@@ -3,13 +3,15 @@ id: F-01kzdhg6mx6ght9h4m504w65gs
 title: >-
   A dirty control worktree discards the record of an agent run that already
   completed
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-07'
+disposition: attach-existing
+resolved_at: '2026-08-07T07:33:53.524Z'
 ---
 # F-01kzdhg6mx6ght9h4m504w65gs — A dirty control worktree discards the record of an agent run that already completed
 
