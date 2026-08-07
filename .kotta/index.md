@@ -75,7 +75,6 @@ None.
 - npm-rejects-the-unscoped-kotta-package-name-as-too-similar-eaag2s6z
 - ready-ticket-szovege-nem-javithato-a-define-csak-backlogbol--147t946f
 - renaming-the-workspace-drops-tracked-but-now-ignored-files-o-nkb8sbc4
-- resuming-with-a-different-agent-runs-the-new-agent-but-leave-8m4rw9a3
 - schemas-package-schema-json-rejects-every-started-package-an-8et554b5
 - state-drift-has-no-reconcile-command-so-the-board-can-only-p-5mqcvk49
 - tests-integration-ui-port-cli-test-ts-is-flaky-aftereach-tim-hqqt57nj

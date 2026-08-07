@@ -3,13 +3,15 @@ id: F-01kzdaxs0133htw4ws8m4rw9a3
 title: >-
   Resuming with a different --agent runs the new agent but leaves the claim
   naming the old one
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-07'
+disposition: attach-existing
+resolved_at: '2026-08-07T07:33:52.831Z'
 ---
 # F-01kzdaxs0133htw4ws8m4rw9a3 — Resuming with a different --agent runs the new agent but leaves the claim naming the old one
 
