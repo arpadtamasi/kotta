@@ -8,7 +8,7 @@ types:
 profiles:
   - bug
 priority: medium
-risk: medium
+risk: low
 batch: null
 depends_on: []
 blocks: []
@@ -21,39 +21,56 @@ updated_at: '2026-08-07'
 
 ## Outcome
 
-The short human form of an entity id is produced by one function, and the two surfaces that write
-entity references outside the CLI — the board and the shipped skills — both use it. The decision
-recorded in D-003 stops being a design note and becomes the behaviour.
+Entities are named to a human by their **title**, written out in full. An identifier appears only
+when there is no title, or when two titles genuinely collide. The rule is stated once, and the
+board's correct implementation stops being a private copy.
 
 ## Actual behaviour
 
-D-003 (2026-07-26) separated two jobs a sequential id conflates: machine identity is a
-coordination-free ULID, and humans reference by title. The code already implements the human half:
+D-003 (2026-07-26) decided that machine identity is a coordination-free ULID and **humans reference
+by title**. One surface implements that; the rest were never told.
 
-- `src/core/identity.ts:20` — `SHORT_ID_LENGTH = 8`, commented "Filename and display tail".
-- `src/core/identity.ts:81` — `displayId()`, the short human-facing form.
-- `src/core/identity.ts:90` — `entityFilename()`, the disk form: `slug-<short id>.md`.
-- `src/core/identity.ts:100` — `filenameMatchesId()`, which matches on the **suffix**.
+**The board is right, but privately.** `ui/src/App.tsx` follows `titleOf(id) ?? displayId(id)` at all
+12 of its reference sites — title first, short identifier only as a fallback. It reaches that
+behaviour through its own `displayId` declared at `ui/src/App.tsx:74`, rather than importing the one
+in `src/core/identity.ts:81`. The core function has **zero callers under `src/`**; every use in the
+repository is the board's copy.
 
-Two surfaces do not use it.
+**The skills have no rule.** `displayId` and `shortId` occur nowhere under `skills/`. The skills
+compose the messages a human actually reads — batch starts, hand-offs, summaries — and nothing tells
+them how to name an entity, so they lead with whatever identifier is at hand.
 
-**The board re-declares it.** `ui/src/App.tsx:74` defines its own `displayId` rather than importing
-the one in core. There are 12 call sites in that file, all of them following the correct pattern
-`titleOf(id) ?? displayId(id)` — title first, short id as fallback. The board's *behaviour* is
-right; its *source of truth* is a second copy that can drift from core silently.
+**Titles are truncated where they differ.** Observed 2026-08-07 in a neighbouring workspace, a
+listing shown to the operator:
 
-**The skills carry no output rule.** The strings `displayId` and `shortId` do not occur anywhere
-under `skills/`. The skills compose the messages a human reads when a batch starts or a contract is
-handed over, and nothing tells them how to name an entity.
+```
+replace-the-home-page-hero-...        status: backlog
+recompose-the-home-page-around-...    status: defined
+```
 
-`displayId()` has **zero callers under `src/`**. Every one of its 12 uses is the board's own copy.
+Both titles are cut with an ellipsis before the point at which they diverge. The operator signed the
+wrong contract, then had to retype two identifiers by hand to recover:
+
+```
+T-01kze8q493ct95ep59snxk84vt
+T-01kze82m2e6jzwc2embfb297er
+```
+
+A ULID is time-ordered, so entities minted minutes apart share a long leading run — here the first
+eight characters. The eye reads left to right and sees the same string twice; what distinguishes
+them is the tail, which is exactly what `displayId()` returns and what nothing calls.
+
+The identifier only became load-bearing because the title had been truncated out of usefulness.
 
 ## Expected behaviour
 
-- The board imports `displayId` from core and declares no local equivalent.
-- Every skill that writes an entity reference states the rule it follows: title first, short
-  `slug-hash` form as the fallback, never a bare 26-character ULID as the leading token.
-- The board's rendered output is unchanged, because it already follows the rule.
+- Every surface that names an entity to a human leads with the **title, in full**, and does not
+  truncate it before the point where similar titles diverge.
+- An identifier is a fallback, not a companion: shown when there is no title, or appended to
+  disambiguate two entities whose titles are identical.
+- When an identifier is shown, it is the short `slug-hash` form, never a bare 26-character ULID.
+- The board's rendered output does not change. It already behaves this way; only the source of its
+  implementation moves.
 
 ## Reproduction steps
 
@@ -64,81 +81,70 @@ Board:
 
 Skills:
 
-1. `grep -rn "displayId\|shortId" skills/` — no results.
-2. Read any batch-start message a skill produces and observe bare ULIDs leading the titles.
+1. `grep -rn "displayId\|shortId\|slug-hash" skills/` — no results.
+2. Read any batch-start or hand-off message a skill produces and observe identifiers leading the
+   titles.
 
 ## Environment
 
-Any Kotta checkout. Not host-, agent- or platform-dependent: both gaps are static properties of the
-source tree.
+Any Kotta checkout. Static properties of the source tree; not host-, agent- or platform-dependent.
 
 ## Frequency
 
-Board: permanent — the duplicate declaration exists in every build.
+Board: permanent, present in every build.
 
-Skills: every message a skill writes that names an entity.
+Skills: every message that names an entity.
 
 ## Impact
 
-A ULID is time-ordered, so entities minted in the same session share a long leading run of
-characters. Two contracts created minutes apart in a neighbouring workspace on 2026-08-07:
+The operator's stated requirement, 2026-08-07: identifiers should not be visible at all except as a
+last resort. Today they are the leading token in most text surfaces, and because of ULID prefix
+sharing they are frequently indistinguishable from one another — so the surface that is supposed to
+identify an entity is the one least able to.
 
-```
-T-01kze8q493ct95ep59snxk84vt
-T-01kze82m2e6jzwc2embfb297er
-```
+The concrete cost already paid: a contract signed in error, and a manual recovery through three
+retyped identifiers.
 
-The first eight characters are identical. The eye reads left to right and sees the same string
-twice; the distinguishing part is the tail — which is exactly what `displayId()` returns and what
-nothing calls. Printing the full ULID is therefore not merely verbose, it is **actively
-misleading**.
-
-The observed consequence in that session: the operator signed the wrong contract of two
-similarly-titled ones, and then had to retype three 26-character ids by hand to recover. An operator
-request from 2026-08-03 already stated the need directly: "nem tudom, melyik id mihez kell, adj
-slug+hash alakú id-ket."
-
-This is also the first thing anyone shown the tool will see, which makes it the cheapest available
-improvement to how Kotta reads to a newcomer.
+This is also the first thing anyone shown the tool encounters, which makes it the cheapest available
+improvement to how Kotta reads to someone who has not seen it before.
 
 ## Regression-test expectation
 
-- A component or unit test asserts the board renders the short form for a minted id and the title
-  when one is known, and that assertion is satisfied by the core implementation rather than a local
-  copy.
 - A test asserts no file under `ui/src/` declares a function named `displayId`.
+- A test asserts the board renders the title when one is known and the short form when it is not,
+  satisfied by the core implementation.
 - Both fail against the current tree.
 
 ## Scope
 
-1. Import `displayId` from `src/core/identity.ts` in `ui/src/App.tsx` and delete the local
-   declaration at `:74`, leaving all 12 call sites and their rendered output unchanged.
-2. Add an entity-reference output rule to every skill under `skills/` that writes entity references:
-   title first, `slug-hash` short form as the fallback, never a bare full ULID as the leading token.
-   State it once in a form each skill can carry, rather than restating it differently per file.
-3. Add the regression tests above.
+1. Import `displayId` from `src/core/identity.ts` into `ui/src/App.tsx` and delete the local
+   declaration at `:74`. All 12 call sites and their rendered output stay exactly as they are.
+2. State the entity-reference rule once, in a form every skill under `skills/` can carry: title in
+   full, never truncated before the point of divergence; identifier only when there is no title or
+   when titles collide; short `slug-hash` form when an identifier is shown.
+3. Apply that rule to the skills that compose human-facing messages naming entities.
+4. Add the regression tests above.
 
 ## Non-goals
 
-- **Changing CLI output.** Printing the short form from the CLI is the larger half of this problem
-  and belongs after `T-01kzda6nj9hd2z45tt06fw8n0g`, which rewrites `src/cli/index.ts` wholesale and
-  pins its surface with snapshots. Touching it here would collide.
-- Accepting the short form as command *input*. Resolution today requires the full ULID even though
-  `filenameMatchesId()` already implements suffix matching on disk. That is a separate, larger
-  change to the resolver.
-- Any change to `displayId`, `entityFilename`, `filenameMatchesId`, `SHORT_ID_LENGTH`, or the
-  identity model. This contract wires the existing implementation up; it does not revisit it.
+- **CLI output.** Printing the short form from the CLI is the larger half of this problem and
+  belongs after `T-01kzda6nj9hd2z45tt06fw8n0g`, which rewrites `src/cli/index.ts` and pins its
+  surface with snapshots. Touching it here would collide.
+- Accepting the short form as command **input**. Resolution still requires the full ULID even though
+  `filenameMatchesId()` already matches on the suffix; that is a separate change to the resolver.
+- Any change to `displayId`, `entityFilename`, `filenameMatchesId` or `SHORT_ID_LENGTH`. This
+  contract starts using the existing implementation; it does not revisit it.
 - Any change to the board's layout, styling, data flow, or what it renders.
+- Truncation behaviour in surfaces this repository does not own. The rule is stated so those
+  surfaces can adopt it; it is not enforced here.
 - Renaming or restructuring any skill.
 
 ## Acceptance
 
-- `ui/src/App.tsx` contains no `displayId` declaration and imports the symbol from core.
-- `grep -rn "function displayId" ui/src/` returns nothing.
-- The board's rendered entity references are unchanged, verified against a capture taken before the
-  change.
-- Every skill under `skills/` that writes an entity reference states the output rule, and
-  `grep -rl "slug-hash" skills/` lists them.
+- `ui/src/App.tsx` declares no `displayId` and imports it from core; `grep -rn "function displayId"
+  ui/src/` returns nothing.
+- The board's rendered entity references are identical to a capture taken before the change.
+- The entity-reference rule is stated in the skills that name entities, and is greppable in them.
 - The two regression tests exist and fail when their fix is reverted.
 - No file under `src/cli/` and no file under `src/core/` is modified.
 - `kotta validate`, `npm run typecheck`, `npm run build` and the full suite pass.
@@ -149,19 +155,19 @@ improvement to how Kotta reads to a newcomer.
 - `npm run build` — the board must still build with the core import.
 - `npm run typecheck`.
 - `npx vitest run --exclude '.worktrees/**'` for the full suite.
-- Manual: open `kotta ui`, compare the entity references against a screenshot taken before the
-  change, and confirm they are identical.
-- Manual: read one skill's output rule and confirm it produces the intended form for a worked
-  example.
+- Manual: open `kotta ui` and compare entity references against a screenshot taken before the
+  change — identical.
+- Manual: take the two colliding titles from the Impact section, apply the rule by hand, and confirm
+  the result distinguishes them without showing an identifier.
 
 ## Constraints
 
-- Behaviour-preserving on the board. The board already renders correctly; any visible difference is
-  a defect, not an improvement.
+- Behaviour-preserving on the board. It already renders correctly; any visible difference is a
+  defect, not an improvement.
 - Do not touch `src/cli/index.ts` or `src/core/identity.ts`. The first belongs to
   `T-01kzda6nj9hd2z45tt06fw8n0g`; the second is correct as written and is what this contract exists
   to start using.
-- The skills rule must be a rule, not a rewrite. Existing skill procedures stay as they are.
+- The skills change is a rule, not a rewrite. Existing skill procedures stay as they are.
 
 ## Open decisions
 
@@ -169,16 +175,15 @@ None.
 
 ## Execution notes
 
-- The board is the only surface in the repository that already gets this right, and it gets it right
-  through a copy. That is the ordinary way a good decision stops spreading: the surface that needed
-  it implemented it locally, and nothing pulled the implementation back to the middle. Fixing the
-  direction of the dependency is most of the value here; the rendered output does not change at all.
-- The skills half is deliberately a written rule rather than a helper, because skills are prose read
-  by an agent, not code. The check that it landed is that the rule is greppable in the files that
-  need it.
-- The two halves are one contract because they are the two non-CLI writers of entity references and
-  they share one acceptance question: does an entity reference lead with something a human can tell
-  apart. Splitting them would produce two branches for four files.
-- The CLI half is the larger prize and is deliberately deferred, not forgotten. Its blocker is
-  sequencing, not doubt: `T-01kzda6nj9hd2z45tt06fw8n0g` rewrites the command table and pins it with
-  surface snapshots, so the output change is cheap after it and conflict-prone before it.
+- The rule is "title, in full" rather than "short identifier". An earlier draft of this contract had
+  it backwards — it treated the short form as the goal, when the operator's requirement is not to see
+  identifiers at all unless nothing else will do. The short form is the fallback's fallback.
+- The truncation finding is the more valuable half. In the observed incident the identifiers were a
+  symptom: the two titles differed at a point past the ellipsis, so the only distinguishing
+  information left on screen was a pair of near-identical ULIDs. A rule that only shortened the
+  identifiers would not have prevented it.
+- The board is the only surface that already gets this right, and it gets it right through a copy —
+  the ordinary way a good decision stops spreading. Reversing the direction of the dependency is
+  most of the value here, and the rendered output does not change at all.
+- The CLI half is deferred for sequencing, not doubt. It is the larger prize, it is cheap once the
+  command table is derived from a registry, and it is conflict-prone before that.
