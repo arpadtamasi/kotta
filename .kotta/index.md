@@ -17,11 +17,11 @@ None.
 
 ## Active contracts
 
-- definecontract-accepts-definition-content-instead-of-a-files-1yd5vn20
+None.
 
 ## Review
 
-None.
+- definecontract-accepts-definition-content-instead-of-a-files-1yd5vn20
 
 ## Blocked
 
