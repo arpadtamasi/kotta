@@ -83,7 +83,6 @@ None.
 - the-advertised-install-version-is-hardcoded-in-three-files-a-wn3kw5t7
 - the-board-cannot-show-two-contradiction-classes-that-a-team--2s40aw1j
 - the-claude-agent-is-invoked-without-a-permission-flag-so-eve-1me3jkh4
-- the-executor-discards-the-agent-stdout-it-captured-so-no-run-e3z74k41
 - the-published-json-schemas-are-documentation-nothing-checks-ge5asz8x
 - ui-port-cli-tests-silently-assert-nothing-when-4311-is-alrea-nbxc71r5
 - ui-ux-spec-md-describes-the-pre-v2-board-and-has-no-owner-af-a4dg5622

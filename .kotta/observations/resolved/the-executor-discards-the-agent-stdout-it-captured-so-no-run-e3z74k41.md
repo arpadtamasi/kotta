@@ -3,13 +3,15 @@ id: F-01kzdaxefyc4jxk1hwe3z74k41
 title: >-
   The executor discards the agent stdout it captured, so no run records what the
   agent claimed
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-07'
+disposition: attach-existing
+resolved_at: '2026-08-07T07:33:52.493Z'
 ---
 # F-01kzdaxefyc4jxk1hwe3z74k41 — The executor discards the agent stdout it captured, so no run records what the agent claimed
 
