@@ -3,13 +3,15 @@ id: F-01kzdebgbn97ve9bby1me3jkh4
 title: >-
   The claude agent is invoked without a permission flag, so every claude run is
   a silent no-op recorded as implemented
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-07'
+disposition: attach-existing
+resolved_at: '2026-08-07T07:33:53.187Z'
 ---
 # F-01kzdebgbn97ve9bby1me3jkh4 — The claude agent is invoked without a permission flag, so every claude run is a silent no-op recorded as implemented
 
