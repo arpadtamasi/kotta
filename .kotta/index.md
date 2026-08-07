@@ -64,6 +64,7 @@ None.
 - crm-kit-and-flowbench-cannot-be-migrated-unrelated-dirty-tre-9m3dkmxv
 - gray-matter-memoizes-frontmatter-so-every-writer-mutates-a-s-s8j3h62g
 - harom-szomszed-repo-agents-md-je-ideiglenes-szabalyblokkot-h-10cpc3k3
+- kotta-hand-enumerates-the-agents-and-hosts-it-can-work-with--ccfd497m
 - kotta-integrate-only-supports-codex-so-claude-code-sessions--n5cp4s0q
 - kotta-migrate-writes-a-root-gitattributes-it-never-reports-i-hkr7tyh2
 - live-pages-quickstart-still-advertises-kotta-0-3-0-jdzchspa
