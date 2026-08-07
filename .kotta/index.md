@@ -46,6 +46,7 @@ None.
 - a-board-nema-n-rejti-el-a-nem-commitolt-munkat-ha-a-fo-munka-88p5tm36
 - a-decision-cannot-record-that-it-narrows-or-continues-anothe-8pv9r452
 - a-define-nem-javithatja-a-contract-cimet-igy-egy-observation-a469asbk
+- a-dirty-control-worktree-discards-the-record-of-an-agent-run-504w65gs
 - a-kiadatlan-changelog-bejegyzes-a-regi-binaris-nevet-hasznal-m4m7q531
 - a-markdown-h1-a-teljes-azonositot-hordozza-igy-a-mintazott-u-rb71ckkr
 - a-prioritas-szuletesi-attributum-pedig-valtozo-tulajdonsag-a-9666rqce
