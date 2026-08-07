@@ -1,7 +1,7 @@
 ---
 id: T-01kzdhtqw01nbgdg5dd9cw3zpr
 title: The execution record is derived from what the run actually did
-status: backlog
+status: defined
 origin: human
 types:
   - refactor
