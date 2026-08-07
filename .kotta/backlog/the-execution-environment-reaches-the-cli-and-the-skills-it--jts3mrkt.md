@@ -7,7 +7,7 @@ types:
   - bug
 profiles:
   - bug
-priority: medium
+priority: high
 risk: medium
 batch: null
 depends_on: []
@@ -21,152 +21,172 @@ updated_at: '2026-08-07'
 
 ## Outcome
 
-An agent launched by `kotta contract execute` can reach the `kotta` binary from its own subshells,
-and is told in its brief that the lifecycle skills exist and carry the procedure. The discipline
-Kotta ships stops being optional in practice.
+Host wiring is repository-relative state, written into the repo and committed like any other Kotta
+file. A launched agent — and a cloned checkout, and a linked worktree — gets the Kotta MCP tools and
+the Kotta skills without anyone configuring a machine by hand.
 
 ## Actual behaviour
 
-Two independent gaps, both measured on the oneanda workspace over 2026-07-31 / 08-01, with every
-approval gate enabled in `config.yaml`.
+**Nothing installs the skills. Not for agents, and not for the operator.** Kotta ships ten skills
+under `skills/`. `src/commands/integrate.ts` is 31 lines and the string `skill` occurs in it **zero
+times**; it writes `.codex/config.toml` and nothing else. No other command installs them either.
 
-**The binary is not reliably on PATH where the agent works.** `spawnAgent` at
-`src/commands/execute.ts:68` calls `spawn(invocation.command, invocation.args, { cwd, stdio })` with
-no `env` argument, so the child inherits whatever PATH the launching process happened to have.
-Nothing guarantees the directory containing the running `kotta` binary is on it, and nothing
-re-establishes it for the shells the agent itself spawns. Measured consequence: **12 occurrences of
-`command not found: a-team`**. The operator worked around it by pasting an absolute path into a
-prompt (`/Users/rp/.nvm/versions/node/v24.14.1/bin/a-team`); agents worked around it with
-`export PATH=...` prefixes.
+The only installation in existence on the primary operator's machine was two hand-made symlinks, and
+**both are dangling**:
 
-**The brief never mentions the skills.** `briefContract` at `src/commands/contract.ts:415` assembles
-exactly these parts (`:467`–`:474`): header, contract body, referenced decisions, missing-decision
-notice, profile blocks, claim. The word "skill" does not occur in the file. The brief's own header
-states it is "the complete intent context for executing this contract (D-009)" — so an agent that
-reads it as complete has no reason to look for `execute-contract`, `submit-review` or
-`close-contract`. Measured consequence: **831 commands touching the CLI against 5 Skill
-invocations**, with the lifecycle run as bare CLI (`ticket define` 47×, `ticket validate` 48×,
-`ticket close` 21×, `ticket start` 20×) and **22 `--help` invocations** as the agent groped for the
-command surface mid-task.
+```
+~/.claude/skills/explore-workspace -> ../../.agents/skills/explore-workspace   (target absent)
+~/.claude/skills/submit-review     -> ../../.agents/skills/submit-review       (target absent)
+```
 
-The second gap is the expensive one: `execute-contract`, `submit-review` and `close-contract` are
-where the evidence discipline lives. When agents reach for the raw CLI instead, the commands
-succeed and the discipline is simply absent.
+The other eight are installed nowhere. This is the mechanism behind the measured **831 commands
+touching the CLI against 5 Skill invocations** on the oneanda workspace: agents did not bypass the
+skills, the skills were not present. `AGENTS.md` instructs agents to prefer the skills "if they are
+installed"; that condition has never been true.
+
+**The `claude` host loses its MCP tools in a worktree, and `codex` does not.** The two hosts store
+the same wiring in structurally different places:
+
+| host | where the wiring lives | survives a worktree |
+|---|---|---|
+| codex | `.codex/config.toml`, repo-relative, **tracked in git** | yes — verified present in `.worktrees/T-01kzdhtqw01nbgdg5dd9cw3zpr` |
+| claude | `~/.claude.json` under the key `/Users/rp/Dev/progos/kotta` | no — the agent's cwd is the worktree path, which has no entry |
+
+`kotta contract execute` launches `claude` with `AGENT_ARGUMENTS.claude = ["-p"]` and
+`cwd = <worktree>` (`src/commands/execute.ts:17`, `:68`). A Claude Code session opened in this
+repository on 2026-08-07 consequently started with zero Kotta tools, already recorded as an
+observation.
+
+The pattern that works is already in use in a neighbouring repository: `oneanda/.mcp.json` is
+project-scoped, tracked in git, and needs no per-machine setup.
 
 ## Expected behaviour
 
-- The agent process, and shells it spawns, can invoke `kotta` by name without the operator supplying
-  a path and without a shell-profile side effect.
-- The brief names the lifecycle skills available for this contract's phase and states that they
-  carry the procedure, without inlining their content and without widening the brief into other
-  contracts' context.
-- Neither change alters what any command does, what the brief's existing sections contain, or how
-  approval works.
+- `.mcp.json` in the repository root registers the Kotta MCP server for Claude Code, tracked in git,
+  requiring no entry in `~/.claude.json`.
+- `.codex/config.toml` keeps doing what it already does, unchanged.
+- The Kotta skills are present under `.claude/skills/` in the repository, so any Claude Code session
+  opened anywhere in the checkout — including a linked worktree — can use them.
+- `kotta init` performs the host wiring as part of initializing a workspace, so a fresh project is
+  usable from chat without a second command.
+- `kotta integrate` remains the entry point for doing the same wiring again: on a cloned repository
+  whose `.kotta/` arrived through git and where `init` must not run, and after a host is added or a
+  configuration is lost.
+- No command writes outside the repository. The operator's global configuration is not touched.
 
 ## Reproduction steps
 
-PATH:
+Skills:
 
-1. From a shell where `kotta` resolves only through a version-manager shim, run
-   `kotta contract execute <id> --agent <agent>`.
-2. In the launched agent, run a command in a fresh subshell that invokes `kotta`.
-3. Observe `command not found` where the launching shell resolved the binary.
+1. `grep -c skill src/commands/integrate.ts` — returns 0.
+2. `ls ~/.claude/skills | grep -E 'define-contract|close-contract|execute-contract'` — no results.
+3. `ls -L ~/.claude/skills/submit-review` — the symlink does not resolve.
 
-Brief:
+MCP in a worktree:
 
-1. `kotta contract brief <id>` for any defined contract.
-2. Search the output for `skill`. There are no matches.
-3. Confirm against source: `grep -c skill src/commands/contract.ts` returns 0.
+1. Confirm `.codex/config.toml` exists in a linked worktree under `.worktrees/`.
+2. Confirm `~/.claude.json` has an `mcpServers` entry for the repository root and none for the
+   worktree path.
+3. Open a Claude Code session with the worktree as cwd and observe that no `mcp__kotta__*` tool is
+   available.
 
 ## Environment
 
-Node 20+, macOS and Linux. Reproduced with the `codex` agent; the mechanism is agent-independent
-because it is in the launcher and the brief builder, not in any agent adapter. Version-manager
-installs (nvm, asdf, volta) make the PATH case more likely but are not required for it.
+Any Kotta checkout. Hosts: Claude Code and Codex. Not platform-specific — both gaps are properties
+of where configuration is written, not of the operating system.
 
 ## Frequency
 
-PATH: every run whose agent spawns a shell that does not inherit the launcher's resolved PATH — 12
-observed occurrences in two days of real use.
+Skills: **always.** They have never been installed by any command.
 
-Brief: **every execution, without exception.** The brief has never contained a skills section.
+MCP: every `claude` run launched into a worktree, and every Claude Code session opened in one.
 
 ## Impact
 
-The quality of a Kotta run depends on which agent happens to be driving, which is exactly the
-variance the system exists to remove. Two closed-ticket defects already recorded in this workspace —
-evidence satisfied by volume rather than fitness, and the "Deviations: None." pattern — are
-plausibly downstream of the skills never running, because those are the skills that would have
-refused.
+The three skills that carry the evidence discipline — `execute-contract`, `submit-review`,
+`close-contract` — have never run. Two defects already recorded in this workspace, evidence
+satisfied by volume rather than fitness and the "Deviations: None." pattern, are plausibly
+downstream of that: those skills are what would have refused.
 
-For a system whose pitch is that the procedure is enforced, "the procedure it ships is optional in
-practice" is the failure that matters most on first contact.
+For a tool whose claim is that the procedure is enforced, "the procedure it ships was never
+installed" is the failure that matters most, and it is invisible from inside a session that never
+knew the skills existed.
 
 ## Regression-test expectation
 
-- A unit test asserts `spawnAgent` passes an `env` whose `PATH` contains the directory of the
-  running `kotta` binary, and that no other inherited variable is dropped.
-- A unit test asserts the output of `briefContract` contains a skills section naming the lifecycle
-  skills, and a second asserts the brief's other sections are byte-identical to before for a fixture
-  contract.
-- Both tests fail against the current implementation.
+- A test asserts `init` produces `.mcp.json` with a `kotta` server entry, `.codex/config.toml`, and
+  the skills under `.claude/skills/`, in a temporary repository.
+- A test asserts `integrate` is idempotent: running it twice leaves byte-identical files and reports
+  no change on the second run.
+- A test asserts no command writes outside the repository root during `init` or `integrate`.
+- All fail against the current implementation.
 
 ## Scope
 
-1. Pass an explicit `env` in `spawnAgent` (`src/commands/execute.ts:68`) that inherits
-   `process.env` and prepends the directory of the currently running `kotta` executable to `PATH`,
-   de-duplicated, without dropping or reordering anything else.
-2. Add a skills section to the brief assembled in `briefContract`
-   (`src/commands/contract.ts:467`–`:474`): the names of the lifecycle skills relevant to executing
-   and submitting a contract, one line each on what they cover, and a sentence stating that they
-   carry the procedure and should be preferred over raw CLI calls. Names and one-line summaries
-   only — no skill bodies.
-3. State in the brief header that the skills section is part of the complete context, so the D-009
-   completeness claim and the skills section do not contradict each other.
-4. Add the regression tests above.
+1. Extend `src/commands/integrate.ts` from a codex-only writer into host wiring that writes, into
+   the repository root: `.mcp.json` registering the Kotta MCP server for Claude Code,
+   `.codex/config.toml` exactly as today, and the shipped skills under `.claude/skills/`.
+2. Write all host configurations unconditionally rather than detecting the host. An unused
+   configuration file is inert, and detection would add a failure mode for no benefit.
+3. Make the wiring idempotent and additive: preserve any existing content it did not write, report
+   what changed, and change nothing on a second run.
+4. Call the wiring from `initCommand` (`src/commands/init.ts`) after `initializeWorkspace`
+   succeeds.
+5. Relax the host guard at `src/cli/index.ts:315` and its argument description at `:312` so
+   `integrate` covers the hosts it now writes. This is the only change to that file.
+6. Add the regression tests above, and a `.gitignore` review so nothing newly written is
+   accidentally ignored.
 
 ## Non-goals
 
-- Changing any skill's content.
-- Changing how the CLI is installed, published, or linked; no change to `package.json` `bin`.
-- Any change to `src/cli/index.ts`, the command table, or the MCP tool list. That surface belongs to
-  `T-01kzda6nj9hd2z45tt06fw8n0g` and must not be touched here.
-- Adding hosts to `integrate`, or any new chat path.
-- Enforcing skill use, or failing a run that used the raw CLI. The brief informs; it does not gate.
-- Changing the brief's existing sections, their order, or the token-warning threshold.
+- The `claude -p` permission behaviour. `AGENT_ARGUMENTS.claude = ["-p"]` cannot write files while
+  reporting success; that is a separate recorded defect and is not touched here.
+- Any PATH handling. The 12 `command not found` occurrences observed on the oneanda workspace have
+  no established mechanism — a child process inherits PATH — and this contract does not guess at one.
+- Any change to `src/cli/index.ts` beyond the two lines named in Scope 5. The command table belongs
+  to `T-01kzda6nj9hd2z45tt06fw8n0g`.
+- Any change to skill content, to `AGENTS.md`, or to which skills exist.
+- Hosts beyond Claude Code and Codex.
+- Removing the `~/.claude.json` entry that exists today on the operator's machine. The new file makes
+  it redundant; deleting user state is out of bounds.
+- Migrating already-initialized workspaces automatically. They run `integrate`.
 
 ## Acceptance
 
-- `spawnAgent` passes an explicit `env`; the directory of the running `kotta` binary is present in
-  its `PATH`, and every variable present in `process.env` is still present with its original value.
-- A contract brief contains a section naming the lifecycle skills, and that section is present for
-  every contract regardless of profile.
-- The brief's header, contract, decision, profile and claim sections are unchanged for a fixture
-  contract, verified by comparison against a pre-change capture.
-- The two regression tests exist and fail when their fix is reverted.
-- No file under `src/cli/` and no file under `skills/` is modified.
-- `kotta validate`, `npm run typecheck` and the full suite pass.
+- `kotta init` in a fresh repository produces `.kotta/`, `.mcp.json` with a `kotta` server entry,
+  `.codex/config.toml`, and the ten skills under `.claude/skills/`.
+- `kotta integrate` in an already-initialized repository produces the same three, and running it a
+  second time changes no bytes and reports no change.
+- A Claude Code session opened with a linked worktree as its working directory has the Kotta MCP
+  tools available, verified manually against a live worktree.
+- The skills resolve: every file under `.claude/skills/` is readable and none is a dangling link.
+- `.codex/config.toml` after the change is byte-identical to the file this repository has today.
+- No file outside the repository root is created or modified by either command.
+- Only two lines of `src/cli/index.ts` differ.
+- `kotta validate`, `npm run typecheck`, `npm run build` and the full suite pass.
 
 ## Verification
 
-- `npx vitest run` on the new launcher-env and brief-skills tests.
+- `npx vitest run` on the new init-wiring, idempotency and no-writes-outside-root tests.
 - `npx vitest run tests/integration/` unchanged.
-- `npm run typecheck`.
-- `npx vitest run --exclude '.worktrees/**'` for the full suite, excluding linked worktrees.
-- Manual: `kotta contract brief <id>` and confirm the skills section reads correctly and the rest of
-  the brief is unchanged against a capture taken before the change.
-- Manual: launch an agent via `contract execute` and confirm `kotta --version` resolves inside a
-  subshell it spawns.
+- `npm run typecheck` and `npm run build`.
+- `npx vitest run --exclude '.worktrees/**'` for the full suite.
+- Manual: run `kotta integrate` in this repository, then open a Claude Code session in
+  `.worktrees/<some-contract>` and confirm the `mcp__kotta__*` tools are present and a Kotta skill
+  is listed.
+- Manual: `diff` the produced `.codex/config.toml` against the committed one — no difference.
 
 ## Constraints
 
-- `.kotta/` remains canonical; this contract changes no state, no schema and no lifecycle rule.
-- The PATH change must be additive. Replacing or filtering the inherited environment is out of
-  bounds — an agent that loses an unrelated variable is a worse failure than the one being fixed.
-- The brief must stay bounded. Adding skill names is in scope precisely because it is a few lines;
-  inlining skill content would re-create the context-widening D-009 exists to prevent.
-- Do not touch `src/cli/index.ts`. `T-01kzda6nj9hd2z45tt06fw8n0g` rewrites that file's command table
-  and pins it with surface snapshots; an edit here would collide with it.
+- Repository-relative only. Writing to `~/.claude.json`, `~/.claude/skills/` or any other path
+  outside the repository is out of bounds; that asymmetry is the defect being fixed.
+- Additive and idempotent. These commands run against repositories that already contain
+  configuration for other tools, and destroying it would be a far worse failure than the one being
+  fixed.
+- `init` keeps refusing an already-initialized workspace. Wiring is added to `init`, not a
+  relaxation of its precondition.
+- The two-line change to `src/cli/index.ts` is a hard ceiling, so the merge with
+  `T-01kzda6nj9hd2z45tt06fw8n0g` stays trivial regardless of which lands first.
 
 ## Open decisions
 
@@ -174,19 +194,19 @@ None.
 
 ## Execution notes
 
-- The two gaps are filed as one contract because they have one outcome — the shipped procedure
-  actually reaching the agent — and because splitting them would produce two branches touching
-  `src/commands/` in the same week for no verification benefit. If the PATH fix turns out to need
-  platform-specific handling, split it out rather than widening this contract.
-- The skills section deliberately lists names and one-liners rather than resolving which skills are
-  installed. Detecting installation would couple the brief to the host's filesystem, and D-009's
-  point is that the brief is derived from the workspace, not from the coordinator's environment. A
-  named skill that is not installed is a no-op for the agent; the AGENTS.md contract already says
-  the CLI is the whole contract when skills are absent.
-- The PATH fix uses the directory of the *running* binary rather than a configured path, so a
-  workspace using a linked or version-managed install gets the same binary the operator invoked.
-  This is the property the 12 observed failures all violated.
-- Evidence for both gaps predates this contract and lives in the resolved observation covering CLI
-  reachability and skill bypass. This contract implements the two mechanical halves of it; the
-  remaining half — exposing more operations to chat — belongs to
-  `T-01kzda6nj9hd2z45tt06fw8n0g` and is explicitly out of scope here.
+- The skills are vendored into `.claude/skills/` rather than symlinked into `node_modules`. The
+  decision is the operator's, taken 2026-08-07, and the reason is the evidence: the only skills ever
+  installed on this machine were symlinks, and both are dangling. A vendored copy survives a clone,
+  a worktree and a dependency reinstall; a symlink survives none of them reliably. The cost is that
+  a consuming repository carries Kotta's skill files in its own history, which is accepted.
+- Host configurations are written unconditionally rather than detected. Detection has to decide what
+  counts as "codex is present", and a wrong answer produces a silently unusable workspace — the
+  exact failure mode already being fixed. An inert config file costs nothing.
+- The title of this contract predates its current scope: PATH handling was investigated on
+  2026-08-07 and removed for lack of an established mechanism, and the brief-based skills listing was
+  rejected by the operator as re-inventing skill handling that the host already provides. The title
+  cannot be corrected because `define` does not accept a title change — an already recorded Kotta
+  gap, hit here in the course of this work.
+- `~/.claude.json` keeps its existing entry. Once `.mcp.json` lands the entry is redundant, and
+  whether to clean up per-machine state is a separate decision belonging to whoever owns that
+  machine.
