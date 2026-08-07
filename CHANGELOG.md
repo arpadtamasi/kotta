@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **`no-change` execution state.** `contract execute` captures the worktree's baseline — the contract
+  branch tip and its porcelain status — before it launches, and compares afterwards. An agent that
+  exits 0 and reports work it never did is recorded as `no-change` instead of `implemented`, and the
+  human output says so plainly and names what to check. Commits and uncommitted changes both remain
+  `implemented`. The existing failure ladder keeps its order and is still evaluated first.
+- Each execution event now carries the resolved state, the agent that ran, the baseline and resulting
+  commit, whether uncommitted changes remain, the exit code, and the agent's own printed output —
+  stored as reported and attributed, never promoted into the state decision. A resume appends a new
+  record instead of rewriting the previous one.
+
+### Fixed
+
+- A completed run's record is no longer discarded when the control worktree holds unrelated dirt:
+  the execution record is written with `requireClean: false`, matching every sibling caller. A write
+  that fails for a real reason now reports the run that is at risk and says the work exists but is
+  unrecorded, instead of claiming something failed to start.
+- `execute --resume --agent <other>` updates the claim to the agent that actually ran, so a later
+  bare `--resume` relaunches it.
+- The configured `claude` invocation permits writes (`-p --permission-mode bypassPermissions`) inside
+  its own worktree; previously it asked for permission nobody could grant and reliably changed
+  nothing. An invocation that structurally cannot write now fails at launch naming the cause.
+
 ## [0.5.0] - 2026-08-05
 
 ### Added

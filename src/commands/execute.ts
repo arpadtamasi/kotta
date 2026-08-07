@@ -1,23 +1,50 @@
 import { spawn, spawnSync } from "node:child_process";
-import { accessSync, constants, existsSync, readFileSync } from "node:fs";
+import { accessSync, constants, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { parse as parseYaml } from "yaml";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { findRepositoryRoot, workspacePath } from "../filesystem/workspace.js";
 import { findContract } from "../filesystem/entities.js";
 import { assertClean, git } from "../git/git.js";
 import { briefContract, startContract } from "./contract.js";
 import { ENV_PREFIX, readEnv } from "../core/env.js";
 import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
-import { appendLifecycleEvent } from "../core/events.js";
+import { appendEvent } from "../core/events.js";
+import { validateClaim } from "../core/claim.js";
 
 /**
  * Arguments a named agent expects around a prompt that arrives on stdin.
  * Unknown agents are invoked bare: the prompt is still the whole stdin.
+ *
+ * The flag that permits writes is part of the invocation, not the operator's
+ * problem: an agent that must ask before every edit has nobody to ask in a
+ * headless run, so it would exit 0 having implemented nothing. The isolated
+ * worktree on its own branch is the boundary that makes bypassing the
+ * interactive prompt acceptable here.
  */
 const AGENT_ARGUMENTS: Record<string, string[]> = {
-  claude: ["-p"],
+  claude: ["-p", "--permission-mode", "bypassPermissions"],
   codex: ["exec", "-"],
 };
+
+/**
+ * Why a resolved invocation structurally cannot change files. Evaluated before
+ * launch so a disarmed agent is a launch-time error naming the cause, never a
+ * successful-looking empty run.
+ */
+export function invocationWriteFailure(agent: string, args: string[]): string | null {
+  if (agent !== "claude") return null;
+  const mode = args[args.indexOf("--permission-mode") + 1];
+  if (!args.includes("--permission-mode") || !mode?.trim()) {
+    return "'claude -p' asks before it writes and a headless run has nobody to answer, so it would change nothing; the invocation needs --permission-mode.";
+  }
+  if (mode === "plan") return "--permission-mode plan forbids edits by design, so a planning run cannot implement a contract.";
+  return null;
+}
+
+function assertInvocationCanWrite(agent: string, command: string, args: string[], tail: string): void {
+  const cause = invocationWriteFailure(agent, args);
+  if (cause) throw new Error(`Agent '${agent}' cannot change files as invoked ('${[command, ...args].join(" ")}'): ${cause} ${tail}`);
+}
 
 /** The launch seam: tests substitute a deterministic script double for a real agent binary. */
 export const AGENT_COMMAND_ENV = `${ENV_PREFIX}AGENT_COMMAND`;
@@ -97,6 +124,7 @@ export interface ExecutionContext {
   worktree: string;
   branch: string;
   agent: string;
+  claimPath: string;
 }
 
 /** An execution context exists when a claim for the contract lives in its worktree. */
@@ -110,10 +138,46 @@ export function locateExecutionContext(root: string, id: string): ExecutionConte
   const claim = parseYaml(readFileSync(claimPath, "utf8")) as Record<string, unknown>;
   const recorded = typeof claim.worktree === "string" ? claim.worktree : `.worktrees/${id}`;
   const worktree = recorded.startsWith("/") ? recorded : join(controlRoot, recorded);
-  return { worktree, branch: String(claim.branch ?? ""), agent: String(claim.agent ?? "") };
+  return { worktree, branch: String(claim.branch ?? ""), agent: String(claim.agent ?? ""), claimPath };
 }
 
-export type ExecutionState = "implemented" | "agent-failed" | "cancelled";
+/**
+ * The comparison point for "did this run do anything". The contract branch tip
+ * plus the worktree's porcelain status, captured before the agent launches —
+ * after the fact there is nothing left to compare against.
+ */
+export interface ExecutionBaseline {
+  commit: string;
+  status: string;
+}
+
+function captureBaseline(id: string, worktree: string, tail: string): ExecutionBaseline {
+  try {
+    return { commit: git(worktree, ["rev-parse", "HEAD"]), status: git(worktree, ["status", "--porcelain"]) };
+  } catch (error) {
+    throw new Error(`Baseline capture failed for ${id} in ${worktree}: ${errorMessage(error)}. The agent was not launched, because a run with no comparison point cannot be recorded faithfully. ${tail}`);
+  }
+}
+
+/**
+ * Re-read the worktree after the run. An unreadable worktree counts as changed:
+ * Kotta never reports an empty run it could not verify.
+ */
+function inspectWorktree(worktree: string, baseline: ExecutionBaseline): { commit: string; status: string; changed: boolean } {
+  try {
+    const commit = git(worktree, ["rev-parse", "HEAD"]);
+    const status = git(worktree, ["status", "--porcelain"]);
+    return { commit, status, changed: commit !== baseline.commit || status !== baseline.status };
+  } catch {
+    return { commit: baseline.commit, status: baseline.status, changed: true };
+  }
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+export type ExecutionState = "implemented" | "no-change" | "agent-failed" | "cancelled";
 
 export interface ExecuteResult {
   ok: boolean;
@@ -133,7 +197,11 @@ export interface ExecuteResult {
     inheritContext: string | null;
     resumed: boolean;
     exitCode: number | null;
+    baselineCommit: string;
+    commit: string;
     uncommittedChanges: boolean;
+    /** Where this run's account was stored; null means the record write failed. */
+    recordPath: string | null;
     reason: string | null;
   };
   errors?: { code: string; message: string }[];
@@ -175,6 +243,8 @@ export async function executeContract(id: string, options: ExecuteOptions, launc
     if (legacyContract.state !== "active") throw new Error(`Contract ${id} must be active to resume; it is ${legacyContract.state}.`);
     const { command, args } = resolveAgentCommand(agent);
     if (!agentCommandAvailable(command)) throw new Error(agentMissingMessage(command));
+    const contextNote = `Execution context ${existing.worktree} is untouched.`;
+    assertInvocationCanWrite(agent, command, args, contextNote);
     const briefRoot = contract.state === "defined" ? existing.worktree : root;
     return await runAgent({ id, root: briefRoot, controlRoot: root, agent, command, args, context: existing, inheritContext, resumed: true, launch });
   }
@@ -189,11 +259,14 @@ export async function executeContract(id: string, options: ExecuteOptions, launc
   if (!agent) throw new Error("--agent <agent> is required to create an execution context.");
   assertClean(root);
   const { command, args } = resolveAgentCommand(agent);
-  // The agent is resolved before any mutation: a missing binary must not leave a half-built context.
+  // The agent is resolved before any mutation: a missing binary, or one that cannot
+  // write, must not leave a half-built context.
   if (!agentCommandAvailable(command)) throw new Error(agentMissingMessage(command));
+  assertInvocationCanWrite(agent, command, args, "No execution context was created.");
 
   const started = startContract(id, agent);
-  const context: ExecutionContext = { worktree: String(started.data.worktree), branch: String(started.data.branch), agent };
+  const worktree = String(started.data.worktree);
+  const context: ExecutionContext = { worktree, branch: String(started.data.branch), agent, claimPath: workspacePath(root, "claims", `${id}.yaml`) };
   return await runAgent({ id, root, controlRoot: root, agent, command, args, context, inheritContext, resumed: false, launch });
 }
 
@@ -220,11 +293,14 @@ async function runAgent(input: {
   try {
     brief = briefContract(id, {}, root);
   } catch (error) {
-    throw new Error(`Brief assembly failed for ${id}: ${error instanceof Error ? error.message : String(error)}. ${contextNote}`);
+    throw new Error(`Brief assembly failed for ${id}: ${errorMessage(error)}. ${contextNote}`);
   }
 
+  const baseline = captureBaseline(id, context.worktree, contextNote);
   const run = await launch({ command, args, cwd: context.worktree, prompt: promptFor(brief.data.brief, inheritContext) });
 
+  // The failure ladder keeps its order and its messages; `no-change` is only
+  // reached when it yields nothing.
   const failure = run.cancelled
     ? { state: "cancelled" as const, reason: `Execution was interrupted; the agent was terminated with ${run.signal ?? "SIGTERM"}.` }
     : run.error
@@ -235,11 +311,14 @@ async function runAgent(input: {
           ? { state: "agent-failed" as const, reason: "Agent produced no output; the result is empty and cannot be treated as an implementation." }
           : null;
 
+  const after = inspectWorktree(context.worktree, baseline);
+  const state: ExecutionState = failure?.state ?? (after.changed ? "implemented" : "no-change");
+  const noChangeReason = `Agent completed and changed nothing: ${context.worktree} still matches the pre-run baseline ${baseline.commit.slice(0, 12)}. This run produced no implementation.`;
+  const reason = failure?.reason ?? (state === "no-change" ? noChangeReason : null);
   const contractState = safeContractState(controlRoot, id);
-  const uncommittedChanges = Boolean(git(context.worktree, ["status", "--porcelain"]));
   const data: ExecuteResult["data"] = {
     id,
-    state: failure?.state ?? "implemented",
+    state,
     contractState,
     agent,
     agentCommand: command,
@@ -252,13 +331,58 @@ async function runAgent(input: {
     inheritContext,
     resumed,
     exitCode: run.status,
-    uncommittedChanges,
-    reason: failure?.reason ?? null,
+    baselineCommit: baseline.commit,
+    commit: after.commit,
+    uncommittedChanges: Boolean(after.status),
+    recordPath: null,
+    reason,
   };
-  withControlPlaneMutation(controlRoot, (canonicalRoot) => {
-    appendLifecycleEvent(canonicalRoot, id, `execution-${data.state}`, failure?.reason ?? `Executor ${agent} completed its implementation run.`);
-    commitControlState(canonicalRoot, `chore(kotta): record ${data.state} execution for ${id}`);
-  });
+
+  // The agent that actually ran owns the claim from here on, so a later bare
+  // `--resume` relaunches it. Recorded in the same mutation as the run, before
+  // the event, so the claim can never name an agent no run mentions.
+  const replacedAgent = context.agent && context.agent !== agent ? context.agent : null;
+  const payload = {
+    agent,
+    agent_command: command,
+    resumed,
+    exit_code: run.status,
+    baseline_commit: baseline.commit,
+    commit: after.commit,
+    baseline_uncommitted_changes: Boolean(baseline.status),
+    uncommitted_changes: Boolean(after.status),
+    ...(replacedAgent ? { claim_agent_replaced: replacedAgent } : {}),
+    // The agent's own account of the run. Stored as reported, never promoted
+    // into the state decision above.
+    agent_report: { source: "agent stdout", verified: false, output: run.stdout },
+  };
+  try {
+    withControlPlaneMutation(controlRoot, (canonicalRoot) => {
+      if (replacedAgent) rewriteClaimAgent(context, agent);
+      data.recordPath = appendEvent(canonicalRoot, {
+        entity: id,
+        contract: id,
+        kind: "lifecycle",
+        state: `execution-${state}`,
+        summary: reason ?? `Executor ${agent} completed its implementation run.`,
+        payload,
+      }).path;
+      commitControlState(canonicalRoot, `chore(kotta): record ${state} execution for ${id}`);
+    }, { requireClean: false });
+  } catch (error) {
+    // The run already happened. Say so, and say that it is now unrecorded —
+    // this error is about finishing, never about failing to start.
+    return {
+      ok: false,
+      command: "contract execute",
+      data,
+      errors: [{
+        code: "EXECUTION_UNRECORDED",
+        message: `Execution of ${id} finished as ${state} but its record could not be written: ${errorMessage(error)}. The work exists on branch ${context.branch} in ${context.worktree} and is now unrecorded; nothing there was changed or reverted. Inspect it, then re-record by resuming with 'kotta contract execute ${id} --resume'.`,
+      }],
+    };
+  }
+
   if (!failure) return { ok: true, command: "contract execute", data };
   return {
     ok: false,
@@ -266,6 +390,15 @@ async function runAgent(input: {
     data,
     errors: [{ code: failure.state === "cancelled" ? "EXECUTION_CANCELLED" : "AGENT_FAILED", message: `${failure.reason} ${contextNote}` }],
   };
+}
+
+/** Point the claim at the agent that actually ran. The claim is the resume seam. */
+function rewriteClaimAgent(context: ExecutionContext, agent: string): void {
+  const claim = parseYaml(readFileSync(context.claimPath, "utf8")) as Record<string, unknown>;
+  claim.agent = agent;
+  const errors = validateClaim(claim);
+  if (errors.length) throw new Error(`Claim ${context.claimPath} would become invalid: ${errors.join(", ")}.`);
+  writeFileSync(context.claimPath, stringifyYaml(claim));
 }
 
 function safeContractState(worktree: string, id: string): string {
@@ -288,7 +421,13 @@ export function formatExecution(result: ExecuteResult): string {
     `  contract:   ${data.contractState}${data.uncommittedChanges ? " (worktree has uncommitted changes)" : ""}`,
   ];
   if (data.briefWarning) lines.push(`  WARNING:  ${data.briefWarning}`);
-  if (result.ok) lines.push(`Next: verify the work, then 'kotta contract review ${data.id} --evidence "..."'. Review stays a separate gate.`);
+  if (data.state === "no-change") {
+    lines.push(
+      `  reason:   ${String(data.reason)}`,
+      `Nothing to review: the worktree is unchanged at ${data.baselineCommit.slice(0, 12)}. Read what the agent reported in ${data.recordPath ?? "this run's execution event"}, then retry with 'kotta contract execute ${data.id} --resume' or release with 'kotta claim release ${data.id} --force'.`,
+    );
+  } else if (result.ok) lines.push(`Next: verify the work, then 'kotta contract review ${data.id} --evidence "..."'. Review stays a separate gate.`);
+  else if (result.errors?.[0]?.code === "EXECUTION_UNRECORDED") lines.push(`  UNRECORDED: ${result.errors[0].message}`);
   else lines.push(`  reason:   ${String(data.reason)}`, `The claim and worktree are preserved. Retry with 'kotta contract execute ${data.id} --resume' or release with 'kotta claim release ${data.id} --force'.`);
   return lines.join("\n");
 }

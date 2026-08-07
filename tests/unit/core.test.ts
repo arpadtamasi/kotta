@@ -6,6 +6,7 @@ import { describe, expect, test } from "vitest";
 import { branchName } from "../../src/commands/contract.js";
 import { planBatchWaves } from "../../src/commands/batch.js";
 import { validateClaim } from "../../src/core/claim.js";
+import { invocationWriteFailure, resolveAgentCommand } from "../../src/commands/execute.js";
 import { CONTRACT_ID, displayId, entityFilename, filenameMatchesId, isMintedId, mintId, shortId } from "../../src/core/identity.js";
 import { createDecision } from "../../src/commands/decision.js";
 import { decisionDraftFromSource, renderDecision, validateDecision } from "../../src/core/decision.js";
@@ -80,6 +81,16 @@ describe("core deterministic rules", () => {
       expect.objectContaining({ code: "INVALID_DECISION_DATE" }),
       expect.objectContaining({ code: "MISSING_DECISION_SECTION", message: expect.stringContaining("Context") }),
     ]);
+  });
+
+  test("names the cause when an agent invocation structurally cannot write", () => {
+    // A headless agent that must ask before every edit implements nothing, so the
+    // configured invocation is checked before launch instead of after an empty run.
+    expect(invocationWriteFailure("claude", resolveAgentCommand("claude").args)).toBeNull();
+    expect(invocationWriteFailure("claude", ["-p"])).toContain("--permission-mode");
+    expect(invocationWriteFailure("claude", ["-p", "--permission-mode"])).toContain("--permission-mode");
+    expect(invocationWriteFailure("claude", ["-p", "--permission-mode", "plan"])).toContain("forbids edits");
+    expect(invocationWriteFailure("codex", resolveAgentCommand("codex").args)).toBeNull();
   });
 
   test("rejects a duplicate decision without changing the existing record", () => {
