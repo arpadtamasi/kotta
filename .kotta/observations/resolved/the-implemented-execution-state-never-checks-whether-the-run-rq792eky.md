@@ -1,13 +1,15 @@
 ---
 id: F-01kzdax5af5edadf83rq792eky
 title: The implemented execution state never checks whether the run changed anything
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-07'
+disposition: attach-existing
+resolved_at: '2026-08-07T07:33:52.144Z'
 ---
 # F-01kzdax5af5edadf83rq792eky — The implemented execution state never checks whether the run changed anything
 
