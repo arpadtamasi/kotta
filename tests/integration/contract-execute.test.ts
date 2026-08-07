@@ -1,5 +1,5 @@
 import { execFileSync, spawn, spawnSync, type SpawnSyncReturns } from "node:child_process";
-import { chmodSync, existsSync, mkdtempSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
@@ -261,6 +261,35 @@ describe("contract execute (T-035 / D-009)", () => {
     expect(git(repository, "log", "--oneline", `${before}..HEAD`)).toContain(`record implemented execution for ${id}`);
     expect(existsSync(unrelated)).toBe(true);
     expect(git(repository, "status", "--porcelain")).toBe("?? unrelated-scratch.txt");
+  });
+
+  test("a record write that fails for a real reason names the run at risk, not a failed start", () => {
+    const context = fixture("unrecorded");
+    const { repository, id } = context;
+    expectOk(cliRun(repository, ["contract", "start", id, "--agent", "claude", "--json"]));
+    const worktree = join(repository, ".worktrees", id);
+    const before = git(worktree, "rev-parse", "HEAD");
+
+    // Hold the control-plane lock with a live owner so only the record write fails.
+    const lock = join(repository, ".git/kotta-mutation.lock");
+    mkdirSync(lock, { recursive: true });
+    writeFileSync(join(lock, "owner.json"), JSON.stringify({ pid: process.pid }));
+
+    const result = cliRun(repository, ["contract", "execute", id, "--resume", "--json"], agentEnvironment(context, "commit"));
+    expect(result.status).not.toBe(0);
+    const parsed = json(result) as { ok: boolean; data: Record<string, unknown>; errors: { code: string; message: string }[] };
+    expect(parsed).toMatchObject({ ok: false, data: { state: "implemented", recordPath: null }, errors: [{ code: "EXECUTION_UNRECORDED" }] });
+    expect(parsed.errors[0].message).toContain(`Execution of ${id} finished as implemented`);
+    expect(parsed.errors[0].message).toContain("is now unrecorded");
+    // The message is about finishing a run; nothing here failed to start.
+    expect(parsed.errors[0].message).not.toContain("before starting");
+    expect(parsed.errors[0].message).not.toContain("No execution context was created");
+
+    // The work is untouched and still there to be recorded on the next attempt.
+    expect(git(worktree, "log", "--oneline", "-1")).toContain("feat: double implementation");
+    expect(git(worktree, "rev-parse", "HEAD")).not.toBe(before);
+    expect(executionEvents(repository, id)).toEqual([]);
+    rmSync(lock, { recursive: true, force: true });
   });
 
   test("a resume that names another agent leaves the claim naming the agent that ran", () => {
