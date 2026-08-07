@@ -67,9 +67,9 @@ and needs no per-machine setup.
   `.claude/skills/`.
 - `kotta init` writes them while initializing a workspace, so one command produces a usable project.
 - `kotta sync` regenerates them, and is the command a clone or an out-of-date repository runs.
-- Each generated artefact records a content hash of what produced it. `kotta status` and
-  `kotta validate` report when what is on disk no longer matches what this Kotta would generate —
-  whether because Kotta was upgraded or because a file was hand-edited.
+- `kotta status` and `kotta validate` regenerate the Kotta-owned section in memory and compare it
+  to what is on disk. A difference is reported whether it came from a Kotta upgrade or from a
+  hand-edit; nothing is stored to make that comparison possible.
 - No command writes outside the repository. The operator's global configuration is untouched.
 
 ## Reproduction steps
@@ -114,8 +114,10 @@ knew the skills existed.
 - A test asserts `init` in a temporary repository produces `.mcp.json` with a `kotta` server entry,
   `.codex/config.toml`, and the ten skills under `.claude/skills/`.
 - A test asserts `sync` is idempotent: a second run changes no bytes and reports no change.
-- A test asserts `status` and `validate` report drift after a generated file is edited, and after a
-  recorded hash is changed to simulate an upgrade.
+- A test asserts `status` and `validate` report drift after a generated file is hand-edited, and
+  after the generator's output is changed to simulate a Kotta upgrade.
+- A test asserts foreign content is never reported as drift: an `.mcp.json` carrying an unrelated
+  server, and a `.codex/config.toml` carrying an unrelated block, are both clean.
 - A test asserts neither command writes outside the repository root.
 - All fail against the current implementation.
 
@@ -128,14 +130,18 @@ knew the skills existed.
 2. Extend `src/commands/integrate.ts` from a codex-only writer into a generator that writes all
    three artefacts, unconditionally rather than by host detection. An unused config file is inert;
    detection would add a failure mode for no benefit.
-3. Record a content hash in each generated artefact, covering what this Kotta would produce.
+3. Define what Kotta owns in each artefact, because it owns a section rather than a whole file:
+   the `kotta` entry in `.mcp.json`, the `[mcp_servers.kotta]` block in `.codex/config.toml`, and
+   all of `.claude/skills/`. Generation, comparison and overwriting all operate on that section
+   only; foreign content is preserved untouched.
 4. Rename the command `integrate` to `sync` — argument, description and help text — and update
    `README.md` and `AGENTS.md`. **No deprecated alias**; see Execution notes.
 5. Call the generator from `initCommand` (`src/commands/init.ts`) after `initializeWorkspace`
    succeeds.
-6. Report drift in `kotta status` and `kotta validate`: name each artefact whose on-disk hash
-   differs from what this Kotta would generate, and name `kotta sync` as the remedy. Report only;
-   never regenerate as a side effect.
+6. Report drift in `kotta status` and `kotta validate`: regenerate each Kotta-owned section in
+   memory, compare it to disk, name every artefact that differs, and name `kotta sync` as the
+   remedy. State that `sync` will overwrite it, so an intentional edit is not lost silently. Report
+   only; never regenerate as a side effect.
 7. Add the regression tests above, and confirm nothing newly written is caught by `.gitignore`.
 
 ## Non-goals
@@ -161,8 +167,8 @@ knew the skills existed.
   skills under `.claude/skills/`.
 - `kotta sync` in an already-initialized repository produces the same three artefacts; a second run
   changes no bytes and reports no change.
-- Each generated artefact carries a content hash, and no authored file under `.kotta/` is written by
-  either command.
+- No authored file under `.kotta/` is written by either command, and no foreign content in
+  `.mcp.json` or `.codex/config.toml` is altered by generation, comparison or overwriting.
 - After hand-editing a generated skill, `kotta status` and `kotta validate` both name that artefact
   as drifted and name `kotta sync` as the remedy. Neither regenerates it.
 - A Claude Code session opened with a linked worktree as its working directory has the Kotta MCP
@@ -210,15 +216,21 @@ None.
   times (`.a-team`, `migration.json`, and `session.atomics` next door), and the one the
   `consolidate-model` skill exists to catch. Kotta is pre-1.0 with one operator; a clean rename
   costs a `README` line and creates no residue.
-- **A content hash, not a version number.** A version marker catches an upgrade but not a hand-edit,
-  and generated files that sit in a repository will be edited. The hash catches both at the same
-  cost. The rule it enforces is the one `oneanda/libs/curriculum/README.md` already states for its
-  own generated read model: never edited, always deletable and regenerable.
+- **Nothing is stored to detect drift.** An earlier draft of this contract recorded a content hash
+  in each artefact. That was unnecessary: generation is deterministic, so `status` can produce the
+  expected section in memory and compare it to disk. One comparison catches both a hand-edit and a
+  Kotta upgrade, and there is no marker to keep correct. The rule being enforced is the one
+  `oneanda/libs/curriculum/README.md` already states for its own generated read model: never edited,
+  always deletable and regenerable.
+- **Kotta owns a section, not a file.** `.mcp.json` and `.codex/config.toml` legitimately carry other
+  tools' configuration — `oneanda/.mcp.json` holds `ezchops` and `resend` alongside anything else —
+  and the current `integrate` already appends rather than overwrites. Comparing whole files would
+  report a false drift on every repository that wires a second server, which is most of them.
 - **Vendored, not symlinked.** The operator's decision, 2026-08-07, on the evidence: the only skills
   ever installed on this machine were symlinks, and both are dangling. A vendored copy survives a
   clone, a worktree and a dependency reinstall. The cost — a consuming repository carrying Kotta's
-  skill files in its own history — is accepted, and the hash makes staleness visible rather than
-  silent.
+  skill files in its own history — is accepted, and the drift check makes staleness visible rather
+  than silent.
 - **Why `sync` and not `integrate`.** Once every artefact is repository-relative and committed, a
   clone and a worktree get them from git and need no integration step at all. The only remaining
   reason to run the command is that the installed Kotta changed. That is regeneration, not
