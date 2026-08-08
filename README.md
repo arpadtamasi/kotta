@@ -273,6 +273,7 @@ branch, and re-running it after success is a no-op.
 - `submit-review` — submit implementation with evidence.
 - `close-contract` — verify completion and safely release resources.
 - `report-kotta-bug` — prepare and, after explicit approval, submit a Kotta defect report as a GitHub Issue.
+- `consolidate-model` — find where one concept lives under several names across code, docs and wire, and propose consolidations in chat. Creates nothing.
 
 ## Report a bug
 

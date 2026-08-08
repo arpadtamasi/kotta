@@ -4,6 +4,29 @@
 **Státusz:** javaslat  
 **Cél:** a Kotta kiterjesztése a contract előtti problématérre: a beszélgetésekből származó intent, döntések, terminológia és bizonytalanságok explicit kezelésére.
 
+**Evidencia:** a javaslat az AI-t használó fejlesztők problémáiból indult ki, nem kódvizsgálatból. Kétféle bizonyíték támasztja alá, és a kettő nem ugyanoda mutat — lásd az *Evidencia* szakaszt közvetlenül alább. A §13 és §14 korábbi, kódra vonatkozó állításai a visszamérés során dőltek meg; a §13 helyére döntés került (§13.1), a §14 tévedésként javítva.
+
+---
+
+## Evidencia
+
+### Külső — publikált kutatás
+
+| forrás | találat | mit támaszt alá |
+|---|---|---|
+| **65 fejlesztős survey + literature review (2026)** | az AI erős a boilerplate-ben, implementációban, dokumentációban; **gyenge a planningben és a requirements analysisben**. Az érték a specification quality, architectural reasoning és oversight felé tolódik. | a javaslat magját (§1): a hibák a contract előtt történnek. **És egyben a Shape kockázatát is** (§18). |
+| **„Professional Software Developers Don't Vibe, They Control” (2025)** — 13 fő terepmegfigyelés, 99 fős survey | a tapasztalt fejlesztők megtartják a design- és implementációs döntéseket, tudatos stratégiákkal korlátozzák az agentet; a hagyományos SE best practice-ek kulcsfontosságúak maradnak. | §5 (explicit delegáció) és **P0** (a Kotta metszetet kodifikál). |
+| **METR randomizált vizsgálat (2025)** — 16 tapasztalt fejlesztő, 246 valódi task, átlagosan 5 éve ismert repókban | előzetesen +24 %, utólag +20 % gyorsulást **éreztek**; a mérés szerint **19 %-kal lassabbak** lettek. | **nem a Shape-et, hanem az oversightot**: az önbevallott értékelés nem megbízható. Lásd §2.3 evidence-mérését. |
+| **„Prompt smells” taxonómia (IEEE, 2026)** | a prompt homályossága és hiányossága mérhetően rontja az outputot. | §6 (kérdezési szabály) — bár egy szinttel lejjebb: a promptról szól, nem a közös modellről. |
+
+A METR-találat külön figyelmet érdemel, mert az egyetlen, amely **a javaslat ellen is szól**. Ha egy tapasztalt fejlesztő 39 százalékpontot téved a saját teljesítménye megítélésében, akkor minden olyan réteg gyanús, amelynek a hasznát önbevallás igazolja — beleértve a Shape-et is. Ebből következik a §5.3 metrika-váltása.
+
+### Belső — a Kotta és a szomszédos oneanda workspace
+
+A §2 minden állítása mögött mért adat áll ebből a két repóból: fájlhelyek, sorszámok, parancshívás-számok, take-korpusz. A hivatkozások a szövegben helyben szerepelnek.
+
+**Amit ez az evidencia nem fed le:** a javaslat egyetlen felhasználón és egy szomszédos projekten van visszamérve. Az `n=1` korlát minden „ez általános” típusú állításra érvényes, és a P0 próbája (odaadni egy tapasztalt fejlesztőnek) még nem futott le.
+
 ---
 
 ## 1. Kiinduló helyzet
@@ -47,7 +70,35 @@ A javasolt átalakítás ezért nem a jelenlegi execution-control réteg lecser�
 
 ---
 
-## 2. A két központi probléma
+## 1b. A vezérelv
+
+Kézenfekvő lenne ebből azt a következtetést levonni, hogy **jobb tervet kell csináltatni az AI-val** a végrehajtás előtt. Ez a javaslat nem ezt mondja, és fontos, hogy miért nem.
+
+Egy 2026-os, 65 fejlesztős vizsgálat szerint az AI épp a **planningben és a requirements analysisben** a leggyengébb — miközben a boilerplate-ben, az implementációban és a dokumentációban erős. Aki tehát a contract előtti fázist arra bízza, hogy az agent majd jobban tervez, az az AI leggyengébb képességére épít.
+
+A vezérelv ezért nem a jobb terv:
+
+> **A Kotta nem azt próbálja elérni, hogy az AI jól tervezzen.**
+> **Azt éri el, hogy az AI félreértése olcsón kiderüljön és olcsón javítható legyen.**
+
+Ez két különböző rendszert jelent.
+
+A „jobb terv” rendszere teljességre optimalizál: minél hiánytalanabb a modell a végrehajtás előtt, annál jobb. Ez waterfall, és a Kotta mai keretezése már ma is efelé hajlik.
+
+A „vedd észre és javítsd” rendszere két másik dologra optimalizál:
+
+| | kérdés | ma |
+|---|---|---|
+| **Észrevehetőség** | mennyi idő alatt derül ki, hogy az agent mást ért? | mérhetetlen |
+| **Javíthatóság** | hány lépés visszatéríteni? | mérhetetlen |
+
+Ebből következik, hogy mi számít jó felületnek. Egy felület akkor jó, ha **az eltérés látszik rajta** — nem akkor, ha teljes. Egy szótár nem azért kell, hogy leírja a domént, hanem azért, hogy amikor az agent más szót használ, az **feltűnjön**. Egy döntés-hézag nem azért kell, hogy előre kitöltsük, hanem azért, hogy amikor az agent csendben döntött, az **kiderüljön**.
+
+A továbbiakban minden javaslatot ehhez kell mérni: **korábban derül-e ki egy félreértés, és olcsóbb-e visszafordítani.** Ami csak a modell teljességét növeli, az nem tartozik ide.
+
+---
+
+## 2. A központi problémák
 
 ### 2.1. Kimondatlan döntések
 
@@ -74,23 +125,36 @@ A probléma nem egyszerűen az, hogy „hiányos a spec”, hanem az, hogy:
 
 A másik tipikus probléma, hogy az agent olyan terminológiát kezd használni, amelyet a user nem használ vagy nem ért.
 
-Példa:
+Példa — egy fogalom, öt felület, négy válasz. „Hogyan nevezünk meg egy entitást embernek?”, a Kotta saját kódjában:
 
 ```text
-user:
-"gyakorlási út"
+core (src/core/identity.ts:76):
+displayId()  →  "T-a3f9c1d2"
 
-agent:
-"progression pipeline"
+lemezformátum (entityFilename, :85):
+"slug-a3f9c1d2.md"
 
-másik contract:
-"learning track"
+board (ui/src/App.tsx:67):
+displayId újraimplementálva, a core-ból nem importálva
 
-kód:
-PracticeProgram
+CLI:
+"T-01kz3kx1ex19tjw82tbd1366pk"
+
+skillek:
+—  (a "displayId" és a "shortId" egyszer sem fordul elő a skills/ alatt)
 ```
 
-Néhány iteráció után ugyanaz a fogalom több néven él.
+A tervezés egyszer már kimondta a választ: a `displayId()` kommentje szerint az emberi forma a rövid hash, az `entityFilename()` szerint a lemezforma slug + hash. A `displayId()`-nek mégis **nulla hívója van a `src/` alatt** — mind a 12 hívás a boardon él, amely ráadásul újra is implementálta a függvényt. A két felület már el is csúszott egymástól.
+
+Néhány iteráció után ugyanaz a fogalom több néven él. És ha a nevek nem csak megjelenítést vezérelnek, a drift kemény törésbe fordul:
+
+```text
+CLI  (src/commands/observation.ts:66):        attach-existing
+séma (schemas/observation.schema.json:16):    attach-to-existing-contract
+README:                                       egyik sem
+```
+
+A `kotta observation resolve <id> --disposition attach-existing --approve` sikerrel lefut, és olyan frontmattert ír, amelyre a publikált séma nem illik; a sémában dokumentált értéket viszont a CLI `Unknown disposition` hibával utasítja el. A helyes érték sehol nincs kimondva.
 
 Ennek következménye:
 
@@ -103,6 +167,43 @@ Ennek következménye:
 A probléma ezért nem pusztán copywriting:
 
 > **az agent olyan fogalmat nevez el, amelyről a user nem feltétlenül tudja, hogy új fogalomként lett bevezetve.**
+
+**Ez nem hipotetikus.** Mindkét fenti eset a Kottában történt meg — abban a rendszerben, amelyet részben épp a drift ellen építünk, ráadásul egy *explicit szótármigráció közben*. A migráció maga sem zárult le: a `.a-team` könyvtárnév és a `migration.json` régi szavai (`tickets`, `findings`, `packages`) szándékos átmenetként maradtak bent, de **egyetlen döntés sem mondja meg, mikor tűnnek el**. Aki ma rájuk keres, nem tudja eldönteni, hogy maradványt vagy érvényes fogalmat talált.
+
+Ha egy szótármigrációt futtató, erre a problémára figyelő rendszer sem tudja megakadályozni a saját driftjét, akkor a drift nem fegyelem kérdése. Kontrollréteg kell hozzá (§7).
+
+---
+
+### 2.3. A kontrollréteg megkerülhetősége
+
+Az előző két probléma hallgatólagosan feltételezi, hogy ha egyszer közös modellt építettünk, az meg is köti a végrehajtást. A mérés szerint ez ma nem áll.
+
+Mérés az oneanda workspace-en, 2026-07-31 / 08-01, **minden kapu bekapcsolva** a `config.yaml`-ben (`require_human_ready_approval`, `require_human_done_approval`, `require_verification_for_ready`, `require_review_evidence_for_done`):
+
+*A kontrollréteg nem elérhető ott, ahol a munka történik:*
+
+- **831** parancs érintette a CLI-t, **5** skill-invokáció mellett. A lifecycle nyers CLI-ként futott (`ticket define` 47×, `ticket validate` 48×, `ticket close` 21×, `ticket start` 20×) — vagyis az a három skill, amelyben az evidence-fegyelem lakik, gyakorlatilag soha nem futott le. A rendszer szállítja a procedúrát, de az a gyakorlatban opcionális.
+- **12** `command not found: a-team`: a bináris gyakran nincs a PATH-on épp azokon a helyeken, ahova a rendszer maga küldi az agenst (worktree, subshell). Az operátornak abszolút útvonalat kellett a promptba másolnia.
+- **22** `--help` hívás: az agens menet közben tapogatja a parancsfelületet.
+
+*Ezért a kapuk megkerülhetők:*
+
+- Állapotátmenet fájlmozgatásként: `git mv .a-team/done/O-120-….md .a-team/review/`, `mv` fallbackkel. Az állapot az a könyvtár, amelyben a fájl áll — a kapu csak azokon az átmeneteken fut le, amelyeket a CLI végez.
+- A `validate` utólag `MISSING_REVIEW_EVIDENCE`-t jelentett **már `done/`-ban álló** ticketekre: azok nem mehettek át a záró kapun. Egy lezárt ticketből a saját `discovery` profiljának **hat** kötelező szakasza hiányzott. Soha nem volt megformálva, és le van zárva.
+- 22 közvetlen `Write`/`Edit` a `backlog/`-ba, és `rm -f`-fel törölt findingok disposition helyett.
+
+*És ahol a kapu lefutott, ott is teljesíthető volt tartalom nélkül:*
+
+- Ugyanaz a ~1000 szavas evidence-szöveg beillesztve **hét** külön evidence-sorba (T-071, T-074, T-075, T-076), négybe másik ötben. A séma nem üres cellát kér soronként; egy LLM mindig tud nem üres cellát előállítani.
+- T-073-ban a `ui: visual_evidence_present` alá írt szöveg szó szerint azt mondja, hogy *„Vizualis evidence valos eszkozon nincs - ejszakai futas."* A check bizonyítéka kijelenti, hogy a check nem futott le — és a ticket átment.
+
+A két jelenség ugyanarra a mechanizmusra fut ki: a fájl mozgatása a kézenfekvő művelet, amikor a CLI elutasít vagy nem elérhető. Ez nem rosszindulat, hanem a legkisebb ellenállás iránya.
+
+> **a kontrollréteg csak ott köt, ahol elérhető, és ahol a kikényszerítés nem a jóindulaton múlik.**
+
+Ez a probléma **megelőzi** az előző kettőt. Egy közös modell, amelyet egy `git mv` megkerül, csak névleg közös modell — és a Shape pontosan ugyanígy megkerülhető lesz, ha ugyanazon a tároláson és ugyanazon az elérési úton ül.
+
+A javaslat többi része (§3–§12) a 2.1-re és a 2.2-re válaszol. A 2.3-ra nem válaszol; azt a §13 tárgyalja nyitott kérdésként.
 
 ---
 
@@ -354,7 +455,7 @@ Ez megakadályozza, hogy a Kotta bürokratikus kérdezőgéppé váljon.
 
 ## 5.3. A Kotta új fontos metrikája
 
-Javasolt elsődleges shaping metric:
+Javasolt shaping metric:
 
 ```text
 Unowned decisions: 3
@@ -365,6 +466,19 @@ Ennek jelentése:
 > Ha most elkezdődne a végrehajtás, három olyan product/design/architecture döntés van, amelyet az implementáló agentnek kellene a user helyett meghoznia.
 
 Ez sokkal informatívabb, mint egy általános readiness score.
+
+**De ez nem az elsődleges metrika**, és fontos, hogy miért nem. Az unowned decisions szám azt méri, mennyire **teljes** a modell a végrehajtás előtt — vagyis pontosan azt a teljesség-optimalizálást, amit a §1b elvet.
+
+A vezérelvből két másik metrika következik:
+
+| | kérdés | mit mér |
+|---|---|---|
+| **Time-to-notice** | mennyi idő telik el a félreértés keletkezése és a felismerése között? | észrevehetőség |
+| **Cost-to-correct** | hány lépés visszatéríteni, ha kiderült? | javíthatóság |
+
+Ezek ma **mérhetetlenek** — a rendszer nem rögzíti sem azt, hogy mikor tért el az agent, sem azt, hogy hány lépésbe került visszahozni. Az első feladat tehát nem a javításuk, hanem az, hogy egyáltalán legyen róluk adat.
+
+Az `unowned decisions` ehhez képest **másodlagos és feltételes**: akkor hasznos, ha egy döntés felszínre hozása olcsóbb, mint utólag észrevenni, hogy az agent már meghozta. Ahol nem az, ott a kérdezés adminisztráció.
 
 ---
 
@@ -838,9 +952,7 @@ A compile után a jelenlegi Kotta lifecycle lép életbe.
 
 # 13. A jelenlegi Kotta-rendszerrel való kapcsolat
 
-A meglévő execution modellt nem kell újratervezni.
-
-A jelenlegi:
+A Shape a contract elé kerül, nem helyette. A meglévő lifecycle **alakja** jó, és marad:
 
 ```text
 contract
@@ -864,29 +976,40 @@ human acceptance
 close
 ```
 
-maradjon.
+Ez a sorrend nem szorul újratervezésre.
 
-A Shape csak a contract előtti hiányzó kontrollréteg.
+Nyitott kérdés viszont, hogy a lánc **kikényszerítése** elbírja-e a rá épülő réteget. A §2.3 mérése szerint ma nem: az állapot az a könyvtár, amelyben a fájl áll, tehát a kapu csak azokon az átmeneteken fut le, amelyeket a CLI végez — és a CLI épp ott nem elérhető, ahova a rendszer az agenst küldi. Ahol pedig lefut, ott az evidence-kapu mennyiségre teljesül, nem illeszkedésre.
+
+## 13.1. A „kapu” két dolgot takar — és csak az egyik sürgős
+
+A §2.3 mérése egy szó alatt két különböző hiányosságot mutatott. Külön kell venni őket, mert nem ugyanaz a válasz rájuk.
+
+| | mit jelent | kinek kell |
+|---|---|---|
+| **Kikényszerítés** | a `git mv` ne működjön; az állapot ne a könyvtár legyen | **ellenséges vagy felügyelet nélküli** használónak |
+| **Elérhetőség** | a parancs ott legyen, ahol a munka; a skillek fussanak le | **minden** használónak, az elsőtől kezdve |
+
+**Döntés.** A Kottát ma egy operátor futtatja, aki meg akarja mutatni másoknak. Ebből következik:
+
+> **A kikényszerítés non-goal, amíg a Kottát egy operátor üzemelteti.** Aki nem csal magával szándékosan, annak a kapu nem védelem, hanem ceremónia. Ez a döntés visszavonandó abban a pillanatban, amikor a rendszert olyan valaki üzemelteti, akit nem te felügyelsz.
+>
+> **Az elérhetőség viszont előfeltétel, és a Phase 1 elé kerül.** A §2.3 mérésének súlyos része nem a megkerülhetőség, hanem hogy **831 nyers CLI-hívás jutott 5 skill-invokációra**, tizenkét `command not found` mellett. Az a három skill, amelyben az evidence-fegyelem lakik, gyakorlatilag soha nem futott le. Ez nem elvi rés: ez az, hogy a rendszer által szállított eljárás a gyakorlatban opcionális.
+
+A §13 korábbi állítása tehát így pontosítható. A meglévő execution modell **alakja** jó és marad. A **garanciáiból** a kikényszerítés tudatosan gyenge marad; az elérhetőség viszont hiányzik, és pótolni kell, mielőtt bármi ráépül.
 
 ---
 
 # 14. A meglévő shaping-vonal generalizálása
 
-A repo-ban már létező shaping elképzelések jó alapot adnak:
+Egy korábbi változat abból indult ki, hogy a repóban már létezik egy shaping-vonal — determinisztikus shape-plan, preview, plan hash, code-aware finding analysis, provenance, human correction, mutáció előtti review —, amelyet elég általánosítani.
 
-- determinisztikus shape-plan;
-- preview;
-- plan hash;
-- code-aware finding analysis;
-- provenance;
-- human correction;
-- mutation előtti review.
+Ez tévedés volt: ezek tervek és mockupok, nem implementáció. A `src/` alatt a `planHash` / `plan-hash` **nulla találat**; a `preview`, `provenance` és `cluster` kizárólag a `design/` HTML-mockupokban fordul elő; a `shape` hat előfordulása pedig mind *workspace shape*-et jelent — a migrációs sémaellenőrzést (`src/filesystem/workspace.ts:134`) —, aminek semmi köze az itt javasolt Shape-hez.
 
-Ezeket nem érdemes kidobni.
+Ennek egy következménye van az ütemezésre: a Phase 4-nek (§19) **nincs mit átvezetnie**. Zöldmezős munka, nem migráció.
 
-A javaslat:
+A fogalmi modell viszont ettől függetlenül érvényes, és ez a javaslat lényegi része:
 
-### Jelenlegi mentális modell
+### Korábbi mentális modell (szándék szintjén)
 
 ```text
 findings
@@ -1166,6 +1289,22 @@ Az első verzióban nem cél:
 
 A Shape a jelenlegi Kotta elé kerül, nem helyette.
 
+**Eldöntve (§13.1):** a **kapuk kikényszerítése** is non-goal, amíg a Kottát egy operátor üzemelteti — vagyis a Shape sem lesz erősebb kötés, mint a mai kapuk. Ez tudatos korlát, nem feledékenység, és visszavonandó, ha a rendszert olyan valaki futtatja, akit nem te felügyelsz. Az **elérhetőség** ezzel szemben nem non-goal: az előfeltétel, és a Phase 1 elé kerül.
+
+## A Shape saját kockázata
+
+Egy non-goal-nál fontosabb, mert magát a javaslat magját érinti.
+
+A §1b-ben idézett 65 fejlesztős vizsgálat szerint az AI épp a **planningben és a requirements analysisben** a leggyengébb. A Shape-agent viszont pontosan ezt csinálja: beszélgetésből követelményt, döntési hézagot és fogalmi konfliktust állít elő.
+
+> **A Shape az AI leggyengébb képességére épít.**
+
+A §6 kérdezési szabálya ezt részben kivédi — *kérdezz, ne dönts* —, de nem teljesen: annak eldöntése, hogy **mi számít döntési pontnak**, maga is requirements-analízis.
+
+Ezért a Shape-et nem szabad úgy bevezetni, hogy a minőségéről nincs adat. A Phase 1 sikerkritériumába fel kell venni a §5.3 két metrikáját: ha a Shape nem rövidíti a **time-to-notice**-t, akkor a shaping nem érték, hanem egy újabb réteg, amit karban kell tartani.
+
+Ehhez kapcsolódik egy termékkockázat is. A terepvizsgálatok szerint a tapasztalt fejlesztők **már ma megtartják a kontrollt** saját stratégiákkal. Nekik a Shape nem új képesség, hanem adminisztráció — hacsak nem pontosan azt kodifikálja, amit amúgy is csinálnak (lásd P0).
+
 ---
 
 # 19. MVP javaslat
@@ -1245,7 +1384,7 @@ A rendszer észreveszi, ha egy új beszélgetés potenciálisan ütközik egy ko
 
 ## Phase 4 — Generalized shaping engine
 
-A már meglévő finding-shaping capabilityt átvezetni ugyanarra a Shape-modellre.
+A finding-shapinget ugyanarra a Shape-modellre vinni. Figyelem: ez **nem** egy meglévő capability átvezetése — a §14 szerint a finding-shaping ma nincs implementálva, tehát ez a fázis zöldmezős, és ennek megfelelően kell becsülni.
 
 Inputok:
 
@@ -1270,6 +1409,32 @@ Outputok:
 ---
 
 # 20. Javasolt product principles
+
+## P0 — A Kotta meglévő stratégiákat kodifikál, nem újat vezet be
+
+A terepvizsgálatok szerint a tapasztalt fejlesztők már ma sem engedik el az agenteket: megtartják a design- és implementációs döntéseket, és tudatos stratégiákkal korlátozzák az agent viselkedését.
+
+A mai Kotta lényegében ezek metszete, formalizálva:
+
+| amit amúgy is csinálnak | a Kottában |
+|---|---|
+| kicsi, körülhatárolt feladat | contract |
+| friss kontextus feladatonként | `execute` fresh |
+| eldobható izoláció | claim + branch + worktree |
+| írd le előbb, mit akarsz | define + brief |
+| ne hidd el, hogy kész — nézd meg | evidence + acceptance |
+| ne javítsd, ami nincs a scope-ban | observation |
+| ne foltozz össze zavaros sessiont — indítsd újra | `--resume`, és a második `execute` elutasítása |
+
+Mind a hét ugyanazt a két dolgot javítja: **hamarabb derüljön ki az eltérés**, és **olcsóbb legyen visszafordítani**. A §1b vezérelve tehát nem új szabály, hanem ennek a metszetnek az absztrakciója.
+
+Két következménye van.
+
+**A fogalmak közösek; a szavak nem.** A `contract`, `observation`, `batch`, `claim` a Kotta szótára, nem a szakmáé. Egy tapasztalt fejlesztő a fogalmakat felismeri, a szavakat nem — ezért az elfogadás akadálya nem a képesség, hanem a nyelv. Ez a §7 és a §22 tétje, és ez indokolja, hogy a szótár-munka **előrébb** kerül, mint az új képességek.
+
+**Minden új javaslatra érvényes a próba:** ez olyasmit kodifikál, amit egy jó fejlesztő amúgy is csinál — vagy olyasmit ír elő, amit senki? Az első a Kotta dolga. A második adminisztráció.
+
+---
 
 ## P1 — Humans own intent
 
