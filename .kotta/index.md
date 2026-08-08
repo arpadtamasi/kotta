@@ -14,7 +14,6 @@ None.
 
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
 - one-operation-registry-derives-both-the-cli-and-the-mcp-surf-06fw8n0g
-- the-execution-environment-reaches-the-cli-and-the-skills-it--jts3mrkt
 
 ## Active contracts
 
