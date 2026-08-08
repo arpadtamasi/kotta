@@ -3,7 +3,7 @@ id: T-01kz3kx1ex19tjw82tbd1366pk
 title: >-
   Az agenseknek szolo szabalyok csak egy masolt AGENTS.md-ben elnek, pedig a
   termeknek kellene hordoznia oket (brief header + kotta guide)
-status: defined
+status: done
 origin: observation
 types:
   - feature
@@ -16,8 +16,9 @@ blocks: []
 branch: null
 pull_request: null
 created_at: '2026-08-03'
-updated_at: '2026-08-03'
+updated_at: '2026-08-08'
 source_observation: F-01kz3k2axqqy6r4rgqmgt5ybtt
+resolution: cancelled
 ---
 # T-01kz3kx1ex19tjw82tbd1366pk — The execution brief carries the agent rules, so they do not depend on the caller
 
