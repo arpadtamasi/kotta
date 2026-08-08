@@ -1,7 +1,7 @@
 ---
 id: T-01kzgn32keps18769dp5rstcgt
 title: kotta sync installs the skills Kotta ships
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -12,10 +12,13 @@ risk: low
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: fix/T-01kzgn32keps18769dp5rstcgt-kotta-sync-installs-the-skills-kotta-ships
 pull_request: null
 created_at: '2026-08-08'
 updated_at: '2026-08-08'
+assigned_agent: claude
+worktree: .worktrees/T-01kzgn32keps18769dp5rstcgt
+execution_mode: inherited
 ---
 # T-01kzgn32keps18769dp5rstcgt — kotta sync installs the skills Kotta ships
 
