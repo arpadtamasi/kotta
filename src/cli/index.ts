@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { initCommand } from "../commands/init.js";
 import { briefContract, cancelContract, closeContract, defineContract, newContract, signContract, reopenContract, reviewContract, startContract, validateContract } from "../commands/contract.js";
@@ -168,7 +169,11 @@ contract
   .command("define <id>")
   .requiredOption("--from <path>", "Markdown definition file")
   .option("--json")
-  .action((id: string, options: { from: string; json?: boolean }) => print(defineContract(id, options.from), Boolean(options.json)));
+  .action((id: string, options: { from: string; json?: boolean }) => {
+    const sourcePath = resolve(options.from);
+    if (!existsSync(sourcePath)) throw new Error(`Contract definition was not found: ${sourcePath}`);
+    print(defineContract(id, readFileSync(sourcePath, "utf8")), Boolean(options.json));
+  });
 contract
   // `define` writes the contract; `sign` is the human gate that makes it binding and moves it to
   // `defined`. Two different acts, so two different verbs (D-01kz240dn155hb97h6px6n2p85).
