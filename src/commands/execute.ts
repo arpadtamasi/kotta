@@ -10,35 +10,50 @@ import { ENV_PREFIX, readEnv } from "../core/env.js";
 import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
 import { appendEvent } from "../core/events.js";
 import { validateClaim } from "../core/claim.js";
+import { readAgentPermissionMode } from "../core/config.js";
 
 /**
  * Arguments a named agent expects around a prompt that arrives on stdin.
  * Unknown agents are invoked bare: the prompt is still the whole stdin.
  *
- * The flag that permits writes is part of the invocation, not the operator's
- * problem: an agent that must ask before every edit has nobody to ask in a
- * headless run, so it would exit 0 having implemented nothing. The isolated
- * worktree on its own branch is the boundary that makes bypassing the
- * interactive prompt acceptable here.
+ * No permission mode is baked in here. What a launched agent may do is the
+ * operator's decision, read from `.kotta/config.yaml`; with nothing configured,
+ * Kotta passes no flag and the agent's own project settings apply. The isolated
+ * worktree bounds the Git state, not the process, so it is not a reason for Kotta
+ * to hand out an authority the caller never granted.
  */
 const AGENT_ARGUMENTS: Record<string, string[]> = {
-  claude: ["-p", "--permission-mode", "bypassPermissions"],
+  claude: ["-p"],
   codex: ["exec", "-"],
 };
+
+/** Modes that forbid edits by definition, whatever the agent's own settings say. */
+const READ_ONLY_MODES = new Set(["plan"]);
 
 /**
  * Why a resolved invocation structurally cannot change files. Evaluated before
  * launch so a disarmed agent is a launch-time error naming the cause, never a
  * successful-looking empty run.
+ *
+ * Absence of a mode is not such a case. It means the agent's settings decide, and
+ * Kotta cannot read them — so it warns rather than refuses, and the baseline
+ * comparison reports a run that then changed nothing as `no-change`.
  */
 export function invocationWriteFailure(agent: string, args: string[]): string | null {
   if (agent !== "claude") return null;
   const mode = args[args.indexOf("--permission-mode") + 1];
-  if (!args.includes("--permission-mode") || !mode?.trim()) {
-    return "'claude -p' asks before it writes and a headless run has nobody to answer, so it would change nothing; the invocation needs --permission-mode.";
-  }
-  if (mode === "plan") return "--permission-mode plan forbids edits by design, so a planning run cannot implement a contract.";
+  if (!args.includes("--permission-mode") || !mode?.trim()) return null;
+  if (READ_ONLY_MODES.has(mode)) return `--permission-mode ${mode} forbids edits by design, so it cannot implement a contract.`;
   return null;
+}
+
+/**
+ * Said once at launch when nothing states what the agent may do: the run is about
+ * to depend on settings Kotta cannot see, and may legitimately change nothing.
+ */
+export function invocationWriteWarning(agent: string, args: string[]): string | null {
+  if (agent !== "claude" || args.includes("--permission-mode")) return null;
+  return "No agents.permission_mode is set in .kotta/config.yaml, so this run inherits whatever the agent's own project settings permit. 'claude -p' asks before it writes and a headless run has nobody to answer, so it may complete having changed nothing.";
 }
 
 function assertInvocationCanWrite(agent: string, command: string, args: string[], tail: string): void {
@@ -67,9 +82,11 @@ export interface AgentRun {
 
 export type AgentLauncher = (invocation: AgentInvocation) => Promise<AgentRun>;
 
-export function resolveAgentCommand(agent: string): { command: string; args: string[] } {
+export function resolveAgentCommand(agent: string, root?: string): { command: string; args: string[] } {
   const override = readEnv("AGENT_COMMAND")?.trim();
-  return { command: override || agent, args: AGENT_ARGUMENTS[agent] ?? [] };
+  const base = AGENT_ARGUMENTS[agent] ?? [];
+  const mode = agent === "claude" && root ? readAgentPermissionMode(root) : null;
+  return { command: override || agent, args: mode ? [...base, "--permission-mode", mode] : [...base] };
 }
 
 export function agentCommandAvailable(command: string): boolean {
@@ -193,6 +210,8 @@ export interface ExecuteResult {
     briefTokens: number;
     briefSections: number;
     briefWarning: string | null;
+    /** Said when nothing states what the agent may do; null when the workspace configured it. */
+    permissionWarning: string | null;
     context: "fresh" | "inherited";
     inheritContext: string | null;
     resumed: boolean;
@@ -241,7 +260,7 @@ export async function executeContract(id: string, options: ExecuteOptions, launc
     const contract = findContract(root, id);
     const legacyContract = contract.state === "defined" ? findContract(existing.worktree, id) : contract;
     if (legacyContract.state !== "active") throw new Error(`Contract ${id} must be active to resume; it is ${legacyContract.state}.`);
-    const { command, args } = resolveAgentCommand(agent);
+    const { command, args } = resolveAgentCommand(agent, root);
     if (!agentCommandAvailable(command)) throw new Error(agentMissingMessage(command));
     const contextNote = `Execution context ${existing.worktree} is untouched.`;
     assertInvocationCanWrite(agent, command, args, contextNote);
@@ -258,7 +277,7 @@ export async function executeContract(id: string, options: ExecuteOptions, launc
   const agent = options.agent?.trim();
   if (!agent) throw new Error("--agent <agent> is required to create an execution context.");
   assertClean(root);
-  const { command, args } = resolveAgentCommand(agent);
+  const { command, args } = resolveAgentCommand(agent, root);
   // The agent is resolved before any mutation: a missing binary, or one that cannot
   // write, must not leave a half-built context.
   if (!agentCommandAvailable(command)) throw new Error(agentMissingMessage(command));
@@ -327,6 +346,7 @@ async function runAgent(input: {
     briefTokens: brief.data.tokens,
     briefSections: brief.data.sections.length,
     briefWarning: brief.data.warning,
+    permissionWarning: invocationWriteWarning(agent, args),
     context: inheritContext ? "inherited" : "fresh",
     inheritContext,
     resumed,
@@ -421,6 +441,7 @@ export function formatExecution(result: ExecuteResult): string {
     `  contract:   ${data.contractState}${data.uncommittedChanges ? " (worktree has uncommitted changes)" : ""}`,
   ];
   if (data.briefWarning) lines.push(`  WARNING:  ${data.briefWarning}`);
+  if (data.permissionWarning) lines.push(`  WARNING:  ${data.permissionWarning}`);
   if (data.state === "no-change") {
     lines.push(
       `  reason:   ${String(data.reason)}`,

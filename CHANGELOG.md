@@ -26,9 +26,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   unrecorded, instead of claiming something failed to start.
 - `execute --resume --agent <other>` updates the claim to the agent that actually ran, so a later
   bare `--resume` relaunches it.
-- The configured `claude` invocation permits writes (`-p --permission-mode bypassPermissions`) inside
-  its own worktree; previously it asked for permission nobody could grant and reliably changed
-  nothing. An invocation that structurally cannot write now fails at launch naming the cause.
+- **What a launched agent may do is now the operator's decision.** `agents.permission_mode` in
+  `.kotta/config.yaml` is passed to the agent as `--permission-mode`. Nothing is baked into the
+  invocation: with no mode set — the shipped default — Kotta passes no flag and the agent's own
+  project settings decide, so a launched run never receives authority the caller had not granted.
+  Previously `claude` was invoked bare, asked for permission nobody could grant, and reliably
+  changed nothing while the run was recorded as an implementation. An unconfigured run now says so
+  at launch and is recorded as `no-change`; a mode that forbids edits by definition (`plan`) is
+  refused at launch naming the cause.
 
 ## [0.5.0] - 2026-08-05
 

@@ -6,7 +6,9 @@ import { describe, expect, test } from "vitest";
 import { branchName } from "../../src/commands/contract.js";
 import { planBatchWaves } from "../../src/commands/batch.js";
 import { validateClaim } from "../../src/core/claim.js";
-import { invocationWriteFailure, resolveAgentCommand } from "../../src/commands/execute.js";
+import { invocationWriteFailure, invocationWriteWarning, resolveAgentCommand } from "../../src/commands/execute.js";
+import { readAgentPermissionMode } from "../../src/core/config.js";
+import { initializeWorkspace } from "../../src/filesystem/workspace.js";
 import { CONTRACT_ID, displayId, entityFilename, filenameMatchesId, isMintedId, mintId, shortId } from "../../src/core/identity.js";
 import { createDecision } from "../../src/commands/decision.js";
 import { decisionDraftFromSource, renderDecision, validateDecision } from "../../src/core/decision.js";
@@ -84,13 +86,38 @@ describe("core deterministic rules", () => {
   });
 
   test("names the cause when an agent invocation structurally cannot write", () => {
-    // A headless agent that must ask before every edit implements nothing, so the
-    // configured invocation is checked before launch instead of after an empty run.
-    expect(invocationWriteFailure("claude", resolveAgentCommand("claude").args)).toBeNull();
-    expect(invocationWriteFailure("claude", ["-p"])).toContain("--permission-mode");
-    expect(invocationWriteFailure("claude", ["-p", "--permission-mode"])).toContain("--permission-mode");
+    // Only a mode that forbids edits by definition is a launch-time refusal. An
+    // unstated mode is not: the agent's own settings decide it and Kotta cannot
+    // read them, so it warns and lets the baseline comparison report the truth.
     expect(invocationWriteFailure("claude", ["-p", "--permission-mode", "plan"])).toContain("forbids edits");
+    expect(invocationWriteFailure("claude", ["-p"])).toBeNull();
+    expect(invocationWriteFailure("claude", ["-p", "--permission-mode"])).toBeNull();
+    expect(invocationWriteFailure("claude", ["-p", "--permission-mode", "bypassPermissions"])).toBeNull();
     expect(invocationWriteFailure("codex", resolveAgentCommand("codex").args)).toBeNull();
+  });
+
+  test("warns, rather than refusing, when nothing states what the agent may do", () => {
+    expect(invocationWriteWarning("claude", ["-p"])).toContain("agents.permission_mode");
+    expect(invocationWriteWarning("claude", ["-p", "--permission-mode", "acceptEdits"])).toBeNull();
+    expect(invocationWriteWarning("codex", ["exec", "-"])).toBeNull();
+  });
+
+  test("the permission mode comes from the workspace, and is absent until one is set", () => {
+    // Kotta ships no default mode: an unconfigured workspace grants nothing the
+    // caller did not already grant through the agent's own settings.
+    const root = mkdtempSync(join(tmpdir(), "kotta-permission-mode-"));
+    git(root, "init", "-b", "main");
+    writeFileSync(join(root, "README.md"), "fixture\n");
+    initializeWorkspace({ root });
+    expect(readAgentPermissionMode(root)).toBeNull();
+    expect(resolveAgentCommand("claude", root).args).toEqual(["-p"]);
+
+    const configPath = join(root, ".kotta", "config.yaml");
+    writeFileSync(configPath, readFileSync(configPath, "utf8").replace("permission_mode: null", "permission_mode: bypassPermissions"));
+    expect(readAgentPermissionMode(root)).toBe("bypassPermissions");
+    expect(resolveAgentCommand("claude", root).args).toEqual(["-p", "--permission-mode", "bypassPermissions"]);
+    // The mode is a claude concept; another agent's invocation is untouched by it.
+    expect(resolveAgentCommand("codex", root).args).toEqual(["exec", "-"]);
   });
 
   test("rejects a duplicate decision without changing the existing record", () => {

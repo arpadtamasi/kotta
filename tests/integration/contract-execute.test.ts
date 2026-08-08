@@ -185,9 +185,10 @@ describe("contract execute (T-035 / D-009)", () => {
     const recorded = JSON.parse(readFileSync(context.record, "utf8")) as { argv: string[]; cwd: string; stdin: string };
     const brief = (expectOk(cliRun(worktree, ["contract", "brief", id, "--json"])) as { data: { brief: string; tokens: number } }).data;
     expect(recorded.stdin).toBe(brief.brief);
-    // The invocation permits writes: an agent that must ask before every edit
-    // cannot implement anything in a headless run.
-    expect(recorded.argv).toEqual(["-p", "--permission-mode", "bypassPermissions"]);
+    // Kotta adds no permission flag of its own: an unconfigured workspace grants
+    // nothing the caller had not already granted through the agent's settings.
+    expect(recorded.argv).toEqual(["-p"]);
+    expect(String(data.permissionWarning)).toContain("agents.permission_mode");
     expect(recorded.cwd.endsWith(join(".worktrees", id))).toBe(true);
     expect(recorded.stdin).not.toContain("Context inheritance");
     expect(Number(data.briefTokens)).toBe(brief.tokens);
@@ -290,6 +291,39 @@ describe("contract execute (T-035 / D-009)", () => {
     expect(git(worktree, "rev-parse", "HEAD")).not.toBe(before);
     expect(executionEvents(repository, id)).toEqual([]);
     rmSync(lock, { recursive: true, force: true });
+  });
+
+  test("a configured permission mode reaches the invocation, and configuring one silences the warning", () => {
+    // The operator's deliberate act, and the only way a launched agent receives
+    // more than the caller's own settings already permit.
+    const context = fixture("permission-mode");
+    const { repository, id } = context;
+    const configPath = join(repository, ".kotta", "config.yaml");
+    writeFileSync(configPath, readFileSync(configPath, "utf8").replace("permission_mode: null", "permission_mode: bypassPermissions"));
+    git(repository, "add", "-A");
+    git(repository, "commit", "-m", "chore: permit writes for launched agents");
+
+    const result = cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "commit"));
+    const data = (expectOk(result) as { data: Record<string, unknown> }).data;
+    expect(data.permissionWarning).toBeNull();
+    const recorded = JSON.parse(readFileSync(context.record, "utf8")) as { argv: string[] };
+    expect(recorded.argv).toEqual(["-p", "--permission-mode", "bypassPermissions"]);
+  });
+
+  test("refuses at launch when the configured mode forbids edits by definition", () => {
+    const context = fixture("permission-plan");
+    const { repository, id } = context;
+    const configPath = join(repository, ".kotta", "config.yaml");
+    writeFileSync(configPath, readFileSync(configPath, "utf8").replace("permission_mode: null", "permission_mode: plan"));
+    git(repository, "add", "-A");
+    git(repository, "commit", "-m", "chore: planning mode");
+
+    const result = cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "commit"));
+    expect(result.status).not.toBe(0);
+    expect(result.stdout + result.stderr).toContain("forbids edits");
+    // Nothing was created: the refusal happens before the context exists.
+    expect(existsSync(claimPath(repository, id))).toBe(false);
+    expect(existsSync(context.record)).toBe(false);
   });
 
   test("a resume that names another agent leaves the claim naming the agent that ran", () => {
