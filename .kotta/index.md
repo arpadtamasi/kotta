@@ -22,7 +22,6 @@ None.
 ## Review
 
 - definecontract-accepts-definition-content-instead-of-a-files-1yd5vn20
-- kotta-sync-installs-the-skills-kotta-ships-p5rstcgt
 - the-execution-record-is-derived-from-what-the-run-actually-d-d9cw3zpr
 
 ## Blocked

@@ -1,6 +1,0 @@
-contract: T-01kzgn32keps18769dp5rstcgt
-agent: claude
-branch: fix/T-01kzgn32keps18769dp5rstcgt-kotta-sync-installs-the-skills-kotta-ships
-worktree: .worktrees/T-01kzgn32keps18769dp5rstcgt
-execution_mode: inherited
-started_at: 2026-08-08T13:35:46.350Z
