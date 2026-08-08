@@ -90,6 +90,7 @@ None.
 - the-advertised-install-version-is-hardcoded-in-three-files-a-wn3kw5t7
 - the-agent-s-full-stdout-is-stored-in-the-execution-event-wit-fs2s13yd
 - the-board-cannot-show-two-contradiction-classes-that-a-team--2s40aw1j
+- the-define-contract-skill-never-says-what-complete-means-and-cdtrdt8d
 - the-published-json-schemas-are-documentation-nothing-checks-ge5asz8x
 - the-skills-sync-feature-shipped-without-a-changelog-entry-pxwst12g
 - ui-port-cli-tests-silently-assert-nothing-when-4311-is-alrea-nbxc71r5
