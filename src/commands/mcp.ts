@@ -1,5 +1,3 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -91,18 +89,14 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     },
     annotations: localWrite,
   }, async ({ id, definition }) => {
-    const temporary = mkdtempSync(join(tmpdir(), "kotta-mcp-definition-"));
-    const draft = join(temporary, "definition.md");
     try {
-      writeFileSync(draft, definition);
       const result = withControlPlaneMutation(root, (controlRoot) => {
-        const defined = defineContract(id, draft, controlRoot);
+        const defined = defineContract(id, definition, controlRoot);
         commitControlState(controlRoot, `chore(kotta): define ${id}`);
         return defined;
       }, { requireClean: false });
       return toolResult(result as unknown as ToolPayload, `Defined ${id}; it is ready for validation.`);
     } catch (error) { return toolError(error); }
-    finally { rmSync(temporary, { recursive: true, force: true }); }
   });
 
   server.registerTool("contract_validate", {

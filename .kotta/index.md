@@ -14,15 +14,15 @@ None.
 
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
 - one-operation-registry-derives-both-the-cli-and-the-mcp-surf-06fw8n0g
-- the-execution-record-is-derived-from-what-the-run-actually-d-d9cw3zpr
+- the-agent-rules-reach-the-calling-chat-as-a-generated-file-n-atnxppcm
 
 ## Active contracts
 
-None.
+- the-execution-record-is-derived-from-what-the-run-actually-d-d9cw3zpr
 
 ## Review
 
-- definecontract-accepts-definition-content-instead-of-a-files-1yd5vn20
+None.
 
 ## Blocked
 
@@ -45,26 +45,31 @@ None.
 - F-030-package-szintu-review-hianyzik-a-ticketek-review-ban-tartasa
 - a-board-listai-nem-mutatjak-az-entitasok-korat-csak-az-obser-fx05szh7
 - a-board-nema-n-rejti-el-a-nem-commitolt-munkat-ha-a-fo-munka-88p5tm36
+- a-contract-that-proves-incomplete-during-execution-has-no-re-c26y53yb
 - a-decision-cannot-record-that-it-narrows-or-continues-anothe-8pv9r452
 - a-define-nem-javithatja-a-contract-cimet-igy-egy-observation-a469asbk
 - a-kiadatlan-changelog-bejegyzes-a-regi-binaris-nevet-hasznal-m4m7q531
 - a-markdown-h1-a-teljes-azonositot-hordozza-igy-a-mintazott-u-rb71ckkr
 - a-prioritas-szuletesi-attributum-pedig-valtozo-tulajdonsag-a-9666rqce
 - a-resolve-disposition-enumja-elte-r-a-publikalt-sematol-atta-dm37tkv3
+- a-signed-contract-cannot-be-revised-narrowing-one-requires-c-xvjsfgbq
 - a-slug-hash-emberi-azonosito-mar-letezik-es-dokumentalt-a-ui-1p7xrhzb
 - a-ticket-brief-nem-szedi-fel-a-mintazott-azonositoju-dontese-phd95n90
 - a-vitest-a-worktrees-ala-is-benez-egy-elo-ticket-worktree-me-cahhcmt5
 - a-workspace-konyvtar-atnevezese-uressen-mutatja-a-boardot-am-0n2rjcpt
+- agents-reach-for-kotta-contract-list-which-does-not-exist-6jxwxqgh
 - az-approve-kapu-ceremonia-bizonyitek-nelkul-senki-nem-elleno-md9f1zcv
 - az-entitast-letrehozo-parancsok-nem-irjak-ki-az-azonositot-e-9mg56yk6
 - az-id-azert-szivarog-a-human-kommunikaciora-mert-o-az-egyetl-szetd8cz
 - calling-codex-chat-has-no-kotta-approval-adapter-and-falls-b-txr0k995
+- claim-release-force-strands-the-contract-in-active-with-no-c-e7bbdr58
 - contract-new-human-output-hides-the-created-contract-id-xwja20bg
 - contract-reopen-is-a-human-gate-with-no-chat-path-so-correct-nz0vwxnz
 - contract-validate-can-pass-a-backlog-contract-that-sign-imme-0ms18ejw
 - crm-kit-and-flowbench-cannot-be-migrated-unrelated-dirty-tre-9m3dkmxv
 - gray-matter-memoizes-frontmatter-so-every-writer-mutates-a-s-s8j3h62g
 - harom-szomszed-repo-agents-md-je-ideiglenes-szabalyblokkot-h-10cpc3k3
+- kotta-hand-enumerates-the-agents-and-hosts-it-can-work-with--ccfd497m
 - kotta-integrate-only-supports-codex-so-claude-code-sessions--n5cp4s0q
 - kotta-migrate-writes-a-root-gitattributes-it-never-reports-i-hkr7tyh2
 - live-pages-quickstart-still-advertises-kotta-0-3-0-jdzchspa
@@ -73,7 +78,9 @@ None.
 - nincs-backlog-review-es-epp-azert-kell-tolnia-magat-a-termek-sjb9v9w9
 - nincs-sprint-vegi-rendcsinalas-a-close-takarit-de-a-maradeko-6mmdp86q
 - no-before-baseline-is-obtainable-kotta-validate-refuses-a-pr-4e63se3v
+- nothing-relates-the-human-gate-set-to-the-chat-approval-set--77s7jgtd
 - npm-rejects-the-unscoped-kotta-package-name-as-too-similar-eaag2s6z
+- observation-new-without-discovered-during-writes-without-com-xfkbpp0q
 - ready-ticket-szovege-nem-javithato-a-define-csak-backlogbol--147t946f
 - renaming-the-workspace-drops-tracked-but-now-ignored-files-o-nkb8sbc4
 - schemas-package-schema-json-rejects-every-started-package-an-8et554b5
@@ -81,7 +88,10 @@ None.
 - tests-integration-ui-port-cli-test-ts-is-flaky-aftereach-tim-hqqt57nj
 - the-a-team-directory-name-outlives-the-vocabulary-migration--1n909nqf
 - the-advertised-install-version-is-hardcoded-in-three-files-a-wn3kw5t7
+- the-agent-s-full-stdout-is-stored-in-the-execution-event-wit-fs2s13yd
 - the-board-cannot-show-two-contradiction-classes-that-a-team--2s40aw1j
+- the-define-contract-skill-never-says-what-complete-means-and-cdtrdt8d
 - the-published-json-schemas-are-documentation-nothing-checks-ge5asz8x
+- the-skills-sync-feature-shipped-without-a-changelog-entry-pxwst12g
 - ui-port-cli-tests-silently-assert-nothing-when-4311-is-alrea-nbxc71r5
 - ui-ux-spec-md-describes-the-pre-v2-board-and-has-no-owner-af-a4dg5622

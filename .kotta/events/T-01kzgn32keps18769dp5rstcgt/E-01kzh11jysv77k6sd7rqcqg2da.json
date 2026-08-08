@@ -1,0 +1,14 @@
+{
+  "entity": "T-01kzgn32keps18769dp5rstcgt",
+  "contract": "T-01kzgn32keps18769dp5rstcgt",
+  "kind": "approval",
+  "approval_id": "E-01kzh11jyj0mm5p6pqfs1sn11m",
+  "phase": "approved",
+  "action": "contract.close",
+  "payload": {
+    "surface": "cli"
+  },
+  "source_message": "E-01kzh11jyrh2fe93sypjksjyh4",
+  "id": "E-01kzh11jysv77k6sd7rqcqg2da",
+  "created_at": "2026-08-08T15:49:39.417Z"
+}

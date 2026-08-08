@@ -146,6 +146,20 @@ None.
     expect(readFileSync(contract, "utf8")).toBe(before);
   });
 
+  test("define reports the resolved path for a missing --from file and leaves the contract in backlog", () => {
+    const repository = mkdtempSync(join(tmpdir(), "kotta-define-missing-"));
+    git(repository, "init", "-b", "main");
+    writeFileSync(join(repository, "README.md"), "fixture\n");
+    run(repository, ["init"]);
+    const created = run(repository, ["contract", "new", "--title", "Missing source", "--type", "feature"]) as { data: { id: string; path: string } };
+    const missing = join(repository, "no-such-definition.md");
+    const result = spawnSync("node", [cli, "contract", "define", created.data.id, "--from", missing, "--json"], { cwd: repository, encoding: "utf8" });
+    expect(result.status).not.toBe(0);
+    expect(result.stdout).toContain(`Contract definition was not found: ${resolve(missing)}`);
+    expect(existsSync(created.data.path)).toBe(true);
+    expect(readFileSync(created.data.path, "utf8")).toContain("status: backlog");
+  });
+
   test("sign accepts an unambiguous no-open-decisions statement without exact punctuation", () => {
     const repository = mkdtempSync(join(tmpdir(), "kotta-open-decisions-"));
     git(repository, "init", "-b", "main");

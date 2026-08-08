@@ -1,3 +1,5 @@
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -17,7 +19,11 @@ export default defineConfig({
     environment: "node",
     // No test may launch a real browser: every `kotta ui` here — in process or spawned,
     // which inherits this — hands its URL to a no-op instead of the platform opener.
-    env: { KOTTA_UI_OPEN_COMMAND: "true" },
+    // No test may install skills into the operator's real home. `kotta init` installs them, so
+    // every test that initializes a workspace — most of them — would otherwise write to
+    // ~/.claude/skills. Redirected once here, and inherited by spawned CLI processes, exactly as
+    // the browser opener above.
+    env: { KOTTA_UI_OPEN_COMMAND: "true", KOTTA_SKILLS_HOME: join(tmpdir(), "kotta-test-skills") },
     // Kotta gives every active contract a linked worktree under `worktree_root` (.worktrees by
     // default), and each one is a full checkout carrying its own copy of tests/. Vitest ignores
     // .gitignore when discovering tests, so without this the suite runs once per open contract

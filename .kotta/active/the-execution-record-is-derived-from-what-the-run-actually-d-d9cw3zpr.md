@@ -1,7 +1,7 @@
 ---
 id: T-01kzdhtqw01nbgdg5dd9cw3zpr
 title: The execution record is derived from what the run actually did
-status: defined
+status: active
 origin: human
 types:
   - refactor
@@ -12,10 +12,14 @@ risk: medium
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: >-
+  refactor/T-01kzdhtqw01nbgdg5dd9cw3zpr-the-execution-record-is-derived-from-what-the-run-actually-d
 pull_request: null
 created_at: '2026-08-07'
-updated_at: '2026-08-07'
+updated_at: '2026-08-08'
+assigned_agent: claude
+worktree: .worktrees/T-01kzdhtqw01nbgdg5dd9cw3zpr
+execution_mode: inherited
 ---
 # T-01kzdhtqw01nbgdg5dd9cw3zpr — The execution record is derived from what the run actually did
 

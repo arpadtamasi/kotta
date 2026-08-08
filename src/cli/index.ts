@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from "commander";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { initCommand } from "../commands/init.js";
 import { briefContract, cancelContract, closeContract, defineContract, newContract, signContract, reopenContract, reviewContract, startContract, validateContract } from "../commands/contract.js";
@@ -17,6 +18,7 @@ import { formatMigration, migrateWorkspace } from "../commands/migrate.js";
 import { assertCurrentWorkspaceShape, findRepositoryRoot } from "../filesystem/workspace.js";
 import { mcpCommand } from "../commands/mcp.js";
 import { integrateCodex } from "../commands/integrate.js";
+import { syncSkills } from "../commands/sync.js";
 
 const program = new Command();
 const packagePath = fileURLToPath(new URL("../../package.json", import.meta.url));
@@ -51,15 +53,41 @@ function humanize(result: unknown): string {
     if (command === "status" && "data" in result) {
       // The workspace path leads: with `.kotta/` and `.a-team/` both readable, the directory that
       // answered is the first thing a reader needs (D-007).
-      const data = (result as { data: { workspace: unknown; definedContracts: unknown[]; activeContracts: unknown[]; reviewContracts: unknown[]; newObservations: unknown[] } }).data;
-      return [
+      const data = (result as { data: { workspace: unknown; definedContracts: unknown[]; activeContracts: unknown[]; reviewContracts: unknown[]; newObservations: unknown[]; skills?: { shipped: number; installed: number; drifted: string[] } } }).data;
+      const lines = [
         `Workspace: ${String(data.workspace)}`,
         `Defined ${data.definedContracts.length}, active ${data.activeContracts.length}, review ${data.reviewContracts.length}, new observations ${data.newObservations.length}.`,
-      ].join("\n");
+      ];
+      // Absent skills and stale skills fail the same way — silently — so both are named here,
+      // with the one command that fixes either.
+      if (data.skills && data.skills.installed === 0 && data.skills.shipped > 0) {
+        lines.push(`Skills: none installed of ${data.skills.shipped} shipped. Run 'kotta sync'.`);
+      } else if (data.skills && data.skills.drifted.length) {
+        lines.push(`Skills: ${data.skills.drifted.join(", ")} differ from the shipped version. Run 'kotta sync'.`);
+      }
+      return lines.join("\n");
     }
     if ((result as { command: unknown }).command === "decision create" && "data" in result) {
       const data = (result as { data: { id: unknown; path: unknown } }).data;
       return `Recorded decision ${String(data.id)} at ${String(data.path)}.`;
+    }
+    if (command === "sync" && "data" in result) {
+      const data = (result as { data: { target: unknown; created: string[]; updated: string[]; unchanged: string[]; skipped: string[] } }).data;
+      const changed = [
+        data.created.length ? `${data.created.length} installed` : "",
+        data.updated.length ? `${data.updated.length} updated` : "",
+        data.unchanged.length ? `${data.unchanged.length} unchanged` : "",
+      ].filter(Boolean).join(", ");
+      const lines = [`Skills in ${String(data.target)}: ${changed || "none shipped"}.`];
+      // A name collision is reported, never resolved: Kotta cannot know what put the other skill
+      // there, so it does not get to decide the directory is disposable.
+      if (data.skipped.length) lines.push(`Left alone — another skill already uses the name: ${data.skipped.join(", ")}.`);
+      return lines.join("\n");
+    }
+    if (command === "init" && "data" in result) {
+      const data = (result as { data: { root: unknown; skills?: { created: string[]; updated: string[]; unchanged: string[] } } }).data;
+      const installed = data.skills ? data.skills.created.length + data.skills.updated.length + data.skills.unchanged.length : 0;
+      return `Created workspace at ${String(data.root)}${installed ? `, and ${installed} skills are installed.` : "."}`;
     }
     if (command === "integrate codex" && "data" in result) {
       const data = (result as { data: { path: unknown; changed: unknown } }).data;
@@ -75,7 +103,7 @@ function humanize(result: unknown): string {
  * `migrate` exists precisely to read the old shape, and `ui` explains the gap on the board rather than
  * refusing to start — everything else stops with a message that names `kotta migrate`.
  */
-const SHAPE_EXEMPT = new Set(["init", "migrate", "ui", "mcp"]);
+const SHAPE_EXEMPT = new Set(["init", "migrate", "ui", "mcp", "sync"]);
 
 program.hook("preAction", (_program, action) => {
   const names = [action.name(), action.parent?.name()].filter(Boolean) as string[];
@@ -119,6 +147,12 @@ program
   .option("--json")
   .action((options: { json?: boolean }) => print(statusCommand(), Boolean(options.json)));
 
+program
+  .command("sync")
+  .description("Install the skills Kotta ships into the host's skill directory")
+  .option("--json")
+  .action((options: { json?: boolean }) => print(syncSkills(), Boolean(options.json)));
+
 const contract = program.command("contract").description("Create and transition contracts");
 contract
   .command("new")
@@ -135,7 +169,11 @@ contract
   .command("define <id>")
   .requiredOption("--from <path>", "Markdown definition file")
   .option("--json")
-  .action((id: string, options: { from: string; json?: boolean }) => print(defineContract(id, options.from), Boolean(options.json)));
+  .action((id: string, options: { from: string; json?: boolean }) => {
+    const sourcePath = resolve(options.from);
+    if (!existsSync(sourcePath)) throw new Error(`Contract definition was not found: ${sourcePath}`);
+    print(defineContract(id, readFileSync(sourcePath, "utf8")), Boolean(options.json));
+  });
 contract
   // `define` writes the contract; `sign` is the human gate that makes it binding and moves it to
   // `defined`. Two different acts, so two different verbs (D-01kz240dn155hb97h6px6n2p85).

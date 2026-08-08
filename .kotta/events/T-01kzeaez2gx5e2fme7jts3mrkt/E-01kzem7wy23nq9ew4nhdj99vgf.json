@@ -1,0 +1,14 @@
+{
+  "entity": "T-01kzeaez2gx5e2fme7jts3mrkt",
+  "contract": "T-01kzeaez2gx5e2fme7jts3mrkt",
+  "kind": "approval",
+  "approval_id": "E-01kzem7w29t47qxgj6r590cqta",
+  "phase": "rejected",
+  "action": "contract.sign",
+  "payload": {
+    "surface": "caller-chat"
+  },
+  "source_message": "E-01kzem7wxz6fq3amvyzkknb5v6",
+  "id": "E-01kzem7wy23nq9ew4nhdj99vgf",
+  "created_at": "2026-08-07T17:27:25.890Z"
+}

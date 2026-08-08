@@ -39,14 +39,12 @@ export function newContract(options: { title: string; type: string; profiles: st
 
 const DEFINITION_FIELDS = new Set(["id", "types", "profiles", "priority", "risk", "depends_on", "blocks"]);
 
-export function defineContract(id: string, source: string, repositoryRoot?: string) {
+export function defineContract(id: string, definition: string, repositoryRoot?: string) {
   const root = controlPlaneRoot(repositoryRoot ?? findRepositoryRoot());
   const contract = findContract(root, id);
   if (contract.state !== "backlog") throw new Error(`Contract ${id} can only be defined while it is in backlog.`);
-  const sourcePath = resolve(source);
-  if (!existsSync(sourcePath)) throw new Error(`Contract definition was not found: ${sourcePath}`);
   const current = parseMarkdown(readFileSync(contract.path, "utf8"));
-  const draft = parseMarkdown(readFileSync(sourcePath, "utf8"));
+  const draft = parseMarkdown(definition);
   const unknown = Object.keys(draft.data).filter((field) => !DEFINITION_FIELDS.has(field));
   if (unknown.length) throw new Error(`Unsupported definition fields: ${unknown.join(", ")}.`);
   if (draft.data.id !== undefined && String(draft.data.id) !== id) throw new Error(`Definition id '${String(draft.data.id)}' does not match ${id}.`);
