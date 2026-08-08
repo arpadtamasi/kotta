@@ -13,6 +13,7 @@ None.
 ## Defined contracts
 
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
+- kotta-sync-installs-the-skills-kotta-ships-p5rstcgt
 - one-operation-registry-derives-both-the-cli-and-the-mcp-surf-06fw8n0g
 
 ## Active contracts

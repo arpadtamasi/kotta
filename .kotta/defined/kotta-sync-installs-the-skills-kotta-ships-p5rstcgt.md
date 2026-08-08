@@ -1,7 +1,7 @@
 ---
 id: T-01kzgn32keps18769dp5rstcgt
 title: kotta sync installs the skills Kotta ships
-status: backlog
+status: defined
 origin: human
 types:
   - bug
