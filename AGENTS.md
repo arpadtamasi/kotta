@@ -34,10 +34,10 @@ backlog → defined → active → review → done
 | --- | --- | --- |
 | Capture intent | `kotta contract new --title "…" --type <type> [--profile …]` | human, or agent if allowed by config |
 | Formalize | `kotta contract define <id> --from <file>` then `kotta contract validate <id>` | agent |
-| Approve for execution | Calling-chat `approval_request`, or `kotta contract sign <id> --approve` | **human only** |
+| Approve for execution | `kotta contract sign <id> --approve`, after the human said yes in chat | **human decides** (rule 5) |
 | Execute | `kotta contract execute <id> --agent <agent>` | agent, in its own claim + branch + worktree |
 | Submit | `kotta contract review <id> --evidence "…" --pull-request <ref>` | agent |
-| Close | Calling-chat `approval_request`, or `kotta contract close <id> --approve` | **human only** |
+| Close | `kotta contract close <id> --approve`, after the human said yes in chat | **human decides** (rule 5) |
 
 `contract execute` does the start, builds the brief and launches a fresh agent context whose only
 input is `kotta contract brief <id>`. Resume an interrupted or failed run with `--resume`; a second
@@ -53,10 +53,12 @@ Canonical live state, claims and visible conversation stay on `git.base_branch`;
 worktrees contain code and their original baseline, not a divergent lifecycle copy. Commands invoked
 from any linked worktree route state changes back to the checked-out control worktree.
 
-When the Kotta MCP server is available, use its structured tools instead of asking the human to copy
-ids or run commands. `contract_start_caller` is the inherited-context start path. Consequential
-transitions must go through `approval_request`, whose elicitation is answered by the human in the
-calling chat. `kotta ui` only displays the resulting canonical state and timeline.
+Never ask the human to copy an id or go and run a command. Whatever the surface, you drive it: the
+CLI is the whole interface, and where the Kotta MCP server is available its structured tools are an
+equivalent path to the same services. `contract_start_caller` is the inherited-context start path.
+`approval_request` is one way to put a decision to the human, and rule 5 is the other; if the
+elicitation is unavailable or refused by the host, ask in plain chat rather than falling back to the
+terminal. `kotta ui` only displays the resulting canonical state and timeline.
 
 ## Rules for agents
 
@@ -68,7 +70,13 @@ calling chat. `kotta ui` only displays the resulting canonical state and timelin
    and a human-approved `kotta observation resolve <id> --disposition <disposition> --approve`.
 4. **Do not invent product intent or accepted trade-offs.** Ask the human. Durable answers are
    recorded with `kotta decision create --from <file> --approve`.
-5. **Approval is a human gate.** Never click a chat approval or pass `--approve` on the human's behalf.
+5. **Approval is a human gate — ask for it here, in the conversation.** Put the decision to the
+   human in chat, in their language: what will happen, named by **title**, one line, then a plain
+   yes or no. Never an id, never a command for them to go and run. On an explicit yes **in this
+   conversation, for this exact decision**, you may run the command with `--approve` yourself; the
+   receipt Kotta records is what makes it durable. Anything less than an explicit yes is a no:
+   silence, a yes to a different question, an earlier unrelated yes, or your own judgement that
+   they would obviously agree. If you cannot ask — no human is present — you do not approve.
 6. **One active contract = one claim, one feature branch, one worktree.** Parallel work uses
    separate worktrees. Never execute on a protected branch.
 7. **Review needs acceptance-to-evidence mapping**; closing needs accepted review, integration and
@@ -80,7 +88,7 @@ calling chat. `kotta ui` only displays the resulting canonical state and timelin
 
 If the Kotta skills are installed, prefer them — they encode the how: `explore-workspace`,
 `setup-kotta`, `define-contract`, `validate-observation`, `start-contract`, `execute-contract`,
-`execute-batch`, `submit-review`, `close-contract`, `report-kotta-bug`. If they are not installed,
+`execute-batch`, `submit-review`, `close-contract`, `consolidate-model`, `report-kotta-bug`. If they are not installed,
 the CLI above is the whole contract; nothing depends on the skills being present.
 
 A defect in Kotta itself is not a contract here: use `report-kotta-bug`, or the issue form at
