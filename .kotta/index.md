@@ -62,6 +62,7 @@ None.
 - az-entitast-letrehozo-parancsok-nem-irjak-ki-az-azonositot-e-9mg56yk6
 - az-id-azert-szivarog-a-human-kommunikaciora-mert-o-az-egyetl-szetd8cz
 - calling-codex-chat-has-no-kotta-approval-adapter-and-falls-b-txr0k995
+- claim-release-force-strands-the-contract-in-active-with-no-c-e7bbdr58
 - contract-new-human-output-hides-the-created-contract-id-xwja20bg
 - contract-reopen-is-a-human-gate-with-no-chat-path-so-correct-nz0vwxnz
 - contract-validate-can-pass-a-backlog-contract-that-sign-imme-0ms18ejw
