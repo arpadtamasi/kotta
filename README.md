@@ -10,9 +10,9 @@ It provides executable contracts, type-specific requirements, coordinated work b
 
 ## Install and create your first contract
 
-Prerequisites: Node.js 20 or newer, Git, and a coding-agent host supported by
-`skills@1.5.20`. The guided slash-command path is verified with Codex; other hosts reported
-by the installer may expose installed skills differently.
+Prerequisites: Node.js 20 or newer, Git, and a coding-agent host that reads skills from
+`~/.claude/skills`. The guided slash-command path is verified with Codex; other hosts may expose
+installed skills differently.
 
 Install the public CLI and confirm the exact version:
 
@@ -25,11 +25,18 @@ The binary is `kotta`. The pre-rename name `a-team` is installed as an alias of 
 entrypoint and reports the same version, so existing scripts keep working; new work should
 use `kotta`. See [Renamed from A-Team](#renamed-from-a-team) if you already have a workspace.
 
-Install the pinned skill collection from the public repository:
+Install the skills that ship with the CLI. They go into the host's skill directory, so one run
+covers every project and every linked worktree, and the version always matches the CLI you just
+installed:
 
 ```bash
-npx skills@1.5.20 add arpadtamasi/kotta
+kotta sync
 ```
+
+`kotta init` does this too, so a new project needs one command rather than two. Run `kotta sync`
+again after upgrading Kotta; `kotta status` says when an installed skill no longer matches the
+shipped one. A skill belonging to another tool under the same name is left alone and reported,
+never overwritten.
 
 Connect Kotta to the project-scoped Codex chat once, then start a new chat (or restart the host) so
 the MCP tools are discovered:
