@@ -45,6 +45,7 @@ None.
 - F-030-package-szintu-review-hianyzik-a-ticketek-review-ban-tartasa
 - a-board-listai-nem-mutatjak-az-entitasok-korat-csak-az-obser-fx05szh7
 - a-board-nema-n-rejti-el-a-nem-commitolt-munkat-ha-a-fo-munka-88p5tm36
+- a-contract-that-proves-incomplete-during-execution-has-no-re-c26y53yb
 - a-decision-cannot-record-that-it-narrows-or-continues-anothe-8pv9r452
 - a-define-nem-javithatja-a-contract-cimet-igy-egy-observation-a469asbk
 - a-kiadatlan-changelog-bejegyzes-a-regi-binaris-nevet-hasznal-m4m7q531
