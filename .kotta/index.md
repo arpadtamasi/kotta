@@ -22,7 +22,7 @@ None.
 
 ## Review
 
-- definecontract-accepts-definition-content-instead-of-a-files-1yd5vn20
+None.
 
 ## Blocked
 
