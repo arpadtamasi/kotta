@@ -1,0 +1,14 @@
+{
+  "entity": "T-01kz3kx1ex19tjw82tbd1366pk",
+  "contract": "T-01kz3kx1ex19tjw82tbd1366pk",
+  "kind": "approval",
+  "approval_id": "E-01kzhjj3k9cacw9a1eptz68cdd",
+  "phase": "applied",
+  "action": "contract.reopen",
+  "payload": {
+    "surface": "cli"
+  },
+  "source_message": "E-01kzhjj3k98aesjn4vmf2xenz0",
+  "id": "E-01kzhjj3katepx13bh49dxw7qh",
+  "created_at": "2026-08-08T20:55:46.538Z"
+}
