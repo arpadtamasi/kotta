@@ -3,7 +3,7 @@ id: T-01kzh5ta34v0b4q5mxatnxppcm
 title: >-
   The agent rules reach the calling chat as a generated file, not a hand-copied
   one
-status: backlog
+status: defined
 origin: human
 types:
   - bug
