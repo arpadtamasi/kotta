@@ -137,7 +137,9 @@ available today — records the opposite of what happened.
    `defined` and `active`, releasing an existing claim through the current release guard and moving
    the contract to `backlog`.
 2. Register it on the CLI, and expose it to the calling chat the way the other gated actions are
-   exposed, so it is not a terminal-only escape hatch.
+   exposed, so it is not a terminal-only escape hatch. Concretely: add `contract.revise` to the
+   `approval_request` action enum at `src/commands/mcp.ts:203`, and to the prose sentence at
+   `src/commands/mcp.ts:45` that lists which actions route through it.
 3. `claim release --force` returns an `active` contract to `defined` instead of leaving it at
    `active`.
 4. `start` reuses a recorded branch and an existing worktree for a `defined` contract instead of
@@ -225,6 +227,19 @@ None.
 - `reopenContract` (`src/commands/contract.ts`) is the closest existing shape — an approved backwards
   transition that rewrites frontmatter and moves the file — and is worth reading before writing
   `revise`, but it is not extended: its states stay `review` and `done`.
+- **This contract collides with `T-01kzda6nj9hd2z45tt06fw8n0g` ("One operation registry derives both
+  the CLI and the MCP surface"), which is signed and not started.** That contract derives both
+  surface tables from one registry, and states as a behavioural invariant that "the same five actions
+  stay gated": `contract.sign`, `observation.resolve`, `contract.close`, `contract.request-changes`,
+  `batch.close`. This contract makes it six. Neither blocks the other, and no ordering is imposed
+  here, but whichever lands second owns the reconciliation: if the registry lands first, `revise` is
+  added as a registry entry rather than as a hand-written pair of registrations; if this lands first,
+  the registry's invariant is six actions, not five, and its surface-snapshot tests must be written
+  against the surface as it then stands. Say in the review evidence which order actually happened.
+- `kotta observation new` without `--discovered-during` writes its file without committing
+  (`F-01kzhjhsknj52aqr4mxfkbpp0q`), which leaves the control worktree dirty and makes the next
+  lifecycle command refuse. Expect it while recording anything found during this work; it is not a
+  fault of this contract's changes.
 - The four observations are the evidence and should be dispositioned against this contract rather
   than resolved separately.
 - Two of them were recorded during the same session that found the defect, and one carries a wrong
