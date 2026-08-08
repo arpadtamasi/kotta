@@ -1,7 +1,7 @@
 ---
 id: T-01kzeaez2gx5e2fme7jts3mrkt
 title: The execution environment reaches the CLI and the skills it ships
-status: backlog
+status: defined
 origin: human
 types:
   - bug
@@ -15,7 +15,7 @@ blocks: []
 branch: null
 pull_request: null
 created_at: '2026-08-07'
-updated_at: '2026-08-07'
+updated_at: '2026-08-08'
 ---
 # T-01kzeaez2gx5e2fme7jts3mrkt — The execution environment reaches the CLI and the skills it ships
 
