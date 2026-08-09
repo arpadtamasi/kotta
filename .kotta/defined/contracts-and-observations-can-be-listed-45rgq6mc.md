@@ -1,7 +1,7 @@
 ---
 id: T-01kzm8xg1hmp20dgy545rgq6mc
 title: Contracts and observations can be listed
-status: backlog
+status: defined
 origin: human
 types:
   - feature
