@@ -11,6 +11,7 @@ import { newObservation, resolveObservation, validateObservation } from "../comm
 import { closeBatch, finalizeBatch, newBatch, batchStatus, signBatch, startBatch, updateBatchContracts, validateBatch } from "../commands/batch.js";
 import { validateWorkspace } from "../commands/validate.js";
 import { listClaims, releaseClaim } from "../commands/claim.js";
+import { formatList, listCommand, type ListResult } from "../commands/list.js";
 import { resolveWorkspaceLocation, uiCommand } from "../commands/ui.js";
 import { createDecision } from "../commands/decision.js";
 import { dedupeEntity, describeDedupe, type DedupeResult } from "../commands/dedupe.js";
@@ -45,6 +46,9 @@ function humanize(result: unknown): string {
           : `Next: run the contract in a fresh agent context (D-009) — ${String(data.nextStep)}.`,
         `'kotta contract execute <id> --agent <agent>' does start, brief and agent launch in one command.`,
       ].join("\n");
+    }
+    if (command.endsWith(" list") && "data" in result && "entity" in (result as { data: Record<string, unknown> }).data) {
+      return formatList(result as ListResult);
     }
     if (command === "contract new" && "data" in result) {
       const data = (result as { data: { id: unknown; path: unknown } }).data;
@@ -155,6 +159,12 @@ program
 
 const contract = program.command("contract").description("Create and transition contracts");
 contract
+  .command("list")
+  .description("List contracts with their state and title")
+  .option("--state <state...>", "Narrow to one or more states")
+  .option("--json")
+  .action((options: { state?: string[]; json?: boolean }) => print(listCommand("contract", { state: options.state }), Boolean(options.json)));
+contract
   .command("new")
   .requiredOption("--title <title>")
   .requiredOption("--type <type>")
@@ -251,6 +261,12 @@ contract
 
 const observation = program.command("observation").description("Capture and disposition observations");
 observation
+  .command("list")
+  .description("List observations with their state and title")
+  .option("--state <state...>", "Narrow to one or more states")
+  .option("--json")
+  .action((options: { state?: string[]; json?: boolean }) => print(listCommand("observation", { state: options.state }), Boolean(options.json)));
+observation
   .command("new")
   .requiredOption("--title <title>")
   .requiredOption("--type <type>")
@@ -271,6 +287,14 @@ observation
 
 const decision = program.command("decision").description("Record durable human decisions");
 decision
+  .command("list")
+  .description("List decisions with their state and title")
+  // Accepted so the refusal can say why decisions have no states, rather than
+  // commander answering "unknown option" and leaving the reason unstated.
+  .option("--state <state...>", "Not applicable to decisions; refused with the reason")
+  .option("--json")
+  .action((options: { state?: string[]; json?: boolean }) => print(listCommand("decision", { state: options.state }), Boolean(options.json)));
+decision
   .command("create")
   .description("Validate and atomically record a durable decision")
   .requiredOption("--from <path>", "Markdown decision source")
@@ -281,6 +305,12 @@ decision
     print(createDecision({ from: options.from, id: options.id, approved: Boolean(options.approve) }), Boolean(options.json)));
 
 const batchCommand = program.command("batch").description("Validate and execute coordinated batches");
+batchCommand
+  .command("list")
+  .description("List batches with their state and title")
+  .option("--state <state...>", "Narrow to one or more states")
+  .option("--json")
+  .action((options: { state?: string[]; json?: boolean }) => print(listCommand("batch", { state: options.state }), Boolean(options.json)));
 batchCommand
   .command("new")
   .requiredOption("--title <title>")

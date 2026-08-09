@@ -7,6 +7,8 @@ import { recordContractMessage } from "./conversation.js";
 import { briefContract, defineContract, newContract, reviewContract, startContract, validateContract } from "./contract.js";
 import { newObservation } from "./observation.js";
 import { statusCommand } from "./status.js";
+import { listCommand } from "./list.js";
+import { entityStates } from "../filesystem/entities.js";
 import { readEvents } from "../core/events.js";
 import { assertCurrentWorkspaceShape, findRepositoryRoot } from "../filesystem/workspace.js";
 import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
@@ -59,6 +61,23 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
       return toolResult(result as unknown as ToolPayload, `Kotta has ${result.data.activeContracts.length} active, ${result.data.definedContracts.length} defined, and ${result.data.reviewContracts.length} review contracts.`);
     } catch (error) { return toolError(error); }
   });
+
+  // Orientation is the question chat asks most, and the answer must not be
+  // "read .kotta/ yourself" — the one thing the workspace rule forbids.
+  for (const entity of ["contract", "observation", "decision", "batch"] as const) {
+    const states = entityStates(entity);
+    server.registerTool(`${entity}_list`, {
+      title: `List Kotta ${entity === "batch" ? "batches" : `${entity}s`}`,
+      description: `List every ${entity} in the workspace with its id, state and title. Read-only; use it to orient before choosing an action, instead of reading the workspace directories.`,
+      inputSchema: entity === "decision" ? {} : { state: z.array(z.enum(states as [string, ...string[]])).optional() },
+      annotations: readOnly,
+    }, async (input: { state?: string[] }) => {
+      try {
+        const result = listCommand(entity, { state: input?.state }, root);
+        return toolResult(result as unknown as ToolPayload, `${result.data.count} ${entity === "batch" && result.data.count !== 1 ? "batches" : `${entity}${result.data.count === 1 ? "" : "s"}`}.`);
+      } catch (error) { return toolError(error); }
+    });
+  }
 
   server.registerTool("contract_create", {
     title: "Create a Kotta contract",
