@@ -349,7 +349,14 @@ kotta decision create --from /tmp/cutover-decision.md --approve
 
 kotta claim list
 kotta claim release T-014 --force
+
+kotta contract list --state review
+kotta observation list --state new
+kotta decision list
+kotta batch list
 ```
+
+`list` answers "what is in this workspace" for every entity, with the title first and the id after it, and narrows with a repeatable `--state`. It is read-only and deterministic: the same workspace lists the same bytes, and nothing — not even the index — is written. The same four listings reach the calling chat as read-only tools, so an agent orienting itself never has a reason to read `.kotta/` directly.
 
 Every command supports `--json`. Mutations validate before writing and report both the violated rule and corrective action when rejected.
 

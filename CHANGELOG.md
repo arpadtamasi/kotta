@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **`list` for every entity.** `kotta contract list`, `kotta observation list`, `kotta decision list`
+  and `kotta batch list` print their entities with state, title and id, narrow with a repeatable
+  `--state`, and support `--json` — the shape `kotta claim list` already had and nothing else did.
+  All four also reach the calling chat as read-only tools. Previously `kotta status` returned counts
+  and bare ids, and the only way to see what a workspace contained was to read `.kotta/` by hand,
+  which is what the workspace rule forbids.
+
 ## [0.5.0] - 2026-08-05
 
 ### Added

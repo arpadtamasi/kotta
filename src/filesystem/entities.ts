@@ -101,17 +101,71 @@ export function resolveEffectiveContract<T>(root: string, id: string, read: (con
   return { value: read(coordinator), location: coordinator };
 }
 
+export const OBSERVATION_STATES = ["new", "resolved"] as const;
+
+/** Every listable entity. Decisions are stored flat: recorded is the only state they have. */
+export type ListableEntity = "contract" | "observation" | "batch" | "decision";
+
+/**
+ * Where an entity kind keeps its files, paired with the state each directory means.
+ * One source for the mapping: `status`, the index, `listIds` and `list` all read it,
+ * so a new state cannot appear in one of them and be missing from the rest.
+ */
+export function entityStateDirectories(entity: ListableEntity): Array<{ state: string; directory: string }> {
+  switch (entity) {
+    case "contract": return CONTRACT_STATES.map((state) => ({ state, directory: state }));
+    case "batch": return BATCH_STATES.map((state) => ({ state, directory: `batches/${state}` }));
+    case "observation": return OBSERVATION_STATES.map((state) => ({ state, directory: `observations/${state}` }));
+    case "decision": return [{ state: "recorded", directory: "decisions" }];
+  }
+}
+
+/** The states an entity kind can be narrowed to, for the option that does the narrowing. */
+export function entityStates(entity: ListableEntity): string[] {
+  return entityStateDirectories(entity).map(({ state }) => state);
+}
+
 export function listIds(root: string, entity: "contract" | "observation" | "batch"): string[] {
+  return listEntities(root, entity).map(({ id }) => id);
+}
+
+export interface ListedEntity {
+  id: string;
+  state: string;
+  title: string;
+  path: string;
+}
+
+/**
+ * Every entity of a kind, with the title a human reads first. Lifecycle order across
+ * directories, then filename order inside one, so the same workspace always lists the
+ * same bytes. A file whose title cannot be read is listed with an empty one rather
+ * than omitted: a listing that silently drops entities is worse than an ugly row.
+ */
+export function listEntities(root: string, entity: ListableEntity, states?: string[]): ListedEntity[] {
   const workspace = workspacePath(root);
-  const directories = entity === "contract"
-    ? CONTRACT_STATES.map(String)
-    : entity === "observation" ? ["observations/new", "observations/resolved"] : ["batches/backlog", "batches/defined", "batches/active", "batches/done"];
-  return directories.flatMap((directory) => {
-    const path = join(workspace, directory);
-    if (!existsSync(path)) return [];
-    return readdirSync(path)
-      .filter((name) => name.endsWith(".md"))
-      .map((name) => idFromEntityFile(join(path, name), name))
-      .filter((id): id is string => id !== null);
-  });
+  const wanted = states?.length ? new Set(states) : null;
+  return entityStateDirectories(entity)
+    .filter(({ state }) => !wanted || wanted.has(state))
+    .flatMap(({ state, directory }) => {
+      const path = join(workspace, directory);
+      if (!existsSync(path)) return [];
+      return readdirSync(path)
+        .filter((name) => name.endsWith(".md"))
+        .sort()
+        .flatMap((name) => {
+          const file = join(path, name);
+          const id = idFromEntityFile(file, name);
+          return id === null ? [] : [{ id, state, title: entityTitle(file), path: file }];
+        });
+    });
+}
+
+function entityTitle(path: string): string {
+  try {
+    const title = parseMarkdown(readFileSync(path, "utf8")).data.title;
+    return typeof title === "string" ? title.trim() : "";
+  } catch {
+    return "";
+  }
 }
