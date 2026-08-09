@@ -1,7 +1,7 @@
 ---
 id: T-01kzm8xg1hmp20dgy545rgq6mc
 title: Contracts and observations can be listed
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -11,10 +11,13 @@ risk: low
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: feat/T-01kzm8xg1hmp20dgy545rgq6mc-contracts-and-observations-can-be-listed
 pull_request: null
 created_at: '2026-08-09'
 updated_at: '2026-08-09'
+assigned_agent: claude
+worktree: .worktrees/T-01kzm8xg1hmp20dgy545rgq6mc
+execution_mode: inherited
 ---
 # T-01kzm8xg1hmp20dgy545rgq6mc — Every entity can be listed
 
