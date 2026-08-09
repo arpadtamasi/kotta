@@ -181,6 +181,9 @@ export function initializeWorkspace(options: InitOptions = {}): { root: string; 
       allow_agent_observations: true,
       allow_agent_defined_contracts: false,
     },
+    // null means Kotta passes no permission flag and the agent's own project
+    // settings decide. Widening this is the operator's deliberate act.
+    agents: { permission_mode: null },
     git: {
       base_branch: "main",
       protected_branches: ["main", "master", "develop"],

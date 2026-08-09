@@ -10,6 +10,21 @@ export interface WorkspaceConfig {
 
 const DEFAULTS: WorkspaceConfig = { baseBranch: "main", protectedBranches: ["main", "master", "develop"] };
 
+/**
+ * The permission mode a launched agent runs under, or null when the workspace has
+ * not stated one. Null is not a default mode: it means Kotta passes no flag and
+ * the agent's own project settings decide, which is the caller's authority rather
+ * than one Kotta granted. Widening it is an operator's deliberate act, recorded in
+ * `.kotta/config.yaml` where it can be read, reviewed and revoked.
+ */
+export function readAgentPermissionMode(root: string): string | null {
+  const path = workspacePath(root, "config.yaml");
+  if (!existsSync(path)) return null;
+  const parsed = parse(readFileSync(path, "utf8")) as { agents?: { permission_mode?: unknown } } | null;
+  const mode = parsed?.agents?.permission_mode;
+  return typeof mode === "string" && mode.trim() ? mode.trim() : null;
+}
+
 /** Reads the git section of the workspace config.yaml, falling back to the values `init` writes. */
 export function readWorkspaceConfig(root: string): WorkspaceConfig {
   const path = workspacePath(root, "config.yaml");

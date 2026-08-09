@@ -1,5 +1,5 @@
 import { execFileSync, spawn, spawnSync, type SpawnSyncReturns } from "node:child_process";
-import { chmodSync, existsSync, mkdtempSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
@@ -25,6 +25,16 @@ if (mode === "empty") process.exit(0);
 if (mode === "fail") {
   process.stderr.write("double: refusing to implement\\n");
   process.exit(3);
+}
+if (mode === "no-change") {
+  // Exits 0 and talks about work it never did: the shape the record must not call implemented.
+  process.stdout.write("double: analysed the brief and decided nothing was needed\\n");
+  process.exit(0);
+}
+if (mode === "uncommitted") {
+  writeFileSync("agent-output.txt", "left uncommitted by the double\\n");
+  process.stdout.write("double: implemented without committing\\n");
+  process.exit(0);
 }
 if (mode === "hang") {
   writeFileSync(process.env.DOUBLE_MARKER, "running");
@@ -125,6 +135,31 @@ function claimPath(repository: string, id: string): string {
   return join(repository, ".kotta/claims", `${id}.yaml`);
 }
 
+interface ExecutionEvent {
+  state: string;
+  summary: string;
+  payload: {
+    agent: string;
+    exit_code: number | null;
+    baseline_commit: string;
+    commit: string;
+    uncommitted_changes: boolean;
+    claim_agent_replaced?: string;
+    agent_report: { source: string; verified: boolean; output: string };
+  };
+}
+
+/** The stored account of every run, in order. `.kotta/` is the source of truth for it. */
+function executionEvents(repository: string, id: string): ExecutionEvent[] {
+  const directory = join(repository, ".kotta/events", id);
+  if (!existsSync(directory)) return [];
+  return readdirSync(directory)
+    .filter((name) => name.endsWith(".json"))
+    .sort()
+    .map((name) => JSON.parse(readFileSync(join(directory, name), "utf8")) as ExecutionEvent)
+    .filter((event) => event.state?.startsWith("execution-"));
+}
+
 describe("contract execute (T-035 / D-009)", () => {
   test("runs a defined contract in a fresh agent context and returns implemented work", () => {
     const context = fixture("happy");
@@ -150,10 +185,164 @@ describe("contract execute (T-035 / D-009)", () => {
     const recorded = JSON.parse(readFileSync(context.record, "utf8")) as { argv: string[]; cwd: string; stdin: string };
     const brief = (expectOk(cliRun(worktree, ["contract", "brief", id, "--json"])) as { data: { brief: string; tokens: number } }).data;
     expect(recorded.stdin).toBe(brief.brief);
+    // Kotta adds no permission flag of its own: an unconfigured workspace grants
+    // nothing the caller had not already granted through the agent's settings.
     expect(recorded.argv).toEqual(["-p"]);
+    expect(String(data.permissionWarning)).toContain("agents.permission_mode");
     expect(recorded.cwd.endsWith(join(".worktrees", id))).toBe(true);
     expect(recorded.stdin).not.toContain("Context inheritance");
     expect(Number(data.briefTokens)).toBe(brief.tokens);
+
+    // Acceptance 3: the record describes the run, and stores the agent's own account as reported.
+    const events = executionEvents(repository, id);
+    expect(events).toHaveLength(1);
+    expect(existsSync(String(data.recordPath))).toBe(true);
+    expect(JSON.parse(readFileSync(String(data.recordPath), "utf8"))).toMatchObject({ state: "execution-implemented" });
+    expect(events[0].state).toBe("execution-implemented");
+    expect(events[0].payload).toMatchObject({ agent: "claude", exit_code: 0, uncommitted_changes: false, resumed: false });
+    expect(events[0].payload.baseline_commit).not.toBe(events[0].payload.commit);
+    expect(events[0].payload.commit).toBe(git(worktree, "rev-parse", "HEAD"));
+    expect(events[0].payload.agent_report).toMatchObject({ source: "agent stdout", verified: false });
+    expect(events[0].payload.agent_report.output).toContain("double: implemented");
+  });
+
+  test("an agent that changes nothing is no-change, not implemented", () => {
+    const context = fixture("no-change");
+    const { repository, id } = context;
+    const result = cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "no-change"));
+    const parsed = expectOk(result) as { ok: boolean; data: Record<string, unknown> };
+    const worktree = join(repository, ".worktrees", id);
+
+    expect(parsed.data).toMatchObject({ state: "no-change", exitCode: 0, uncommittedChanges: false });
+    expect(parsed.data.commit).toBe(parsed.data.baselineCommit);
+    expect(String(parsed.data.reason)).toContain("changed nothing");
+    expect(git(worktree, "status", "--porcelain")).toBe("");
+
+    const events = executionEvents(repository, id);
+    expect(events.map((event) => event.state)).toEqual(["execution-no-change"]);
+    expect(events[0].payload.agent_report.output).toContain("decided nothing was needed");
+
+    // The human output says so plainly and names what to check.
+    const human = cliRun(repository, ["contract", "execute", id, "--resume"], agentEnvironment(context, "no-change"));
+    expect(human.status).toBe(0);
+    expect(human.stdout).toContain(`kotta contract execute ${id}: no-change`);
+    expect(human.stdout).toContain("Nothing to review");
+    expect(human.stdout).toContain(join(".kotta/events", id));
+    expect(human.stdout).toContain("Read what the agent reported in ");
+    expect(human.stdout).not.toContain("--evidence");
+    // A resume appends a second run record instead of rewriting the first.
+    expect(executionEvents(repository, id).map((event) => event.state)).toEqual(["execution-no-change", "execution-no-change"]);
+  });
+
+  test("work left uncommitted in the worktree is implemented, not an empty run", () => {
+    const context = fixture("uncommitted");
+    const { repository, id } = context;
+    const data = (expectOk(cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "uncommitted"))) as { data: Record<string, unknown> }).data;
+    const worktree = join(repository, ".worktrees", id);
+
+    expect(data).toMatchObject({ state: "implemented", uncommittedChanges: true });
+    expect(data.commit).toBe(data.baselineCommit);
+    expect(readFileSync(join(worktree, "agent-output.txt"), "utf8")).toContain("left uncommitted");
+    expect(executionEvents(repository, id)[0].payload).toMatchObject({ uncommitted_changes: true, baseline_uncommitted_changes: false });
+  });
+
+  test("a run that completes while the control worktree is dirty still writes its record", () => {
+    const context = fixture("dirty-control");
+    const { repository, id } = context;
+    expectOk(cliRun(repository, ["contract", "start", id, "--agent", "claude", "--json"]));
+    // The 2026-08-07 failure: an unrelated untracked file made assertClean destroy the record.
+    const unrelated = join(repository, "unrelated-scratch.txt");
+    writeFileSync(unrelated, "not Kotta's business\n");
+    const before = git(repository, "rev-parse", "HEAD");
+
+    const data = (expectOk(cliRun(repository, ["contract", "execute", id, "--resume", "--json"], agentEnvironment(context, "commit"))) as { data: Record<string, unknown> }).data;
+    expect(data).toMatchObject({ state: "implemented" });
+
+    expect(executionEvents(repository, id).map((event) => event.state)).toEqual(["execution-implemented"]);
+    expect(git(repository, "log", "--oneline", `${before}..HEAD`)).toContain(`record implemented execution for ${id}`);
+    expect(existsSync(unrelated)).toBe(true);
+    expect(git(repository, "status", "--porcelain")).toBe("?? unrelated-scratch.txt");
+  });
+
+  test("a record write that fails for a real reason names the run at risk, not a failed start", () => {
+    const context = fixture("unrecorded");
+    const { repository, id } = context;
+    expectOk(cliRun(repository, ["contract", "start", id, "--agent", "claude", "--json"]));
+    const worktree = join(repository, ".worktrees", id);
+    const before = git(worktree, "rev-parse", "HEAD");
+
+    // Hold the control-plane lock with a live owner so only the record write fails.
+    const lock = join(repository, ".git/kotta-mutation.lock");
+    mkdirSync(lock, { recursive: true });
+    writeFileSync(join(lock, "owner.json"), JSON.stringify({ pid: process.pid }));
+
+    const result = cliRun(repository, ["contract", "execute", id, "--resume", "--json"], agentEnvironment(context, "commit"));
+    expect(result.status).not.toBe(0);
+    const parsed = json(result) as { ok: boolean; data: Record<string, unknown>; errors: { code: string; message: string }[] };
+    expect(parsed).toMatchObject({ ok: false, data: { state: "implemented", recordPath: null }, errors: [{ code: "EXECUTION_UNRECORDED" }] });
+    expect(parsed.errors[0].message).toContain(`Execution of ${id} finished as implemented`);
+    expect(parsed.errors[0].message).toContain("is now unrecorded");
+    // The message is about finishing a run; nothing here failed to start.
+    expect(parsed.errors[0].message).not.toContain("before starting");
+    expect(parsed.errors[0].message).not.toContain("No execution context was created");
+
+    // The work is untouched and still there to be recorded on the next attempt.
+    expect(git(worktree, "log", "--oneline", "-1")).toContain("feat: double implementation");
+    expect(git(worktree, "rev-parse", "HEAD")).not.toBe(before);
+    expect(executionEvents(repository, id)).toEqual([]);
+    rmSync(lock, { recursive: true, force: true });
+  });
+
+  test("a configured permission mode reaches the invocation, and configuring one silences the warning", () => {
+    // The operator's deliberate act, and the only way a launched agent receives
+    // more than the caller's own settings already permit.
+    const context = fixture("permission-mode");
+    const { repository, id } = context;
+    const configPath = join(repository, ".kotta", "config.yaml");
+    writeFileSync(configPath, readFileSync(configPath, "utf8").replace("permission_mode: null", "permission_mode: bypassPermissions"));
+    git(repository, "add", "-A");
+    git(repository, "commit", "-m", "chore: permit writes for launched agents");
+
+    const result = cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "commit"));
+    const data = (expectOk(result) as { data: Record<string, unknown> }).data;
+    expect(data.permissionWarning).toBeNull();
+    const recorded = JSON.parse(readFileSync(context.record, "utf8")) as { argv: string[] };
+    expect(recorded.argv).toEqual(["-p", "--permission-mode", "bypassPermissions"]);
+  });
+
+  test("refuses at launch when the configured mode forbids edits by definition", () => {
+    const context = fixture("permission-plan");
+    const { repository, id } = context;
+    const configPath = join(repository, ".kotta", "config.yaml");
+    writeFileSync(configPath, readFileSync(configPath, "utf8").replace("permission_mode: null", "permission_mode: plan"));
+    git(repository, "add", "-A");
+    git(repository, "commit", "-m", "chore: planning mode");
+
+    const result = cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "commit"));
+    expect(result.status).not.toBe(0);
+    expect(result.stdout + result.stderr).toContain("forbids edits");
+    // Nothing was created: the refusal happens before the context exists.
+    expect(existsSync(claimPath(repository, id))).toBe(false);
+    expect(existsSync(context.record)).toBe(false);
+  });
+
+  test("a resume that names another agent leaves the claim naming the agent that ran", () => {
+    const context = fixture("resume-agent");
+    const { repository, id } = context;
+    expectOk(cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "no-change")));
+    expect(readFileSync(claimPath(repository, id), "utf8")).toContain("agent: claude");
+
+    const switched = (expectOk(cliRun(repository, ["contract", "execute", id, "--resume", "--agent", "codex", "--json"], agentEnvironment(context, "commit"))) as { data: Record<string, unknown> }).data;
+    expect(switched).toMatchObject({ state: "implemented", resumed: true, agent: "codex" });
+    expect(readFileSync(claimPath(repository, id), "utf8")).toContain("agent: codex");
+    expect(executionEvents(repository, id).at(-1)?.payload).toMatchObject({ agent: "codex", claim_agent_replaced: "claude" });
+
+    // A later bare resume relaunches the agent that actually ran.
+    const bare = (expectOk(cliRun(repository, ["contract", "execute", id, "--resume", "--json"], agentEnvironment(context, "no-change"))) as { data: Record<string, unknown> }).data;
+    expect(bare).toMatchObject({ agent: "codex", state: "no-change" });
+    expect((JSON.parse(readFileSync(context.record, "utf8")) as { argv: string[] }).argv).toEqual(["exec", "-"]);
+    expect(readFileSync(claimPath(repository, id), "utf8")).toContain("agent: codex");
+    expect(expectOk(cliRun(repository, ["validate", "--json"]))).toMatchObject({ ok: true });
   });
 
   test("human output names the brief size, the agent, the branch and the worktree", () => {

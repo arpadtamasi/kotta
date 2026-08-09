@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **`no-change` execution state.** `contract execute` captures the worktree's baseline — the contract
+  branch tip and its porcelain status — before it launches, and compares afterwards. An agent that
+  exits 0 and reports work it never did is recorded as `no-change` instead of `implemented`, and the
+  human output says so plainly and names what to check. Commits and uncommitted changes both remain
+  `implemented`. The existing failure ladder keeps its order and is still evaluated first.
+- Each execution event now carries the resolved state, the agent that ran, the baseline and resulting
+  commit, whether uncommitted changes remain, the exit code, and the agent's own printed output —
+  stored as reported and attributed, never promoted into the state decision. A resume appends a new
+  record instead of rewriting the previous one.
+
+### Fixed
+
+- A completed run's record is no longer discarded when the control worktree holds unrelated dirt:
+  the execution record is written with `requireClean: false`, matching every sibling caller. A write
+  that fails for a real reason now reports the run that is at risk and says the work exists but is
+  unrecorded, instead of claiming something failed to start.
+- `execute --resume --agent <other>` updates the claim to the agent that actually ran, so a later
+  bare `--resume` relaunches it.
+- **What a launched agent may do is now the operator's decision.** `agents.permission_mode` in
+  `.kotta/config.yaml` is passed to the agent as `--permission-mode`. Nothing is baked into the
+  invocation: with no mode set — the shipped default — Kotta passes no flag and the agent's own
+  project settings decide, so a launched run never receives authority the caller had not granted.
+  Previously `claude` was invoked bare, asked for permission nobody could grant, and reliably
+  changed nothing while the run was recorded as an implementation. An unconfigured run now says so
+  at launch and is recorded as `no-change`; a mode that forbids edits by definition (`plan`) is
+  refused at launch naming the cause.
+
 ## [0.5.0] - 2026-08-05
 
 ### Added
