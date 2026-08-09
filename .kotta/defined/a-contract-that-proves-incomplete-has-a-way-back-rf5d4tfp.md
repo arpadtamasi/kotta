@@ -1,7 +1,7 @@
 ---
 id: T-01kzhnsncw8znqdn14rf5d4tfp
 title: A contract that proves incomplete has a way back
-status: backlog
+status: defined
 origin: human
 types:
   - feature
@@ -15,7 +15,7 @@ blocks: []
 branch: null
 pull_request: null
 created_at: '2026-08-08'
-updated_at: '2026-08-08'
+updated_at: '2026-08-09'
 ---
 # T-01kzhnsncw8znqdn14rf5d4tfp — A contract that proves incomplete has a way back
 
