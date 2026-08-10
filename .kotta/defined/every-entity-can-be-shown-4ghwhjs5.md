@@ -1,7 +1,7 @@
 ---
 id: T-01kzn4jcktrv988d0n4ghwhjs5
 title: Every entity can be shown
-status: backlog
+status: defined
 origin: human
 types:
   - feature
