@@ -1,7 +1,7 @@
 ---
 id: T-01kzhnsncw8znqdn14rf5d4tfp
 title: A contract that proves incomplete has a way back
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -12,10 +12,14 @@ risk: medium
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: >-
+  feat/T-01kzhnsncw8znqdn14rf5d4tfp-a-contract-that-proves-incomplete-has-a-way-back
 pull_request: null
 created_at: '2026-08-08'
-updated_at: '2026-08-09'
+updated_at: '2026-08-10'
+assigned_agent: claude
+worktree: .worktrees/T-01kzhnsncw8znqdn14rf5d4tfp
+execution_mode: inherited
 ---
 # T-01kzhnsncw8znqdn14rf5d4tfp — A contract that proves incomplete has a way back
 
