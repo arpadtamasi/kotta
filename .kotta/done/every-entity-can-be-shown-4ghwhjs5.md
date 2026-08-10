@@ -1,7 +1,7 @@
 ---
 id: T-01kzn4jcktrv988d0n4ghwhjs5
 title: Every entity can be shown
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -18,6 +18,7 @@ updated_at: '2026-08-10'
 assigned_agent: claude
 worktree: .worktrees/T-01kzn4jcktrv988d0n4ghwhjs5
 execution_mode: inherited
+resolution: completed
 ---
 # T-01kzn4jcktrv988d0n4ghwhjs5 — Every entity can be shown, and named the way it is printed
 
