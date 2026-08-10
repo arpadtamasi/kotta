@@ -19,11 +19,11 @@ None.
 
 ## Active contracts
 
-- every-entity-can-be-shown-4ghwhjs5
+None.
 
 ## Review
 
-None.
+- every-entity-can-be-shown-4ghwhjs5
 
 ## Blocked
 
