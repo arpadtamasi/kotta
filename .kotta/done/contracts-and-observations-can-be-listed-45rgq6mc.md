@@ -1,7 +1,7 @@
 ---
 id: T-01kzm8xg1hmp20dgy545rgq6mc
 title: Contracts and observations can be listed
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -14,10 +14,11 @@ blocks: []
 branch: feat/T-01kzm8xg1hmp20dgy545rgq6mc-contracts-and-observations-can-be-listed
 pull_request: 'https://github.com/arpadtamasi/kotta/pull/32'
 created_at: '2026-08-09'
-updated_at: '2026-08-09'
+updated_at: '2026-08-10'
 assigned_agent: claude
 worktree: .worktrees/T-01kzm8xg1hmp20dgy545rgq6mc
 execution_mode: inherited
+resolution: completed
 ---
 # T-01kzm8xg1hmp20dgy545rgq6mc — Every entity can be listed
 

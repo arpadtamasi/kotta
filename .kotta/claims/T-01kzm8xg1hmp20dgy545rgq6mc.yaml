@@ -1,6 +1,0 @@
-contract: T-01kzm8xg1hmp20dgy545rgq6mc
-agent: claude
-branch: feat/T-01kzm8xg1hmp20dgy545rgq6mc-contracts-and-observations-can-be-listed
-worktree: .worktrees/T-01kzm8xg1hmp20dgy545rgq6mc
-execution_mode: inherited
-started_at: 2026-08-09T22:11:51.329Z
