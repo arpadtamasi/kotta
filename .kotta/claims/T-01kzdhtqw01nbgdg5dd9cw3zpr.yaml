@@ -1,6 +1,0 @@
-contract: T-01kzdhtqw01nbgdg5dd9cw3zpr
-agent: claude
-branch: refactor/T-01kzdhtqw01nbgdg5dd9cw3zpr-the-execution-record-is-derived-from-what-the-run-actually-d
-worktree: .worktrees/T-01kzdhtqw01nbgdg5dd9cw3zpr
-execution_mode: inherited
-started_at: 2026-08-07T07:44:09.236Z

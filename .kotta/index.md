@@ -24,7 +24,6 @@ None.
 ## Review
 
 - contracts-and-observations-can-be-listed-45rgq6mc
-- the-execution-record-is-derived-from-what-the-run-actually-d-d9cw3zpr
 
 ## Blocked
 

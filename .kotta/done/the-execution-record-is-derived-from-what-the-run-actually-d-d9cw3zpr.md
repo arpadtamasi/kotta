@@ -1,7 +1,7 @@
 ---
 id: T-01kzdhtqw01nbgdg5dd9cw3zpr
 title: The execution record is derived from what the run actually did
-status: review
+status: done
 origin: human
 types:
   - refactor
@@ -16,10 +16,11 @@ branch: >-
   refactor/T-01kzdhtqw01nbgdg5dd9cw3zpr-the-execution-record-is-derived-from-what-the-run-actually-d
 pull_request: 'https://github.com/arpadtamasi/kotta/pull/31'
 created_at: '2026-08-07'
-updated_at: '2026-08-08'
+updated_at: '2026-08-10'
 assigned_agent: claude
 worktree: .worktrees/T-01kzdhtqw01nbgdg5dd9cw3zpr
 execution_mode: inherited
+resolution: completed
 ---
 # T-01kzdhtqw01nbgdg5dd9cw3zpr — The execution record is derived from what the run actually did
 
