@@ -9,6 +9,7 @@ import { validateClaim } from "../../src/core/claim.js";
 import { invocationWriteFailure, invocationWriteWarning, resolveAgentCommand } from "../../src/commands/execute.js";
 import { readAgentPermissionMode } from "../../src/core/config.js";
 import { initializeWorkspace } from "../../src/filesystem/workspace.js";
+import { canonicalEntityId } from "../../src/filesystem/entities.js";
 import { CONTRACT_ID, displayId, entityFilename, filenameMatchesId, isMintedId, mintId, shortId } from "../../src/core/identity.js";
 import { createDecision } from "../../src/commands/decision.js";
 import { decisionDraftFromSource, renderDecision, validateDecision } from "../../src/core/decision.js";
@@ -134,5 +135,32 @@ describe("core deterministic rules", () => {
     const before = readFileSync(canonical, "utf8");
     expect(() => createDecision({ from: source, id: "D-001", approved: true }, root)).toThrow("already exists");
     expect(readFileSync(canonical, "utf8")).toBe(before);
+  });
+});
+
+describe("short ids resolve to one entity", () => {
+  test("an ambiguous short id is refused naming every full id it matched", () => {
+    // Two ULIDs sharing their last eight characters. Unlikely, not impossible — and
+    // a command that silently picked one could never be corrected afterwards.
+    const root = mkdtempSync(join(tmpdir(), "kotta-ambiguous-"));
+    git(root, "init", "-b", "main");
+    writeFileSync(join(root, "README.md"), "fixture\n");
+    initializeWorkspace({ root });
+    const first = "T-01kzaaaaaaaaaaaaaacdefgh23";
+    const second = "T-01kzbbbbbbbbbbbbbbcdefgh23";
+    const backlog = join(root, ".kotta", "backlog");
+    // entityFilename derives the filename from the short id, so these two would collide
+    // there too; the id in the frontmatter is what identifies the entity.
+    for (const [slug, id] of [["colliding-one", first], ["colliding-two", second]] as const) {
+      writeFileSync(join(backlog, `${slug}-${id.slice(-8)}.md`), `---\nid: ${id}\ntitle: Colliding\nstatus: backlog\n---\n# ${id}\n`);
+    }
+
+    expect(() => canonicalEntityId(root, "contract", "T-cdefgh23")).toThrow(/ambiguous/);
+    expect(() => canonicalEntityId(root, "contract", "T-cdefgh23")).toThrow(new RegExp(first));
+    expect(() => canonicalEntityId(root, "contract", "T-cdefgh23")).toThrow(new RegExp(second));
+    // Naming one in full is never ambiguous, and an unknown id is passed through
+    // unchanged so the command's own "not found" is what the reader sees.
+    expect(canonicalEntityId(root, "contract", first)).toBe(first);
+    expect(canonicalEntityId(root, "contract", "T-nope")).toBe("T-nope");
   });
 });

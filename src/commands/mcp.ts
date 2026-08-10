@@ -8,6 +8,7 @@ import { briefContract, defineContract, newContract, reviewContract, startContra
 import { newObservation } from "./observation.js";
 import { statusCommand } from "./status.js";
 import { listCommand } from "./list.js";
+import { showCommand } from "./show.js";
 import { entityStates } from "../filesystem/entities.js";
 import { readEvents } from "../core/events.js";
 import { assertCurrentWorkspaceShape, findRepositoryRoot } from "../filesystem/workspace.js";
@@ -75,6 +76,20 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
       try {
         const result = listCommand(entity, { state: input?.state }, root);
         return toolResult(result as unknown as ToolPayload, `${result.data.count} ${entity === "batch" && result.data.count !== 1 ? "batches" : `${entity}${result.data.count === 1 ? "" : "s"}`}.`);
+      } catch (error) { return toolError(error); }
+    });
+  }
+
+  for (const entity of ["contract", "observation", "decision", "batch"] as const) {
+    server.registerTool(`${entity}_show`, {
+      title: `Show one Kotta ${entity}`,
+      description: `Read one ${entity} as it is stored: its state, its set facts and its body. Accepts the short id the listings print. Read-only, and not the execution brief — use contract_brief when an agent is about to implement.`,
+      inputSchema: { id: z.string().min(1) },
+      annotations: readOnly,
+    }, async ({ id }) => {
+      try {
+        const result = showCommand(entity, id, root);
+        return toolResult(result as unknown as ToolPayload, `${result.data.title || result.data.id} is ${result.data.state}.`);
       } catch (error) { return toolError(error); }
     });
   }

@@ -354,7 +354,12 @@ kotta contract list --state review
 kotta observation list --state new
 kotta decision list
 kotta batch list
+
+kotta contract show T-rf5d4tfp
+kotta observation show F-01kz9d5nqwdwb7r2c0jdzchspa
 ```
+
+`show` answers the other half — one entity as it is stored, its state, its set facts and its body — and is deliberately not `contract brief`: the brief assembles the execution package for an agent about to implement, and exists for contracts alone. **The id the CLI prints is the id the CLI accepts:** the short form shown in every listing resolves on every command that takes an id, and an ambiguous short form is refused naming the full ids it matched rather than guessing between them.
 
 `list` answers "what is in this workspace" for every entity, with the title first and the id after it, and narrows with a repeatable `--state`. It is read-only and deterministic: the same workspace lists the same bytes, and nothing — not even the index — is written. The same four listings reach the calling chat as read-only tools, so an agent orienting itself never has a reason to read `.kotta/` directly.
 
