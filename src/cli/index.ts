@@ -12,6 +12,8 @@ import { closeBatch, finalizeBatch, newBatch, batchStatus, signBatch, startBatch
 import { validateWorkspace } from "../commands/validate.js";
 import { listClaims, releaseClaim } from "../commands/claim.js";
 import { formatList, listCommand, type ListResult } from "../commands/list.js";
+import { formatShow, showCommand, type ShowResult } from "../commands/show.js";
+import { canonicalEntityId, type ListableEntity } from "../filesystem/entities.js";
 import { resolveWorkspaceLocation, uiCommand } from "../commands/ui.js";
 import { createDecision } from "../commands/decision.js";
 import { dedupeEntity, describeDedupe, type DedupeResult } from "../commands/dedupe.js";
@@ -49,6 +51,9 @@ function humanize(result: unknown): string {
     }
     if (command.endsWith(" list") && "data" in result && "entity" in (result as { data: Record<string, unknown> }).data) {
       return formatList(result as ListResult);
+    }
+    if (command.endsWith(" show") && "data" in result && "body" in (result as { data: Record<string, unknown> }).data) {
+      return formatShow(result as ShowResult);
     }
     if (command === "contract new" && "data" in result) {
       const data = (result as { data: { id: unknown; path: unknown } }).data;
@@ -109,6 +114,38 @@ function humanize(result: unknown): string {
  */
 const SHAPE_EXEMPT = new Set(["init", "migrate", "ui", "mcp", "sync"]);
 
+/**
+ * Which entity an id argument belongs to, by the command group it was typed under.
+ * Claims are keyed by the contract they belong to, so they resolve as contracts.
+ */
+const ID_ENTITY: Record<string, ListableEntity> = {
+  contract: "contract",
+  observation: "observation",
+  decision: "decision",
+  batch: "batch",
+  claim: "contract",
+};
+
+/**
+ * The id the CLI printed is the id the CLI accepts. `displayId` shows a minted id by
+ * its short form everywhere — listings, status, human output — so the short form is
+ * resolved here, once, for every command that takes one, rather than in each of them.
+ * Services below this line always receive the full id and never learn the difference.
+ */
+function normaliseIdArgument(action: { parent?: { name(): string } | null; processedArgs?: unknown[] }): void {
+  const group = action.parent?.name();
+  const entity = group ? ID_ENTITY[group] : undefined;
+  const given = action.processedArgs?.[0];
+  if (!entity || typeof given !== "string" || !given.trim()) return;
+  try {
+    action.processedArgs![0] = canonicalEntityId(findRepositoryRoot(), entity, given);
+  } catch (error) {
+    // An ambiguous short form is the operator's decision and must surface; anything
+    // else — no workspace, no repository — is left to the command's own error.
+    if (error instanceof Error && error.message.includes("ambiguous")) throw error;
+  }
+}
+
 program.hook("preAction", (_program, action) => {
   const names = [action.name(), action.parent?.name()].filter(Boolean) as string[];
   if (names.some((name) => SHAPE_EXEMPT.has(name))) return;
@@ -118,6 +155,7 @@ program.hook("preAction", (_program, action) => {
     if (!(error instanceof Error) || !error.message.includes("kotta migrate")) return; // no repository, no workspace: not our refusal
     throw error;
   }
+  normaliseIdArgument(action as unknown as Parameters<typeof normaliseIdArgument>[0]);
 });
 
 program
@@ -164,6 +202,11 @@ contract
   .option("--state <state...>", "Narrow to one or more states")
   .option("--json")
   .action((options: { state?: string[]; json?: boolean }) => print(listCommand("contract", { state: options.state }), Boolean(options.json)));
+contract
+  .command("show <id>")
+  .description("Show one contract: its state, its set facts and its body")
+  .option("--json")
+  .action((id: string, options: { json?: boolean }) => print(showCommand("contract", id), Boolean(options.json)));
 contract
   .command("new")
   .requiredOption("--title <title>")
@@ -267,6 +310,11 @@ observation
   .option("--json")
   .action((options: { state?: string[]; json?: boolean }) => print(listCommand("observation", { state: options.state }), Boolean(options.json)));
 observation
+  .command("show <id>")
+  .description("Show one observation: its state, its set facts and its body")
+  .option("--json")
+  .action((id: string, options: { json?: boolean }) => print(showCommand("observation", id), Boolean(options.json)));
+observation
   .command("new")
   .requiredOption("--title <title>")
   .requiredOption("--type <type>")
@@ -295,6 +343,11 @@ decision
   .option("--json")
   .action((options: { state?: string[]; json?: boolean }) => print(listCommand("decision", { state: options.state }), Boolean(options.json)));
 decision
+  .command("show <id>")
+  .description("Show one decision: its state, its set facts and its body")
+  .option("--json")
+  .action((id: string, options: { json?: boolean }) => print(showCommand("decision", id), Boolean(options.json)));
+decision
   .command("create")
   .description("Validate and atomically record a durable decision")
   .requiredOption("--from <path>", "Markdown decision source")
@@ -311,6 +364,11 @@ batchCommand
   .option("--state <state...>", "Narrow to one or more states")
   .option("--json")
   .action((options: { state?: string[]; json?: boolean }) => print(listCommand("batch", { state: options.state }), Boolean(options.json)));
+batchCommand
+  .command("show <id>")
+  .description("Show one batch: its state, its set facts and its body")
+  .option("--json")
+  .action((id: string, options: { json?: boolean }) => print(showCommand("batch", id), Boolean(options.json)));
 batchCommand
   .command("new")
   .requiredOption("--title <title>")

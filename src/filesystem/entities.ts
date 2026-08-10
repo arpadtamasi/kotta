@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { parseMarkdown } from "../core/markdown.js";
-import { CONTRACT_ID, filenameMatchesId } from "../core/identity.js";
+import { CONTRACT_ID, displayId, filenameMatchesId } from "../core/identity.js";
 import { workspacePath } from "./workspace.js";
 
 export const CONTRACT_STATES = ["backlog", "defined", "active", "review", "done"] as const;
@@ -159,6 +159,27 @@ export function listEntities(root: string, entity: ListableEntity, states?: stri
           return id === null ? [] : [{ id, state, title: entityTitle(file), path: file }];
         });
     });
+}
+
+/**
+ * The full id behind an id the CLI printed. `displayId` shows a minted id by its last
+ * eight characters, and until this existed that short form was output the input side
+ * refused — every listing invited a name the next command would not accept.
+ *
+ * Ambiguity is refused rather than resolved: two entities behind one short form is a
+ * question for the operator, and silently picking one is the worse failure. One id
+ * living in two state directories is not ambiguity — a merge can leave it there, and
+ * the readers already handle it in lifecycle order.
+ */
+export function canonicalEntityId(root: string, entity: ListableEntity, id: string): string {
+  const trimmed = id.trim();
+  const matches = [...new Set(listEntities(root, entity).map((found) => found.id))]
+    .filter((candidate) => candidate === trimmed || displayId(candidate) === trimmed);
+  if (matches.length === 1) return matches[0];
+  if (matches.length > 1) {
+    throw new Error(`${entity} id '${trimmed}' is ambiguous; it matches ${matches.join(", ")}. Name one of them in full.`);
+  }
+  return trimmed;
 }
 
 function entityTitle(path: string): string {

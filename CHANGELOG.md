@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **`show` for every entity, and short ids that resolve.** `kotta contract show`,
+  `kotta observation show`, `kotta decision show` and `kotta batch show` print one entity's state,
+  its set facts and its body, with `--json` and as read-only chat tools. Separately, the short id
+  the CLI displays everywhere — `T-rf5d4tfp` — is now accepted by every command that takes an id,
+  not only by `show`; previously Kotta printed an identifier and then answered "not found" when it
+  was typed back. An ambiguous short form is refused naming the full ids it matched.
+
+### Added
+
 - **`list` for every entity.** `kotta contract list`, `kotta observation list`, `kotta decision list`
   and `kotta batch list` print their entities with state, title and id, narrow with a repeatable
   `--state`, and support `--json` — the shape `kotta claim list` already had and nothing else did.
