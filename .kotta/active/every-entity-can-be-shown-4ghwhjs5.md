@@ -1,7 +1,7 @@
 ---
 id: T-01kzn4jcktrv988d0n4ghwhjs5
 title: Every entity can be shown
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -11,10 +11,13 @@ risk: low
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: feat/T-01kzn4jcktrv988d0n4ghwhjs5-every-entity-can-be-shown
 pull_request: null
 created_at: '2026-08-10'
 updated_at: '2026-08-10'
+assigned_agent: claude
+worktree: .worktrees/T-01kzn4jcktrv988d0n4ghwhjs5
+execution_mode: inherited
 ---
 # T-01kzn4jcktrv988d0n4ghwhjs5 — Every entity can be shown, and named the way it is printed
 
