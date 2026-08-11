@@ -38,6 +38,7 @@ backlog → defined → active → review → done
 | Execute | `kotta contract execute <id> --agent <agent>` | agent, in its own claim + branch + worktree |
 | Submit | `kotta contract review <id> --evidence "…" --pull-request <ref>` | agent |
 | Close | `kotta contract close <id> --approve`, after the human said yes in chat | **human decides** (rule 5) |
+| Retire | `kotta contract cancel <id> --resolution <resolution> --reason "…" [--superseded-by <id>] --approve`, after the human said yes in chat | **human decides** (rule 5) |
 
 `contract execute` does the start, builds the brief and launches a fresh agent context whose only
 input is `kotta contract brief <id>`. Resume an interrupted or failed run with `--resume`; a second
@@ -48,6 +49,12 @@ worktree to the current caller without launching another agent. Fresh remains th
 
 A contract with no unresolved choice may use `None`, `N/A`, or `No open decisions` (with or
 without a final period) under `Open decisions`. Any substantive text there blocks signing.
+
+`close` ends work that was finished and merged; `cancel` ends work whose purpose is gone, from any
+state before `done`, and it is the only exit for a contract a decision made objectless. It always
+records why, and `duplicate` and `obsolete` also require the contract or decision that took the
+work's place. It releases the claim and removes the execution worktree, and never deletes the
+branch. Do not close such a contract as completed and do not leave it sitting in `active`.
 
 Canonical live state, claims and visible conversation stay on `git.base_branch`; implementation
 worktrees contain code and their original baseline, not a divergent lifecycle copy. Commands invoked

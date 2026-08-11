@@ -2,7 +2,7 @@ import { mkdirSync, readdirSync, writeFileSync, readFileSync, existsSync, unlink
 import { join, resolve } from "node:path";
 import { parse as parseYaml, stringify } from "yaml";
 import { findRepositoryRoot, regenerateIndex, workspaceDirectoryName, workspacePath } from "../filesystem/workspace.js";
-import { findContract } from "../filesystem/entities.js";
+import { canonicalEntityId, findContract, listEntities } from "../filesystem/entities.js";
 import { entityFilename, mintId } from "../core/identity.js";
 import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
 import { assertValid, validateContractDefinitionFile, validateContractFile } from "../core/validation.js";
@@ -307,20 +307,81 @@ export function closeContract(id: string, approved: boolean, repositoryRoot?: st
 }
 
 const CANCEL_RESOLUTIONS = ["duplicate", "obsolete", "cancelled"] as const;
+/** Every live state. A retirement must reach the work wherever it got to, or it is not a retirement. */
+const CANCELLABLE_STATES = ["backlog", "defined", "active", "review"];
+/** Resolutions that assert something else took this work's place. The something else gets named. */
+const SUPERSEDING_RESOLUTIONS = ["duplicate", "obsolete"];
 
-export function cancelContract(id: string, resolution: string, approved: boolean, repositoryRoot?: string) {
-  const requestedRoot = repositoryRoot ?? findRepositoryRoot();
-  return withControlPlaneMutation(requestedRoot, (root) => {
+/**
+ * The contract or decision a cancellation points at, resolved to its canonical id.
+ * A dangling link is worse than no link, because it reads as an answer.
+ */
+function supersedingEntity(root: string, value: string, cancelled: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) throw new Error("--superseded-by requires the id of the contract or decision that took this work's place.");
+  for (const kind of ["contract", "decision"] as const) {
+    const canonical = canonicalEntityId(root, kind, trimmed);
+    if (!listEntities(root, kind).some((found) => found.id === canonical)) continue;
+    if (canonical === cancelled) throw new Error(`Contract ${cancelled} cannot supersede itself.`);
+    return canonical;
+  }
+  throw new Error(`--superseded-by '${trimmed}' names no contract or decision in this workspace.`);
+}
+
+/** Contracts that declared a dependency on the one being retired. Reported, never cascaded. */
+function dependentContracts(root: string, id: string): string[] {
+  return listEntities(root, "contract")
+    .filter(({ state }) => state !== "done")
+    .filter((found) => {
+      const depends = parseMarkdown(readFileSync(found.path, "utf8")).data.depends_on;
+      return Array.isArray(depends) && depends.map(String).includes(id);
+    })
+    .map(({ id: dependent }) => dependent);
+}
+
+/**
+ * Retire work that should not continue, from any state it can be sitting in.
+ *
+ * `close` is for work that was finished and merged; this is for work whose purpose is gone —
+ * superseded by a decision, duplicated by another contract, or abandoned. Both end at `done`;
+ * only this one has to say why, and only this one keeps the branch, because a cancelled branch
+ * was never merged and its commits are the single copy of whatever was built.
+ */
+export function cancelContract(
+  id: string,
+  resolution: string,
+  reason: string,
+  approved: boolean,
+  repositoryRoot?: string,
+  options: { supersededBy?: string; locked?: boolean; commit?: boolean; approvalRecorded?: boolean } = {},
+) {
+  const callerRoot = repositoryRoot ?? findRepositoryRoot();
+  const cancel = (root: string) => {
   if (!CANCEL_RESOLUTIONS.includes(resolution as (typeof CANCEL_RESOLUTIONS)[number])) throw new Error(`Cancel resolution must be one of ${CANCEL_RESOLUTIONS.join(", ")}; got '${resolution}'.`);
-  const contract = findContract(root, id);
-  if (!["backlog", "defined"].includes(contract.state)) throw new Error(`Contract ${id} can only be cancelled from backlog or defined; ${contract.state} contracts exit through reopen/close.`);
+  const stated = reason.trim();
+  if (!stated) throw new Error("A cancellation requires --reason \"…\". A retirement with no stated cause is the fact this command exists to keep.");
+  // The claim and worktree paths are keyed by the full id; resolving the short form the
+  // listings print keeps a `cancel T-rf5d4tfp` from quietly leaving both behind.
+  const canonicalId = canonicalEntityId(root, "contract", id);
+  const contract = findContract(root, canonicalId);
+  if (contract.state === "done") throw new Error(`Contract ${canonicalId} is already done; a retired or completed contract returns through reopen, not through a second cancel.`);
+  if (!CANCELLABLE_STATES.includes(contract.state)) throw new Error(`Contract ${canonicalId} cannot be cancelled from ${contract.state}.`);
   if (!approved) throw new Error("Human cancel approval is required. Re-run with --approve after confirming the contract should be retired.");
-  const claimPath = workspacePath(root, "claims", `${id}.yaml`);
-  if (existsSync(claimPath)) throw new Error(`Contract ${id} has a claim; a claimed contract cannot be cancelled.`);
-  assertClean(root);
+  const superseding = options.supersededBy ? supersedingEntity(root, options.supersededBy, canonicalId) : null;
+  if (!superseding && SUPERSEDING_RESOLUTIONS.includes(resolution)) {
+    throw new Error(`Resolution '${resolution}' says other work took this contract's place; name it with --superseded-by, or retire the contract with --resolution cancelled.`);
+  }
+  // Mirrors close: an absent worktree is not an obstacle, only an unclean one. Reusing the
+  // claim-release guard instead would refuse a missing worktree and trap the very contract
+  // this command exists to free.
+  const worktree = join(root, ".worktrees", canonicalId);
+  if (existsSync(worktree) && git(worktree, ["status", "--porcelain"])) throw new Error(`Worktree ${worktree} contains uncommitted changes; ${canonicalId} was not cancelled.`);
   const entity = parseMarkdown(readFileSync(contract.path, "utf8"));
+  const branch = typeof entity.data.branch === "string" ? entity.data.branch : null;
   entity.data.status = "done";
   entity.data.resolution = resolution;
+  entity.data.cancellation_reason = stated;
+  if (superseding) entity.data.superseded_by = superseding;
   entity.data.updated_at = new Date().toISOString().slice(0, 10);
   const doneDirectory = workspacePath(root, "done");
   mkdirSync(doneDirectory, { recursive: true });
@@ -335,13 +396,26 @@ export function cancelContract(id: string, resolution: string, approved: boolean
     throw error;
   }
   unlinkSync(contract.path);
-  updateContainingBatch(root, id);
+  const claimPath = workspacePath(root, "claims", `${canonicalId}.yaml`);
+  const claimReleased = existsSync(claimPath);
+  if (claimReleased) unlinkSync(claimPath);
+  const dependents = dependentContracts(root, canonicalId);
+  updateContainingBatch(root, canonicalId);
   regenerateIndex(root);
-  appendLifecycleEvent(root, id, "done", `Contract cancelled with resolution ${resolution}.`);
-  git(root, ["add", workspaceDirectoryName(root)]);
-  git(root, ["commit", "-m", `chore(kotta): cancel ${id} (${resolution})`]);
-  return { ok: true, command: "contract cancel", data: { id, resolution, path: destination } };
-  });
+  const summary = [
+    `Contract cancelled from ${contract.state} with resolution ${resolution}.`,
+    `Reason: ${stated}`,
+    superseding ? `Superseded by ${superseding}.` : null,
+    claimReleased ? "The claim was released." : null,
+    branch ? `Branch ${branch} was preserved.` : null,
+  ].filter(Boolean).join(" ");
+  appendLifecycleEvent(root, canonicalId, "done", summary);
+  if (!options.approvalRecorded) appendCliApprovalAudit(root, canonicalId, "contract.cancel", { resolution, reason: stated, superseded_by: superseding });
+  if (existsSync(worktree)) git(root, ["worktree", "remove", worktree]);
+  if (options.commit !== false) commitControlState(root, `chore(kotta): cancel ${canonicalId} (${resolution})`);
+  return { ok: true, command: "contract cancel", data: { id: canonicalId, resolution, reason: stated, supersededBy: superseding, path: destination, claimReleased, branch, dependents } };
+  };
+  return options.locked ? cancel(callerRoot) : withControlPlaneMutation(callerRoot, cancel);
 }
 
 export function reopenContract(id: string, approved: boolean, repositoryRoot?: string, options: { locked?: boolean; commit?: boolean; approvalRecorded?: boolean } = {}) {

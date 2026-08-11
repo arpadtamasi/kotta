@@ -198,6 +198,34 @@ describe("Kotta caller-chat MCP", () => {
     expect(readEvents(root, id).filter((event) => event.kind === "approval").map((event) => event.phase)).toEqual(["proposed", "rejected"]);
   });
 
+  test("retires a signed contract from the caller chat, with the reason and the supersession in the prompt", async () => {
+    const root = fixture();
+    const connected = await connect(root);
+    const id = await createAndDefine(connected.client, root);
+    await connected.client.callTool({ name: "approval_request", arguments: { entity: id, action: "contract.sign", payload: {} } });
+    expect(findContract(root, id).state).toBe("defined");
+
+    const unnamed = await connected.client.callTool({
+      name: "approval_request",
+      arguments: { entity: id, action: "contract.cancel", payload: { resolution: "obsolete", reason: "A decision settled the opposite" } },
+    });
+    expect(unnamed.isError).toBe(true);
+    expect(JSON.stringify(unnamed.structuredContent)).toContain("supersededBy");
+    expect(findContract(root, id).state).toBe("defined");
+
+    const retired = await connected.client.callTool({
+      name: "approval_request",
+      arguments: { entity: id, action: "contract.cancel", payload: { resolution: "cancelled", reason: "The work is objectless" } },
+    });
+    expect(retired.isError).not.toBe(true);
+    // The human is shown what ends and why, not only which command runs.
+    expect(JSON.stringify(connected.prompt())).toContain("The work is objectless");
+    expect(findContract(root, id).state).toBe("done");
+    // The refused proposal above never reached the event log; only sign and cancel did.
+    const phases = readEvents(root, id).filter((event) => event.kind === "approval").map((event) => event.phase);
+    expect(phases).toEqual(["proposed", "approved", "applied", "proposed", "approved", "applied"]);
+  });
+
   test("fails closed when the calling host cannot present elicitation", async () => {
     const root = fixture();
     const client = await connectWithoutElicitation(root);

@@ -20,4 +20,10 @@ Work only in the branch and worktree recorded by the contract's claim. Kotta sta
 7. Run the repository checks and contract-specific verification. Capture exact, reproducible evidence for every acceptance condition and profile requirement.
 8. Keep implementation changes committed on the feature branch and leave the working tree clean before review. Lifecycle state, claims and visible chat remain on the control branch and are mutated only through Kotta.
 
+A contract that turns out to have no object — a decision has since settled the opposite, or another
+contract already covers it — is not finished and not left running. Say so in chat and retire it with
+`kotta contract cancel <id> --resolution obsolete --reason "…" --superseded-by <id> --approve` on an
+explicit human yes. The command works from `active`, releases the claim, removes the worktree and
+keeps the branch, so nothing already built is lost.
+
 Do not merge, close, or claim acceptance. Execution produces an implementation candidate and evidence; review remains a separate state.

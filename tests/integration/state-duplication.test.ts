@@ -62,7 +62,7 @@ describe("one entity in two state directories (T-036)", () => {
     run(root, ["contract", "sign", contract.id, "--approve"]);
     git(root, "branch", "branch-defined");
     git(root, "reset", "--hard", commonBase);
-    run(root, ["contract", "cancel", contract.id, "--resolution", "obsolete", "--approve"]);
+    run(root, ["contract", "cancel", contract.id, "--resolution", "cancelled", "--reason", "Retired to produce the duplicated state", "--approve"]);
 
     const merge = spawnSync("git", ["merge", "--no-ff", "branch-defined", "-m", "merge"], { cwd: root, encoding: "utf8" });
     expect(`${merge.stdout}${merge.stderr}`).toContain("CONFLICT (rename/rename)");

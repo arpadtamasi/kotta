@@ -182,6 +182,13 @@ backlog → defined → active → review → done
 ```
 
 - Contracts define an observable outcome, bounded scope, acceptance conditions, and verification.
+- Work that should not continue leaves through `kotta contract cancel <id> --resolution <resolution>
+  --reason "…" --approve`, from any state before `done`. `close` is for work that was finished and
+  merged; `cancel` is for work whose purpose is gone — superseded by a decision, duplicated by
+  another contract, or abandoned. `duplicate` and `obsolete` also require `--superseded-by <id>`
+  naming the contract or decision that took its place, so the record says what killed the work and
+  not only that it ended. Cancelling releases the claim and removes the execution worktree; the
+  branch is preserved, because a cancelled branch was never merged.
 - Profiles add work-specific requirements for bugs, UI, performance, workflows, metrics, refactors, and discovery.
 - Batches coordinate sprints, milestones, batches, or missions with sequential, parallel, or dependency-aware execution.
 - Observations capture possible bugs and technical debt without silently expanding active work.
