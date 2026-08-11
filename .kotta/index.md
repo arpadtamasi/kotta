@@ -18,11 +18,12 @@ None.
 
 ## Active contracts
 
-- objectless-work-is-retired-by-name-and-the-record-says-what--wqv7bbf8
+None.
 
 ## Review
 
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
+- objectless-work-is-retired-by-name-and-the-record-says-what--wqv7bbf8
 
 ## Blocked
 
