@@ -13,13 +13,12 @@ None.
 ## Defined contracts
 
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
-- objectless-work-is-retired-by-name-and-the-record-says-what--wqv7bbf8
 - one-operation-registry-derives-both-the-cli-and-the-mcp-surf-06fw8n0g
 - the-agent-rules-reach-the-calling-chat-as-a-generated-file-n-atnxppcm
 
 ## Active contracts
 
-None.
+- objectless-work-is-retired-by-name-and-the-record-says-what--wqv7bbf8
 
 ## Review
 

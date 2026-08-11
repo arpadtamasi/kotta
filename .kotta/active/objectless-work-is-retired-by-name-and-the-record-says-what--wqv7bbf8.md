@@ -1,7 +1,7 @@
 ---
 id: T-01kzrdybqzgpmv3ff0wqv7bbf8
 title: 'Objectless work is retired by name, and the record says what superseded it'
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -12,10 +12,14 @@ risk: medium
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: >-
+  feat/T-01kzrdybqzgpmv3ff0wqv7bbf8-objectless-work-is-retired-by-name-and-the-record-says-what-
 pull_request: null
 created_at: '2026-08-11'
 updated_at: '2026-08-11'
+assigned_agent: claude
+worktree: .worktrees/T-01kzrdybqzgpmv3ff0wqv7bbf8
+execution_mode: inherited
 ---
 # T-01kzrdybqzgpmv3ff0wqv7bbf8 — Objectless work is retired by name, and the record says what superseded it
 
