@@ -18,11 +18,11 @@ None.
 
 ## Active contracts
 
-- a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
+None.
 
 ## Review
 
-None.
+- a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
 
 ## Blocked
 
