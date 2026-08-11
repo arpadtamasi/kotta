@@ -1,7 +1,7 @@
 ---
 id: T-01kzrdybqzgpmv3ff0wqv7bbf8
 title: 'Objectless work is retired by name, and the record says what superseded it'
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -20,6 +20,7 @@ updated_at: '2026-08-11'
 assigned_agent: claude
 worktree: .worktrees/T-01kzrdybqzgpmv3ff0wqv7bbf8
 execution_mode: inherited
+resolution: completed
 ---
 # T-01kzrdybqzgpmv3ff0wqv7bbf8 — Objectless work is retired by name, and the record says what superseded it
 
