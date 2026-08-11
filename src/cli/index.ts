@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { initCommand } from "../commands/init.js";
-import { briefContract, cancelContract, closeContract, defineContract, newContract, signContract, reopenContract, reviewContract, startContract, validateContract } from "../commands/contract.js";
+import { briefContract, cancelContract, closeContract, defineContract, newContract, signContract, reopenContract, reviewContract, reviseContract, startContract, validateContract } from "../commands/contract.js";
 import { executeContract, formatExecution } from "../commands/execute.js";
 import { statusCommand } from "../commands/status.js";
 import { newObservation, resolveObservation, validateObservation } from "../commands/observation.js";
@@ -62,13 +62,14 @@ function humanize(result: unknown): string {
     if (command === "status" && "data" in result) {
       // The workspace path leads: with `.kotta/` and `.a-team/` both readable, the directory that
       // answered is the first thing a reader needs (D-007).
-      const data = (result as { data: { workspace: unknown; definedContracts: unknown[]; activeContracts: unknown[]; reviewContracts: unknown[]; newObservations: unknown[]; skills?: { shipped: number; installed: number; drifted: string[] } } }).data;
+      const data = (result as { data: { workspace: unknown; definedContracts: unknown[]; activeContracts: unknown[]; reviewContracts: unknown[]; newObservations: unknown[]; revisedContracts?: { title: string; reason: string }[]; skills?: { shipped: number; installed: number; drifted: string[] } } }).data;
       const lines = [
         `Workspace: ${String(data.workspace)}`,
         `Defined ${data.definedContracts.length}, active ${data.activeContracts.length}, review ${data.reviewContracts.length}, new observations ${data.newObservations.length}.`,
       ];
       // Absent skills and stale skills fail the same way — silently — so both are named here,
       // with the one command that fixes either.
+      for (const revised of data.revisedContracts ?? []) lines.push(`Revised, awaiting a new definition: ${revised.title} — ${revised.reason}`);
       if (data.skills && data.skills.installed === 0 && data.skills.shipped > 0) {
         lines.push(`Skills: none installed of ${data.skills.shipped} shipped. Run 'kotta sync'.`);
       } else if (data.skills && data.skills.drifted.length) {
@@ -296,6 +297,13 @@ contract
   .option("--approve")
   .option("--json")
   .action((id: string, options: { approve?: boolean; json?: boolean }) => print(dedupeEntity("contract", id, Boolean(options.approve)), Boolean(options.json)));
+contract
+  .command("revise <id>")
+  .description("Human gate: return a signed or started contract to backlog so its text can be corrected")
+  .requiredOption("--reason <reason>", "Why the contract is being revised")
+  .option("--approve")
+  .option("--json")
+  .action((id: string, options: { reason: string; approve?: boolean; json?: boolean }) => print(reviseContract(id, options.reason, Boolean(options.approve)), Boolean(options.json)));
 contract
   .command("reopen <id>")
   .option("--approve")

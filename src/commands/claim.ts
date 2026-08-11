@@ -1,9 +1,12 @@
-import { existsSync, readFileSync, readdirSync, unlinkSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { isAbsolute, join, resolve } from "node:path";
 import { parse } from "yaml";
-import { findRepositoryRoot, workspacePath } from "../filesystem/workspace.js";
+import { findRepositoryRoot, regenerateIndex, workspacePath } from "../filesystem/workspace.js";
 import { git } from "../git/git.js";
 import { validateClaim } from "../core/claim.js";
+import { findContract } from "../filesystem/entities.js";
+import { parseMarkdown, renderMarkdown } from "../core/markdown.js";
+import { appendLifecycleEvent } from "../core/events.js";
 import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
 
 interface LocatedClaim { path: string; worktree: string; data: Record<string, unknown> }
@@ -41,7 +44,31 @@ export function releaseClaim(id: string, force: boolean) {
     if (!existsSync(executionWorktree)) throw new Error(`Execution worktree ${executionWorktree} is missing; restore or inspect it before releasing the claim.`);
     if (git(executionWorktree, ["status", "--porcelain"])) throw new Error(`Execution worktree ${executionWorktree} has uncommitted changes; the claim was not released.`);
     unlinkSync(path);
+    // Release is the inverse of start, and start moved the contract from `defined` to
+    // `active`. Undoing only the claim left the contract at `active` with no claim,
+    // where no command accepted it — start and execute want `defined`, reopen wants
+    // review or done, cancel wants backlog or defined. It now goes back where it came
+    // from, and the branch and worktree it kept are what start reuses.
+    let contractState: string | null = null;
+    try {
+      const contract = findContract(controlRoot, id);
+      if (contract.state === "active") {
+        const entity = parseMarkdown(readFileSync(contract.path, "utf8"));
+        entity.data.status = "defined";
+        delete entity.data.worktree;
+        delete entity.data.execution_mode;
+        delete entity.data.assigned_agent;
+        entity.data.updated_at = new Date().toISOString().slice(0, 10);
+        const destination = workspacePath(controlRoot, "defined", contract.filename);
+        mkdirSync(workspacePath(controlRoot, "defined"), { recursive: true });
+        writeFileSync(destination, renderMarkdown(entity.data, entity.content));
+        unlinkSync(contract.path);
+        regenerateIndex(controlRoot);
+        appendLifecycleEvent(controlRoot, id, "defined", "Claim released; the contract returned to defined with its branch and worktree preserved.");
+        contractState = "defined";
+      } else contractState = contract.state;
+    } catch { /* an orphaned claim with no contract is still worth releasing */ }
     commitControlState(controlRoot, `chore(kotta): release claim ${id}`);
-    return { ok: true, command: "claim release", data: { id, worktree: executionWorktree, warning: "The branch and worktree were preserved for manual recovery." } };
+    return { ok: true, command: "claim release", data: { id, worktree: executionWorktree, contractState, warning: "The branch and worktree were preserved for manual recovery." } };
   });
 }

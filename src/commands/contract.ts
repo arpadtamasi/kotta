@@ -1,5 +1,5 @@
 import { mkdirSync, readdirSync, writeFileSync, readFileSync, existsSync, unlinkSync, renameSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { isAbsolute, join, resolve } from "node:path";
 import { parse as parseYaml, stringify } from "yaml";
 import { findRepositoryRoot, regenerateIndex, workspaceDirectoryName, workspacePath } from "../filesystem/workspace.js";
 import { findContract } from "../filesystem/entities.js";
@@ -122,6 +122,67 @@ export function signContract(id: string, approved: boolean, repositoryRoot?: str
   return options.locked ? sign(requestedRoot) : withControlPlaneMutation(requestedRoot, sign, { requireClean: false });
 }
 
+/**
+ * The way back for a contract that proved wrong before it was finished.
+ *
+ * Signing said the contract was ready; revising says it was not, so it costs a human
+ * approval and a stated reason. It is not `cancel`: the contract keeps its id, its
+ * history and its intent, and the log says it was revised. Routing a resize through
+ * cancel and reopen — the only path that existed before — recorded a retirement that
+ * never happened.
+ *
+ * From `active` the claim is released first, through the same guard `claim release`
+ * uses: uncommitted work in the execution worktree stops the revision, and the branch
+ * and worktree are preserved. No step leaves the contract in a state no command
+ * accepts, which is the defect this closes and the one thing it must not reproduce.
+ */
+export function reviseContract(id: string, reason: string, approved: boolean, repositoryRoot?: string, options: { locked?: boolean; commit?: boolean; approvalRecorded?: boolean } = {}) {
+  const callerRoot = repositoryRoot ?? findRepositoryRoot();
+  const revise = (root: string) => {
+    const contract = findContract(root, id);
+    if (!["defined", "active"].includes(contract.state)) {
+      const alternative = ["review", "done"].includes(contract.state) ? " Reopen owns those states." : "";
+      throw new Error(`Contract ${id} can only be revised from defined or active; it is ${contract.state}.${alternative}`);
+    }
+    const stated = reason.trim();
+    if (!stated) throw new Error("--reason is required to revise a contract. A revision without a stated cause is indistinguishable from a hand-edit.");
+    if (!approved) throw new Error("Human approval is required to revise a signed contract. Re-run with --approve after the human said yes in the conversation.");
+
+    const claimPath = workspacePath(root, "claims", `${id}.yaml`);
+    const releasedClaim = existsSync(claimPath);
+    if (releasedClaim) {
+      const claim = parseYaml(readFileSync(claimPath, "utf8")) as Record<string, unknown>;
+      const recorded = String(claim.worktree ?? `.worktrees/${id}`);
+      const worktree = isAbsolute(recorded) ? recorded : join(root, recorded);
+      if (!existsSync(worktree)) throw new Error(`Execution worktree ${worktree} is missing; restore or inspect it before revising ${id}.`);
+      if (git(worktree, ["status", "--porcelain"])) throw new Error(`Execution worktree ${worktree} has uncommitted changes; ${id} was not revised and nothing was released.`);
+    }
+
+    const previous = contract.state;
+    const entity = parseMarkdown(readFileSync(contract.path, "utf8"));
+    entity.data.status = "backlog";
+    entity.data.revision_reason = stated;
+    entity.data.branch = null;
+    entity.data.pull_request = null;
+    delete entity.data.worktree;
+    delete entity.data.execution_mode;
+    delete entity.data.assigned_agent;
+    entity.data.updated_at = new Date().toISOString().slice(0, 10);
+
+    const destination = workspacePath(root, "backlog", contract.filename);
+    mkdirSync(workspacePath(root, "backlog"), { recursive: true });
+    writeFileSync(destination, renderMarkdown(entity.data, entity.content));
+    unlinkSync(contract.path);
+    if (releasedClaim) unlinkSync(claimPath);
+    regenerateIndex(root);
+    appendLifecycleEvent(root, id, "backlog", `Revised from ${previous}: ${stated}`);
+    if (!options.approvalRecorded) appendCliApprovalAudit(root, id, "contract.revise", { previous_state: previous, reason: stated, claim_released: releasedClaim });
+    if (options.commit !== false) commitControlState(root, `chore(kotta): revise ${id}`);
+    return { ok: true, command: "contract revise", data: { id, state: "backlog", previousState: previous, reason: stated, claimReleased: releasedClaim } };
+  };
+  return options.locked ? revise(callerRoot) : withControlPlaneMutation(callerRoot, revise);
+}
+
 export function startContract(id: string, agent: string, executionMode: "fresh" | "inherited" = "fresh", repositoryRoot?: string) {
   const callerRoot = repositoryRoot ?? findRepositoryRoot();
   return withControlPlaneMutation(callerRoot, (root) => {
@@ -140,15 +201,27 @@ export function startContract(id: string, agent: string, executionMode: "fresh" 
     const branch = branchName(type, id, title);
     const worktreeRelative = `.worktrees/${id}`;
     const worktree = join(root, worktreeRelative);
-    assertSafeWorktreePath(worktree);
-    if (git(root, ["branch", "--list", branch])) throw new Error(`Branch already exists: ${branch}`);
+    // A branch and worktree this contract already owns are reused, not refused: `revise`
+    // and `claim release` both return a contract to a state it can be started from while
+    // deliberately preserving them, and a second start must not be blocked by what the
+    // first one left behind. Reuse is proven, not assumed — the path must already be a
+    // worktree checked out on this contract's branch. Anything else, including someone
+    // else's branch of the same name or a stray directory, is still a refusal.
+    const branchExists = Boolean(git(root, ["branch", "--list", branch]));
+    const reusable = branchExists && existsSync(worktree) && (() => {
+      try { return git(worktree, ["rev-parse", "--abbrev-ref", "HEAD"]) === branch; } catch { return false; }
+    })();
+    if (!reusable) assertSafeWorktreePath(worktree);
+    if (branchExists && !reusable) throw new Error(`Branch already exists: ${branch}`);
 
     let createdWorktree = false;
     let lifecyclePath: string | null = null;
     const active = workspacePath(root, "active", contract.filename);
     try {
-      git(root, ["worktree", "add", worktree, "-b", branch, "HEAD"]);
-      createdWorktree = true;
+      if (!reusable) {
+        git(root, ["worktree", "add", worktree, "-b", branch, "HEAD"]);
+        createdWorktree = true;
+      }
       if (readEnv("TEST_FAIL_START_AT") === "after-worktree") throw new Error("Injected start failure after worktree creation.");
       mkdirSync(workspacePath(root, "active"), { recursive: true });
       mkdirSync(workspacePath(root, "claims"), { recursive: true });
