@@ -8,7 +8,7 @@ import { displayId } from "../core/identity.js";
 export interface ShowResult {
   ok: true;
   command: string;
-  data: { entity: ListableEntity; id: string; state: string; path: string; title: string; facts: Record<string, string>; body: string };
+  data: { entity: ListableEntity; id: string; state: string; path: string; title: string; facts: Record<string, string>; body: string; superseded: Array<{ id: string; title: string }> };
 }
 
 /**
@@ -34,11 +34,23 @@ export function showCommand(entity: ListableEntity, id: string, repositoryRoot?:
     facts[key] = Array.isArray(value) ? value.map(String).join(", ") : String(value);
   }
   const title = typeof parsed.data.title === "string" ? parsed.data.title.trim() : "";
-  return { ok: true, command: `${entity} show`, data: { entity, id: canonical, state: found.state, path: found.path, title, facts, body: parsed.content.trim() } };
+  const superseded = entity === "decision" ? supersededContracts(root, canonical) : [];
+  return { ok: true, command: `${entity} show`, data: { entity, id: canonical, state: found.state, path: found.path, title, facts, body: parsed.content.trim(), superseded } };
+}
+
+/**
+ * The contracts a decision retired, read back from the contracts themselves.
+ * A decision file keeps three fields and stays that way; the link is stored once, on the
+ * contract that lost its purpose, and the decision's side of it is derived here.
+ */
+function supersededContracts(root: string, decision: string): Array<{ id: string; title: string }> {
+  return listEntities(root, "contract")
+    .filter((found) => parseMarkdown(readFileSync(found.path, "utf8")).data.superseded_by === decision)
+    .map(({ id, title }) => ({ id, title }));
 }
 
 export function formatShow(result: ShowResult): string {
-  const { id, state, title, facts, body, path } = result.data;
+  const { id, state, title, facts, body, path, superseded } = result.data;
   const width = Math.max(...["state", "id", ...Object.keys(facts)].map((key) => key.length));
   const lines = [
     title || "(untitled)",
@@ -47,6 +59,7 @@ export function formatShow(result: ShowResult): string {
     `  ${"id".padEnd(width)}  ${displayId(id)}${displayId(id) === id ? "" : `  (${id})`}`,
     ...Object.entries(facts).map(([key, value]) => `  ${key.padEnd(width)}  ${value}`),
     `  ${"path".padEnd(width)}  ${path}`,
+    ...(superseded.length ? ["", "Superseded contracts", ...superseded.map(({ id: retired, title: retiredTitle }) => `  ${displayId(retired)}  ${retiredTitle}`)] : []),
     "",
     body,
   ];

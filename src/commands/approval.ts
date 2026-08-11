@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import matter from "gray-matter";
 import { closeBatch, findBatch } from "./batch.js";
-import { closeContract, reopenContract, signContract } from "./contract.js";
+import { cancelContract, closeContract, reopenContract, signContract } from "./contract.js";
 import { findObservation, resolveObservation } from "./observation.js";
 import { appendEvent, approvalHistory, mintApprovalId, readEvents, type KottaEvent } from "../core/events.js";
 import { CONTRACT_ID, OBSERVATION_ID, BATCH_ID } from "../core/identity.js";
@@ -13,6 +13,7 @@ export const APPROVAL_ACTIONS = [
   "contract.sign",
   "observation.resolve",
   "contract.close",
+  "contract.cancel",
   "contract.request-changes",
   "batch.close",
 ] as const;
@@ -22,6 +23,10 @@ export type ApprovalDecision = "approved" | "rejected" | "cancelled";
 
 const ACTIONS = new Set<string>(APPROVAL_ACTIONS);
 const OBSERVATION_DISPOSITIONS = new Set(["create-contract", "attach-existing", "investigate", "accept-risk", "reject", "merge-duplicate"]);
+const CANCEL_RESOLUTIONS = new Set(["duplicate", "obsolete", "cancelled"]);
+const SUPERSEDING_RESOLUTIONS = new Set(["duplicate", "obsolete"]);
+/** Cancelling is the one gated action whose whole point is the payload: what ends, why, and what replaced it. */
+const CANCEL_PAYLOAD_FIELDS = new Set(["resolution", "reason", "supersededBy"]);
 
 function validateEntity(action: ApprovalAction, entity: string): void {
   const pattern = action.startsWith("contract.") ? CONTRACT_ID : action === "observation.resolve" ? OBSERVATION_ID : BATCH_ID;
@@ -29,6 +34,15 @@ function validateEntity(action: ApprovalAction, entity: string): void {
 }
 
 function validatePayload(action: ApprovalAction, payload: Record<string, unknown>): void {
+  if (action === "contract.cancel") {
+    const resolution = typeof payload.resolution === "string" ? payload.resolution : "";
+    if (!CANCEL_RESOLUTIONS.has(resolution)) throw new Error("contract.cancel requires one explicit valid resolution.");
+    if (!(typeof payload.reason === "string" && payload.reason.trim())) throw new Error("contract.cancel requires a stated reason.");
+    const supersededBy = typeof payload.supersededBy === "string" ? payload.supersededBy.trim() : "";
+    if (SUPERSEDING_RESOLUTIONS.has(resolution) && !supersededBy) throw new Error(`Resolution '${resolution}' requires supersededBy naming the contract or decision that took this work's place.`);
+    if (Object.keys(payload).some((key) => !CANCEL_PAYLOAD_FIELDS.has(key))) throw new Error("contract.cancel accepts only the resolution, reason and supersededBy payload.");
+    return;
+  }
   if (action === "observation.resolve") {
     const disposition = typeof payload.disposition === "string" ? payload.disposition : "";
     if (!OBSERVATION_DISPOSITIONS.has(disposition)) throw new Error("observation.resolve requires one explicit valid disposition.");
@@ -49,11 +63,22 @@ function relatedContract(root: string, entity: string, action: ApprovalAction): 
 }
 
 export function approvalDescription(action: ApprovalAction, entity: string, payload: Record<string, unknown> = {}): string {
-  const detail = action === "observation.resolve" ? ` --disposition ${String(payload.disposition)}` : "";
-  return `${action} ${entity}${detail}`;
+  if (action === "observation.resolve") return `${action} ${entity} --disposition ${String(payload.disposition)}`;
+  if (action === "contract.cancel") {
+    const superseded = typeof payload.supersededBy === "string" && payload.supersededBy.trim() ? ` --superseded-by ${payload.supersededBy.trim()}` : "";
+    return `${action} ${entity} --resolution ${String(payload.resolution)}${superseded} --reason "${String(payload.reason)}"`;
+  }
+  return `${action} ${entity}`;
 }
 
 function assertApplicable(root: string, entity: string, action: ApprovalAction): void {
+  if (action === "contract.cancel") {
+    const state = findContract(root, entity).state;
+    // Cancelling is the exception among the contract actions: it reaches the work wherever it
+    // got to, and only a contract already at done has nothing left to retire.
+    if (state === "done") throw new Error(`contract.cancel requires ${entity} to still be live; it is already done. Reopen it first if it must change.`);
+    return;
+  }
   if (action.startsWith("contract.")) {
     const state = findContract(root, entity).state;
     const expected = action === "contract.sign" ? "backlog" : "review";
@@ -77,6 +102,12 @@ function apply(root: string, proposal: KottaEvent): unknown {
     case "contract.sign": return signContract(proposal.entity, true, root, { approvalRecorded: true, locked: true, commit: false });
     case "observation.resolve": return resolveObservation(proposal.entity, String(payload.disposition), true, root, { approvalRecorded: true, locked: true, commit: false });
     case "contract.close": return closeContract(proposal.entity, true, root, { locked: true, commit: false, approvalRecorded: true });
+    case "contract.cancel": return cancelContract(proposal.entity, String(payload.resolution), String(payload.reason), true, root, {
+      supersededBy: typeof payload.supersededBy === "string" ? payload.supersededBy : undefined,
+      locked: true,
+      commit: false,
+      approvalRecorded: true,
+    });
     case "contract.request-changes": return reopenContract(proposal.entity, true, root, { locked: true, commit: false, approvalRecorded: true });
     case "batch.close": return closeBatch(proposal.entity, true, root, { skipClean: true, commit: false, approvalRecorded: true });
   }

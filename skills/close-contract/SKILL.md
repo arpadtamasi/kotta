@@ -16,3 +16,10 @@ Use `kotta contract close` as the canonical completion operation. Never delete c
 6. Report any resource intentionally retained and the exact safe follow-up.
 
 A merge alone is insufficient: completion requires accepted review and verified acceptance. Rejected review returns through a legal CLI transition instead of being closed.
+
+Work whose purpose is gone is not closed at all — it is retired. `kotta contract cancel <id>
+--resolution <resolution> --reason "…" --approve` accepts any state before `done`, and
+`--superseded-by <id>` names the contract or decision that took its place, which `duplicate` and
+`obsolete` require. Use it when a decision made the contract objectless, when another contract
+duplicates it, or when it is abandoned outright. Closing such a contract as `completed` records work
+that was never wanted, and leaving it in `active` or `review` is not a resolution.

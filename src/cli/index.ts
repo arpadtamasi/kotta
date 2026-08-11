@@ -269,11 +269,14 @@ contract
   .action((id: string, options: { approve?: boolean; json?: boolean }) => print(closeContract(id, Boolean(options.approve)), Boolean(options.json)));
 contract
   .command("cancel <id>")
-  .description("Retire a backlog or defined contract into done with a non-completed resolution")
+  .description("Retire a live contract into done with a non-completed resolution, from any state before done")
   .requiredOption("--resolution <resolution>", "duplicate | obsolete | cancelled")
+  .requiredOption("--reason <reason>", "Why this work is being retired")
+  .option("--superseded-by <id>", "The contract or decision that took this work's place; required for duplicate and obsolete")
   .option("--approve")
   .option("--json")
-  .action((id: string, options: { resolution: string; approve?: boolean; json?: boolean }) => print(cancelContract(id, options.resolution, Boolean(options.approve)), Boolean(options.json)));
+  .action((id: string, options: { resolution: string; reason: string; supersededBy?: string; approve?: boolean; json?: boolean }) =>
+    print(cancelContract(id, options.resolution, options.reason, Boolean(options.approve), undefined, { supersededBy: options.supersededBy }), Boolean(options.json)));
 contract
   .command("brief <id>")
   .description("Assemble the minimal execution context for a contract (D-009)")

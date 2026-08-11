@@ -118,7 +118,7 @@ function backlogBatchWithMembers(label: string, members: Array<"done" | "defined
   git(root, "commit", "-m", "define contracts");
   // `contract cancel` is a supported writer into `done`; it needs a clean tree and commits itself.
   members.forEach((member, index) => {
-    if (member === "done") run(root, ["contract", "cancel", contracts[index].id, "--resolution", "obsolete", "--approve"]);
+    if (member === "done") run(root, ["contract", "cancel", contracts[index].id, "--resolution", "cancelled", "--reason", "Retired to place a done member in the batch", "--approve"]);
   });
   const created = run(root, ["batch", "new", "--title", `Batch ${label}`, "--goal", "Ship the slice"]) as { data: { id: string; path: string } };
   for (const contract of contracts) run(root, ["batch", "add", created.data.id, contract.id]);
