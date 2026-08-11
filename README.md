@@ -347,6 +347,8 @@ kotta observation resolve F-032 --disposition create-contract --approve
 
 kotta decision create --from /tmp/cutover-decision.md --approve
 
+kotta contract revise T-014 --reason "The premise expired before it ran" --approve
+
 kotta claim list
 kotta claim release T-014 --force
 
@@ -364,6 +366,8 @@ kotta observation show F-01kz9d5nqwdwb7r2c0jdzchspa
 `list` answers "what is in this workspace" for every entity, with the title first and the id after it, and narrows with a repeatable `--state`. It is read-only and deterministic: the same workspace lists the same bytes, and nothing — not even the index — is written. The same four listings reach the calling chat as read-only tools, so an agent orienting itself never has a reason to read `.kotta/` directly.
 
 Every command supports `--json`. Mutations validate before writing and report both the violated rule and corrective action when rejected.
+
+**A contract that proves wrong has a way back.** `kotta contract revise <id> --reason "…" --approve` returns a signed or started contract to `backlog`, where `define` applies a new definition. It is not `cancel`: the contract keeps its id, its history and its intent, and the log says it was revised rather than retired. From `active` the claim is released first, through the same guard `claim release` uses — uncommitted work in the execution worktree stops the revision, and the branch and worktree are preserved for the next `start` to reuse. The reason is required and recorded, because a revision without a stated cause is indistinguishable from a hand-edit. `claim release --force` is likewise the true inverse of `start` and returns the contract to `defined`, rather than leaving it in a state no command accepts.
 
 Before a contract can be signed, its `Open decisions` section must say that no decision remains.
 Kotta accepts `None`, `None.`, `N/A`, `N/A.`, `No open decisions` and `No open decisions.`

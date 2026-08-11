@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import matter from "gray-matter";
 import { closeBatch, findBatch } from "./batch.js";
-import { closeContract, reopenContract, signContract } from "./contract.js";
+import { closeContract, reopenContract, reviseContract, signContract } from "./contract.js";
 import { findObservation, resolveObservation } from "./observation.js";
 import { appendEvent, approvalHistory, mintApprovalId, readEvents, type KottaEvent } from "../core/events.js";
 import { CONTRACT_ID, OBSERVATION_ID, BATCH_ID } from "../core/identity.js";
@@ -11,6 +11,7 @@ import { commitControlState, withControlPlaneMutation } from "../git/control-pla
 
 export const APPROVAL_ACTIONS = [
   "contract.sign",
+  "contract.revise",
   "observation.resolve",
   "contract.close",
   "contract.request-changes",
@@ -29,6 +30,9 @@ function validateEntity(action: ApprovalAction, entity: string): void {
 }
 
 function validatePayload(action: ApprovalAction, payload: Record<string, unknown>): void {
+  if (action === "contract.revise" && !String(payload.reason ?? "").trim()) {
+    throw new Error("contract.revise requires a reason in the payload. A revision without a stated cause is indistinguishable from a hand-edit.");
+  }
   if (action === "observation.resolve") {
     const disposition = typeof payload.disposition === "string" ? payload.disposition : "";
     if (!OBSERVATION_DISPOSITIONS.has(disposition)) throw new Error("observation.resolve requires one explicit valid disposition.");
@@ -49,15 +53,18 @@ function relatedContract(root: string, entity: string, action: ApprovalAction): 
 }
 
 export function approvalDescription(action: ApprovalAction, entity: string, payload: Record<string, unknown> = {}): string {
-  const detail = action === "observation.resolve" ? ` --disposition ${String(payload.disposition)}` : "";
+  const detail = action === "observation.resolve" ? ` --disposition ${String(payload.disposition)}`
+    : action === "contract.revise" ? ` --reason "${String(payload.reason ?? "")}"` : "";
   return `${action} ${entity}${detail}`;
 }
 
 function assertApplicable(root: string, entity: string, action: ApprovalAction): void {
   if (action.startsWith("contract.")) {
     const state = findContract(root, entity).state;
-    const expected = action === "contract.sign" ? "backlog" : "review";
-    if (state !== expected) throw new Error(`${action} requires ${entity} to be ${expected}; it is ${state}. Refresh state before preparing another action.`);
+    // Revise is the one contract action with two valid origins: a signed contract that
+    // was never started, and a started one whose text turned out to be wrong.
+    const expected = action === "contract.revise" ? ["defined", "active"] : action === "contract.sign" ? ["backlog"] : ["review"];
+    if (!expected.includes(state)) throw new Error(`${action} requires ${entity} to be ${expected.join(" or ")}; it is ${state}. Refresh state before preparing another action.`);
     return;
   }
   if (action === "observation.resolve") {
@@ -75,6 +82,7 @@ function apply(root: string, proposal: KottaEvent): unknown {
   const payload = proposal.payload ?? {};
   switch (proposal.action as ApprovalAction) {
     case "contract.sign": return signContract(proposal.entity, true, root, { approvalRecorded: true, locked: true, commit: false });
+    case "contract.revise": return reviseContract(proposal.entity, String(payload.reason ?? ""), true, root, { approvalRecorded: true, locked: true, commit: false });
     case "observation.resolve": return resolveObservation(proposal.entity, String(payload.disposition), true, root, { approvalRecorded: true, locked: true, commit: false });
     case "contract.close": return closeContract(proposal.entity, true, root, { locked: true, commit: false, approvalRecorded: true });
     case "contract.request-changes": return reopenContract(proposal.entity, true, root, { locked: true, commit: false, approvalRecorded: true });

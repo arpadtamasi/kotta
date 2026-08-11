@@ -45,7 +45,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
         "Kotta is the canonical contract control plane for this repository.",
         "Use these structured tools instead of asking the human to copy ids or run lifecycle commands.",
         "Caller execution uses contract_start_caller; fresh context remains available through the CLI for automation.",
-        "For sign, close, request-changes, observation disposition, or batch close, call approval_request: it elicits the exact human decision in the host chat and records the receipt before applying.",
+        "For sign, revise, close, request-changes, observation disposition, or batch close, call approval_request: it elicits the exact human decision in the host chat and records the receipt before applying.",
         "The Kotta board is read-only. Record only visible user/assistant contract messages; never hidden reasoning or raw tool output.",
       ].join(" "),
     },
@@ -234,7 +234,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     description: "Present one exact pending Kotta transition in the current host chat. Apply it only after the human explicitly approves the elicitation; rejection and cancellation are durable.",
     inputSchema: {
       entity: z.string().min(1),
-      action: z.enum(["contract.sign", "observation.resolve", "contract.close", "contract.request-changes", "batch.close"]),
+      action: z.enum(["contract.sign", "contract.revise", "observation.resolve", "contract.close", "contract.request-changes", "batch.close"]),
       payload: z.record(z.string(), z.unknown()).default({}),
       clientRequestId: z.string().optional(),
     },

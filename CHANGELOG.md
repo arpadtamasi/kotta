@@ -8,6 +8,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **`kotta contract revise <id> --reason "…" --approve`.** A signed or started contract can be
+  returned to `backlog`, where `define` applies a new definition. It is not a cancellation: the id,
+  the history and the intent are kept, and the lifecycle log says the contract was revised. From
+  `active` the claim is released first, uncommitted work in the execution worktree stops the
+  revision, and the branch and worktree are preserved. The reason is required and recorded, and the
+  action is available to the calling chat through `approval_request`. `kotta status` names a revised
+  contract with its reason, so reconsidered work is distinguishable from work never approved.
+
+### Fixed
+
+- `kotta claim release --force` returns the contract to `defined` instead of leaving it in `active`
+  with no claim, a state every command refused: start and execute required `defined`, reopen
+  required review or done, and cancel required backlog or defined. Release is now the true inverse
+  of start, and `start` reuses a branch and worktree the contract already owns rather than refusing
+  to create them twice.
+
+### Added
+
 - **`show` for every entity, and short ids that resolve.** `kotta contract show`,
   `kotta observation show`, `kotta decision show` and `kotta batch show` print one entity's state,
   its set facts and its body, with `--json` and as read-only chat tools. Separately, the short id
