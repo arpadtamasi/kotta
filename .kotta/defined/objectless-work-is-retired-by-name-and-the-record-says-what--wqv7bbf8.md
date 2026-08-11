@@ -1,7 +1,7 @@
 ---
 id: T-01kzrdybqzgpmv3ff0wqv7bbf8
 title: 'Objectless work is retired by name, and the record says what superseded it'
-status: backlog
+status: defined
 origin: human
 types:
   - feature
