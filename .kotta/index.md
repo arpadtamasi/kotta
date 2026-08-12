@@ -18,11 +18,12 @@ None.
 
 ## Active contracts
 
-- a-hosted-session-runs-kotta-on-the-one-branch-it-was-given-brgs9kmh
+None.
 
 ## Review
 
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
+- a-hosted-session-runs-kotta-on-the-one-branch-it-was-given-brgs9kmh
 
 ## Blocked
 
