@@ -1,7 +1,7 @@
 ---
 id: T-01kztxxfjpaxyam0g2h62v6rc0
 title: 'A batch can name child batches, and the whole tree reads as one work list'
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -20,6 +20,7 @@ updated_at: '2026-08-12'
 assigned_agent: claude
 worktree: .worktrees/T-01kztxxfjpaxyam0g2h62v6rc0
 execution_mode: inherited
+resolution: completed
 ---
 # T-01kztxxfjpaxyam0g2h62v6rc0 — A batch can name child batches, and the whole tree reads as one work list
 

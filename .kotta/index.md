@@ -22,7 +22,6 @@ None.
 
 ## Review
 
-- a-batch-can-name-child-batches-and-the-whole-tree-reads-as-o-h62v6rc0
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
 
 ## Blocked

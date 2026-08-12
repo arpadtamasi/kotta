@@ -1,6 +1,0 @@
-contract: T-01kztxxfjpaxyam0g2h62v6rc0
-agent: claude
-branch: feat/T-01kztxxfjpaxyam0g2h62v6rc0-a-batch-can-name-child-batches-and-the-whole-tree-reads-as-o
-worktree: .worktrees/T-01kztxxfjpaxyam0g2h62v6rc0
-execution_mode: inherited
-started_at: 2026-08-12T13:25:44.884Z
