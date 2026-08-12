@@ -3,13 +3,15 @@ id: F-01kztt37st3xy3dmfnr23getrn
 title: >-
   A batch holds contracts and nothing else, so a large product has no way to
   group work above one level
-status: new
+status: resolved
 origin: agent
 observation_type: enhancement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-12'
+disposition: attach-existing
+resolved_at: '2026-08-12T14:57:04.158Z'
 ---
 # F-01kztt37st3xy3dmfnr23getrn — A batch holds contracts and nothing else, so a large product has no way to group work above one level
 

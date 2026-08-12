@@ -43,7 +43,6 @@ None.
 - F-022-state-gates-are-bypassable-because-the-store-is-the-filesyst
 - F-025-progos-as-first-kotta-publisher-mcp-kottas-for-standard-sme-
 - F-030-package-szintu-review-hianyzik-a-ticketek-review-ban-tartasa
-- a-batch-holds-contracts-and-nothing-else-so-a-large-product--r23getrn
 - a-board-listai-nem-mutatjak-az-entitasok-korat-csak-az-obser-fx05szh7
 - a-board-nema-n-rejti-el-a-nem-commitolt-munkat-ha-a-fo-munka-88p5tm36
 - a-contract-that-proves-incomplete-during-execution-has-no-re-c26y53yb
