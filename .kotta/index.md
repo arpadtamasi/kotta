@@ -12,14 +12,13 @@ None.
 
 ## Defined contracts
 
-- a-batch-can-name-child-batches-and-the-whole-tree-reads-as-o-h62v6rc0
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
 - one-operation-registry-derives-both-the-cli-and-the-mcp-surf-06fw8n0g
 - the-agent-rules-reach-the-calling-chat-as-a-generated-file-n-atnxppcm
 
 ## Active contracts
 
-None.
+- a-batch-can-name-child-batches-and-the-whole-tree-reads-as-o-h62v6rc0
 
 ## Review
 
