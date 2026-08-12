@@ -3,7 +3,7 @@ id: T-01kztp3e01729h4655n34p7qcp
 title: >-
   Kotta ships its own rules file and offers a pointer, without ever owning the
   project's AGENTS.md
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -14,10 +14,14 @@ risk: medium
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: >-
+  feat/T-01kztp3e01729h4655n34p7qcp-kotta-ships-its-own-rules-file-and-offers-a-pointer-without-
 pull_request: null
 created_at: '2026-08-12'
 updated_at: '2026-08-12'
+assigned_agent: claude
+worktree: .worktrees/T-01kztp3e01729h4655n34p7qcp
+execution_mode: inherited
 ---
 # T-01kztp3e01729h4655n34p7qcp — Kotta ships its own rules file and offers a pointer, without ever owning the project's AGENTS.md
 
