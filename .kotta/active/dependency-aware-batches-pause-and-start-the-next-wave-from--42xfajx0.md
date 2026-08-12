@@ -1,7 +1,7 @@
 ---
 id: T-01kzw15bre7s0wms8d42xfajx0
 title: Dependency-aware batches pause and start the next wave from main
-status: defined
+status: active
 origin: observation
 types:
   - bug
@@ -13,11 +13,16 @@ risk: medium
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: >-
+  fix/T-01kzw15bre7s0wms8d42xfajx0-dependency-aware-batches-pause-and-start-the-next-wave-from-
 pull_request: null
 created_at: '2026-08-12'
 updated_at: '2026-08-12'
 source_observation: F-01kzw13qka26pq2jgjja1t562m
+assigned_agent: codex
+worktree: .worktrees/T-01kzw15bre7s0wms8d42xfajx0
+execution_mode: fresh
+branch_origin: created
 ---
 # T-01kzw15bre7s0wms8d42xfajx0 — Dependency-aware batches pause and start the next wave from main
 
