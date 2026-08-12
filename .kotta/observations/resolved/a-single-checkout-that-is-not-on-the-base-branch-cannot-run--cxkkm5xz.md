@@ -3,13 +3,15 @@ id: F-01kztvbpa23qm3gdz4cxkkm5xz
 title: >-
   A single checkout that is not on the base branch cannot run Kotta at all —
   every command refuses, not just start
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-12'
+disposition: attach-existing
+resolved_at: '2026-08-12T12:06:24.072Z'
 ---
 # F-01kztvbpa23qm3gdz4cxkkm5xz — A single checkout that is not on the base branch cannot run Kotta at all — every command refuses, not just start
 
