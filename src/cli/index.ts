@@ -21,7 +21,7 @@ import { formatMigration, migrateWorkspace } from "../commands/migrate.js";
 import { assertCurrentWorkspaceShape, findRepositoryRoot } from "../filesystem/workspace.js";
 import { mcpCommand } from "../commands/mcp.js";
 import { integrateCodex } from "../commands/integrate.js";
-import { syncSkills } from "../commands/sync.js";
+import { syncCommand } from "../commands/sync.js";
 
 const program = new Command();
 const packagePath = fileURLToPath(new URL("../../package.json", import.meta.url));
@@ -31,6 +31,28 @@ program.name("kotta").description("Repository-native human-AI development workfl
 function print(result: unknown, json: boolean): void {
   process.stdout.write(json ? `${JSON.stringify(result)}\n` : `${humanize(result)}\n`);
   if (typeof result === "object" && result && "ok" in result && (result as { ok: unknown }).ok === false) process.exitCode = 1;
+}
+
+type AgentsSummary = { path: string; state: "created" | "updated" | "unchanged" | "drifted" } | null;
+type ProjectAgentsSummary = { path: string; state: "created" | "linked" | "already-linked"; line: string } | null;
+
+/**
+ * What happened to the rules file, and — when the project's own AGENTS.md was left alone — the exact
+ * line to add, so the agent asking the human can quote it instead of inventing one.
+ */
+function agentsLines(agents: AgentsSummary | undefined, project: ProjectAgentsSummary | undefined, pointer: string | null | undefined): string[] {
+  const lines: string[] = [];
+  if (agents) {
+    if (agents.state === "drifted") lines.push(`Rules: ${agents.path} was edited; it was left alone and not refreshed.`);
+    else if (agents.state !== "unchanged") lines.push(`Rules: ${agents.state} ${agents.path}.`);
+  }
+  if (project) {
+    if (project.state === "already-linked") lines.push(`${project.path} already points at the rules.`);
+    else lines.push(`Added one line to ${project.path}: ${project.line}`);
+  } else if (agents && pointer) {
+    lines.push(`Kotta did not touch the project's AGENTS.md. To point it at the rules, ask the human, then re-run with --link-agents; the line is: ${pointer}`);
+  }
+  return lines;
 }
 
 function humanize(result: unknown): string {
@@ -62,7 +84,7 @@ function humanize(result: unknown): string {
     if (command === "status" && "data" in result) {
       // The workspace path leads: with `.kotta/` and `.a-team/` both readable, the directory that
       // answered is the first thing a reader needs (D-007).
-      const data = (result as { data: { workspace: unknown; definedContracts: unknown[]; activeContracts: unknown[]; reviewContracts: unknown[]; newObservations: unknown[]; skills?: { shipped: number; installed: number; drifted: string[] } } }).data;
+      const data = (result as { data: { workspace: unknown; definedContracts: unknown[]; activeContracts: unknown[]; reviewContracts: unknown[]; newObservations: unknown[]; skills?: { shipped: number; installed: number; drifted: string[] }; rules?: { present: boolean; drifted: boolean; path: string } } }).data;
       const lines = [
         `Workspace: ${String(data.workspace)}`,
         `Defined ${data.definedContracts.length}, active ${data.activeContracts.length}, review ${data.reviewContracts.length}, new observations ${data.newObservations.length}.`,
@@ -74,6 +96,10 @@ function humanize(result: unknown): string {
       } else if (data.skills && data.skills.drifted.length) {
         lines.push(`Skills: ${data.skills.drifted.join(", ")} differ from the shipped version. Run 'kotta sync'.`);
       }
+      // The rules an agent reads are as silent a failure as an absent skill: an old copy still
+      // parses, and nothing else in the workspace would notice it moved.
+      if (data.rules && !data.rules.present) lines.push(`Rules: ${data.rules.path} is missing. Run 'kotta sync'.`);
+      else if (data.rules && data.rules.drifted) lines.push(`Rules: ${data.rules.path} differs from the shipped version.`);
       return lines.join("\n");
     }
     if ((result as { command: unknown }).command === "decision create" && "data" in result) {
@@ -81,7 +107,7 @@ function humanize(result: unknown): string {
       return `Recorded decision ${String(data.id)} at ${String(data.path)}.`;
     }
     if (command === "sync" && "data" in result) {
-      const data = (result as { data: { target: unknown; created: string[]; updated: string[]; unchanged: string[]; skipped: string[] } }).data;
+      const data = (result as { data: { target: unknown; created: string[]; updated: string[]; unchanged: string[]; skipped: string[]; agents?: AgentsSummary; projectAgents?: ProjectAgentsSummary; pointer?: string | null } }).data;
       const changed = [
         data.created.length ? `${data.created.length} installed` : "",
         data.updated.length ? `${data.updated.length} updated` : "",
@@ -91,12 +117,16 @@ function humanize(result: unknown): string {
       // A name collision is reported, never resolved: Kotta cannot know what put the other skill
       // there, so it does not get to decide the directory is disposable.
       if (data.skipped.length) lines.push(`Left alone — another skill already uses the name: ${data.skipped.join(", ")}.`);
+      lines.push(...agentsLines(data.agents, data.projectAgents, data.pointer));
       return lines.join("\n");
     }
     if (command === "init" && "data" in result) {
-      const data = (result as { data: { root: unknown; skills?: { created: string[]; updated: string[]; unchanged: string[] } } }).data;
+      const data = (result as { data: { root: unknown; skills?: { created: string[]; updated: string[]; unchanged: string[] }; agents?: AgentsSummary; projectAgents?: ProjectAgentsSummary; pointer?: string | null } }).data;
       const installed = data.skills ? data.skills.created.length + data.skills.updated.length + data.skills.unchanged.length : 0;
-      return `Created workspace at ${String(data.root)}${installed ? `, and ${installed} skills are installed.` : "."}`;
+      return [
+        `Created workspace at ${String(data.root)}${installed ? `, and ${installed} skills are installed.` : "."}`,
+        ...agentsLines(data.agents, data.projectAgents, data.pointer),
+      ].join("\n");
     }
     if (command === "integrate codex" && "data" in result) {
       const data = (result as { data: { path: unknown; changed: unknown } }).data;
@@ -174,8 +204,9 @@ program
   .command("init")
   .description("Create a .kotta workspace")
   .option("--project-name <name>")
+  .option("--link-agents", "Add one line pointing at the workspace rules to the project's AGENTS.md, after the human said yes")
   .option("--json")
-  .action((options: { projectName?: string; json?: boolean }) => print(initCommand(options.projectName), Boolean(options.json)));
+  .action((options: { projectName?: string; linkAgents?: boolean; json?: boolean }) => print(initCommand(options.projectName, { linkAgents: options.linkAgents }), Boolean(options.json)));
 
 program
   .command("validate")
@@ -191,9 +222,10 @@ program
 
 program
   .command("sync")
-  .description("Install the skills Kotta ships into the host's skill directory")
+  .description("Install the skills Kotta ships and refresh the workspace rules file")
+  .option("--link-agents", "Add one line pointing at the workspace rules to the project's AGENTS.md, after the human said yes")
   .option("--json")
-  .action((options: { json?: boolean }) => print(syncSkills(), Boolean(options.json)));
+  .action((options: { linkAgents?: boolean; json?: boolean }) => print(syncCommand({ linkAgents: options.linkAgents }), Boolean(options.json)));
 
 const contract = program.command("contract").description("Create and transition contracts");
 contract

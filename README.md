@@ -38,6 +38,21 @@ again after upgrading Kotta; `kotta status` says when an installed skill no long
 shipped one. A skill belonging to another tool under the same name is left alone and reported,
 never overwritten.
 
+The same two commands also write `.kotta/AGENTS.md`: the rules every agent working in the project
+must follow, with the install command above rendered from the package actually running, so an agent
+that arrives without the CLI can find out where it comes from. That file is Kotta's — `sync` keeps
+it current, and reports it as drifted rather than replacing a copy you edited.
+
+Your own `AGENTS.md` stays yours. Kotta never rewrites it; it reports one line, and adds that line
+only when you ask:
+
+```bash
+kotta sync --link-agents     # appends `@.kotta/AGENTS.md`, and changes nothing else in the file
+```
+
+Running it again is a no-op, and a file that already refers to `.kotta/AGENTS.md` in your own words
+is left alone. Without the flag nothing outside `.kotta/` is written.
+
 Connect Kotta to the project-scoped Codex chat once, then start a new chat (or restart the host) so
 the MCP tools are discovered:
 

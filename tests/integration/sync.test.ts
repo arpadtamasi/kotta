@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { beforeEach, describe, expect, test } from "vitest";
@@ -101,12 +102,106 @@ describe("kotta sync", () => {
     );
   });
 
-  test("writes nothing inside the repository", () => {
+  test("writes nothing inside a repository that has no workspace", () => {
     const before = readdirSync(repository).sort();
 
     run(["sync"]);
 
     expect(readdirSync(repository).sort()).toEqual(before);
+  });
+});
+
+describe("the workspace rules file", () => {
+  const rules = () => join(repository, ".kotta/AGENTS.md");
+  const projectAgents = () => join(repository, "AGENTS.md");
+
+  test("init writes it, naming the package and version an agent cannot guess from the binary", () => {
+    const result = run(["init"]) as { data: { agents: { state: string; path: string }; pointer: string } };
+
+    expect(result.data.agents.state).toBe("created");
+    const written = readFileSync(rules(), "utf8");
+    const manifest = JSON.parse(readFileSync(resolve("package.json"), "utf8")) as { name: string; version: string };
+    expect(written).toContain(`${manifest.name}@${manifest.version}`);
+    expect(written).not.toContain("{{");
+    expect(result.data.pointer).toBe("@.kotta/AGENTS.md");
+  });
+
+  test("sync refreshes its own copy and leaves an edited one alone", () => {
+    run(["init"]);
+    writeFileSync(rules(), "shortened by hand\n");
+
+    const drifted = run(["sync"]) as { data: { agents: { state: string } } };
+    expect(drifted.data.agents.state).toBe("drifted");
+    expect(readFileSync(rules(), "utf8")).toBe("shortened by hand\n");
+
+    // An outdated but untouched copy is Kotta's to refresh; the manifest is what tells them apart.
+    const rendered = readFileSync(rules(), "utf8");
+    writeFileSync(join(repository, ".kotta/.kotta-generated.json"), JSON.stringify({
+      files: { "AGENTS.md": createHash("sha256").update(rendered).digest("hex") },
+    }));
+    const refreshed = run(["sync"]) as { data: { agents: { state: string } } };
+    expect(refreshed.data.agents.state).toBe("updated");
+    expect(readFileSync(rules(), "utf8")).toContain("## The tool these rules assume");
+  });
+
+  test("status names a missing and then a drifted rules file", () => {
+    run(["init"]);
+    rmSync(rules());
+    expect((run(["status"]) as { data: { rules: { present: boolean } } }).data.rules.present).toBe(false);
+
+    run(["sync"]);
+    writeFileSync(rules(), "edited\n");
+    expect((run(["status"]) as { data: { rules: { drifted: boolean } } }).data.rules.drifted).toBe(true);
+  });
+
+  test("init alone leaves an existing AGENTS.md byte-identical and reports the line to add", () => {
+    const own = "# Our rules\n\nRun the linter before pushing.\n";
+    writeFileSync(projectAgents(), own);
+
+    const result = run(["init"]) as { data: { projectAgents: unknown; pointer: string } };
+
+    expect(readFileSync(projectAgents(), "utf8")).toBe(own);
+    expect(result.data.projectAgents).toBe(null);
+    expect(result.data.pointer).toBe("@.kotta/AGENTS.md");
+  });
+
+  test("--link-agents appends one line and keeps every prior byte in order", () => {
+    const own = "# Our rules\n\nRun the linter before pushing.\n";
+    writeFileSync(projectAgents(), own);
+    run(["init"]);
+
+    const linked = run(["sync", "--link-agents"]) as { data: { projectAgents: { state: string; line: string } } };
+
+    expect(linked.data.projectAgents.state).toBe("linked");
+    const after = readFileSync(projectAgents(), "utf8");
+    expect(after.startsWith(own)).toBe(true);
+    expect(after.trimEnd().endsWith("@.kotta/AGENTS.md")).toBe(true);
+    expect(after.split("\n").filter((line) => line.trim()).length).toBe(own.split("\n").filter((line) => line.trim()).length + 1);
+  });
+
+  test("--link-agents creates the file when the project has none", () => {
+    run(["init"]);
+    expect(existsSync(projectAgents())).toBe(false);
+
+    const created = run(["sync", "--link-agents"]) as { data: { projectAgents: { state: string } } };
+
+    expect(created.data.projectAgents.state).toBe("created");
+    expect(readFileSync(projectAgents(), "utf8")).toBe("@.kotta/AGENTS.md\n");
+  });
+
+  test("linking twice changes nothing, and a reworded pointer is not duplicated", () => {
+    run(["init"]);
+    run(["sync", "--link-agents"]);
+    const once = readFileSync(projectAgents(), "utf8");
+
+    const again = run(["sync", "--link-agents"]) as { data: { projectAgents: { state: string } } };
+    expect(again.data.projectAgents.state).toBe("already-linked");
+    expect(readFileSync(projectAgents(), "utf8")).toBe(once);
+
+    writeFileSync(projectAgents(), "See .kotta/AGENTS.md for the workflow rules.\n");
+    const reworded = run(["sync", "--link-agents"]) as { data: { projectAgents: { state: string } } };
+    expect(reworded.data.projectAgents.state).toBe("already-linked");
+    expect(readFileSync(projectAgents(), "utf8")).toBe("See .kotta/AGENTS.md for the workflow rules.\n");
   });
 });
 
