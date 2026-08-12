@@ -54,6 +54,7 @@ None.
 - a-prioritas-szuletesi-attributum-pedig-valtozo-tulajdonsag-a-9666rqce
 - a-resolve-disposition-enumja-elte-r-a-publikalt-sematol-atta-dm37tkv3
 - a-signed-contract-cannot-be-revised-narrowing-one-requires-c-xvjsfgbq
+- a-single-checkout-that-is-not-on-the-base-branch-cannot-run--cxkkm5xz
 - a-slug-hash-emberi-azonosito-mar-letezik-es-dokumentalt-a-ui-1p7xrhzb
 - a-ticket-brief-nem-szedi-fel-a-mintazott-azonositoju-dontese-phd95n90
 - a-vitest-a-worktrees-ala-is-benez-egy-elo-ticket-worktree-me-cahhcmt5
