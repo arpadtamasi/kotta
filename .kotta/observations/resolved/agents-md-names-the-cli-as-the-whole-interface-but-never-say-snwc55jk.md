@@ -3,13 +3,15 @@ id: F-01kztn8rzehzvdfqq1snwc55jk
 title: >-
   AGENTS.md names the CLI as the whole interface but never says where it comes
   from
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-12'
+disposition: attach-existing
+resolved_at: '2026-08-12T10:27:10.217Z'
 ---
 # F-01kztn8rzehzvdfqq1snwc55jk — AGENTS.md names the CLI as the whole interface but never says where it comes from
 
