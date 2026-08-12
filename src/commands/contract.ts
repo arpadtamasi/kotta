@@ -8,7 +8,8 @@ import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
 import { assertValid, validateContractDefinitionFile, validateContractFile } from "../core/validation.js";
 import { BRANCH_PREFIXES } from "../core/profiles.js";
 import { assertClean, assertSafeWorktreePath, git } from "../git/git.js";
-import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
+import { commitControlState, controlPlaneRoot, resolveControlPlane, withControlPlaneMutation } from "../git/control-plane.js";
+import { readWorkspaceConfig } from "../core/config.js";
 import { appendCliApprovalAudit, appendLifecycleEvent } from "../core/events.js";
 import { readEnv } from "../core/env.js";
 
@@ -16,8 +17,22 @@ export function slugify(value: string): string {
   return value.toLowerCase().normalize("NFKD").replace(/\p{M}/gu, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
 }
 
-export function branchName(type: string, id: string, title: string): string {
-  return `${BRANCH_PREFIXES[type] ?? "feat"}/${id}-${slugify(title)}`;
+/** Git's own rules for a ref name, checked before Kotta hands Git a name it chose. */
+const INVALID_BRANCH = /(^[-./])|([./]$)|(\.\.)|(@\{)|([\s~^:?*[\\])|(\/\/)|(\.lock$)/;
+
+/**
+ * The name Kotta gives a branch it creates. `git.branch_pattern` shapes it; the shipped default
+ * `{prefix}/{id}-{slug}` reproduces the names this produced when the pattern was hardcoded.
+ */
+export function branchName(type: string, id: string, title: string, pattern = "{prefix}/{id}-{slug}"): string {
+  const rendered = pattern
+    .replaceAll("{prefix}", BRANCH_PREFIXES[type] ?? "feat")
+    .replaceAll("{id}", id)
+    .replaceAll("{slug}", slugify(title));
+  if (!rendered.trim() || INVALID_BRANCH.test(rendered)) {
+    throw new Error(`git.branch_pattern '${pattern}' produced '${rendered}', which Git will not accept as a branch name.`);
+  }
+  return rendered;
 }
 
 export function newContract(options: { title: string; type: string; profiles: string[] }, repositoryRoot?: string) {
@@ -137,18 +152,35 @@ export function startContract(id: string, agent: string, executionMode: "fresh" 
     if (incomplete.length) throw new Error(`Unresolved dependencies: ${incomplete.join(", ")}. Complete them before starting ${id}.`);
     const title = String(entity.data.title);
     const type = Array.isArray(entity.data.types) ? String(entity.data.types[0]) : String(entity.data.type ?? "feature");
-    const branch = branchName(type, id, title);
-    const worktreeRelative = `.worktrees/${id}`;
-    const worktree = join(root, worktreeRelative);
-    assertSafeWorktreePath(worktree);
-    if (git(root, ["branch", "--list", branch])) throw new Error(`Branch already exists: ${branch}`);
+    const config = readWorkspaceConfig(root);
+    const controlPlane = resolveControlPlane(callerRoot);
+
+    // One checkout on a branch of the environment's choosing means the branch was already named and
+    // there is nowhere to put a second worktree: Kotta takes what it was given and records that it
+    // created neither, so nothing later deletes a checkout that was never ours
+    // (D-01kztv9ysf77134nbqnw28mwg5).
+    //
+    // A single checkout sitting on a protected branch is the ordinary local case, not a host-chosen
+    // work branch. There Kotta names and creates as it always has — which is also how it keeps
+    // execution off the protected branch instead of refusing to start at all.
+    const adopting = controlPlane.mode === "single" && controlPlane.branch !== null && !config.protectedBranches.includes(controlPlane.branch);
+
+    const branch = adopting ? controlPlane.branch! : branchName(type, id, title, config.branchPattern);
+    const worktreeRelative = adopting ? "." : `.worktrees/${id}`;
+    const worktree = adopting ? root : join(root, worktreeRelative);
+    if (!adopting) {
+      assertSafeWorktreePath(worktree);
+      if (git(root, ["branch", "--list", branch])) throw new Error(`Branch already exists: ${branch}`);
+    }
 
     let createdWorktree = false;
     let lifecyclePath: string | null = null;
     const active = workspacePath(root, "active", contract.filename);
     try {
-      git(root, ["worktree", "add", worktree, "-b", branch, "HEAD"]);
-      createdWorktree = true;
+      if (!adopting) {
+        git(root, ["worktree", "add", worktree, "-b", branch, "HEAD"]);
+        createdWorktree = true;
+      }
       if (readEnv("TEST_FAIL_START_AT") === "after-worktree") throw new Error("Injected start failure after worktree creation.");
       mkdirSync(workspacePath(root, "active"), { recursive: true });
       mkdirSync(workspacePath(root, "claims"), { recursive: true });
@@ -157,16 +189,17 @@ export function startContract(id: string, agent: string, executionMode: "fresh" 
       entity.data.assigned_agent = agent;
       entity.data.worktree = worktreeRelative;
       entity.data.execution_mode = executionMode;
+      entity.data.branch_origin = adopting ? "adopted" : "created";
       entity.data.updated_at = new Date().toISOString().slice(0, 10);
       writeFileSync(active, renderMarkdown(entity.data, entity.content));
       unlinkSync(contract.path);
       if (readEnv("TEST_FAIL_START_AT") === "after-active") throw new Error("Injected start failure after control-plane activation.");
-      const claim = { contract: id, agent, branch, worktree: worktreeRelative, execution_mode: executionMode, started_at: new Date().toISOString() };
+      const claim = { contract: id, agent, branch, worktree: worktreeRelative, execution_mode: executionMode, origin: adopting ? "adopted" : "created", started_at: new Date().toISOString() };
       writeFileSync(claimInControl, stringify(claim));
       if (readEnv("TEST_FAIL_START_AT") === "after-claim") throw new Error("Injected start failure after claim creation.");
       assertValid(validateContractFile(active, "active"));
       regenerateIndex(root);
-      lifecyclePath = appendLifecycleEvent(root, id, "active", `Execution started on ${branch} with ${agent}.`).path;
+      lifecyclePath = appendLifecycleEvent(root, id, "active", `Execution started on ${branch} with ${agent}${adopting ? ", adopting the only checkout; Kotta created no branch and no worktree." : "."}`).path;
       commitControlState(root, `chore(kotta): start ${id}`);
     } catch (error) {
       if (lifecyclePath && existsSync(lifecyclePath)) unlinkSync(lifecyclePath);
@@ -186,6 +219,7 @@ export function startContract(id: string, agent: string, executionMode: "fresh" 
       data: {
         id, branch, worktree,
         executionMode,
+        origin: adopting ? "adopted" : "created",
         nextStep: executionMode === "fresh" ? `kotta contract execute ${id} --resume` : `Continue execution in ${worktree}.`,
         callerStep: `Continue in ${worktree}; this is the explicit inherited-context mode.`,
       },
@@ -205,7 +239,10 @@ export function reviewContract(id: string, evidence: string, pullRequest?: strin
   const callerRoot = repositoryRoot ?? findRepositoryRoot();
   return withControlPlaneMutation(callerRoot, (root) => {
   const canonical = findContract(root, id);
-  const executionRoot = join(root, ".worktrees", id);
+  // An adopted contract has no `.worktrees/` entry: the environment's own checkout is where the
+  // work happened, and it is the tree whose cleanliness matters here.
+  const adopted = parseMarkdown(readFileSync(canonical.path, "utf8")).data.branch_origin === "adopted";
+  const executionRoot = adopted ? root : join(root, ".worktrees", id);
   const canonicalClaim = workspacePath(root, "claims", `${id}.yaml`);
   const legacyClaim = workspacePath(executionRoot, "claims", `${id}.yaml`);
   let contract = canonical;
@@ -276,7 +313,8 @@ export function closeContract(id: string, approved: boolean, repositoryRoot?: st
   const integrationTarget = coordinator && git(root, ["branch", "--list", coordinator]) ? coordinator : "HEAD";
   const merged = git(root, ["branch", "--merged", integrationTarget]).split(/\r?\n/).map((line) => line.replace(/^[*+]?\s*/, "")).includes(branch);
   if (!merged) throw new Error(`Branch ${branch} is not merged into ${integrationTarget === "HEAD" ? "the control branch" : `batch coordinator ${integrationTarget}`}.`);
-  const worktree = join(root, ".worktrees", id);
+  const adopted = entity.data.branch_origin === "adopted";
+  const worktree = adopted ? root : join(root, ".worktrees", id);
   if (existsSync(worktree) && git(worktree, ["status", "--porcelain"])) throw new Error(`Worktree ${worktree} contains uncommitted changes; refusing cleanup.`);
   entity.data.status = "done";
   entity.data.resolution = "completed";
@@ -292,16 +330,20 @@ export function closeContract(id: string, approved: boolean, repositoryRoot?: st
   regenerateIndex(root);
   appendLifecycleEvent(root, id, "done", "Review accepted and contract closed.");
   if (!options.approvalRecorded) appendCliApprovalAudit(root, id, "contract.close");
-  if (existsSync(worktree)) {
-    git(root, ["worktree", "remove", worktree]);
-  }
-  if (integrationTarget === "HEAD") git(root, ["branch", "-d", branch]);
-  else {
-    const expected = git(root, ["rev-parse", `refs/heads/${branch}`]);
-    git(root, ["update-ref", "-d", `refs/heads/${branch}`, expected]);
+  // Kotta removes only what Kotta created. An adopted branch and checkout belong to the environment
+  // that provided them, and deleting either would take the session's own working copy with it.
+  if (!adopted) {
+    if (existsSync(worktree)) {
+      git(root, ["worktree", "remove", worktree]);
+    }
+    if (integrationTarget === "HEAD") git(root, ["branch", "-d", branch]);
+    else {
+      const expected = git(root, ["rev-parse", `refs/heads/${branch}`]);
+      git(root, ["update-ref", "-d", `refs/heads/${branch}`, expected]);
+    }
   }
   if (options.commit !== false) commitControlState(root, `chore(kotta): close ${id}`);
-  return { ok: true, command: "contract close", data: { id, resolution: "completed", controlRoot: root } };
+  return { ok: true, command: "contract close", data: { id, resolution: "completed", controlRoot: root, adopted, preserved: adopted ? { branch, worktree } : null } };
   };
   return options.locked ? close(callerRoot) : withControlPlaneMutation(callerRoot, close);
 }
@@ -371,13 +413,14 @@ export function cancelContract(
   if (!superseding && SUPERSEDING_RESOLUTIONS.includes(resolution)) {
     throw new Error(`Resolution '${resolution}' says other work took this contract's place; name it with --superseded-by, or retire the contract with --resolution cancelled.`);
   }
+  const entity = parseMarkdown(readFileSync(contract.path, "utf8"));
+  const branch = typeof entity.data.branch === "string" ? entity.data.branch : null;
+  const adopted = entity.data.branch_origin === "adopted";
   // Mirrors close: an absent worktree is not an obstacle, only an unclean one. Reusing the
   // claim-release guard instead would refuse a missing worktree and trap the very contract
   // this command exists to free.
-  const worktree = join(root, ".worktrees", canonicalId);
+  const worktree = adopted ? root : join(root, ".worktrees", canonicalId);
   if (existsSync(worktree) && git(worktree, ["status", "--porcelain"])) throw new Error(`Worktree ${worktree} contains uncommitted changes; ${canonicalId} was not cancelled.`);
-  const entity = parseMarkdown(readFileSync(contract.path, "utf8"));
-  const branch = typeof entity.data.branch === "string" ? entity.data.branch : null;
   entity.data.status = "done";
   entity.data.resolution = resolution;
   entity.data.cancellation_reason = stated;
@@ -408,12 +451,13 @@ export function cancelContract(
     superseding ? `Superseded by ${superseding}.` : null,
     claimReleased ? "The claim was released." : null,
     branch ? `Branch ${branch} was preserved.` : null,
+    adopted ? "The checkout was adopted, not created, and was left in place." : null,
   ].filter(Boolean).join(" ");
   appendLifecycleEvent(root, canonicalId, "done", summary);
   if (!options.approvalRecorded) appendCliApprovalAudit(root, canonicalId, "contract.cancel", { resolution, reason: stated, superseded_by: superseding });
-  if (existsSync(worktree)) git(root, ["worktree", "remove", worktree]);
+  if (!adopted && existsSync(worktree)) git(root, ["worktree", "remove", worktree]);
   if (options.commit !== false) commitControlState(root, `chore(kotta): cancel ${canonicalId} (${resolution})`);
-  return { ok: true, command: "contract cancel", data: { id: canonicalId, resolution, reason: stated, supersededBy: superseding, path: destination, claimReleased, branch, dependents } };
+  return { ok: true, command: "contract cancel", data: { id: canonicalId, resolution, reason: stated, supersededBy: superseding, path: destination, claimReleased, branch, adopted, dependents } };
   };
   return options.locked ? cancel(callerRoot) : withControlPlaneMutation(callerRoot, cancel);
 }

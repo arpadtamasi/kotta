@@ -73,6 +73,11 @@ Canonical live state, claims and visible conversation stay on `git.base_branch`;
 worktrees contain code and their original baseline, not a divergent lifecycle copy. Commands invoked
 from any linked worktree route state changes back to the checked-out control worktree.
 
+Where there is only one checkout — a hosted session, or a repository with no linked worktrees — that
+checkout is the control plane, on whatever branch it holds. If that branch is not a protected one,
+`start` adopts it instead of creating a second branch and worktree, and records that it created
+neither, so `close` and `cancel` leave the environment's branch and checkout in place.
+
 Never ask the human to copy an id or go and run a command. Whatever the surface, you drive it: the
 CLI is the whole interface, and where the Kotta MCP server is available its structured tools are an
 equivalent path to the same services. `contract_start_caller` is the inherited-context start path.

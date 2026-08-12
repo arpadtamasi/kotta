@@ -216,6 +216,15 @@ chat/approval writers are serialized by a repository-wide mutation lock. The con
 must remain checked out in one linked worktree; commands invoked from another worktree route these
 mutations there and refuse rather than writing live state into a feature branch when it is missing.
 
+That requirement applies to repositories with several worktrees. Where there is exactly one checkout,
+it is the control plane on whatever branch it holds — a hosted agent session gets one checkout on a
+branch of its host's choosing, and a solo developer may never make a second worktree. In that shape,
+if the branch is not a protected one, `contract start` adopts it rather than creating a second branch
+and worktree, and records on the claim that it created neither; `close` and `cancel` then leave that
+branch and checkout exactly where they found them. On a protected branch there is nothing to adopt,
+so Kotta names and creates as usual, which is what keeps execution off it. The name comes from
+`git.branch_pattern`.
+
 The calling agent host is the primary human approval surface. `kotta mcp` exposes structured tools;
 `approval_request` prepares one exact entity-scoped transition, interrupts the current chat with an
 approve/reject/cancel form, records the visible human response, and only then calls the same
