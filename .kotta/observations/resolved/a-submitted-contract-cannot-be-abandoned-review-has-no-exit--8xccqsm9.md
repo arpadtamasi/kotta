@@ -1,13 +1,15 @@
 ---
 id: F-01kzm9hppbvg3gxzj48xccqsm9
 title: 'A submitted contract cannot be abandoned: review has no exit but forward'
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-09'
+disposition: attach-existing
+resolved_at: '2026-08-12T09:35:31.927Z'
 ---
 # F-01kzm9hppbvg3gxzj48xccqsm9 — A submitted contract cannot be abandoned: review has no exit but forward
 

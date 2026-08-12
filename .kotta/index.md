@@ -54,7 +54,6 @@ None.
 - a-resolve-disposition-enumja-elte-r-a-publikalt-sematol-atta-dm37tkv3
 - a-signed-contract-cannot-be-revised-narrowing-one-requires-c-xvjsfgbq
 - a-slug-hash-emberi-azonosito-mar-letezik-es-dokumentalt-a-ui-1p7xrhzb
-- a-submitted-contract-cannot-be-abandoned-review-has-no-exit--8xccqsm9
 - a-ticket-brief-nem-szedi-fel-a-mintazott-azonositoju-dontese-phd95n90
 - a-vitest-a-worktrees-ala-is-benez-egy-elo-ticket-worktree-me-cahhcmt5
 - a-workspace-konyvtar-atnevezese-uressen-mutatja-a-boardot-am-0n2rjcpt
