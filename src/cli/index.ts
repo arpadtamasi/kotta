@@ -84,7 +84,7 @@ function humanize(result: unknown): string {
     if (command === "status" && "data" in result) {
       // The workspace path leads: with `.kotta/` and `.a-team/` both readable, the directory that
       // answered is the first thing a reader needs (D-007).
-      const data = (result as { data: { workspace: unknown; definedContracts: unknown[]; activeContracts: unknown[]; reviewContracts: unknown[]; newObservations: unknown[]; skills?: { shipped: number; installed: number; drifted: string[] }; rules?: { present: boolean; drifted: boolean; path: string } } }).data;
+      const data = (result as { data: { workspace: unknown; definedContracts: unknown[]; activeContracts: unknown[]; reviewContracts: unknown[]; newObservations: unknown[]; skills?: { shipped: number; installed: number; drifted: string[] }; rules?: { present: boolean; drifted: boolean; path: string }; controlPlane?: { mode: string; branch: string | null } } }).data;
       const lines = [
         `Workspace: ${String(data.workspace)}`,
         `Defined ${data.definedContracts.length}, active ${data.activeContracts.length}, review ${data.reviewContracts.length}, new observations ${data.newObservations.length}.`,
@@ -100,6 +100,9 @@ function humanize(result: unknown): string {
       // parses, and nothing else in the workspace would notice it moved.
       if (data.rules && !data.rules.present) lines.push(`Rules: ${data.rules.path} is missing. Run 'kotta sync'.`);
       else if (data.rules && data.rules.drifted) lines.push(`Rules: ${data.rules.path} differs from the shipped version.`);
+      // Which checkout answered, and why that one: a command that silently picks a writer the
+      // reader did not expect is the failure the single-checkout rule has to stay visible about.
+      if (data.controlPlane?.mode === "single") lines.push(`Control plane: this checkout, the only one, on ${data.controlPlane.branch ?? "a detached HEAD"}.`);
       return lines.join("\n");
     }
     if ((result as { command: unknown }).command === "decision create" && "data" in result) {

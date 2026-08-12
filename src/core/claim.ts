@@ -5,6 +5,8 @@ export interface ClaimData {
   agent?: unknown;
   branch?: unknown;
   worktree?: unknown;
+  /** Whether Kotta made the branch and worktree, or adopted what the environment provided. */
+  origin?: unknown;
   started_at?: unknown;
 }
 
@@ -14,6 +16,7 @@ export function validateClaim(data: ClaimData): string[] {
   if (!String(data.agent ?? "").trim()) errors.push("agent is required");
   if (!String(data.branch ?? "").trim()) errors.push("branch is required");
   if (!String(data.worktree ?? "").trim()) errors.push("worktree is required");
+  if (data.origin !== undefined && !["created", "adopted"].includes(String(data.origin))) errors.push("origin must be created or adopted");
   if (Number.isNaN(Date.parse(String(data.started_at ?? "")))) errors.push("started_at must be an ISO timestamp");
   return errors;
 }

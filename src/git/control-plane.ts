@@ -25,16 +25,44 @@ export function linkedWorktreeEntries(root: string): WorktreeEntry[] {
 }
 
 /**
- * Canonical Kotta state lives in the worktree that has the configured base branch checked out.
- * A feature worktree may read its own code, but every live state mutation is routed here.
+ * How the canonical writer was chosen, so a reader can tell why state landed where it did.
+ * `single` is the shape a hosted agent session has: one checkout, on a branch it was given.
  */
-export function controlPlaneRoot(root: string): string {
+export type ControlPlaneMode = "single" | "linked";
+
+export interface ControlPlane {
+  root: string;
+  mode: ControlPlaneMode;
+  /** The branch that checkout holds, when Git reports one. Detached HEAD reports null. */
+  branch: string | null;
+}
+
+/**
+ * Canonical Kotta state lives in the worktree that has the configured base branch checked out —
+ * unless there is only one checkout, in which case that one is it, whatever branch it holds
+ * (D-01kztvgb4q8tnhcw4gm2wqrz8b).
+ *
+ * The count decides before the branch does. The base-branch rule exists to stop two copies of live
+ * state diverging across worktrees; with a single checkout there is nothing to diverge from, and
+ * enforcing it there only made Kotta unusable in a hosted session, where every command — including
+ * read-only `status` — failed before it began (F-01kztvbpa23qm3gdz4cxkkm5xz).
+ */
+export function resolveControlPlane(root: string): ControlPlane {
+  const entries = linkedWorktreeEntries(root);
+  if (entries.length === 1) {
+    const only = entries[0];
+    return { root: resolve(only.path), mode: "single", branch: only.branch?.replace(/^refs\/heads\//, "") ?? null };
+  }
   const { baseBranch } = readWorkspaceConfig(root);
   const reference = `refs/heads/${baseBranch}`;
-  const matches = linkedWorktreeEntries(root).filter((entry) => entry.branch === reference);
-  if (matches.length === 1) return resolve(matches[0].path);
+  const matches = entries.filter((entry) => entry.branch === reference);
+  if (matches.length === 1) return { root: resolve(matches[0].path), mode: "linked", branch: baseBranch };
   if (matches.length > 1) throw new Error(`Configured control branch '${baseBranch}' is checked out in more than one worktree; Kotta cannot choose a canonical writer.`);
   throw new Error(`Configured control branch '${baseBranch}' has no checked-out control worktree. Check it out, then retry; Kotta never writes live state into a feature worktree.`);
+}
+
+export function controlPlaneRoot(root: string): string {
+  return resolveControlPlane(root).root;
 }
 
 function commonGitDirectory(root: string): string {
