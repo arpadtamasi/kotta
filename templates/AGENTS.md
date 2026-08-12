@@ -63,6 +63,12 @@ worktree to the current caller without launching another agent. Fresh remains th
 A contract with no unresolved choice may use `None`, `N/A`, or `No open decisions` (with or
 without a final period) under `Open decisions`. Any substantive text there blocks signing.
 
+A batch may group other batches — `kotta batch add <parent> <child>` takes either kind of member.
+Nesting is grouping only: a child has no coordinator branch and no execution of its own, and
+`batch start` runs leaf batches, never a parent. To carry out a whole parent, read it with
+`kotta batch status <id>`, which reports every contract underneath it in dependency order, and work
+that list. Each contract keeps its own human gates; grouping approves nothing.
+
 `close` ends work that was finished and merged; `cancel` ends work whose purpose is gone, from any
 state before `done`, and it is the only exit for a contract a decision made objectless. It always
 records why, and `duplicate` and `obsolete` also require the contract or decision that took the

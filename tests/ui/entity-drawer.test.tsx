@@ -121,3 +121,31 @@ describe("Entity drawer — open and close", () => {
     vi.unstubAllGlobals();
   });
 });
+
+// Nesting is grouping (D-01kztxvppd40r77cq7kw9b8wzr): a parent that names only child batches has
+// work in it, and the board has to show both the children and the contracts underneath them.
+describe("Entity drawer — a batch that groups other batches", () => {
+  const nested = workspace({
+    contracts: [
+      contract("T-100", "Build parser", { status: "done", batch: "P-010" }),
+      contract("T-101", "Expose command", { status: "active", batch: "P-011" }),
+    ],
+    batches: [
+      batch("P-010", "Core", { contracts: ["T-100"] }),
+      batch("P-011", "Surface", { contracts: ["T-101"] }),
+      batch("P-012", "Product", { batches: ["P-010", "P-011"] }),
+    ],
+  });
+
+  it("draws its children and the contracts underneath them, not an empty batch", () => {
+    openDrawer("P-012", nested);
+    const derivation = screen.getByRole("region", { name: "Derivation" });
+
+    expect(within(derivation).getByRole("button", { name: /Core/ })).toBeDefined();
+    expect(within(derivation).getByRole("button", { name: /Surface/ })).toBeDefined();
+    // The work list is the subtree: a parent with no direct contracts is not empty.
+    expect(within(derivation).getByRole("button", { name: /Build parser/ })).toBeDefined();
+    expect(within(derivation).getByRole("button", { name: /Expose command/ })).toBeDefined();
+    expect(within(derivation).queryByText("No member contracts.")).toBeNull();
+  });
+});

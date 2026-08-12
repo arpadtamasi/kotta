@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFile
 import { join, resolve } from "node:path";
 import { findRepositoryRoot, regenerateIndex, workspaceDirectoryName, workspacePath } from "../filesystem/workspace.js";
 import { findContract, resolveEffectiveContract } from "../filesystem/entities.js";
-import { entityFilename, filenameMatchesId, mintId } from "../core/identity.js";
+import { BATCH_ID, entityFilename, filenameMatchesId, mintId } from "../core/identity.js";
 import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
 import { readWorkspaceConfig } from "../core/config.js";
 import { assertClean, git } from "../git/git.js";
@@ -27,6 +27,76 @@ export function findBatch(root: string, id: string) {
     if (filename) return { state, filename, path: join(directory, filename) };
   }
   throw new Error(`Batch ${id} was not found.`);
+}
+
+/**
+ * Nesting is grouping and nothing else (D-01kztxvppd40r77cq7kw9b8wzr): a child batch has no
+ * coordinator branch, no execution block of its own and no merge target. What it buys is a level
+ * above the contract for a large product, and one readable answer to "what is under this".
+ */
+export interface BatchTree {
+  id: string;
+  title: string;
+  state: string;
+  contracts: string[];
+  children: BatchTree[];
+}
+
+function batchMembers(root: string, id: string): { contracts: string[]; batches: string[]; title: string; state: string } {
+  const batch = findBatch(root, id);
+  const data = parseMarkdown(readFileSync(batch.path, "utf8")).data;
+  return {
+    contracts: Array.isArray(data.contracts) ? data.contracts.map(String) : [],
+    batches: Array.isArray(data.batches) ? data.batches.map(String) : [],
+    title: typeof data.title === "string" ? data.title : "",
+    state: batch.state,
+  };
+}
+
+/** The subtree under a batch. `seen` is the path back to the root, so a cycle names its own loop. */
+export function batchTree(root: string, id: string, seen: string[] = []): BatchTree {
+  if (seen.includes(id)) throw new Error(`Batch nesting is cyclic: ${[...seen, id].join(" → ")}.`);
+  const members = batchMembers(root, id);
+  return {
+    id, title: members.title, state: members.state, contracts: members.contracts,
+    children: members.batches.map((child) => batchTree(root, child, [...seen, id])),
+  };
+}
+
+/** Every contract under a batch, direct members first, then each child in declaration order. */
+export function subtreeContracts(tree: BatchTree): string[] {
+  return [...tree.contracts, ...tree.children.flatMap(subtreeContracts)];
+}
+
+/**
+ * The whole subtree as one work list, dependencies before the contracts that declare them. Derived
+ * on every read rather than stored: membership is already answered by `.kotta/`, and a cached copy
+ * would be a second source of truth for it.
+ */
+export function flattenBatch(root: string, id: string): { contracts: string[]; waves: string[][] } {
+  const ids = [...new Set(subtreeContracts(batchTree(root, id)))];
+  const waves = ids.length ? planBatchWaves(ids, contractDependencies(root, ids)) : [];
+  return { contracts: waves.flat(), waves };
+}
+
+/** A short id the listings print resolves to a batch, so `batch add` routes it as one. */
+function isKnownBatch(root: string, id: string): boolean {
+  try { findBatch(root, id); return true; } catch { return false; }
+}
+
+/** Every batch that names this one. More than one is the invariant that makes flattening ambiguous. */
+function parentsOf(root: string, childId: string): string[] {
+  const parents: string[] = [];
+  for (const state of ["backlog", "defined", "active", "done"]) {
+    const directory = workspacePath(root, "batches", state);
+    if (!existsSync(directory)) continue;
+    for (const name of readdirSync(directory).filter((file) => file.endsWith(".md"))) {
+      const data = parseMarkdown(readFileSync(join(directory, name), "utf8")).data;
+      const children = Array.isArray(data.batches) ? data.batches.map(String) : [];
+      if (children.includes(childId) && typeof data.id === "string") parents.push(data.id);
+    }
+  }
+  return parents;
 }
 
 function contractDependencies(root: string, ids: string[]): Map<string, string[]> {
@@ -99,8 +169,46 @@ export function newBatch(options: { title: string; goal?: string; parallelism?: 
   return { ok: true, command: "batch new", data: { id, path } };
 }
 
+/**
+ * One command for both member kinds, routed by the id it is given. A child batch is recorded on the
+ * parent alone: the child keeps its own members, state and history, and knows nothing about being
+ * grouped — which is what makes `batch remove` a complete undo.
+ */
+function updateChildBatches(root: string, id: string, childId: string, action: "add" | "remove") {
+  const batch = findBatch(root, id);
+  if (batch.state !== "backlog") throw new Error(`Batch ${id} membership can only change while it is in backlog.`);
+  const canonicalChild = String(parseMarkdown(readFileSync(findBatch(root, childId).path, "utf8")).data.id);
+  if (canonicalChild === id) throw new Error(`Batch ${id} cannot contain itself.`);
+  const entity = parseMarkdown(readFileSync(batch.path, "utf8"));
+  const children = Array.isArray(entity.data.batches) ? entity.data.batches.map(String) : [];
+
+  if (action === "add") {
+    const otherParent = parentsOf(root, canonicalChild).find((parent) => parent !== id);
+    if (otherParent) throw new Error(`Batch ${canonicalChild} already belongs to ${otherParent}. Remove it there first.`);
+    // Walking the child's own subtree is what catches a loop at any depth, not just the direct one.
+    const descendants = new Set([canonicalChild, ...collectBatchIds(batchTree(root, canonicalChild))]);
+    if (descendants.has(id)) throw new Error(`Adding ${canonicalChild} to ${id} would make the nesting cyclic: ${id} is already inside it.`);
+    if (!children.includes(canonicalChild)) children.push(canonicalChild);
+  } else {
+    const index = children.indexOf(canonicalChild);
+    if (index < 0) throw new Error(`Batch ${canonicalChild} is not in batch ${id}.`);
+    children.splice(index, 1);
+  }
+
+  entity.data.batches = children;
+  entity.data.updated_at = new Date().toISOString().slice(0, 10);
+  writeFileSync(batch.path, renderMarkdown(entity.data, entity.content));
+  regenerateIndex(root);
+  return { ok: true, command: `batch ${action}`, data: { id, batchId: canonicalChild, batches: children } };
+}
+
+function collectBatchIds(tree: BatchTree): string[] {
+  return tree.children.flatMap((child) => [child.id, ...collectBatchIds(child)]);
+}
+
 export function updateBatchContracts(id: string, contractId: string, action: "add" | "remove", repositoryRoot?: string) {
   const root = controlPlaneRoot(repositoryRoot ?? findRepositoryRoot());
+  if (BATCH_ID.test(contractId.trim()) || isKnownBatch(root, contractId)) return updateChildBatches(root, id, contractId, action);
   const batch = findBatch(root, id);
   if (batch.state !== "backlog") throw new Error(`Batch ${id} membership can only change while it is in backlog.`);
   const contract = findContract(root, contractId);
@@ -138,14 +246,22 @@ export function validateBatch(id: string, repositoryRoot?: string) {
   const body = sections(entity.content);
   for (const heading of ["Goal", "Completion", "Execution notes"]) if (!body.get(heading.toLowerCase())?.trim()) errors.push({ code: "MISSING_SECTION", message: `Missing or empty section: ${heading}.` });
   let waves: string[][] = [];
+  let children: string[] = [];
   try {
-    const ids = Array.isArray(data.contracts) ? data.contracts.map(String) : [];
-    if (!ids.length) throw new Error("Batch must contain at least one contract.");
+    // The subtree, not the direct members: a parent that groups only children still has work in it,
+    // and its ordering has to hold across the children rather than inside each one.
+    children = Array.isArray(data.batches) ? data.batches.map(String) : [];
+    for (const child of children) {
+      const otherParents = parentsOf(root, child).filter((parent) => parent !== id);
+      if (otherParents.length) errors.push({ code: "SHARED_CHILD_BATCH", message: `Batch ${child} is named by ${[id, ...otherParents].join(" and ")}; a batch has at most one parent.` });
+    }
+    const ids = [...new Set(subtreeContracts(batchTree(root, id)))];
+    if (!ids.length) throw new Error("Batch must contain at least one contract, directly or in a child batch.");
     waves = planBatchWaves(ids, contractDependencies(root, ids));
   } catch (error) {
     errors.push({ code: "DEPENDENCY_ERROR", message: error instanceof Error ? error.message : String(error) });
   }
-  return { ok: errors.length === 0, command: "batch validate", data: { id, state: batch.state, waves, warnings }, errors };
+  return { ok: errors.length === 0, command: "batch validate", data: { id, state: batch.state, waves, children, warnings }, errors };
 }
 
 export function signBatch(id: string, approved: boolean, repositoryRoot?: string) {
@@ -207,6 +323,12 @@ export function startBatch(id: string, agent: string) {
   assertClean(root);
   const batch = findBatch(root, id);
   if (!['defined', 'active'].includes(batch.state)) throw new Error(`Batch ${id} must be defined or active before start.`);
+  // Execution is a leaf operation. A parent is a name, and giving it a coordinator branch would
+  // invent the semantics nesting was deliberately kept clear of (D-01kztxvppd40r77cq7kw9b8wzr).
+  const tree = batchTree(root, id);
+  if (tree.children.length) {
+    throw new Error(`Batch ${id} groups other batches and is not run directly. Start the batches inside it: ${tree.children.map((child) => child.id).join(", ")}.`);
+  }
   const entity = parseMarkdown(readFileSync(batch.path, "utf8"));
   const data = entity.data as BatchData;
   const { action: coordinatorAction, coordinator } = establishCoordinator(root, id, data);
@@ -308,7 +430,8 @@ export function batchStatus(id: string) {
   const batch = findBatch(root, id);
   const entity = parseMarkdown(readFileSync(batch.path, "utf8"));
   const data = entity.data as BatchData;
-  const ids = Array.isArray(entity.data.contracts) ? entity.data.contracts.map(String) : [];
+  const tree = batchTree(root, id);
+  const ids = [...new Set(subtreeContracts(tree))];
   const contracts = ids.map((contractId) => {
     const effective = resolveEffectiveContract(root, contractId, (contract) => contract.state);
     const contract = findContract(root, contractId);
@@ -322,6 +445,7 @@ export function batchStatus(id: string) {
     command: "batch status",
     data: {
       id, status: batch.state, contracts,
+      children: tree.children.map((child) => ({ id: child.id, title: child.title, state: child.state })),
       coordinator: {
         state: inspection.state, branch: inspection.branch, base_branch: inspection.baseBranch, current_branch: inspection.currentBranch,
         legacy: inspection.legacy, cleanup_pending: inspection.state === "cleanup-pending",
@@ -344,7 +468,11 @@ export function closeBatch(id: string, approved: boolean, repositoryRoot?: strin
   // Re-running on a finished batch is a no-op, so a retried coordinator never has to guess.
   if (batch.state === "done") return { ok: true, command: "batch close", data: { id, status: "done", path: batch.path, changed: false } };
   if (!approved) throw new Error(`Human close approval is required. Re-run with --approve after verifying every contract of ${id} is complete.`);
-  const contractIds = Array.isArray(data.contracts) ? data.contracts.map(String) : [];
+  const tree = batchTree(root, id);
+  // A parent is finished when its whole subtree is: the same rule as before, one level deeper.
+  const openChildren = tree.children.filter((child) => child.state !== "done");
+  if (openChildren.length) throw new Error(`Batch ${id} cannot close while ${openChildren.map((child) => `${child.id} is ${child.state}`).join(", ")}. Every child batch must reach done first.`);
+  const contractIds = [...new Set(subtreeContracts(tree))];
   if (!contractIds.length) throw new Error(`Batch ${id} has no member contracts; there is nothing to close.`);
   // A contract executing in its own worktree still reads as defined here, so ask for the effective state.
   const open = contractIds
