@@ -137,7 +137,45 @@ export function signContract(id: string, approved: boolean, repositoryRoot?: str
   return options.locked ? sign(requestedRoot) : withControlPlaneMutation(requestedRoot, sign, { requireClean: false });
 }
 
-export function startContract(id: string, agent: string, executionMode: "fresh" | "inherited" = "fresh", repositoryRoot?: string) {
+export interface StartContractOptions {
+  /** Symbolic Git ref whose current commit becomes the new execution branch's baseline. */
+  startRef?: string;
+  /** Batch coordinator ref used to prove reviewed same-batch dependencies are already integrated. */
+  dependencyIntegrationTarget?: string;
+}
+
+function resolveCommit(root: string, ref: string, label: string): string {
+  if (!ref.trim()) throw new Error(`${label} is required.`);
+  try { return git(root, ["rev-parse", "--verify", `${ref}^{commit}`]); }
+  catch { throw new Error(`${label} '${ref}' does not resolve to a Git commit.`); }
+}
+
+/**
+ * Human acceptance and technical wave readiness are deliberately different predicates. A reviewed
+ * dependency unlocks only another member of its own batch, and only when Git proves the feature
+ * branch is already contained in the coordinator commit being used for this dispatch.
+ */
+export function batchDependencySatisfied(root: string, dependencyId: string, batchId: string, integrationTarget: string): boolean {
+  const dependency = findContract(root, dependencyId);
+  if (dependency.state === "done") return true;
+  if (dependency.state !== "review") return false;
+  const entity = parseMarkdown(readFileSync(dependency.path, "utf8"));
+  if (entity.data.batch !== batchId) return false;
+  const branch = typeof entity.data.branch === "string" ? entity.data.branch.trim() : "";
+  if (!branch) return false;
+  try {
+    git(root, ["merge-base", "--is-ancestor", branch, integrationTarget]);
+    return true;
+  } catch { return false; }
+}
+
+export function startContract(
+  id: string,
+  agent: string,
+  executionMode: "fresh" | "inherited" = "fresh",
+  repositoryRoot?: string,
+  options: StartContractOptions = {},
+) {
   const callerRoot = repositoryRoot ?? findRepositoryRoot();
   return withControlPlaneMutation(callerRoot, (root) => {
     const contract = findContract(root, id);
@@ -148,7 +186,19 @@ export function startContract(id: string, agent: string, executionMode: "fresh" 
     const definedSnapshot = readFileSync(contract.path, "utf8");
     const entity = parseMarkdown(definedSnapshot);
     const dependencies = Array.isArray(entity.data.depends_on) ? entity.data.depends_on.map(String) : [];
-    const incomplete = dependencies.filter((dependency) => findContract(root, dependency).state !== "done");
+    const startRef = options.startRef ?? "HEAD";
+    const startCommit = resolveCommit(root, startRef, "Start ref");
+    const dependencyIntegrationTarget = options.dependencyIntegrationTarget;
+    const integrationCommit = dependencyIntegrationTarget
+      ? dependencyIntegrationTarget === startRef
+        ? startCommit
+        : resolveCommit(root, dependencyIntegrationTarget, "Dependency integration target")
+      : null;
+    const batchId = typeof entity.data.batch === "string" ? entity.data.batch : null;
+    if (integrationCommit && !batchId) throw new Error(`Contract ${id} has no batch for dependency integration target '${dependencyIntegrationTarget}'.`);
+    const incomplete = dependencies.filter((dependency) => integrationCommit && batchId
+      ? !batchDependencySatisfied(root, dependency, batchId, integrationCommit)
+      : findContract(root, dependency).state !== "done");
     if (incomplete.length) throw new Error(`Unresolved dependencies: ${incomplete.join(", ")}. Complete them before starting ${id}.`);
     const title = String(entity.data.title);
     const type = Array.isArray(entity.data.types) ? String(entity.data.types[0]) : String(entity.data.type ?? "feature");
@@ -168,6 +218,9 @@ export function startContract(id: string, agent: string, executionMode: "fresh" 
     const branch = adopting ? controlPlane.branch! : branchName(type, id, title, config.branchPattern);
     const worktreeRelative = adopting ? "." : `.worktrees/${id}`;
     const worktree = adopting ? root : join(root, worktreeRelative);
+    if (adopting && git(root, ["rev-parse", "HEAD"]) !== startCommit) {
+      throw new Error(`The adopted checkout is not at start ref '${startRef}' commit ${startCommit}; Kotta cannot move an environment-owned checkout.`);
+    }
     if (!adopting) {
       assertSafeWorktreePath(worktree);
       if (git(root, ["branch", "--list", branch])) throw new Error(`Branch already exists: ${branch}`);
@@ -178,7 +231,7 @@ export function startContract(id: string, agent: string, executionMode: "fresh" 
     const active = workspacePath(root, "active", contract.filename);
     try {
       if (!adopting) {
-        git(root, ["worktree", "add", worktree, "-b", branch, "HEAD"]);
+        git(root, ["worktree", "add", worktree, "-b", branch, startCommit]);
         createdWorktree = true;
       }
       if (readEnv("TEST_FAIL_START_AT") === "after-worktree") throw new Error("Injected start failure after worktree creation.");
@@ -190,16 +243,24 @@ export function startContract(id: string, agent: string, executionMode: "fresh" 
       entity.data.worktree = worktreeRelative;
       entity.data.execution_mode = executionMode;
       entity.data.branch_origin = adopting ? "adopted" : "created";
+      entity.data.start_ref = startRef;
+      entity.data.start_commit = startCommit;
+      if (dependencyIntegrationTarget) entity.data.dependency_integration_target = dependencyIntegrationTarget;
       entity.data.updated_at = new Date().toISOString().slice(0, 10);
       writeFileSync(active, renderMarkdown(entity.data, entity.content));
       unlinkSync(contract.path);
       if (readEnv("TEST_FAIL_START_AT") === "after-active") throw new Error("Injected start failure after control-plane activation.");
-      const claim = { contract: id, agent, branch, worktree: worktreeRelative, execution_mode: executionMode, origin: adopting ? "adopted" : "created", started_at: new Date().toISOString() };
+      const claim = {
+        contract: id, agent, branch, worktree: worktreeRelative, execution_mode: executionMode,
+        origin: adopting ? "adopted" : "created", start_ref: startRef, start_commit: startCommit,
+        ...(dependencyIntegrationTarget ? { dependency_integration_target: dependencyIntegrationTarget } : {}),
+        started_at: new Date().toISOString(),
+      };
       writeFileSync(claimInControl, stringify(claim));
       if (readEnv("TEST_FAIL_START_AT") === "after-claim") throw new Error("Injected start failure after claim creation.");
       assertValid(validateContractFile(active, "active"));
       regenerateIndex(root);
-      lifecyclePath = appendLifecycleEvent(root, id, "active", `Execution started on ${branch} with ${agent}${adopting ? ", adopting the only checkout; Kotta created no branch and no worktree." : "."}`).path;
+      lifecyclePath = appendLifecycleEvent(root, id, "active", `Execution started on ${branch} with ${agent} from ${startRef} at ${startCommit}${adopting ? ", adopting the only checkout; Kotta created no branch and no worktree." : "."}`).path;
       commitControlState(root, `chore(kotta): start ${id}`);
     } catch (error) {
       if (lifecyclePath && existsSync(lifecyclePath)) unlinkSync(lifecyclePath);
@@ -209,7 +270,10 @@ export function startContract(id: string, agent: string, executionMode: "fresh" 
       regenerateIndex(root);
       if (createdWorktree) {
         try { git(root, ["worktree", "remove", worktree]); } catch { /* preserve the original failure */ }
-        try { git(root, ["branch", "-d", branch]); } catch { /* preserve the original failure */ }
+        // A batch baseline can be ahead of the control checkout, so `branch -d` would mistake an
+        // untouched just-created branch for unmerged work. Delete only if it still points at the
+        // exact commit Kotta created it from; any unexpected movement is preserved for inspection.
+        try { git(root, ["update-ref", "-d", `refs/heads/${branch}`, startCommit]); } catch { /* preserve the original failure */ }
       }
       throw error;
     }
@@ -217,7 +281,8 @@ export function startContract(id: string, agent: string, executionMode: "fresh" 
       ok: true,
       command: "contract start",
       data: {
-        id, branch, worktree,
+        id, branch, worktree, startRef, startCommit,
+        dependencyIntegrationTarget: dependencyIntegrationTarget ?? null,
         executionMode,
         origin: adopting ? "adopted" : "created",
         nextStep: executionMode === "fresh" ? `kotta contract execute ${id} --resume` : `Continue execution in ${worktree}.`,

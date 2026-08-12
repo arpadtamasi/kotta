@@ -62,14 +62,23 @@ function humanize(result: unknown): string {
       return describeDedupe((result as DedupeResult).data);
     }
     if (command === "contract start" && "data" in result) {
-      const data = (result as { data: { id: unknown; branch: unknown; worktree: unknown; nextStep: unknown; executionMode?: unknown; callerStep?: unknown } }).data;
+      const data = (result as { data: { id: unknown; branch: unknown; worktree: unknown; startRef: unknown; startCommit: unknown; nextStep: unknown; executionMode?: unknown; callerStep?: unknown } }).data;
       return [
-        `Started ${String(data.id)}: branch ${String(data.branch)}, worktree ${String(data.worktree)}.`,
+        `Started ${String(data.id)} from ${String(data.startRef)} at ${String(data.startCommit)}: branch ${String(data.branch)}, worktree ${String(data.worktree)}.`,
         data.executionMode === "inherited"
           ? `Execution mode: inherited context — ${String(data.callerStep)}`
           : `Next: run the contract in a fresh agent context (D-009) — ${String(data.nextStep)}.`,
         `'kotta contract execute <id> --agent <agent>' does start, brief and agent launch in one command.`,
       ].join("\n");
+    }
+    if (command === "batch start" && "data" in result) {
+      const data = (result as { data: { id: unknown; starts: Array<{ id: unknown; startRef: unknown; startCommit: unknown }>; waiting: unknown[]; failures: Array<{ id: unknown; message: unknown }>; coordinator: { branch: unknown; commit: unknown } } }).data;
+      const lines = [`Batch ${String(data.id)} coordinator ${String(data.coordinator.branch)} at ${String(data.coordinator.commit)}.`];
+      for (const start of data.starts) lines.push(`Started ${String(start.id)} from ${String(start.startRef)} at ${String(start.startCommit)}.`);
+      for (const failure of data.failures) lines.push(`Failed ${String(failure.id)}: ${String(failure.message)}`);
+      if (data.waiting.length) lines.push(`Waiting: ${data.waiting.map(String).join(", ")}.`);
+      if (!data.starts.length && !data.waiting.length) lines.push("No contracts were dispatched; every member is done.");
+      return lines.join("\n");
     }
     if (command.endsWith(" list") && "data" in result && "entity" in (result as { data: Record<string, unknown> }).data) {
       return formatList(result as ListResult);
