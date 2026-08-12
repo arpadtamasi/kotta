@@ -4,6 +4,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { controlPlaneRoot } from "../git/control-plane.js";
 import { skillDrift } from "./sync.js";
+import { agentsDrift } from "./agents.js";
 
 export function statusCommand(repositoryRoot?: string) {
   const root = controlPlaneRoot(repositoryRoot ?? findRepositoryRoot());
@@ -16,5 +17,5 @@ export function statusCommand(repositoryRoot?: string) {
   // directory did you read?" must be visible without guessing (D-007).
   // The skills are reported here because nothing else would say it: an agent told to prefer them
   // cannot notice that they were never installed, and an out-of-date copy fails silently.
-  return { ok: true, command: "status", data: { workspace: workspacePath(root), definedContracts: byDirectory("defined"), activeContracts: byDirectory("active"), reviewContracts: byDirectory("review"), newObservations: byDirectory("observations/new"), allContracts: listIds(root, "contract"), skills: skillDrift() } };
+  return { ok: true, command: "status", data: { workspace: workspacePath(root), definedContracts: byDirectory("defined"), activeContracts: byDirectory("active"), reviewContracts: byDirectory("review"), newObservations: byDirectory("observations/new"), allContracts: listIds(root, "contract"), skills: skillDrift(), rules: agentsDrift(root) } };
 }

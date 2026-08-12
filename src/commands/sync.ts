@@ -3,6 +3,8 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readEnv } from "../core/env.js";
+import { findRepositoryRoot, hasWorkspace } from "../filesystem/workspace.js";
+import { linkProjectAgents, pointerLine, syncWorkspaceAgents } from "./agents.js";
 
 /**
  * Kotta ships its skills inside the package, but nothing has ever installed them — so the
@@ -137,6 +139,26 @@ export function syncSkills(environment: NodeJS.ProcessEnv = process.env): SyncRe
 
   writeManifest(target, owned);
   return { ok: true, command: "sync", data: { target, created, updated, unchanged, skipped } };
+}
+
+/**
+ * `sync` keeps both shipped artefacts current: the skills, in the host's global skill directory,
+ * and the workspace rules file, in the repository. They travel together because they go stale
+ * together — an upgrade moves both, and an agent reading yesterday's rules is the failure this
+ * command exists to prevent.
+ *
+ * The project's own `AGENTS.md` is a third thing and is not Kotta's. `linkAgents` appends one
+ * pointer line to it after a human said yes; without the flag the pointer is only reported, so the
+ * calling agent can quote the exact line when it asks (D-01kztp2epe4sehb25mpv7hc33b).
+ */
+export function syncCommand(options: { linkAgents?: boolean } = {}, environment: NodeJS.ProcessEnv = process.env) {
+  const skills = syncSkills(environment);
+  // `sync` installs the skills from anywhere; only the rules file needs a workspace to live in.
+  const located = (() => { try { return findRepositoryRoot(); } catch { return null; } })();
+  const root = located && hasWorkspace(located) ? located : null;
+  const agents = root ? syncWorkspaceAgents(root) : null;
+  const projectAgents = root && options.linkAgents ? linkProjectAgents(root) : null;
+  return { ok: true as const, command: "sync" as const, data: { ...skills.data, agents, projectAgents, pointer: root ? pointerLine(root) : null } };
 }
 
 /**

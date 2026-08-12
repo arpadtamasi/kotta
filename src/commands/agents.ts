@@ -1,0 +1,153 @@
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { findRepositoryRoot, workspaceDirectoryName, workspacePath } from "../filesystem/workspace.js";
+
+/**
+ * Kotta's rules used to reach a project only by a human copying this repository's `AGENTS.md` by
+ * hand, which is why the install line — the one fact an agent without the CLI needs — never
+ * travelled with them (F-01kztn8rzehzvdfqq1snwc55jk). The rules now ship, and Kotta writes them
+ * into the workspace directory it already owns outright.
+ *
+ * The project's own `AGENTS.md` stays the project's. Kotta appends one pointer line to it and only
+ * when asked, per D-01kztp2epe4sehb25mpv7hc33b: that file usually carries conventions Kotta knows
+ * nothing about, and a generator that overwrites it forfeits the trust its other rules depend on.
+ */
+
+export const WORKSPACE_AGENTS_FILE = "AGENTS.md";
+export const PROJECT_AGENTS_FILE = "AGENTS.md";
+
+export type WorkspaceAgentsState = "created" | "updated" | "unchanged" | "drifted";
+export type ProjectAgentsState = "created" | "linked" | "already-linked";
+
+function packageRoot(): string {
+  return fileURLToPath(new URL("../..", import.meta.url));
+}
+
+/** The published identity, read from the running package rather than typed into the template. */
+function publishedPackage(): { name: string; version: string } {
+  const manifest = JSON.parse(readFileSync(join(packageRoot(), "package.json"), "utf8")) as { name?: unknown; version?: unknown };
+  const name = typeof manifest.name === "string" ? manifest.name : "";
+  const version = typeof manifest.version === "string" ? manifest.version : "";
+  if (!name || !version) throw new Error("The Kotta package has no readable name and version; the rules file would name no install command.");
+  return { name, version };
+}
+
+export function shippedAgentsTemplate(): string {
+  return join(packageRoot(), "templates", WORKSPACE_AGENTS_FILE);
+}
+
+/**
+ * The rules as this installation would write them. The install command is rendered from the
+ * package's own name and version, so it cannot name a package that is not the one running.
+ */
+export function renderAgentsFile(root: string): string {
+  const { name, version } = publishedPackage();
+  return readFileSync(shippedAgentsTemplate(), "utf8")
+    .replaceAll("{{package}}", name)
+    .replaceAll("{{version}}", version)
+    .replaceAll("{{workspace}}", workspaceDirectoryName(root));
+}
+
+/**
+ * What Kotta last wrote, by content hash. The skills installer answers the same question with an
+ * ownership manifest; here the file lives in the operator's repository rather than in a home-
+ * directory cache, so an edited copy is reported and left alone instead of being replaced.
+ */
+function generatedManifestPath(root: string): string {
+  return workspacePath(root, ".kotta-generated.json");
+}
+
+function digest(content: string): string {
+  return createHash("sha256").update(content).digest("hex");
+}
+
+function readGenerated(root: string): Record<string, string> {
+  const path = generatedManifestPath(root);
+  if (!existsSync(path)) return {};
+  try {
+    const parsed = JSON.parse(readFileSync(path, "utf8")) as { files?: unknown };
+    return parsed.files && typeof parsed.files === "object" ? { ...(parsed.files as Record<string, string>) } : {};
+  } catch {
+    return {}; // an unreadable manifest claims nothing: better to report drift than to clobber
+  }
+}
+
+function writeGenerated(root: string, files: Record<string, string>): void {
+  writeFileSync(generatedManifestPath(root), `${JSON.stringify({ files }, null, 2)}\n`);
+}
+
+export interface WorkspaceAgentsResult {
+  path: string;
+  state: WorkspaceAgentsState;
+}
+
+/** Write or refresh the workspace rules file, never replacing one that was edited by hand. */
+export function syncWorkspaceAgents(repositoryRoot?: string): WorkspaceAgentsResult {
+  const root = repositoryRoot ?? findRepositoryRoot();
+  const path = workspacePath(root, WORKSPACE_AGENTS_FILE);
+  const rendered = renderAgentsFile(root);
+  const generated = readGenerated(root);
+
+  if (existsSync(path)) {
+    const current = readFileSync(path, "utf8");
+    if (current === rendered) {
+      // Adopt an identical copy: it is ours by content, whatever wrote it.
+      writeGenerated(root, { ...generated, [WORKSPACE_AGENTS_FILE]: digest(rendered) });
+      return { path, state: "unchanged" };
+    }
+    if (generated[WORKSPACE_AGENTS_FILE] !== digest(current)) return { path, state: "drifted" };
+    writeFileSync(path, rendered);
+    writeGenerated(root, { ...generated, [WORKSPACE_AGENTS_FILE]: digest(rendered) });
+    return { path, state: "updated" };
+  }
+
+  writeFileSync(path, rendered);
+  writeGenerated(root, { ...generated, [WORKSPACE_AGENTS_FILE]: digest(rendered) });
+  return { path, state: "created" };
+}
+
+/** Is the installed rules file missing, or no longer what this Kotta would write? */
+export function agentsDrift(repositoryRoot?: string): { present: boolean; drifted: boolean; path: string } {
+  const root = repositoryRoot ?? findRepositoryRoot();
+  const path = workspacePath(root, WORKSPACE_AGENTS_FILE);
+  if (!existsSync(path)) return { present: false, drifted: false, path };
+  return { present: true, drifted: readFileSync(path, "utf8") !== renderAgentsFile(root), path };
+}
+
+/** The one line Kotta ever adds to a project's own AGENTS.md. */
+export function pointerLine(repositoryRoot?: string): string {
+  const root = repositoryRoot ?? findRepositoryRoot();
+  return `@${workspaceDirectoryName(root)}/${WORKSPACE_AGENTS_FILE}`;
+}
+
+export interface ProjectAgentsResult {
+  path: string;
+  state: ProjectAgentsState;
+  line: string;
+}
+
+/**
+ * Append the pointer to the project's own `AGENTS.md`, creating that file only when there is none.
+ * Nothing already in it is rewritten, reordered or removed, and a file that already points at the
+ * workspace rules is left exactly as it is — detected by the path, so a reworded line around it
+ * does not earn a duplicate.
+ */
+export function linkProjectAgents(repositoryRoot?: string): ProjectAgentsResult {
+  const root = repositoryRoot ?? findRepositoryRoot();
+  const path = join(root, PROJECT_AGENTS_FILE);
+  const line = pointerLine(root);
+  const target = `${workspaceDirectoryName(root)}/${WORKSPACE_AGENTS_FILE}`;
+
+  if (!existsSync(path)) {
+    writeFileSync(path, `${line}\n`);
+    return { path, state: "created", line };
+  }
+
+  const current = readFileSync(path, "utf8");
+  if (current.includes(target)) return { path, state: "already-linked", line };
+  const separator = current.endsWith("\n\n") ? "" : current.endsWith("\n") ? "\n" : "\n\n";
+  writeFileSync(path, `${current}${separator}${line}\n`);
+  return { path, state: "linked", line };
+}

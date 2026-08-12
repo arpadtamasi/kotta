@@ -10,10 +10,12 @@ Use the `kotta` CLI as the canonical mutation interface. Do not create or edit `
 1. Locate the Git repository root and inspect any existing workspace directory and `.gitignore` entry. `.kotta/` is the workspace directory; a directory under the pre-rename name is still read, and `init` refuses to add a second one beside it. The README section "Renamed from A-Team" is the single description of that compatibility, including how to migrate an existing workspace (`git mv` plus a backwards symlink) and what happens when both names are real directories — read it there rather than restating it.
 2. Explain any conflict that would prevent a safe initialization. Preserve existing files; never overwrite them silently.
 3. Run `kotta init` from the repository root. Add `--json` when structured output is useful.
-4. When the caller is Codex, run `kotta integrate codex`. It idempotently adds the local Kotta MCP server to the project `.codex/config.toml` without replacing existing host settings. Tell the user a new chat or host restart is required before newly configured MCP tools appear.
-5. Run `kotta validate` and report actionable validation failures.
-6. Summarize the created workspace and configuration, including the base branch and worktree policy.
-7. Tell the user that `/define-contract` creates the first executable work contract and `kotta status` shows current state.
+4. `init` also writes `.kotta/AGENTS.md` — the rules every agent in this project must follow, including the command that installs the CLI they require. That file is Kotta's; `kotta sync` keeps it current and reports it as drifted rather than overwriting an edited one.
+5. The project's own `AGENTS.md` is **not** Kotta's. `init` reports one pointer line and adds nothing. Show the user that exact line, say it will be appended and that nothing else in their file changes, and on an explicit yes run `kotta sync --link-agents`. A no is a no: the rules are still readable at `.kotta/AGENTS.md`. With no human to ask, never pass the flag.
+6. When the caller is Codex, run `kotta integrate codex`. It idempotently adds the local Kotta MCP server to the project `.codex/config.toml` without replacing existing host settings. Tell the user a new chat or host restart is required before newly configured MCP tools appear.
+7. Run `kotta validate` and report actionable validation failures.
+8. Summarize the created workspace and configuration, including the base branch and worktree policy.
+9. Tell the user that `/define-contract` creates the first executable work contract and `kotta status` shows current state.
 
 The filesystem under `.kotta/` is canonical, but all workflow mutations must pass through Kotta's
 validated services so validation, index generation, and transaction safety stay consistent. Contract
