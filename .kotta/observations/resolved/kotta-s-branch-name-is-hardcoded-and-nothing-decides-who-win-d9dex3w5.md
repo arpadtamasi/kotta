@@ -3,13 +3,15 @@ id: F-01kztt3mce0yk9pm7jd9dex3w5
 title: >-
   Kotta's branch name is hardcoded and nothing decides who wins when the host
   names the branch first
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-12'
+disposition: attach-existing
+resolved_at: '2026-08-12T12:06:24.833Z'
 ---
 # F-01kztt3mce0yk9pm7jd9dex3w5 — Kotta's branch name is hardcoded and nothing decides who wins when the host names the branch first
 
