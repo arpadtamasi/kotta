@@ -1,7 +1,7 @@
 ---
 id: T-01kzw15bre7s0wms8d42xfajx0
 title: Dependency-aware batches pause and start the next wave from main
-status: active
+status: review
 origin: observation
 types:
   - bug
@@ -150,3 +150,37 @@ None.
 ## Execution notes
 
 The implementation seam is `startBatch` in `src/commands/batch.ts` and `startContract` in `src/commands/contract.ts`. Decisions D-002 and D-004 already make verification and actually merged prerequisites the load-bearing pre-flight checks; this contract applies those decisions without changing the two human gates.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A reviewed predecessor whose branch is an ancestor of the recorded coordinator satisfies a same-batch dependency without being closed. | Commit ce1d02f implements dependency-aware technical handoff and coordinator baselines. Regression test fails on pristine HEAD and passes after the change. Final verification: npm test — 45 files passed, 299 tests passed, 1 skipped; npm run typecheck passed; npm run build passed; focused batch dependency wave tests 4/4 passed; the affected isolated workspace kotta validate passed; git diff --check passed. |
+| A reviewed predecessor not integrated into the coordinator does not satisfy the dependency and no execution context is created for its dependent. | Commit ce1d02f implements dependency-aware technical handoff and coordinator baselines. Regression test fails on pristine HEAD and passes after the change. Final verification: npm test — 45 files passed, 299 tests passed, 1 skipped; npm run typecheck passed; npm run build passed; focused batch dependency wave tests 4/4 passed; the affected isolated workspace kotta validate passed; git diff --check passed. |
+| The dependent worktree starts at the exact coordinator head visible at dispatch and contains all coordinator-integrated predecessor changes. | Commit ce1d02f implements dependency-aware technical handoff and coordinator baselines. Regression test fails on pristine HEAD and passes after the change. Final verification: npm test — 45 files passed, 299 tests passed, 1 skipped; npm run typecheck passed; npm run build passed; focused batch dependency wave tests 4/4 passed; the affected isolated workspace kotta validate passed; git diff --check passed. |
+| A dependency that is neither `done` nor reviewed-and-integrated remains unresolved; standalone contract starts continue to require `done` dependencies. | Commit ce1d02f implements dependency-aware technical handoff and coordinator baselines. Regression test fails on pristine HEAD and passes after the change. Final verification: npm test — 45 files passed, 299 tests passed, 1 skipped; npm run typecheck passed; npm run build passed; focused batch dependency wave tests 4/4 passed; the affected isolated workspace kotta validate passed; git diff --check passed. |
+| Human approval is still required for every `review → done` transition, and a batch with reviewed members does not report itself `done`. | Commit ce1d02f implements dependency-aware technical handoff and coordinator baselines. Regression test fails on pristine HEAD and passes after the change. Final verification: npm test — 45 files passed, 299 tests passed, 1 skipped; npm run typecheck passed; npm run build passed; focused batch dependency wave tests 4/4 passed; the affected isolated workspace kotta validate passed; git diff --check passed. |
+| Start output and lifecycle history expose the symbolic start ref and resolved commit. | Commit ce1d02f implements dependency-aware technical handoff and coordinator baselines. Regression test fails on pristine HEAD and passes after the change. Final verification: npm test — 45 files passed, 299 tests passed, 1 skipped; npm run typecheck passed; npm run build passed; focused batch dependency wave tests 4/4 passed; the affected isolated workspace kotta validate passed; git diff --check passed. |
+| Regression tests, the full test suite, type checking, build, and workspace validation pass. | Commit ce1d02f implements dependency-aware technical handoff and coordinator baselines. Regression test fails on pristine HEAD and passes after the change. Final verification: npm test — 45 files passed, 299 tests passed, 1 skipped; npm run typecheck passed; npm run build passed; focused batch dependency wave tests 4/4 passed; the affected isolated workspace kotta validate passed; git diff --check passed. |
+| bug: expected_behavior_verified | Commit ce1d02f implements dependency-aware technical handoff and coordinator baselines. Regression test fails on pristine HEAD and passes after the change. Final verification: npm test — 45 files passed, 299 tests passed, 1 skipped; npm run typecheck passed; npm run build passed; focused batch dependency wave tests 4/4 passed; the affected isolated workspace kotta validate passed; git diff --check passed. |
+| bug: regression_test_added_or_exception_recorded | Commit ce1d02f implements dependency-aware technical handoff and coordinator baselines. Regression test fails on pristine HEAD and passes after the change. Final verification: npm test — 45 files passed, 299 tests passed, 1 skipped; npm run typecheck passed; npm run build passed; focused batch dependency wave tests 4/4 passed; the affected isolated workspace kotta validate passed; git diff --check passed. |
+| bug: affected_environment_rechecked | Commit ce1d02f implements dependency-aware technical handoff and coordinator baselines. Regression test fails on pristine HEAD and passes after the change. Final verification: npm test — 45 files passed, 299 tests passed, 1 skipped; npm run typecheck passed; npm run build passed; focused batch dependency wave tests 4/4 passed; the affected isolated workspace kotta validate passed; git diff --check passed. |
+| workflow: happy_path_verified | Commit ce1d02f implements dependency-aware technical handoff and coordinator baselines. Regression test fails on pristine HEAD and passes after the change. Final verification: npm test — 45 files passed, 299 tests passed, 1 skipped; npm run typecheck passed; npm run build passed; focused batch dependency wave tests 4/4 passed; the affected isolated workspace kotta validate passed; git diff --check passed. |
+| workflow: failure_and_cancellation_paths_verified | Commit ce1d02f implements dependency-aware technical handoff and coordinator baselines. Regression test fails on pristine HEAD and passes after the change. Final verification: npm test — 45 files passed, 299 tests passed, 1 skipped; npm run typecheck passed; npm run build passed; focused batch dependency wave tests 4/4 passed; the affected isolated workspace kotta validate passed; git diff --check passed. |
+| workflow: authorization_and_idempotency_verified | Commit ce1d02f implements dependency-aware technical handoff and coordinator baselines. Regression test fails on pristine HEAD and passes after the change. Final verification: npm test — 45 files passed, 299 tests passed, 1 skipped; npm run typecheck passed; npm run build passed; focused batch dependency wave tests 4/4 passed; the affected isolated workspace kotta validate passed; git diff --check passed. |
+
+### Verification performed
+
+Commit ce1d02f implements dependency-aware technical handoff and coordinator baselines. Regression test fails on pristine HEAD and passes after the change. Final verification: npm test — 45 files passed, 299 tests passed, 1 skipped; npm run typecheck passed; npm run build passed; focused batch dependency wave tests 4/4 passed; the affected isolated workspace kotta validate passed; git diff --check passed.
+
+### Deviations
+
+None.
+
+### Observations created
+
+None.
+
+### Known concerns
+
+The shared repository kotta validate is red only because pre-existing completed contract T-01kzgn32keps18769dp5rstcgt declares no deviations while its historical verification narrative contains DEVIATIONS. The changed behavior and new claim metadata validate cleanly in the isolated integration workspace.
