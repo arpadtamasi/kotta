@@ -69,6 +69,13 @@ Nesting is grouping only: a child has no coordinator branch and no execution of 
 `kotta batch status <id>`, which reports every contract underneath it in dependency order, and work
 that list. Each contract keeps its own human gates; grouping approves nothing.
 
+Inside a running leaf batch, technical dependency readiness is separate from human acceptance. A
+dependency can release the next wave when it is `done`, or when it is in `review` and Git proves its
+feature branch is already in that batch's coordinator branch. `batch start` creates every newly
+released member from the coordinator's current commit and reports that exact baseline. This never
+approves or closes the reviewed predecessor; standalone `contract start` still requires dependencies
+to be `done`, and every `review → done` transition still needs the human gate.
+
 `close` ends work that was finished and merged; `cancel` ends work whose purpose is gone, from any
 state before `done`, and it is the only exit for a contract a decision made objectless. It always
 records why, and `duplicate` and `obsolete` also require the contract or decision that took the

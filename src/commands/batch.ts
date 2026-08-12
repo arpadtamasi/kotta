@@ -7,7 +7,7 @@ import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
 import { readWorkspaceConfig } from "../core/config.js";
 import { assertClean, git } from "../git/git.js";
 import { branchExists, classifyBaseUpdate, classifyIntegration, coordinatorBranchName, linkedWorktrees, type CleanupState, type CoordinatorMetadata } from "../git/coordinator.js";
-import { slugify, startContract } from "./contract.js";
+import { batchDependencySatisfied, slugify, startContract } from "./contract.js";
 import { appendCliApprovalAudit, appendLifecycleEvent } from "../core/events.js";
 import { commitControlState, controlPlaneRoot } from "../git/control-plane.js";
 
@@ -332,18 +332,28 @@ export function startBatch(id: string, agent: string) {
   const entity = parseMarkdown(readFileSync(batch.path, "utf8"));
   const data = entity.data as BatchData;
   const { action: coordinatorAction, coordinator } = establishCoordinator(root, id, data);
+  const coordinatorCommit = git(root, ["rev-parse", "--verify", `${coordinator.branch}^{commit}`]);
   const ids = data.contracts.map(String);
   const dependencies = contractDependencies(root, ids);
   const done = new Set(ids.filter((contractId) => findContract(root, contractId).state === "done"));
   // A started contract lives in its own worktree; the root checkout still shows it as defined, so ask the effective state.
   const defined = ids.filter((contractId) => resolveEffectiveContract(root, contractId, (contract) => contract.state).value === "defined");
-  let executable = defined.filter((contractId) => (dependencies.get(contractId) ?? []).every((dependency) => findContract(root, dependency).state === "done"));
+  let executable = defined.filter((contractId) => (dependencies.get(contractId) ?? [])
+    .every((dependency) => batchDependencySatisfied(root, dependency, id, coordinatorCommit)));
   if (data.execution.mode === "sequential") executable = executable.slice(0, 1);
   executable = executable.slice(0, Math.max(1, Number(data.execution.parallelism ?? 1)));
   const started: string[] = [];
+  const starts: Array<{ id: string; startRef: string; startCommit: string }> = [];
   const failures: Array<{ id: string; message: string }> = [];
   for (const contractId of executable) {
-    try { startContract(contractId, agent); started.push(contractId); }
+    try {
+      const result = startContract(contractId, agent, "fresh", root, {
+        startRef: coordinator.branch,
+        dependencyIntegrationTarget: coordinator.branch,
+      });
+      started.push(contractId);
+      starts.push({ id: contractId, startRef: result.data.startRef, startCommit: result.data.startCommit });
+    }
     catch (error) {
       failures.push({ id: contractId, message: error instanceof Error ? error.message : String(error) });
       if (data.execution.stop_on_failure !== false) throw error;
@@ -365,7 +375,12 @@ export function startBatch(id: string, agent: string) {
   return {
     ok: failures.length === 0,
     command: "batch start",
-    data: { id, started, waiting: ids.filter((contractId) => !started.includes(contractId) && !done.has(contractId)), failures, coordinator: { branch: coordinator.branch, base_branch: coordinator.base_branch, worktree: coordinator.worktree, action: coordinatorAction } },
+    data: {
+      id, started, starts,
+      waiting: ids.filter((contractId) => !started.includes(contractId) && !done.has(contractId)),
+      failures,
+      coordinator: { branch: coordinator.branch, commit: coordinatorCommit, base_branch: coordinator.base_branch, worktree: coordinator.worktree, action: coordinatorAction },
+    },
   };
 }
 

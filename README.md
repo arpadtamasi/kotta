@@ -273,6 +273,16 @@ checkout on the base branch. The batch records the coordinator branch, worktree,
 base commit. Starting again reuses the recorded coordinator worktree; a missing worktree or an
 unrelated control checkout is refused rather than guessed.
 
+Every contract dispatched by `batch start` branches from the coordinator's current commit, not the
+control checkout's `HEAD`. The command prints the symbolic start ref and exact resolved commit for
+each new worktree, and the same baseline is retained in the claim and lifecycle history.
+
+Dependency-aware execution has a technical handoff rule distinct from acceptance. A dependency is
+ready for another member of the same batch when it is `done`, or when it is in `review` and Git proves
+its feature branch is an ancestor of the coordinator commit. Review alone never unlocks a wave, and
+`contract start` outside `batch start` still requires every dependency to be `done`. Dispatching the
+next wave does not close or approve its predecessor: `review → done` remains the separate human gate.
+
 Completing the last contract does **not** delete the coordinator branch — its final commit is what
 gets integrated. `kotta batch status <id>` reports where the batch stands: `active`,
 `done-unintegrated`, `cleanup-pending`, `blocked-*`, or `cleaned`.
