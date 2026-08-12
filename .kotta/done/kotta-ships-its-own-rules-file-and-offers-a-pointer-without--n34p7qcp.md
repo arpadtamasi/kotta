@@ -3,7 +3,7 @@ id: T-01kztp3e01729h4655n34p7qcp
 title: >-
   Kotta ships its own rules file and offers a pointer, without ever owning the
   project's AGENTS.md
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -22,6 +22,7 @@ updated_at: '2026-08-12'
 assigned_agent: claude
 worktree: .worktrees/T-01kztp3e01729h4655n34p7qcp
 execution_mode: inherited
+resolution: completed
 ---
 # T-01kztp3e01729h4655n34p7qcp — Kotta ships its own rules file and offers a pointer, without ever owning the project's AGENTS.md
 

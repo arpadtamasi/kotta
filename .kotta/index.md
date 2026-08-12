@@ -23,7 +23,6 @@ None.
 ## Review
 
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
-- kotta-ships-its-own-rules-file-and-offers-a-pointer-without--n34p7qcp
 
 ## Blocked
 
