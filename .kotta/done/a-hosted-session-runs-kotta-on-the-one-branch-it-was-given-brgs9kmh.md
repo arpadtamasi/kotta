@@ -1,7 +1,7 @@
 ---
 id: T-01kztvgdxb60hx200mbrgs9kmh
 title: A hosted session runs Kotta on the one branch it was given
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -20,6 +20,7 @@ updated_at: '2026-08-12'
 assigned_agent: claude
 worktree: .worktrees/T-01kztvgdxb60hx200mbrgs9kmh
 execution_mode: inherited
+resolution: completed
 ---
 # T-01kztvgdxb60hx200mbrgs9kmh — A hosted session runs Kotta on the one branch it was given
 

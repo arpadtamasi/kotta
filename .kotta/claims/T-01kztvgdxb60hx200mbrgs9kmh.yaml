@@ -1,6 +1,0 @@
-contract: T-01kztvgdxb60hx200mbrgs9kmh
-agent: claude
-branch: feat/T-01kztvgdxb60hx200mbrgs9kmh-a-hosted-session-runs-kotta-on-the-one-branch-it-was-given
-worktree: .worktrees/T-01kztvgdxb60hx200mbrgs9kmh
-execution_mode: inherited
-started_at: 2026-08-12T11:35:28.709Z
