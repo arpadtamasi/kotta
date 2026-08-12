@@ -1,13 +1,15 @@
 ---
 id: F-01kzhd1dptz40r9k9n6jxwxqgh
 title: 'Agents reach for ''kotta contract list'', which does not exist'
-status: new
+status: resolved
 origin: agent
 observation_type: gap
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-08'
+disposition: attach-existing
+resolved_at: '2026-08-12T15:12:42.974Z'
 ---
 # F-01kzhd1dptz40r9k9n6jxwxqgh — Agents reach for 'kotta contract list', which does not exist
 
