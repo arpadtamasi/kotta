@@ -12,14 +12,13 @@ None.
 
 ## Defined contracts
 
-- a-hosted-session-runs-kotta-on-the-one-branch-it-was-given-brgs9kmh
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
 - one-operation-registry-derives-both-the-cli-and-the-mcp-surf-06fw8n0g
 - the-agent-rules-reach-the-calling-chat-as-a-generated-file-n-atnxppcm
 
 ## Active contracts
 
-None.
+- a-hosted-session-runs-kotta-on-the-one-branch-it-was-given-brgs9kmh
 
 ## Review
 

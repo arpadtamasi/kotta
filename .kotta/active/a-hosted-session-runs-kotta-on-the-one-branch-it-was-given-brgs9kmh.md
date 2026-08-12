@@ -1,7 +1,7 @@
 ---
 id: T-01kztvgdxb60hx200mbrgs9kmh
 title: A hosted session runs Kotta on the one branch it was given
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -12,10 +12,14 @@ risk: high
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: >-
+  feat/T-01kztvgdxb60hx200mbrgs9kmh-a-hosted-session-runs-kotta-on-the-one-branch-it-was-given
 pull_request: null
 created_at: '2026-08-12'
 updated_at: '2026-08-12'
+assigned_agent: claude
+worktree: .worktrees/T-01kztvgdxb60hx200mbrgs9kmh
+execution_mode: inherited
 ---
 # T-01kztvgdxb60hx200mbrgs9kmh — A hosted session runs Kotta on the one branch it was given
 
