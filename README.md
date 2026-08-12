@@ -206,6 +206,11 @@ backlog → defined → active → review → done
   branch is preserved, because a cancelled branch was never merged.
 - Profiles add work-specific requirements for bugs, UI, performance, workflows, metrics, refactors, and discovery.
 - Batches coordinate sprints, milestones, batches, or missions with sequential, parallel, or dependency-aware execution.
+- A batch may also group other batches, so a large product has a level above the contract. That
+  nesting is grouping only: a child batch has no coordinator branch and no execution of its own, and
+  `kotta batch start` runs a leaf, never a parent. Reading a parent — `kotta batch status <id>` —
+  reports every contract in its subtree in dependency order, which is what lets you ask an agent in
+  chat to carry out a whole parent. Every contract in it still passes its own human gates.
 - Observations capture possible bugs and technical debt without silently expanding active work.
 - Claims connect each active contract to one agent, one feature branch, and one isolated implementation worktree.
 

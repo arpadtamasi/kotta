@@ -415,13 +415,15 @@ batchCommand
   .option("--json")
   .action((options: { title: string; goal?: string; parallelism: number; json?: boolean }) => print(newBatch(options), Boolean(options.json)));
 batchCommand
-  .command("add <batch-id> <contract-id>")
+  .command("add <batch-id> <member-id>")
+  .description("Add a contract, or another batch to group under this one")
   .option("--json")
-  .action((batchId: string, contractId: string, options: { json?: boolean }) => print(updateBatchContracts(batchId, contractId, "add"), Boolean(options.json)));
+  .action((batchId: string, memberId: string, options: { json?: boolean }) => print(updateBatchContracts(batchId, memberId, "add"), Boolean(options.json)));
 batchCommand
-  .command("remove <batch-id> <contract-id>")
+  .command("remove <batch-id> <member-id>")
+  .description("Remove a member contract, or a grouped child batch")
   .option("--json")
-  .action((batchId: string, contractId: string, options: { json?: boolean }) => print(updateBatchContracts(batchId, contractId, "remove"), Boolean(options.json)));
+  .action((batchId: string, memberId: string, options: { json?: boolean }) => print(updateBatchContracts(batchId, memberId, "remove"), Boolean(options.json)));
 batchCommand
   .command("validate <id>")
   .option("--json")

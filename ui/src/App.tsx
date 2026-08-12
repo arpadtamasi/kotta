@@ -26,7 +26,7 @@ type Contract = {
   migration?: { legacy_id: string; legacy_title: string; lane: string; legacy_status: string; backlog_section: string; story_points: number | null; ready_candidate: boolean; split: boolean; status_correction?: string | null; source_file: string } | null;
 };
 type Batch = {
-  id: string; title: string; status: string; kind: string; contracts: string[]; sections: Record<string, string>;
+  id: string; title: string; status: string; kind: string; contracts: string[]; batches?: string[]; sections: Record<string, string>;
   created_at?: string | null; updated_at?: string | null;
   execution?: { mode?: string; parallelism?: number; stop_on_failure?: boolean };
   coordinator?: { branch?: string; base_branch?: string; base_commit?: string; cleaned_at?: string | null } | null;
@@ -182,6 +182,16 @@ export function readBoard(workspace: Workspace): Board {
   const decisions = workspace.decisions ?? [];
   const contractById = new Map(contracts.map((t) => [t.id, t]));
   const batchById = new Map(batches.map((p) => [p.id, p]));
+  // Nesting is grouping: a parent's work is everything under it, so progress, closability and the
+  // member list all read the subtree rather than the directly named contracts.
+  const subtreeContracts = (batch: Batch, seen = new Set<string>()): string[] => {
+    if (seen.has(batch.id)) return [];
+    seen.add(batch.id);
+    return [...batch.contracts, ...(batch.batches ?? []).flatMap((child) => {
+      const nested = batchById.get(child);
+      return nested ? subtreeContracts(nested, seen) : [];
+    })];
+  };
   const observationById = new Map(observations.map((f) => [f.id, f]));
   // Every surface names an entity by its title, so the title index is part of reading the board.
   entityTitles.clear();
@@ -190,11 +200,11 @@ export function readBoard(workspace: Workspace): Board {
   // The three queues are the human decisions surfaced directly in chat.
   const undisposed = observations.filter((f) => f.status === "new");
   const inReview = contracts.filter((t) => t.status === "review");
-  const closable = batches.filter((p) => p.status !== "done" && p.contracts.length > 0 && p.contracts.every((id) => isDone(contractById.get(id))));
+  const closable = batches.filter((p) => p.status !== "done" && subtreeContracts(p).length > 0 && subtreeContracts(p).every((id) => isDone(contractById.get(id))) && (p.batches ?? []).every((child) => batchById.get(child)?.status === "done"));
   // The backlog menu is deliberately NOT a queue: a defined contract is an option, not a debt.
   const defined = contracts.filter((t) => t.status === DEFINED);
   const running = contracts.filter((t) => t.status === "active");
-  const activeBatches = batches.filter((p) => p.status === "active" || p.contracts.some((id) => contractById.get(id)?.status === "active"));
+  const activeBatches = batches.filter((p) => p.status === "active" || subtreeContracts(p).some((id) => contractById.get(id)?.status === "active"));
 
   const oldest = (values: Array<string | null | undefined>) => values.reduce<number | null>((max, value) => {
     const age = daysSince(value);
@@ -236,6 +246,7 @@ export function readBoard(workspace: Workspace): Board {
     }
   }
   for (const batch of batches) for (const member of batch.contracts) if (!contractById.has(member)) dangling(batch.id, "contracts", member, "a contract");
+  for (const batch of batches) for (const child of batch.batches ?? []) if (!batchById.has(child)) dangling(batch.id, "batches", child, "a batch");
   for (const observation of observations) if (observation.became && !contractById.has(observation.became)) dangling(observation.id, "became", observation.became, "a contract");
   // 3. Membership recorded on one side only: two files describe the same relationship differently.
   for (const contract of contracts) {
@@ -271,7 +282,7 @@ export function readBoard(workspace: Workspace): Board {
   });
 
   return {
-    contracts, batches, observations, decisions, contractById, batchById, observationById,
+    contracts, batches, observations, decisions, contractById, batchById, observationById, subtreeContracts,
     undisposed, inReview, closable, defined, running, activeBatches,
     queues, queueTotal: undisposed.length + inReview.length + closable.length, contradictions, menu,
   };
@@ -656,9 +667,10 @@ export function BatchesView({ board, onOpen }: { board: Board; onOpen: (id: stri
     {board.batches.length === 0 && <p className="view__empty">No batch on disk. A batch is written with <code>kotta batch new</code>.</p>}
     <div className="cards">
       {board.batches.map((batch) => {
-        const members = batch.contracts.map((id) => board.contractById.get(id)).filter((t): t is Contract => Boolean(t));
+        const memberIds = board.subtreeContracts(batch);
+        const members = memberIds.map((id) => board.contractById.get(id)).filter((t): t is Contract => Boolean(t));
         const done = members.filter((t) => t.status === "done").length;
-        const total = batch.contracts.length;
+        const total = memberIds.length;
         return <EntityButton key={batch.id} id={batch.id} className={`card-batch ${batch.status === "active" ? "is-active" : ""}`} onOpen={onOpen}>
           <span className="card-batch__top">
             <StateTag state={batch.status} />
@@ -776,9 +788,19 @@ export function DerivationPanel({ id, board, onOpen }: { id: string; board: Boar
         ? <LinkRow link={{ id: became, title: titleOf(became), note: "became this contract" }} onOpen={onOpen} />
         : <Dangling field="became" id={became} />;
   } else if (batch) {
+    const nested = batch.batches ?? [];
+    const memberIds = board.subtreeContracts(batch);
     goes = <div className="deriv__siblings">
-      {batch.contracts.length === 0 && <p className="deriv__none">No member contracts.</p>}
-      {batch.contracts.map((member) => {
+      {nested.map((child) => {
+        const grouped = board.batchById.get(child);
+        return grouped
+          ? <EntityButton key={child} id={child} className="deriv__sibling" onOpen={onOpen}>
+            <span>{grouped.title}</span><StateTag state={grouped.status} />
+          </EntityButton>
+          : <div key={child} className="deriv__sibling"><Dangling field="batches" id={child} /></div>;
+      })}
+      {memberIds.length === 0 && nested.length === 0 && <p className="deriv__none">No member contracts.</p>}
+      {memberIds.map((member) => {
         const sibling = board.contractById.get(member);
         return sibling
           ? <EntityButton key={member} id={member} className="deriv__sibling" onOpen={onOpen}>
