@@ -1,13 +1,15 @@
 ---
 id: F-01kzrc4apc1660d4z37c1nf5nw
 title: A decision that makes a contract moot has no path out and leaves no trace
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-11'
+disposition: attach-existing
+resolved_at: '2026-08-12T09:35:31.487Z'
 ---
 # F-01kzrc4apc1660d4z37c1nf5nw — A decision that makes a contract moot has no path out and leaves no trace
 

@@ -1,0 +1,15 @@
+{
+  "entity": "F-01kzrc4apc1660d4z37c1nf5nw",
+  "contract": null,
+  "kind": "approval",
+  "approval_id": "E-01kztn7d56kayd6r3xzamwx2jz",
+  "phase": "applied",
+  "action": "observation.resolve",
+  "payload": {
+    "disposition": "attach-existing",
+    "surface": "cli"
+  },
+  "source_message": "E-01kztn7d56qxj9509nznwjm9xs",
+  "id": "E-01kztn7d574hnq32vcsfqcxk3n",
+  "created_at": "2026-08-12T09:35:31.495Z"
+}

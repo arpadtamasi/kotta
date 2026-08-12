@@ -47,7 +47,6 @@ None.
 - a-board-nema-n-rejti-el-a-nem-commitolt-munkat-ha-a-fo-munka-88p5tm36
 - a-contract-that-proves-incomplete-during-execution-has-no-re-c26y53yb
 - a-decision-cannot-record-that-it-narrows-or-continues-anothe-8pv9r452
-- a-decision-that-makes-a-contract-moot-has-no-path-out-and-le-7c1nf5nw
 - a-define-nem-javithatja-a-contract-cimet-igy-egy-observation-a469asbk
 - a-kiadatlan-changelog-bejegyzes-a-regi-binaris-nevet-hasznal-m4m7q531
 - a-markdown-h1-a-teljes-azonositot-hordozza-igy-a-mintazott-u-rb71ckkr
