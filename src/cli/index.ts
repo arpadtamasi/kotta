@@ -34,7 +34,7 @@ function print(result: unknown, json: boolean): void {
 }
 
 type AgentsSummary = { path: string; state: "created" | "updated" | "unchanged" | "drifted" } | null;
-type ProjectAgentsSummary = { path: string; state: "created" | "linked" | "already-linked"; line: string } | null;
+type ProjectAgentsSummary = { path: string; state: "created" | "linked" | "migrated" | "already-linked"; line: string } | null;
 
 /**
  * What happened to the rules file, and — when the project's own AGENTS.md was left alone — the exact
@@ -48,6 +48,7 @@ function agentsLines(agents: AgentsSummary | undefined, project: ProjectAgentsSu
   }
   if (project) {
     if (project.state === "already-linked") lines.push(`${project.path} already points at the rules.`);
+    else if (project.state === "migrated") lines.push(`Migrated Kotta's legacy inline rules in ${project.path} to ${project.line}; preserved the project section.`);
     else lines.push(`Added one line to ${project.path}: ${project.line}`);
   } else if (agents && pointer) {
     lines.push(`Kotta did not touch the project's AGENTS.md. To point it at the rules, ask the human, then re-run with --link-agents; the line is: ${pointer}`);
@@ -216,7 +217,7 @@ program
   .command("init")
   .description("Create a .kotta workspace")
   .option("--project-name <name>")
-  .option("--link-agents", "Add one line pointing at the workspace rules to the project's AGENTS.md, after the human said yes")
+  .option("--link-agents", "Link the project's AGENTS.md to the workspace rules, migrating a recognized legacy Kotta prelude after the human said yes")
   .option("--json")
   .action((options: { projectName?: string; linkAgents?: boolean; json?: boolean }) => print(initCommand(options.projectName, { linkAgents: options.linkAgents }), Boolean(options.json)));
 
@@ -235,7 +236,7 @@ program
 program
   .command("sync")
   .description("Install the skills Kotta ships and refresh the workspace rules file")
-  .option("--link-agents", "Add one line pointing at the workspace rules to the project's AGENTS.md, after the human said yes")
+  .option("--link-agents", "Link the project's AGENTS.md to the workspace rules, migrating a recognized legacy Kotta prelude after the human said yes")
   .option("--json")
   .action((options: { linkAgents?: boolean; json?: boolean }) => print(syncCommand({ linkAgents: options.linkAgents }), Boolean(options.json)));
 

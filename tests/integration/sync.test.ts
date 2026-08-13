@@ -114,6 +114,34 @@ describe("kotta sync", () => {
 describe("the workspace rules file", () => {
   const rules = () => join(repository, ".kotta/AGENTS.md");
   const projectAgents = () => join(repository, "AGENTS.md");
+  const legacyInlineAgents = (projectInstructions: string) => [
+    "# AGENTS.md",
+    "",
+    "This repository runs on **Kotta**. Work is defined, executed, reviewed and closed as plain files",
+    "in `.kotta/`, and every state change goes through the `kotta` CLI.",
+    "",
+    "## The rule everything else follows from",
+    "",
+    "`.kotta/` is the canonical source of truth for work.",
+    "",
+    "## Orient yourself first",
+    "",
+    "Run `kotta status`.",
+    "",
+    "## The lifecycle",
+    "",
+    "backlog → defined → active → review → done",
+    "",
+    "## Rules for agents",
+    "",
+    "1. **No change without an active contract you hold the claim for.**",
+    "",
+    "## Skills",
+    "",
+    "A defect in Kotta itself is not a contract here: report it.",
+    "",
+    projectInstructions,
+  ].join("\n");
 
   test("init writes it, naming the package and version an agent cannot guess from the binary", () => {
     const result = run(["init"]) as { data: { agents: { state: string; path: string }; pointer: string } };
@@ -200,6 +228,56 @@ describe("the workspace rules file", () => {
     expect(after.startsWith(own)).toBe(true);
     expect(after.trimEnd().endsWith("@.kotta/AGENTS.md")).toBe(true);
     expect(after.split("\n").filter((line) => line.trim()).length).toBe(own.split("\n").filter((line) => line.trim()).length + 1);
+  });
+
+  test("--link-agents migrates a legacy inline Kotta prelude and preserves the project section byte-for-byte", () => {
+    const projectInstructions = "## This repository\n\n# Product rules\n\nRun our checks.\nDo not reformat this section.";
+    const legacy = legacyInlineAgents(projectInstructions);
+    writeFileSync(projectAgents(), legacy);
+    run(["init"]);
+
+    const migrated = run(["sync", "--link-agents"]) as { data: { projectAgents: { state: string; line: string } } };
+
+    expect(migrated.data.projectAgents.state).toBe("migrated");
+    expect(readFileSync(projectAgents(), "utf8")).toBe(`@.kotta/AGENTS.md\n\n${projectInstructions}`);
+  });
+
+  test("legacy inline migration is opt-in and idempotent", () => {
+    const projectInstructions = "## This repository\n\nKeep this exact project text.\n";
+    const legacy = legacyInlineAgents(projectInstructions);
+    writeFileSync(projectAgents(), legacy);
+
+    run(["init"]);
+    run(["sync"]);
+    expect(readFileSync(projectAgents(), "utf8")).toBe(legacy);
+
+    run(["sync", "--link-agents"]);
+    const once = readFileSync(projectAgents(), "utf8");
+    const again = run(["sync", "--link-agents"]) as { data: { projectAgents: { state: string } } };
+    expect(again.data.projectAgents.state).toBe("already-linked");
+    expect(readFileSync(projectAgents(), "utf8")).toBe(once);
+  });
+
+  test("migration removes the legacy prelude when an earlier sync already appended the pointer", () => {
+    const projectInstructions = "## This repository\n\nKeep this project section.\n\n@.kotta/AGENTS.md\n";
+    writeFileSync(projectAgents(), legacyInlineAgents(projectInstructions));
+    run(["init"]);
+
+    const migrated = run(["sync", "--link-agents"]) as { data: { projectAgents: { state: string } } };
+
+    expect(migrated.data.projectAgents.state).toBe("migrated");
+    expect(readFileSync(projectAgents(), "utf8")).toBe(projectInstructions);
+  });
+
+  test("a project-owned file that merely mentions Kotta is linked without deleting any content", () => {
+    const own = "# Our rules\n\nWe use Kotta.\n\n## This repository\n\nKeep everything here.\n";
+    writeFileSync(projectAgents(), own);
+    run(["init"]);
+
+    const linked = run(["sync", "--link-agents"]) as { data: { projectAgents: { state: string } } };
+
+    expect(linked.data.projectAgents.state).toBe("linked");
+    expect(readFileSync(projectAgents(), "utf8").startsWith(own)).toBe(true);
   });
 
   test("--link-agents creates the file when the project has none", () => {

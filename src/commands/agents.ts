@@ -10,16 +10,17 @@ import { findRepositoryRoot, workspaceDirectoryName, workspacePath } from "../fi
  * travelled with them (F-01kztn8rzehzvdfqq1snwc55jk). The rules now ship, and Kotta writes them
  * into the workspace directory it already owns outright.
  *
- * The project's own `AGENTS.md` stays the project's. Kotta appends one pointer line to it and only
- * when asked, per D-01kztp2epe4sehb25mpv7hc33b: that file usually carries conventions Kotta knows
- * nothing about, and a generator that overwrites it forfeits the trust its other rules depend on.
+ * The project's own `AGENTS.md` stays the project's. Kotta links it only when asked. The one
+ * exception to append-only linking is a legacy Kotta prelude: its explicit `## This repository`
+ * boundary lets Kotta replace its old copied rules while preserving the project's section byte for
+ * byte. Unrecognised content is never removed.
  */
 
 export const WORKSPACE_AGENTS_FILE = "AGENTS.md";
 export const PROJECT_AGENTS_FILE = "AGENTS.md";
 
 export type WorkspaceAgentsState = "created" | "updated" | "unchanged" | "drifted";
-export type ProjectAgentsState = "created" | "linked" | "already-linked";
+export type ProjectAgentsState = "created" | "linked" | "migrated" | "already-linked";
 
 function packageRoot(): string {
   return fileURLToPath(new URL("../..", import.meta.url));
@@ -128,11 +129,38 @@ export interface ProjectAgentsResult {
   line: string;
 }
 
+const LEGACY_KOTTA_OPENING = "# AGENTS.md\n\nThis repository runs on **Kotta**.";
+const LEGACY_KOTTA_SECTIONS = [
+  "## The rule everything else follows from",
+  "## Orient yourself first",
+  "## The lifecycle",
+  "## Rules for agents",
+  "## Skills",
+];
+
 /**
- * Append the pointer to the project's own `AGENTS.md`, creating that file only when there is none.
- * Nothing already in it is rewritten, reordered or removed, and a file that already points at the
- * workspace rules is left exactly as it is — detected by the path, so a reworded line around it
- * does not earn a duplicate.
+ * Return the project-owned suffix of a copied, pre-shipped Kotta rules file. The detector is
+ * deliberately structural rather than tied to one historical version: downstream copies changed
+ * as Kotta evolved, but every shipped-era ancestor used the same opening, section set and explicit
+ * ownership boundary. Requiring all of them prevents a casual Kotta mention from authorising a
+ * deletion.
+ */
+function legacyProjectSection(current: string): string | null {
+  const boundary = /^## This repository\r?$/m.exec(current);
+  if (!boundary || boundary.index === undefined) return null;
+
+  const prelude = current.slice(0, boundary.index).replaceAll("\r\n", "\n");
+  if (!prelude.startsWith(LEGACY_KOTTA_OPENING)) return null;
+  if (!LEGACY_KOTTA_SECTIONS.every((section) => prelude.includes(`\n${section}\n`))) return null;
+  if (!prelude.includes("A defect in Kotta itself is not a contract here:")) return null;
+  return current.slice(boundary.index);
+}
+
+/**
+ * Link the project's own `AGENTS.md` to the workspace rules, creating the file when there is none.
+ * Ordinary project content is append-only. A recognised legacy Kotta prelude is replaced by the
+ * pointer while its explicitly delimited project section is preserved byte-for-byte. A file that
+ * already points at the workspace rules is left exactly as it is.
  */
 export function linkProjectAgents(repositoryRoot?: string): ProjectAgentsResult {
   const root = repositoryRoot ?? findRepositoryRoot();
@@ -146,6 +174,15 @@ export function linkProjectAgents(repositoryRoot?: string): ProjectAgentsResult 
   }
 
   const current = readFileSync(path, "utf8");
+  const projectSection = legacyProjectSection(current);
+  if (projectSection !== null) {
+    // Some workspaces already had the pointer appended beneath their project section. In that case
+    // removing only the legacy prelude is enough; otherwise put the pointer before the untouched
+    // project-owned suffix.
+    const migrated = projectSection.includes(target) ? projectSection : `${line}\n\n${projectSection}`;
+    writeFileSync(path, migrated);
+    return { path, state: "migrated", line };
+  }
   if (current.includes(target)) return { path, state: "already-linked", line };
   const separator = current.endsWith("\n\n") ? "" : current.endsWith("\n") ? "\n" : "\n\n";
   writeFileSync(path, `${current}${separator}${line}\n`);
