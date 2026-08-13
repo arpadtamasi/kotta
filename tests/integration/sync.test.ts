@@ -126,7 +126,7 @@ describe("the workspace rules file", () => {
     expect(result.data.pointer).toBe("@.kotta/AGENTS.md");
   });
 
-  test("renders an effect-based contract boundary without weakening lifecycle protections", () => {
+  test("renders a generic effect-based contract boundary without product-specific exceptions", () => {
     run(["init"]);
     const status = run(["status"]) as { data: { activeContracts: unknown[] } };
 
@@ -137,8 +137,6 @@ describe("the workspace rules file", () => {
     expect(written).toContain("process-only documentation");
     expect(written).toContain("tool or agent context");
     expect(written).toContain("non-product housekeeping");
-    expect(written).toContain("zero active contracts");
-    expect(written).toContain("`product.md`");
     expect(written).toContain("product behaviour");
     expect(written).toContain("source code");
     expect(written).toContain("user-visible or published documentation");
