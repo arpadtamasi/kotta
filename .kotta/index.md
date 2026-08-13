@@ -23,7 +23,6 @@ None.
 ## Review
 
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
-- dependency-aware-batches-pause-and-start-the-next-wave-from--42xfajx0
 
 ## Blocked
 
