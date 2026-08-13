@@ -3,7 +3,7 @@ id: T-01kzwxfdabqvrtct2vzfzqzpfd
 title: >-
   The unconditional agent rule turns process documentation and non-product
   housekeeping into contract work
-status: defined
+status: active
 origin: observation
 types:
   - bug
@@ -16,11 +16,18 @@ risk: medium
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: >-
+  fix/T-01kzwxfdabqvrtct2vzfzqzpfd-the-unconditional-agent-rule-turns-process-documentation-and
 pull_request: null
 created_at: '2026-08-13'
 updated_at: '2026-08-13'
 source_observation: F-01kzwwsjvcbcxf5vpee4g2s4mc
+assigned_agent: codex
+worktree: .worktrees/T-01kzwxfdabqvrtct2vzfzqzpfd
+execution_mode: fresh
+branch_origin: created
+start_ref: HEAD
+start_commit: a0c8bf34fab7b7330617070b7f0753022b12393e
 ---
 # The contract gate excludes process-only documentation and non-product housekeeping
 

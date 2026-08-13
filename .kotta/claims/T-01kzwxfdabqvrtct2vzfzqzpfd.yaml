@@ -1,0 +1,9 @@
+contract: T-01kzwxfdabqvrtct2vzfzqzpfd
+agent: codex
+branch: fix/T-01kzwxfdabqvrtct2vzfzqzpfd-the-unconditional-agent-rule-turns-process-documentation-and
+worktree: .worktrees/T-01kzwxfdabqvrtct2vzfzqzpfd
+execution_mode: fresh
+origin: created
+start_ref: HEAD
+start_commit: a0c8bf34fab7b7330617070b7f0753022b12393e
+started_at: 2026-08-13T07:01:38.095Z
