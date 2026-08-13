@@ -18,11 +18,12 @@ None.
 
 ## Active contracts
 
-- the-unconditional-agent-rule-turns-process-documentation-and-zfzqzpfd
+None.
 
 ## Review
 
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
+- the-unconditional-agent-rule-turns-process-documentation-and-zfzqzpfd
 
 ## Blocked
 
