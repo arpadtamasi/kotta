@@ -126,6 +126,31 @@ describe("the workspace rules file", () => {
     expect(result.data.pointer).toBe("@.kotta/AGENTS.md");
   });
 
+  test("renders an effect-based contract boundary without weakening lifecycle protections", () => {
+    run(["init"]);
+    const status = run(["status"]) as { data: { activeContracts: unknown[] } };
+
+    expect(status.data.activeContracts).toEqual([]);
+    const written = readFileSync(rules(), "utf8").toLowerCase().replace(/\s+/g, " ");
+    expect(written).not.toContain("no change without an active contract");
+    expect(written).toContain("explicitly requested by the human");
+    expect(written).toContain("process-only documentation");
+    expect(written).toContain("tool or agent context");
+    expect(written).toContain("non-product housekeeping");
+    expect(written).toContain("zero active contracts");
+    expect(written).toContain("`product.md`");
+    expect(written).toContain("product behaviour");
+    expect(written).toContain("source code");
+    expect(written).toContain("user-visible or published documentation");
+    expect(written).toContain("shipped artifacts or configuration");
+    expect(written).toContain("build or release behaviour");
+    expect(written).toContain("production operations");
+    expect(written).toContain("acceptance-relevant deliverable");
+    expect(written).toContain("active contract you hold the claim for");
+    expect(written).toContain("ask one focused question");
+    expect(written).toContain("never hand-edit `.kotta/`");
+  });
+
   test("sync refreshes its own copy and leaves an edited one alone", () => {
     run(["init"]);
     writeFileSync(rules(), "shortened by hand\n");

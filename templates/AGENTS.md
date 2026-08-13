@@ -100,8 +100,18 @@ terminal. `kotta ui` only displays the resulting canonical state and timeline.
 
 ## Rules for agents
 
-1. **No change without an active contract you hold the claim for.** If there is no contract, the
-   work is not defined yet — say so instead of starting.
+1. **Gate product and deliverable work, not supporting housekeeping.** A bounded repository change
+   explicitly requested by the human needs no contract only when its effect is confined to
+   process-only documentation, tool or agent context, or similar non-product housekeeping and it
+   changes no product or promised deliverable. With zero active contracts, an explicitly requested
+   `impeccable init` may capture internal context in `PRODUCT.md` when that file is not itself a
+   promised deliverable. Product behaviour, source code, user-visible or published documentation,
+   shipped artifacts or configuration, build or release behaviour, production operations, and any
+   other acceptance-relevant deliverable require an active contract you hold the claim for.
+   Purpose and effect decide, not path or extension. If an artifact's role is ambiguous, ask one
+   focused question; do not create a contract or assume an exemption. If supporting work reveals
+   product or deliverable impact, stop before that impact and enter the contract lifecycle. Always
+   obey stricter project rules, and never hand-edit `.kotta/`.
 2. **Stay inside the contract's scope.** Anything you notice outside it becomes an observation, not
    a silent fix: `kotta observation new --title "…" --type <type> --evidence "…"`.
 3. **An observation is not a contract.** It is dispositioned by `kotta observation validate <id>`
