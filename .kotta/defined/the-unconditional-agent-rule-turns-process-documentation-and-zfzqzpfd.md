@@ -3,7 +3,7 @@ id: T-01kzwxfdabqvrtct2vzfzqzpfd
 title: >-
   The unconditional agent rule turns process documentation and non-product
   housekeeping into contract work
-status: backlog
+status: defined
 origin: observation
 types:
   - bug
