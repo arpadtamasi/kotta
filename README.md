@@ -43,15 +43,18 @@ must follow, with the install command above rendered from the package actually r
 that arrives without the CLI can find out where it comes from. That file is Kotta's — `sync` keeps
 it current, and reports it as drifted rather than replacing a copy you edited.
 
-Your own `AGENTS.md` stays yours. Kotta never rewrites it; it reports one line, and adds that line
-only when you ask:
+Your own `AGENTS.md` stays yours. Kotta changes it only when you ask:
 
 ```bash
-kotta sync --link-agents     # appends `@.kotta/AGENTS.md`, and changes nothing else in the file
+kotta sync --link-agents     # links `@.kotta/AGENTS.md` after explicit human approval
 ```
 
-Running it again is a no-op, and a file that already refers to `.kotta/AGENTS.md` in your own words
-is left alone. Without the flag nothing outside `.kotta/` is written.
+For a normal project file this appends only the pointer. For an older `AGENTS.md` that starts with
+Kotta's copied inline rules and has Kotta's explicit `## This repository` ownership boundary, it
+replaces the obsolete Kotta prelude with the pointer and preserves that project section byte for
+byte. A similar-looking file without the complete legacy structure is never shortened. Running the
+command again is a no-op, and a file that already refers to `.kotta/AGENTS.md` is left alone.
+Without the flag nothing outside `.kotta/` is written.
 
 Connect Kotta to the project-scoped Codex chat once, then start a new chat (or restart the host) so
 the MCP tools are discovered:
