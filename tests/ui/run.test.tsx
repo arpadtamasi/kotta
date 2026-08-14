@@ -67,12 +67,12 @@ describe("The Run overlay", () => {
     expect(cards.map((card) => card.textContent)).toEqual(expect.arrayContaining(members.map((member) => expect.stringContaining(member.title))));
 
     for (const state of ["done", "active", "review", "defined", "blocked", "backlog"]) {
-      expect(within(screen.getByRole("dialog", { name: "The run" })).getByText(state, { selector: ".state" })).toBeDefined();
+      expect(within(screen.getByRole("dialog", { name: "The run" })).getAllByText(state, { selector: ".state" }).length).toBeGreaterThan(0);
     }
     expect(screen.getByText("1 review · 1 waiting")).toBeDefined();
     expect(screen.getByText("1 blocked · 1 inconsistent")).toBeDefined();
     expect(screen.getByText("backlog member · inconsistent with an active batch")).toBeDefined();
-    expect(screen.getByText("dependency-aware · parallelism 3 · stop on failure")).toBeDefined();
+    expect(screen.getByText(/dependency-aware · parallelism 3 · stop on failure/)).toBeDefined();
     expect(screen.getByLabelText("1 of 6 complete")).toBeDefined();
   });
 
@@ -144,5 +144,25 @@ describe("The Run overlay", () => {
     const active = screen.getByRole("button", { name: /Active implementation/ });
     expect(active.textContent).toContain("running 1h 30m");
     expect(active.textContent).not.toContain("10d ago");
+  });
+
+  it("renders a batch-of-batches once, with the child named inside the parent tree", () => {
+    const nestedMembers = [
+      contract("T-100", "Nested foundation", { status: "done", batch: "P-101" }),
+      contract("T-101", "Nested active work", { status: "active", batch: "P-101", claim: { contract: "T-101", agent: "codex", branch: "feat/T-101", worktree: ".worktrees/T-101", started_at: "2026-08-14T08:00:00Z" }, depends_on: ["T-100"] }),
+    ];
+    const nested = workspace({
+      contracts: nestedMembers,
+      batches: [
+        batch("P-100", "Parent run", { status: "active", contracts: [], batches: ["P-101"] }),
+        batch("P-101", "Nested run", { status: "active", contracts: nestedMembers.map((item) => item.id) }),
+      ],
+    });
+    const { container } = render(<RunOverlay board={readBoard(nested)} onClose={() => undefined} onOpen={() => undefined} />);
+    expect(container.querySelectorAll(".batch-tree__root")).toHaveLength(1);
+    expect(screen.getByRole("region", { name: "Batch: Parent run" })).toBeDefined();
+    expect(within(screen.getByLabelText("Nested batches in Parent run")).getByRole("button", { name: /Nested run/ })).toBeDefined();
+    expect(container.querySelectorAll(".run__card")).toHaveLength(2);
+    expect(screen.getAllByText(/in Nested run/)).toHaveLength(2);
   });
 });
