@@ -196,6 +196,10 @@ describe("Entity drawer — a batch that groups other batches", () => {
 
   it("draws its children and the contracts underneath them, not an empty batch", () => {
     openDrawer("P-012", nested);
+    const dependencyTree = screen.getByRole("region", { name: "Dependency tree" });
+    expect(within(dependencyTree).getByLabelText("Nested batches in Product")).toBeDefined();
+    expect(within(dependencyTree).getByLabelText("Execution waves for Product")).toBeDefined();
+    expect(within(dependencyTree).getByText("Wave 1")).toBeDefined();
     const derivation = screen.getByRole("region", { name: "Derivation" });
 
     expect(within(derivation).getByRole("button", { name: /Core/ })).toBeDefined();

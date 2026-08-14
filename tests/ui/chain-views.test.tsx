@@ -122,17 +122,21 @@ describe("Contracts", () => {
 });
 
 describe("Batches", () => {
-  it("shows a dependency graph with progress, goal and age", () => {
-    render(<BatchesView board={board} filter="all" sort="created-desc" onFilter={() => {}} onSort={() => {}} onOpen={() => {}} />);
-    expect(screen.getByText("Hierarchy, dependency order, progress and age.")).toBeDefined();
-    const tree = screen.getByRole("region", { name: "Batch: Trustworthy daily use" });
-    expect(within(tree).getByLabelText("1 of 2 complete")).toBeDefined();
-    expect(within(tree).getByText(/One module: truthful execution state/)).toBeDefined();
-    expect(within(tree).getByText(/created/)).toBeDefined();
-    expect(within(tree).getByLabelText("Execution waves for Trustworthy daily use")).toBeDefined();
+  it("keeps the overview compact while showing state, scope, progress and age", () => {
+    const onOpen = vi.fn();
+    render(<BatchesView board={board} filter="all" sort="created-desc" onFilter={() => {}} onSort={() => {}} onOpen={onOpen} />);
+    expect(screen.getByText("State, scope, progress and age at scan speed.")).toBeDefined();
+    const row = screen.getByRole("button", { name: /Trustworthy daily use/ });
+    expect(row.textContent).toContain("One module: truthful execution state");
+    expect(row.textContent).toContain("2 direct · 0 child batches · 2 total");
+    expect(within(row).getByLabelText("1 of 2 complete")).toBeDefined();
+    expect(row.textContent).toContain("created");
+    expect(screen.queryByLabelText("Execution waves for Trustworthy daily use")).toBeNull();
+    fireEvent.click(row);
+    expect(onOpen).toHaveBeenCalledWith("P-003");
   });
 
-  it("keeps child batches visible in their parent tree and filters trees by nested state", () => {
+  it("lists child batches as first-class rows and filters their own canonical state", () => {
     const nestedContracts = [
       contract("T-100", "Child foundation", { status: "done", batch: "P-101" }),
       contract("T-101", "Child delivery", { status: "active", batch: "P-101", depends_on: ["T-100"] }),
@@ -147,18 +151,15 @@ describe("Batches", () => {
     }));
     const onOpen = vi.fn();
     const { container } = render(<BatchesView board={nested} filter="active" sort="created-asc" onFilter={() => {}} onSort={() => {}} onOpen={onOpen} />);
-    const roots = [...container.querySelectorAll<HTMLElement>(".batch-tree__root")];
-    expect(roots).toHaveLength(1);
-    expect(roots[0].getAttribute("aria-label")).toBe("Batch: Parent programme");
+    const rows = [...container.querySelectorAll<HTMLElement>(".batch-row")];
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain("Nested delivery batch");
+    expect(screen.queryByText("Parent programme")).toBeNull();
     expect(screen.queryByText("Standalone done batch")).toBeNull();
-    const child = within(screen.getByLabelText("Nested batches in Parent programme")).getByRole("button", { name: /Nested delivery batch/ });
-    expect(child.textContent).toContain("2 direct · 2 total contracts");
-    fireEvent.click(child);
+    expect(rows[0].textContent).toContain("2 direct · 0 child batches · 2 total");
+    fireEvent.click(rows[0]);
     expect(onOpen).toHaveBeenCalledWith("P-101");
-    expect(screen.getByText("Wave 1")).toBeDefined();
-    expect(screen.getByText("Wave 2")).toBeDefined();
-    expect(screen.getAllByText(/in Nested delivery batch/)).toHaveLength(2);
-    expect(screen.getByText("completed · metrics not recorded")).toBeDefined();
+    expect(screen.queryByText("Wave 1")).toBeNull();
   });
 });
 

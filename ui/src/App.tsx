@@ -763,16 +763,9 @@ export function ContractsView({ board, filter, sort, onFilter, onSort, query, on
 export function BatchesView({ board, filter, sort, onFilter, onSort, onOpen }: {
   board: Board; filter: BatchStatus | "all"; sort: CreatedSort; onFilter: (filter: BatchStatus | "all") => void; onSort: (sort: CreatedSort) => void; onOpen: (id: string) => void;
 }) {
-  const now = useNow();
-  const treeMatches = (batch: Batch, seen = new Set<string>()): boolean => {
-    if (seen.has(batch.id)) return false;
-    seen.add(batch.id);
-    return filter === "all" || batch.status === filter || (batch.batches ?? []).some((id) => {
-      const child = board.batchById.get(id);
-      return child ? treeMatches(child, seen) : false;
-    });
-  };
-  const roots = rootBatches(board).filter((batch) => treeMatches(batch)).sort((left, right) => compareCreated(left, right, sort));
+  const rows = board.batches
+    .filter((batch) => filter === "all" || batch.status === filter)
+    .sort((left, right) => compareCreated(left, right, sort));
   const filters: Array<{ key: BatchStatus | "all"; label: string; count: number }> = [
     { key: "all", label: "all", count: board.batches.length },
     ...BATCH_STATES.map((state) => ({ key: state, label: stateLabel(state), count: board.batches.filter((batch) => batch.status === state).length })),
@@ -781,7 +774,7 @@ export function BatchesView({ board, filter, sort, onFilter, onSort, onOpen }: {
     <div className="view__head">
       <div>
         <h2>Batches</h2>
-        <p>Hierarchy, dependency order, progress and age.</p>
+        <p>State, scope, progress and age at scan speed.</p>
       </div>
     </div>
     <div className="filters">
@@ -793,10 +786,32 @@ export function BatchesView({ board, filter, sort, onFilter, onSort, onOpen }: {
       ]} />
     </div>
     {board.batches.length === 0 && <p className="view__empty">No batch on disk. A batch is written with <code>kotta batch new</code>.</p>}
-    {board.batches.length > 0 && roots.length === 0 && <p className="view__empty">No batch tree contains a {filter} batch.</p>}
-    {roots.length > 0 && <div className="batch-tree batch-tree--catalog" aria-label="Batch dependency trees">
-      {roots.map((batch) => <BatchTreeSection key={batch.id} batch={batch} board={board} now={now} appearance="catalog" batchSort={sort} onBatchOpen={onOpen} onContractSelect={onOpen} />)}
-    </div>}
+    {board.batches.length > 0 && rows.length === 0 && <p className="view__empty">No batch matches this filter.</p>}
+    {rows.length > 0 && <>
+      <div className="batch-list__head" aria-hidden="true"><span>batch</span><span>state</span><span>scope</span><span>progress</span><span>age</span></div>
+      <div className="batch-list" aria-label="Batches">
+        {rows.map((batch) => {
+          const memberIds = board.subtreeContracts(batch);
+          const done = memberIds.filter((id) => board.contractById.get(id)?.status === "done").length;
+          const total = memberIds.length;
+          const progress = total ? Math.round((done / total) * 100) : 0;
+          const children = batch.batches?.length ?? 0;
+          return <EntityButton key={batch.id} id={batch.id} className="batch-row" onOpen={onOpen}>
+            <span className="batch-row__identity">
+              <span className="batch-row__title">{batch.title}<Tail id={batch.id} /></span>
+              <span className="batch-row__goal">{firstLine(batch.sections.goal) || "No goal recorded."}</span>
+            </span>
+            <span className="batch-row__state"><StateTag state={batch.status} /></span>
+            <span className="batch-row__scope">{batch.contracts.length} direct · {children} child batch{children === 1 ? "" : "es"} · {total} total</span>
+            <span className="batch-row__progress" aria-label={`${done} of ${total} complete`}>
+              <span><b>{done} / {total}</b><span>{progress}%</span></span>
+              <span className="bar"><span style={{ width: `${progress}%` }} /></span>
+            </span>
+            <span className="batch-row__age">{entityAge(batch.created_at, batch.updated_at)}</span>
+          </EntityButton>;
+        })}
+      </div>
+    </>}
   </div>;
 }
 function firstLine(value?: string): string {
@@ -1110,7 +1125,9 @@ export function EntityDrawer({ id, workspace, board, onClose, onOpen }: {
     fields.push(["state", observation.status], ["type", observation.observation_type], ["severity", observation.severity], ["confidence", observation.confidence],
       ["age", observation.created_at ? `created ${relativeTime(observation.created_at)}` : "created date unavailable"]);
   } else if (batch) {
-    fields.push(["state", batch.status], ["kind", batch.kind], ["members", String(batch.contracts.length)],
+    const total = board.subtreeContracts(batch).length;
+    fields.push(["state", batch.status], ["kind", batch.kind], ["contracts", `${total} total · ${batch.contracts.length} direct`],
+      ["child batches", String(batch.batches?.length ?? 0)],
       ["age", entityAge(batch.created_at, batch.updated_at)]);
   } else if (decision) {
     fields.push(["age", decision.date ? relativeTime(decision.date) : "date unavailable"]);
@@ -1144,6 +1161,7 @@ export function EntityDrawer({ id, workspace, board, onClose, onOpen }: {
                 <MarkdownContent value={body} onEntity={onOpen} />
               </section>
               : null)}
+            {batch && <BatchDependencyDetail batch={batch} board={board} onOpen={onOpen} />}
             {(batch || observation) && <DerivationPanel id={id} board={board} onOpen={onOpen} />}
             {(batch || observation) && <EntityTimeline id={id} workspace={workspace} />}
           </>}
@@ -1298,8 +1316,35 @@ function BatchHierarchy({ batch, board, onOpen, sort, path = new Set<string>() }
   </div>;
 }
 
-function BatchTreeSection({ batch, board, now, selectedId, appearance, batchSort, onBatchOpen, onContractSelect }: {
-  batch: Batch; board: Board; now: number; selectedId?: string | null; appearance: "catalog" | "run"; batchSort?: CreatedSort; onBatchOpen: (id: string) => void; onContractSelect: (id: string) => void;
+function BatchTreeContent({ batch, board, members, now, selectedId, batchSort, onBatchOpen, onContractSelect }: {
+  batch: Batch; board: Board; members: Contract[]; now: number; selectedId?: string | null; batchSort?: CreatedSort; onBatchOpen: (id: string) => void; onContractSelect: (id: string) => void;
+}) {
+  return <>
+    <BatchHierarchy batch={batch} board={board} onOpen={onBatchOpen} sort={batchSort} />
+    <div className="run__canvas-head"><b>Dependency order</b><span>Waves include every contract in this batch tree.</span><span className="run__scroll-hint">shift + wheel ↔</span></div>
+    <RunWaveGraph batch={batch} members={members} metrics={board.latestExecutionByContract} selectedId={selectedId} now={now} ownerRootId={batch.id} batchById={board.batchById} onSelect={onContractSelect} />
+  </>;
+}
+
+function BatchDependencyDetail({ batch, board, onOpen }: { batch: Batch; board: Board; onOpen: (id: string) => void }) {
+  const now = useNow();
+  const memberIds = board.subtreeContracts(batch);
+  const members = memberIds.map((id) => board.contractById.get(id)).filter((contract): contract is Contract => Boolean(contract));
+  const done = members.filter((contract) => contract.status === "done").length;
+  const children = batch.batches?.length ?? 0;
+  return <section className="batch-detail" aria-labelledby={`${batch.id}-dependency-title`}>
+    <div className="batch-detail__head">
+      <h3 id={`${batch.id}-dependency-title`}>Dependency tree</h3>
+      <span>{done} / {members.length} complete · {children} child batch{children === 1 ? "" : "es"}</span>
+    </div>
+    <div className="batch-tree batch-tree--detail">
+      <BatchTreeContent batch={batch} board={board} members={members} now={now} onBatchOpen={onOpen} onContractSelect={onOpen} />
+    </div>
+  </section>;
+}
+
+function BatchTreeSection({ batch, board, now, selectedId, onBatchOpen, onContractSelect }: {
+  batch: Batch; board: Board; now: number; selectedId?: string | null; onBatchOpen: (id: string) => void; onContractSelect: (id: string) => void;
 }) {
   const memberIds = board.subtreeContracts(batch);
   const members = memberIds.map((id) => board.contractById.get(id)).filter((contract): contract is Contract => Boolean(contract));
@@ -1310,7 +1355,7 @@ function BatchTreeSection({ batch, board, now, selectedId, appearance, batchSort
   const progress = memberIds.length ? Math.round((done / memberIds.length) * 100) : 0;
   const children = batch.batches?.length ?? 0;
   const execution = `${batch.execution?.mode ?? "dependency-aware"} · parallelism ${batch.execution?.parallelism ?? 2} · ${(batch.execution?.stop_on_failure ?? true) ? "stop on failure" : "continue on failure"}`;
-  const meta = `${appearance === "catalog" ? firstLine(batch.sections.goal) || execution : execution} · ${entityAge(batch.created_at, batch.updated_at)}`;
+  const meta = `${execution} · ${entityAge(batch.created_at, batch.updated_at)}`;
   return <section className="run__batch batch-tree__root" aria-label={`Batch: ${batch.title}`}>
     <div className="run__batch-head">
       <button type="button" className="batch-tree__batch-open run__batch-title" onClick={() => onBatchOpen(batch.id)} title={entityLabel(batch.id)}>
@@ -1325,9 +1370,7 @@ function BatchTreeSection({ batch, board, now, selectedId, appearance, batchSort
         <span className="bar bar--dark"><span style={{ width: `${progress}%` }} /></span>
       </div>
     </div>
-    <BatchHierarchy batch={batch} board={board} onOpen={onBatchOpen} sort={batchSort} />
-    <div className="run__canvas-head"><b>Dependency order</b><span>Waves include every contract in this batch tree.</span><span className="run__scroll-hint">shift + wheel ↔</span></div>
-    <RunWaveGraph batch={batch} members={members} metrics={board.latestExecutionByContract} selectedId={selectedId} now={now} ownerRootId={batch.id} batchById={board.batchById} onSelect={onContractSelect} />
+    <BatchTreeContent batch={batch} board={board} members={members} now={now} selectedId={selectedId} onBatchOpen={onBatchOpen} onContractSelect={onContractSelect} />
   </section>;
 }
 
@@ -1349,7 +1392,7 @@ export function RunOverlay({ board, onClose, onOpen }: { board: Board; onClose: 
       <div className="run__batches scroll">
         {board.activeBatches.length === 0 && board.running.length === 0 && <p className="run__empty">Nothing is running. A batch starts with <code>kotta batch start &lt;id&gt;</code>, a single contract with <code>kotta contract execute &lt;id&gt; --agent codex</code>.</p>}
         {activeRoots.length > 0 && <div className="batch-tree batch-tree--run">
-          {activeRoots.map((batch) => <BatchTreeSection key={batch.id} batch={batch} board={board} now={now} selectedId={selectedId} appearance="run" onBatchOpen={onOpen} onContractSelect={setSelectedId} />)}
+          {activeRoots.map((batch) => <BatchTreeSection key={batch.id} batch={batch} board={board} now={now} selectedId={selectedId} onBatchOpen={onOpen} onContractSelect={setSelectedId} />)}
           <div className="run__legend" aria-label="Contract state legend">
             {[["done", "done"], ["active", "active"], ["review", "review"], ["defined", "defined"], ["blocked", "blocked"], ["inconsistent", "backlog / inconsistent"]].map(([state, label]) => <span key={state}><i className={`run__legend-swatch run__legend-swatch--${state}`} />{label}</span>)}
             <em>Choose a contract to inspect it without leaving the run.</em>
