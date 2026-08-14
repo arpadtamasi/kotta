@@ -11,6 +11,7 @@ import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "
 import { appendEvent } from "../core/events.js";
 import { validateClaim } from "../core/claim.js";
 import { readAgentPermissionMode } from "../core/config.js";
+import { normalizeAgentOutput, type TokenUsage } from "../core/execution-metrics.js";
 
 /**
  * Arguments a named agent expects around a prompt that arrives on stdin.
@@ -23,8 +24,8 @@ import { readAgentPermissionMode } from "../core/config.js";
  * to hand out an authority the caller never granted.
  */
 const AGENT_ARGUMENTS: Record<string, string[]> = {
-  claude: ["-p"],
-  codex: ["exec", "-"],
+  claude: ["-p", "--output-format", "json"],
+  codex: ["exec", "--json", "-"],
 };
 
 /** Modes that forbid edits by definition, whatever the agent's own settings say. */
@@ -216,6 +217,10 @@ export interface ExecuteResult {
     inheritContext: string | null;
     resumed: boolean;
     exitCode: number | null;
+    startedAt: string;
+    completedAt: string;
+    durationMs: number;
+    tokenUsage: TokenUsage | null;
     baselineCommit: string;
     commit: string;
     uncommittedChanges: boolean;
@@ -316,7 +321,11 @@ async function runAgent(input: {
   }
 
   const baseline = captureBaseline(id, context.worktree, contextNote);
+  const startedAt = new Date().toISOString();
   const run = await launch({ command, args, cwd: context.worktree, prompt: promptFor(brief.data.brief, inheritContext) });
+  const completedAt = new Date().toISOString();
+  const durationMs = Math.max(0, Date.parse(completedAt) - Date.parse(startedAt));
+  const normalizedOutput = normalizeAgentOutput(agent, run.stdout);
 
   // The failure ladder keeps its order and its messages; `no-change` is only
   // reached when it yields nothing.
@@ -351,6 +360,10 @@ async function runAgent(input: {
     inheritContext,
     resumed,
     exitCode: run.status,
+    startedAt,
+    completedAt,
+    durationMs,
+    tokenUsage: normalizedOutput.usage,
     baselineCommit: baseline.commit,
     commit: after.commit,
     uncommittedChanges: Boolean(after.status),
@@ -367,6 +380,10 @@ async function runAgent(input: {
     agent_command: command,
     resumed,
     exit_code: run.status,
+    started_at: startedAt,
+    completed_at: completedAt,
+    duration_ms: durationMs,
+    token_usage: normalizedOutput.usage,
     baseline_commit: baseline.commit,
     commit: after.commit,
     baseline_uncommitted_changes: Boolean(baseline.status),
@@ -374,7 +391,7 @@ async function runAgent(input: {
     ...(replacedAgent ? { claim_agent_replaced: replacedAgent } : {}),
     // The agent's own account of the run. Stored as reported, never promoted
     // into the state decision above.
-    agent_report: { source: "agent stdout", verified: false, output: run.stdout },
+    agent_report: { source: "agent stdout", verified: false, output: normalizedOutput.report },
   };
   try {
     withControlPlaneMutation(controlRoot, (canonicalRoot) => {
@@ -431,10 +448,13 @@ function safeContractState(worktree: string, id: string): string {
 
 export function formatExecution(result: ExecuteResult): string {
   const data = result.data;
+  const duration = data.durationMs < 1000 ? `${data.durationMs}ms` : data.durationMs < 60_000 ? `${Math.round(data.durationMs / 1000)}s` : `${Math.floor(data.durationMs / 60_000)}m ${Math.round((data.durationMs % 60_000) / 1000)}s`;
+  const tokens = data.tokenUsage ? `${data.tokenUsage.total_tokens.toLocaleString("en-US")} tokens` : "tokens not recorded";
   const lines = [
     `kotta contract execute ${data.id}: ${data.state}`,
     `  agent:    ${data.agent} (command: ${data.agentCommand})`,
     `  brief:    ~${data.briefTokens} tokens, ${data.briefSections} sections — the agent's only input`,
+    `  run:      ${duration} · ${tokens}`,
     `  branch:   ${data.branch}`,
     `  worktree: ${data.worktree}`,
     `  context:  ${data.context === "fresh" ? "fresh (D-009 default)" : `INHERITED — ${String(data.inheritContext)}`}`,

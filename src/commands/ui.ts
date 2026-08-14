@@ -228,8 +228,18 @@ export function readWorkspace(workspaceOption: string) {
       })();
   const events = eventPaths.map((path) => JSON.parse((useBase ? (refFiles?.get(path) ?? readFileFromRef(projectRoot, base, path)) : readFileSync(join(projectRoot, path), "utf8")) ?? "{}") as KottaEvent)
     .sort((left, right) => left.created_at.localeCompare(right.created_at) || left.id.localeCompare(right.id));
+  const claimPrefix = `${workspaceDirectory}/claims/`;
+  const claimPaths = useBase
+    ? (refFiles ? [...refFiles.keys()].filter((path) => path.startsWith(claimPrefix) && path.endsWith(".yaml")) : listFilesFromRef(projectRoot, base, workspaceDirectory, "claims", ".yaml"))
+    : (() => {
+        const directory = join(workspace, "claims");
+        return existsSync(directory) ? readdirSync(directory).filter((name) => name.endsWith(".yaml")).map((name) => `${workspaceDirectory}/claims/${name}`) : [];
+      })();
+  const claims = claimPaths.map((path) => parse((useBase ? (refFiles?.get(path) ?? readFileFromRef(projectRoot, base, path)) : readFileSync(join(projectRoot, path), "utf8")) ?? "{}") as Record<string, unknown>);
+  const claimByContract = new Map(claims.map((claim) => [String(claim.contract ?? ""), claim]));
+  const contractsWithClaims = contracts.map((contract) => ({ ...contract, claim: claimByContract.get(String((contract as Record<string, unknown>).id ?? "")) ?? null }));
   const notices = readNotices(projectRoot, workspace, useBase, base, contracts.length + batches.length + observations.length);
-  return { workspace, project: migration?.project ?? config.project?.name ?? "Kotta workspace", migration, contracts, batches, observations, decisions, events, diagnostics, notices, generatedAt: new Date().toISOString() };
+  return { workspace, project: migration?.project ?? config.project?.name ?? "Kotta workspace", migration, contracts: contractsWithClaims, batches, observations, decisions, events, claims, diagnostics, notices, generatedAt: new Date().toISOString() };
 }
 
 /** Entity files sitting in the working tree, under either vocabulary — the counterweight to the ref read. */

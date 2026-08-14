@@ -6,12 +6,13 @@ import { batch, contract, workspace } from "./fixtures";
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
 const members = [
   contract("T-001", "Finished foundation", { status: "done", batch: "P-001", assigned_agent: "codex", updated_at: "2026-08-01" }),
-  contract("T-002", "Active implementation", { status: "active", batch: "P-001", assigned_agent: "codex", branch: "feat/T-002", depends_on: ["T-001"], updated_at: "2026-08-04" }),
+  contract("T-002", "Active implementation", { status: "active", batch: "P-001", assigned_agent: "codex", branch: "feat/T-002", claim: { contract: "T-002", agent: "codex", branch: "feat/T-002", worktree: ".worktrees/T-002", started_at: "2026-08-14T08:00:00Z" }, depends_on: ["T-001"], updated_at: "2026-08-04" }),
   contract("T-003", "Review the implementation", { status: "review", batch: "P-001", assigned_agent: "claude", branch: "feat/T-003", depends_on: ["T-002"], updated_at: "2026-08-03" }),
   contract("T-004", "Waiting parallel work", { status: "defined", batch: "P-001", depends_on: ["T-002"], updated_at: "2026-08-02" }),
   contract("T-005", "Canonically blocked work", { status: "defined", blocked: true, batch: "P-001", depends_on: ["T-003"], sections: { blocker: "waiting for a human decision" } }),
@@ -24,6 +25,10 @@ const data = workspace({
     status: "active", contracts: members.map((member) => member.id),
     execution: { mode: "dependency-aware", parallelism: 3, stop_on_failure: true },
   })],
+  events: [{
+    id: "E-01kzzzzzzzzzzzzzzzzzzzzzzx", entity: "T-001", contract: "T-001", kind: "lifecycle", created_at: "2026-08-14T07:00:00Z",
+    state: "execution-implemented", summary: "Executor completed.", payload: { started_at: "2026-08-14T06:47:30Z", completed_at: "2026-08-14T07:00:00Z", duration_ms: 750_000, token_usage: { input_tokens: 1000, output_tokens: 250, total_tokens: 1250 } },
+  }],
 });
 
 function renderRun(over: { onClose?: () => void; onOpen?: (id: string) => void } = {}) {
@@ -99,9 +104,10 @@ describe("The Run overlay", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Open full contract detail →" }));
     expect(onOpen).toHaveBeenCalledWith("T-002");
-    fireEvent.click(screen.getByRole("button", { name: "← Latest movements" }));
-    expect(screen.getByText("Latest movements")).toBeDefined();
-    expect(screen.getByText(/active · Active implementation/)).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "← Recent executions" }));
+    expect(screen.getByText("Recent executions")).toBeDefined();
+    expect(screen.getByText(/implemented · Finished foundation/)).toBeDefined();
+    expect(screen.getAllByText("12m 30s · 1,250 tokens")).toHaveLength(2);
   });
 
   it("keeps opening, selecting, scrolling and closing passive", () => {
@@ -112,7 +118,7 @@ describe("The Run overlay", () => {
     const { container } = renderRun({ onClose, onOpen });
     fireEvent.scroll(container.querySelector(".run__graph-scroll") as Element, { target: { scrollLeft: 120 } });
     fireEvent.click(screen.getByRole("button", { name: /Waiting parallel work/ }));
-    fireEvent.click(screen.getByRole("button", { name: "← Latest movements" }));
+    fireEvent.click(screen.getByRole("button", { name: "← Recent executions" }));
     fireEvent.keyDown(window, { key: "Escape" });
 
     expect(fetch).not.toHaveBeenCalled();
@@ -129,5 +135,14 @@ describe("The Run overlay", () => {
     expect(within(stack).getByRole("button", { name: /Waiting parallel work/ })).toBeDefined();
     expect(container.querySelectorAll(".run__wave-unit")).toHaveLength(4);
     expect(container.querySelectorAll(".run__connector")).toHaveLength(3);
+  });
+
+  it("derives a live elapsed value from the claim instead of updated_at", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-14T09:30:00Z"));
+    renderRun();
+    const active = screen.getByRole("button", { name: /Active implementation/ });
+    expect(active.textContent).toContain("running 1h 30m");
+    expect(active.textContent).not.toContain("10d ago");
   });
 });

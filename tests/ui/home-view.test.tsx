@@ -37,13 +37,13 @@ function renderHome(over: Partial<Parameters<typeof HomeView>[0]> = {}) {
 const band = (name: string) => screen.getByRole("region", { name });
 
 describe("Home — the three bands", () => {
-  it("shows the bands in the design's order, with the design's wording", () => {
+  it("shows the focused bands in priority order", () => {
     renderHome();
     const headings = screen.getAllByRole("heading", { level: 2 }).map((node) => node.textContent);
     expect(headings).toEqual(["Waiting on you", "Doesn't add up", "What runs next?"]);
-    expect(screen.getByText(/Human gates waiting for an explicit decision in the calling chat/)).toBeDefined();
-    expect(screen.getByText("Two sources disagree, or the data contradicts its own definition. The board will not pick a story.")).toBeDefined();
-    expect(screen.getByText(/A menu, not a debt\./)).toBeDefined();
+    expect(screen.getByText("Explicit decisions, oldest first.")).toBeDefined();
+    expect(screen.getByText("Conflicting canonical facts that need attention.")).toBeDefined();
+    expect(screen.getByText(/executable contracts, with age visible/)).toBeDefined();
   });
 
   it("derives Waiting on you from the three --approve gates, and nothing else", () => {
@@ -61,6 +61,7 @@ describe("Home — the three bands", () => {
     const menu = band("What runs next?");
     expect(within(menu).getByRole("button", { name: /Define the shaping plan schema/ })).toBeDefined();
     expect(within(menu).getByRole("button", { name: /Introduce a shared mutation lock/ })).toBeDefined();
+    expect(within(menu).getByRole("button", { name: /Define the shaping plan schema/ }).closest(".menu")?.textContent).toContain("created");
     const waiting = band("Waiting on you");
     expect(within(waiting).queryByText(/Define the shaping plan schema/)).toBeNull();
     expect(within(waiting).queryByText(/Introduce a shared mutation lock/)).toBeNull();

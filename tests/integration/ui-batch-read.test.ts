@@ -46,6 +46,8 @@ function bigWorkspace(entities: number, options: { checkoutSideBranch: boolean }
     const id = `T-${String(index).padStart(3, "0")}`;
     writeFileSync(join(root, `.a-team/defined/${id}-synthetic.md`), contract(id, "defined"));
   }
+  mkdirSync(join(root, ".a-team/claims"), { recursive: true });
+  writeFileSync(join(root, ".a-team/claims/T-001.yaml"), "contract: T-001\nagent: codex\nbranch: feat/T-001\nworktree: .worktrees/T-001\nstarted_at: 2026-08-14T08:30:00Z\n");
   run(root, ["init", "-b", "main"]);
   run(root, ["add", "-A"]);
   run(root, ["commit", "-m", "fixture: synthetic workspace"]);
@@ -72,6 +74,8 @@ describe("batched, cached base-ref reads (T-029)", () => {
     expect(workspace.contracts).toHaveLength(210);
     expect(workspace.contracts.every((entry) => entry.status === "defined")).toBe(true);
     expect(workspace.contracts.find((entry) => entry.id === "T-210")).toMatchObject({ title: "Synthetic contract T-210" });
+    expect(workspace.contracts.find((entry) => entry.id === "T-001")).toMatchObject({ claim: { agent: "codex", started_at: "2026-08-14T08:30:00Z" } });
+    expect(workspace.claims).toHaveLength(1);
     expect(calls.length).toBeLessThanOrEqual(2);
     expect(calls.map((args) => args[0]).sort()).toEqual(["archive", "rev-parse"]);
   });

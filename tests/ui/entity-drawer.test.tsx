@@ -9,11 +9,18 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { EntityDrawer, readBoard, type Workspace } from "../../ui/src/App";
 import { decision, observation, batch, contract, workspace } from "./fixtures";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 const populated = workspace({
   contracts: [
-    contract("T-012", "Make the UI workspace argument explicit", { status: "active", batch: "P-003", source_observation: "F-001", assigned_agent: "codex", branch: "kotta/t-012", sections: { outcome: "The argument is explicit." } }),
+    contract("T-012", "Make the UI workspace argument explicit", {
+      status: "active", batch: "P-003", source_observation: "F-001", assigned_agent: "codex", branch: "kotta/t-012",
+      claim: { contract: "T-012", agent: "codex", branch: "kotta/t-012", worktree: ".worktrees/T-012", started_at: "2026-08-14T08:00:00Z" },
+      sections: { user_goal: "Know which workspace is being read.", outcome: "The argument is explicit.", acceptance: "The path is visible.", constraints: "The board stays read-only.", verification: "Run the component test.", scope: "The board and UI server." },
+    }),
     contract("T-013", "Add a discoverable bug-reporting path", { status: "review", batch: "P-003" }),
     contract("T-014", "Port collision returns raw EADDRINUSE", { status: "defined", source_observation: "F-404" }),
     contract("T-019", "Sweep unfinished work", { status: "backlog" }),
@@ -21,6 +28,10 @@ const populated = workspace({
   batches: [batch("P-003", "Trustworthy daily use", { status: "active", contracts: ["T-012", "T-013"], sections: { goal: "One module: truthful execution state." } })],
   observations: [observation("F-001", "CLI help contradicts the --workspace default", { status: "resolved", became: "T-012", discovered_during: "T-019" })],
   decisions: [decision("D-001", "The directory is the state")],
+  events: [
+    { id: "E-01kzzzzzzzzzzzzzzzzzzzzzzz", entity: "T-012", contract: "T-012", kind: "lifecycle", created_at: "2026-08-14T07:00:00Z", state: "execution-implemented", summary: "Executor completed.", payload: { started_at: "2026-08-14T06:47:30Z", completed_at: "2026-08-14T07:00:00Z", duration_ms: 750_000, token_usage: { input_tokens: 1000, output_tokens: 250, total_tokens: 1250 } } },
+    { id: "E-01kzzzzzzzzzzzzzzzzzzzzzzy", entity: "T-012", contract: "T-012", kind: "message", created_at: "2026-08-14T07:05:00Z", role: "human", text: "Keep the activity secondary." },
+  ],
 });
 
 /** A row that opens the drawer, so focus can be observed leaving and coming back. */
@@ -39,10 +50,14 @@ function openDrawer(id: string, data: Workspace = populated) {
   fireEvent.click(row);
   return row;
 }
+function openContext() {
+  fireEvent.click(screen.getByRole("tab", { name: "Context" }));
+}
 
 describe("Entity drawer — derivation", () => {
   it("names the contract by its title and draws came from and goes with", () => {
     openDrawer("T-012");
+    openContext();
     const drawer = screen.getByRole("dialog", { name: "contract: Make the UI workspace argument explicit" });
     expect(within(drawer).getByRole("heading", { name: "Make the UI workspace argument explicit" })).toBeDefined();
     const derivation = within(drawer).getByRole("region", { name: "Derivation" });
@@ -57,6 +72,7 @@ describe("Entity drawer — derivation", () => {
 
   it("draws a missing target as a dangling reference instead of dropping the link", () => {
     openDrawer("T-014");
+    openContext();
     const derivation = screen.getByRole("region", { name: "Derivation" });
     expect(within(derivation).getByText("dangling reference")).toBeDefined();
     expect(within(derivation).getByText(/source_observation: F-404/)).toBeDefined();
@@ -65,6 +81,7 @@ describe("Entity drawer — derivation", () => {
 
   it("says plainly when a contract has no source and no batch", () => {
     openDrawer("T-019");
+    openContext();
     const derivation = screen.getByRole("region", { name: "Derivation" });
     expect(within(derivation).getByText(/written straight as a contract/)).toBeDefined();
     expect(within(derivation).getByText("Not in a batch — nothing else has to be solved together with it.")).toBeDefined();
@@ -88,6 +105,46 @@ describe("Entity drawer — derivation", () => {
   it("opens a decision by its title too", () => {
     openDrawer("D-001");
     expect(screen.getByRole("dialog", { name: "decision: The directory is the state" })).toBeDefined();
+  });
+});
+
+describe("Entity drawer — focused contract information", () => {
+  it("opens on a structured brief and keeps chat last", () => {
+    openDrawer("T-012");
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Brief", "Context", "Activity"]);
+    expect(screen.getByRole("tab", { name: "Brief" }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("heading", { name: "Goal" })).toBeDefined();
+    expect(screen.getByText("Know which workspace is being read.")).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Expected output" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Success conditions" })).toBeDefined();
+    expect(screen.queryByText("Keep the activity secondary.")).toBeNull();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Activity" }));
+    expect(screen.getByText("Keep the activity secondary.")).toBeDefined();
+  });
+
+  it("labels historic missing execution metrics instead of treating them as zero", () => {
+    openDrawer("T-019");
+    expect(screen.getAllByText("Not recorded")).toHaveLength(2);
+    expect(screen.queryByText("0 tokens")).toBeNull();
+  });
+
+  it("shows current elapsed time and the last recorded duration and tokens", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-14T09:30:00Z"));
+    openDrawer("T-012");
+    expect(screen.getByText("Running 1h 30m")).toBeDefined();
+    expect(screen.getByText("12m 30s")).toBeDefined();
+    expect(screen.getByText("1,250 tokens")).toBeDefined();
+  });
+
+  it("moves between tabs with arrow keys", () => {
+    openDrawer("T-012");
+    const brief = screen.getByRole("tab", { name: "Brief" });
+    brief.focus();
+    fireEvent.keyDown(brief, { key: "ArrowRight" });
+    expect(document.activeElement).toBe(screen.getByRole("tab", { name: "Context" }));
+    expect(screen.getByRole("region", { name: "Derivation" })).toBeDefined();
   });
 });
 

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import axe from "axe-core";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { EntityDrawer, readBoard, type Workspace } from "../../ui/src/App";
 import { contract, workspace } from "./fixtures";
 
@@ -12,6 +12,9 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 function Drawer({ data }: { data: Workspace }) {
   return <EntityDrawer id={ID} workspace={data} board={readBoard(data)} onClose={() => undefined} onOpen={() => undefined} />;
+}
+function openActivity() {
+  fireEvent.click(screen.getByRole("tab", { name: "Activity" }));
 }
 
 describe("persistent contract conversation", () => {
@@ -28,6 +31,7 @@ describe("persistent contract conversation", () => {
       ],
     });
     render(<Drawer data={data} />);
+    openActivity();
     const log = screen.getByRole("log");
     expect(within(log).getByText("Keep chat visible.")).toBeDefined();
     expect(within(log).getByText("It is stored on main.")).toBeDefined();
@@ -43,6 +47,7 @@ describe("persistent contract conversation", () => {
       events: [{ id: approvalId, entity: ID, contract: ID, kind: "approval", approval_id: approvalId, phase: "proposed", action: "contract.sign", created_at: "2026-08-05T10:00:00Z" }],
     });
     render(<Drawer data={data} />);
+    openActivity();
     expect(screen.getByText("Waiting in the calling chat.")).toBeDefined();
     expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
     expect(screen.queryByRole("button", { name: /Prepare/ })).toBeNull();
@@ -60,11 +65,12 @@ describe("persistent contract conversation", () => {
       ],
     });
     render(<Drawer data={data} />);
+    openActivity();
     expect(screen.getByText("Provider disconnected.")).toBeDefined();
     expect(screen.queryByRole("button", { name: "Retry turn" })).toBeNull();
   });
 
-  it("has no automated accessibility violations in the empty read-only timeline", async () => {
+  it("has no automated accessibility violations in the focused contract drawer", async () => {
     const data = workspace({ contracts: [contract(ID, "Live control plane", { status: "backlog" })], events: [] });
     const { container } = render(<Drawer data={data} />);
     // jsdom has no canvas implementation, so colour contrast is covered by the Playwright site

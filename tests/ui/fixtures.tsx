@@ -10,11 +10,11 @@ type Decision = NonNullable<Workspace["decisions"]>[number];
 export function contract(id: string, title: string, over: Partial<Contract> = {}): Contract {
   return {
     id, title, status: "backlog", types: ["feature"], profiles: [], priority: "medium", risk: "low",
-    batch: null, depends_on: [], blocks: [], sections: {}, updated_at: "2026-07-30", ...over,
+    batch: null, depends_on: [], blocks: [], sections: {}, created_at: "2026-07-20", updated_at: "2026-07-30", ...over,
   };
 }
 export function batch(id: string, title: string, over: Partial<Batch> = {}): Batch {
-  return { id, title, status: "backlog", kind: "batch", contracts: [], sections: { goal: "One module." }, updated_at: "2026-07-20", ...over };
+  return { id, title, status: "backlog", kind: "batch", contracts: [], sections: { goal: "One module." }, created_at: "2026-07-10", updated_at: "2026-07-20", ...over };
 }
 export function observation(id: string, title: string, over: Partial<Observation> = {}): Observation {
   return {
