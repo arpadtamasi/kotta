@@ -3,7 +3,7 @@ id: T-01kzzs5jvsdz9ahjx77h9dd54m
 title: >-
   A board fókuszálása frissességre, futási metrikákra és strukturált
   contract-részletekre
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -25,6 +25,7 @@ assigned_agent: codex
 worktree: .worktrees/T-01kzzs5jvsdz9ahjx77h9dd54m
 execution_mode: inherited
 branch_origin: created
+resolution: completed
 ---
 ## Outcome
 
