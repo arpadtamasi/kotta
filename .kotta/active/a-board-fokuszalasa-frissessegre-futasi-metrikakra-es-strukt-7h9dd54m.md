@@ -3,7 +3,7 @@ id: T-01kzzs5jvsdz9ahjx77h9dd54m
 title: >-
   A board fókuszálása frissességre, futási metrikákra és strukturált
   contract-részletekre
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -16,10 +16,15 @@ risk: medium
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: >-
+  feat/T-01kzzs5jvsdz9ahjx77h9dd54m-a-board-fokuszalasa-frissessegre-futasi-metrikakra-es-strukt
 pull_request: null
 created_at: '2026-08-14'
 updated_at: '2026-08-14'
+assigned_agent: codex
+worktree: .worktrees/T-01kzzs5jvsdz9ahjx77h9dd54m
+execution_mode: inherited
+branch_origin: created
 ---
 ## Outcome
 
