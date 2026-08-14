@@ -1,0 +1,7 @@
+contract: T-01m00afb9wt2vrbs3qgrgv0mtw
+agent: codex
+branch: fix/T-01m00afb9wt2vrbs3qgrgv0mtw-contract-gate-treats-standalone-generated-documents-as-kotta
+worktree: .worktrees/T-01m00afb9wt2vrbs3qgrgv0mtw
+execution_mode: inherited
+origin: created
+started_at: 2026-08-14T14:28:57.629Z

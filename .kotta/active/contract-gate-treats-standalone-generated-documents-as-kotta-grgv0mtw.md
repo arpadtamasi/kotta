@@ -1,7 +1,7 @@
 ---
 id: T-01m00afb9wt2vrbs3qgrgv0mtw
 title: Contract gate treats standalone generated documents as Kotta product work
-status: defined
+status: active
 origin: observation
 types:
   - bug
@@ -12,11 +12,16 @@ risk: medium
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: >-
+  fix/T-01m00afb9wt2vrbs3qgrgv0mtw-contract-gate-treats-standalone-generated-documents-as-kotta
 pull_request: null
 created_at: '2026-08-14'
 updated_at: '2026-08-14'
 source_observation: F-01m007x3gsqznhbcnytnjqpfy5
+assigned_agent: codex
+worktree: .worktrees/T-01m00afb9wt2vrbs3qgrgv0mtw
+execution_mode: inherited
+branch_origin: created
 ---
 # Contract gate treats standalone generated documents as Kotta product work
 
