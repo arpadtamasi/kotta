@@ -1,0 +1,219 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-14T07:52:42Z",
+  "title": "Design System: Kotta Console v2",
+  "extensions": {
+    "colorMeta": {
+      "signal-red": {
+        "role": "primary",
+        "displayName": "Signal Red",
+        "canonical": "#ec3013",
+        "tonalRamp": ["#4d170e", "#7c1405", "#ae1800", "#dd2b0f", "#ff563c", "#ff9783", "#ffc4b8", "#fff2ef"]
+      },
+      "signal-red-soft": {
+        "role": "primary",
+        "displayName": "Signal Red Soft",
+        "canonical": "#fff2ef",
+        "tonalRamp": ["#4d170e", "#7c1405", "#ae1800", "#dd2b0f", "#ff563c", "#ff9783", "#ffc4b8", "#fff2ef"]
+      },
+      "signal-red-light": {
+        "role": "primary",
+        "displayName": "Signal Red Light",
+        "canonical": "#ff9783",
+        "tonalRamp": ["#4d170e", "#7c1405", "#ae1800", "#dd2b0f", "#ff563c", "#ff9783", "#ffc4b8", "#fff2ef"]
+      },
+      "signal-red-hover": {
+        "role": "primary",
+        "displayName": "Signal Red Hover",
+        "canonical": "#dd2b0f",
+        "tonalRamp": ["#4d170e", "#7c1405", "#ae1800", "#dd2b0f", "#ff563c", "#ff9783", "#ffc4b8", "#fff2ef"]
+      },
+      "signal-red-text": {
+        "role": "primary",
+        "displayName": "Signal Red Text",
+        "canonical": "#ae1800",
+        "tonalRamp": ["#4d170e", "#7c1405", "#ae1800", "#dd2b0f", "#ff563c", "#ff9783", "#ffc4b8", "#fff2ef"]
+      },
+      "archive-paper": {
+        "role": "neutral",
+        "displayName": "Archive Paper",
+        "canonical": "#f3f2f2",
+        "tonalRamp": ["#2d2b2b", "#444141", "#605d5d", "#7d7979", "#9b9797", "#bab6b6", "#d7d3d3", "#f8f4f4"]
+      },
+      "record-surface": {
+        "role": "neutral",
+        "displayName": "Record Surface",
+        "canonical": "#eae9e9",
+        "tonalRamp": ["#2d2b2b", "#444141", "#605d5d", "#7d7979", "#9b9797", "#bab6b6", "#d7d3d3", "#f8f4f4"]
+      },
+      "repository-ink": {
+        "role": "neutral",
+        "displayName": "Repository Ink",
+        "canonical": "#201e1d",
+        "tonalRamp": ["#201e1d", "#2d2b2b", "#444141", "#605d5d", "#7d7979", "#9b9797", "#d7d3d3", "#f8f4f4"]
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "#605d5d",
+        "tonalRamp": ["#201e1d", "#2d2b2b", "#444141", "#605d5d", "#7d7979", "#9b9797", "#d7d3d3", "#f8f4f4"]
+      },
+      "completion-green": {
+        "role": "tertiary",
+        "displayName": "Completion Green",
+        "canonical": "#53a77a",
+        "tonalRamp": ["oklch(.22 .09 155)", "oklch(.32 .10 155)", "oklch(.42 .11 155)", "oklch(.52 .11 155)", "oklch(.62 .11 155)", "oklch(.72 .10 155)", "oklch(.82 .08 155)", "oklch(.92 .04 155)"]
+      },
+      "contract-stamp": {
+        "role": "secondary",
+        "displayName": "Contract Stamp Blue",
+        "canonical": "oklch(.45 .14 258)",
+        "tonalRamp": ["oklch(.20 .10 258)", "oklch(.30 .12 258)", "oklch(.40 .14 258)", "oklch(.50 .14 258)", "oklch(.60 .13 258)", "oklch(.70 .11 258)", "oklch(.82 .08 258)", "oklch(.94 .03 258)"]
+      },
+      "observation-stamp": {
+        "role": "secondary",
+        "displayName": "Observation Stamp Ochre",
+        "canonical": "oklch(.44 .12 66)",
+        "tonalRamp": ["oklch(.20 .09 66)", "oklch(.30 .11 66)", "oklch(.40 .12 66)", "oklch(.50 .12 66)", "oklch(.60 .11 66)", "oklch(.70 .09 66)", "oklch(.82 .06 66)", "oklch(.95 .03 66)"]
+      },
+      "batch-stamp": {
+        "role": "secondary",
+        "displayName": "Batch Stamp Violet",
+        "canonical": "oklch(.42 .15 305)",
+        "tonalRamp": ["oklch(.20 .10 305)", "oklch(.30 .13 305)", "oklch(.40 .15 305)", "oklch(.50 .15 305)", "oklch(.60 .13 305)", "oklch(.70 .11 305)", "oklch(.82 .07 305)", "oklch(.94 .03 305)"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "View titles and the largest operational headings." },
+      "headline": { "displayName": "Headline", "purpose": "Workspace identity and prominent section subjects." },
+      "title": { "displayName": "Title", "purpose": "Batch names, panel titles, and high-priority row hierarchy." },
+      "body": { "displayName": "Body", "purpose": "Explanations, descriptions, and primary reading text." },
+      "label": { "displayName": "Label", "purpose": "Navigation, actions, states, section labels, and terse control language." },
+      "mono": { "displayName": "Repository Data", "purpose": "Ids, commands, paths, timestamps, counts, branches, claims, and derived facts." }
+    },
+    "shadows": [
+      { "name": "ink-tint-small", "value": "0 1px 2px color-mix(in srgb, #2d2b2b 14%, transparent)", "purpose": "Small exceptional lifted state; ordinary panels remain flat." },
+      { "name": "ink-tint-medium", "value": "0 3px 10px color-mix(in srgb, #2d2b2b 16%, transparent)", "purpose": "System overlay separation when a structural border is insufficient." },
+      { "name": "ink-tint-large", "value": "0 12px 32px color-mix(in srgb, #2d2b2b 22%, transparent)", "purpose": "Top-level modal elevation only." }
+    ],
+    "motion": [
+      { "name": "state-response", "value": "120ms ease", "purpose": "Hover, focus, selection, and run-card response." },
+      { "name": "running-pulse", "value": "1.6s infinite opacity pulse", "purpose": "The tiny live-status square, never content or layout." },
+      { "name": "reduced-motion", "value": "0.01ms; one iteration", "purpose": "Collapses animation and transition duration when reduced motion is requested." }
+    ],
+    "breakpoints": [
+      { "name": "wide-bands", "value": "1280px" },
+      { "name": "dense-rows", "value": "1080px" },
+      { "name": "stacked-run", "value": "900px" },
+      { "name": "collapsed-rail", "value": "820px" },
+      { "name": "narrow-dialog", "value": "600px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Decisive action with the system's scarce signal color.",
+      "html": "<button class=\"ds-btn-primary\">RUN NEXT →</button>",
+      "css": ".ds-btn-primary { display:inline-flex; align-items:center; justify-content:flex-start; gap:6px; cursor:pointer; font-family:var(--font-heading); font-weight:800; font-size:13px; line-height:1.2; color:var(--color-bg); background:var(--color-accent); border:1px solid transparent; border-radius:0; padding:6.8px 12px; } .ds-btn-primary:hover { background:var(--color-accent-600); } .ds-btn-primary:active { background:var(--color-accent-700); } .ds-btn-primary:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Compact outlined action that stays subordinate to the record.",
+      "html": "<button class=\"ds-btn-secondary\">OPEN CONTRACT</button>",
+      "css": ".ds-btn-secondary { display:inline-flex; align-items:center; justify-content:flex-start; cursor:pointer; font-family:var(--font-heading); font-weight:800; font-size:13px; color:var(--color-text); background:transparent; border:1px solid var(--color-divider); border-radius:0; padding:6.8px 12px; } .ds-btn-secondary:hover { background:color-mix(in srgb, var(--color-text) 7%, transparent); } .ds-btn-secondary:active { background:color-mix(in srgb, var(--color-text) 14%, transparent); } .ds-btn-secondary:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Terse inline action for copy, links, and low-emphasis control.",
+      "html": "<button class=\"ds-btn-ghost\">COPY</button>",
+      "css": ".ds-btn-ghost { cursor:pointer; font-family:var(--font-heading); font-weight:800; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--color-accent-700); background:transparent; border:1px solid transparent; border-radius:0; padding:4px; } .ds-btn-ghost:hover { background:color-mix(in srgb, var(--color-accent) 10%, transparent); } .ds-btn-ghost:active { background:color-mix(in srgb, var(--color-accent) 18%, transparent); } .ds-btn-ghost:focus-visible { outline:2px solid var(--color-accent); outline-offset:2px; }"
+    },
+    {
+      "name": "Search Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Square record-surface field for filtering dense repository data.",
+      "html": "<input class=\"ds-input-search\" type=\"search\" placeholder=\"Search title or id…\" />",
+      "css": ".ds-input-search { width:260px; min-height:36px; padding:6px 10px; font-family:var(--font-body); font-size:14px; color:var(--color-text); caret-color:var(--color-accent); background:var(--color-surface); border:1px solid var(--color-divider); border-radius:0; } .ds-input-search:hover { border-color:color-mix(in srgb, var(--color-text) 45%, transparent); } .ds-input-search:focus-visible { border-color:var(--color-accent); outline:2px solid var(--color-accent); outline-offset:0; }"
+    },
+    {
+      "name": "Active State Tag",
+      "kind": "chip",
+      "refersTo": "status-active",
+      "description": "Lifecycle state paired with an explicit label and decisive fill.",
+      "html": "<span class=\"ds-state-active\">ACTIVE</span>",
+      "css": ".ds-state-active { display:inline-flex; align-items:center; padding:2px 8px; font-family:var(--font-heading); font-size:11px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; white-space:nowrap; color:var(--color-bg); background:var(--color-accent-700); border:1px solid transparent; border-radius:0; }"
+    },
+    {
+      "name": "Rail Navigation Item",
+      "kind": "nav",
+      "description": "Dark-rail stage navigation with step, label, description, and live count.",
+      "html": "<button class=\"ds-rail-item\" aria-current=\"page\"><span class=\"ds-rail-step\">02</span><span class=\"ds-rail-label\"><b>CONTRACTS</b><small>agreements</small></span><span class=\"ds-rail-count\">3</span></button>",
+      "css": ".ds-rail-item { width:212px; display:grid; grid-template-columns:15px 1fr auto; align-items:center; gap:9px; padding:8px 16px; cursor:pointer; text-align:left; color:var(--color-bg); background:var(--color-accent-700); border:0; border-top:1px solid color-mix(in srgb, var(--color-bg) 12%, transparent); } .ds-rail-step,.ds-rail-count { font-family:var(--font-mono); font-size:10px; } .ds-rail-label { display:flex; flex-direction:column; gap:1px; } .ds-rail-label b { font-family:var(--font-heading); font-size:12.5px; letter-spacing:.02em; } .ds-rail-label small { font-size:10px; } .ds-rail-count { padding:0 5px; background:color-mix(in srgb, var(--color-text) 28%, transparent); } .ds-rail-item:hover { background:var(--color-accent-600); } .ds-rail-item:focus-visible { outline:2px solid var(--color-accent); outline-offset:-2px; }"
+    },
+    {
+      "name": "Contract Stamp",
+      "kind": "custom",
+      "description": "Monospace entity identity kept separate from lifecycle state.",
+      "html": "<span class=\"ds-contract-stamp\">T-rf5d4tfp</span>",
+      "css": ".ds-contract-stamp { display:inline-flex; padding:0 4px; font-family:var(--font-mono); font-size:11px; font-weight:600; color:oklch(.45 .14 258); border-bottom:2px solid oklch(.55 .15 258); }"
+    },
+    {
+      "name": "Derivation Panel",
+      "kind": "custom",
+      "description": "A repository-provenance chain with the current record visibly anchored.",
+      "html": "<section class=\"ds-derivation\"><header><b>DERIVATION</b><span>what it came from, what it goes with</span></header><div class=\"ds-derivation-block\"><small>THIS</small><strong>Current contract</strong></div><div class=\"ds-derivation-arrow\">↓</div><p>Related repository record</p></section>",
+      "css": ".ds-derivation { width:520px; color:var(--color-text); background:var(--color-surface); border:1px solid var(--color-divider); } .ds-derivation header { display:flex; align-items:baseline; gap:8px; padding:12px 16px; border-bottom:2px solid var(--color-divider); } .ds-derivation header b { font-family:var(--font-heading); font-size:11.5px; letter-spacing:.11em; } .ds-derivation header span { font-size:11px; color:color-mix(in srgb, var(--color-text) 80%, transparent); } .ds-derivation-block { display:grid; gap:5px; padding:12px 16px; background:var(--color-bg); border-block:1px solid color-mix(in srgb, var(--color-text) 22%, transparent); box-shadow:inset 5px 0 0 var(--color-accent); } .ds-derivation-block small { font-size:9px; letter-spacing:.13em; } .ds-derivation-block strong { font-size:14px; } .ds-derivation-arrow { padding:4px 0; text-align:center; font-family:var(--font-mono); } .ds-derivation p { margin:0; padding:12px 16px; font-size:12.5px; }"
+    },
+    {
+      "name": "Run Card",
+      "kind": "card",
+      "description": "Dark execution record whose label and left edge both communicate state.",
+      "html": "<button class=\"ds-run-card\"><span class=\"ds-run-top\"><code>T-041</code><em>ACTIVE</em></span><strong>Transactional shape apply</strong><small>codex · kotta/t-041-shape-apply</small></button>",
+      "css": ".ds-run-card { width:232px; min-height:92px; display:grid; align-content:start; gap:7px; padding:11px 12px 11px 15px; text-align:left; color:var(--color-bg); background:var(--color-neutral-900); border:1px solid color-mix(in srgb, var(--color-bg) 25%, transparent); border-left:4px solid var(--color-accent); cursor:pointer; transition:background 120ms ease, transform 120ms ease, border-color 120ms ease; } .ds-run-top { display:flex; align-items:center; gap:7px; } .ds-run-top code,.ds-run-card small { font-family:var(--font-mono); font-size:9.5px; color:color-mix(in srgb, var(--color-bg) 78%, transparent); } .ds-run-top em { margin-left:auto; padding:2px 8px; font-family:var(--font-mono); font-size:8.5px; font-style:normal; font-weight:700; letter-spacing:.1em; color:var(--color-bg); background:var(--color-accent); } .ds-run-card strong { font-size:12.5px; line-height:1.3; } .ds-run-card:hover { background:var(--color-neutral-800); transform:translateY(-1px); } .ds-run-card:active { background:color-mix(in srgb, var(--color-accent) 17%, var(--color-text)); } .ds-run-card:focus-visible { outline:2px solid var(--color-bg); outline-offset:2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Evidence Ledger",
+    "overview": "Kotta Console is a strict, precise, dense operational surface: a ledger where intent, provenance, execution state, and human decisions are made legible at a glance. Its modernist editorial order makes the repository feel inspectable rather than abstract; information and demonstrability always outrank ornament.\n\nThe interface is hard-edged, compact, and state-first. Archive-paper grounds, repository ink, strong rules, and a scarce signal red create an austere but purposeful field. A human-readable Archivo register explains the work while a monospace register exposes ids, paths, commands, counts, and timestamps as evidence.\n\nThe anti-references are a generic Kanban board, rounded “soft SaaS” furniture, and decorative dashboard or poster elements that compete with operational truth.",
+    "keyCharacteristics": [
+      "Visible modular grids and strong rules organize the screen.",
+      "One warm signal color marks urgency, activity, and decisive emphasis.",
+      "Square geometry, compact rows, and flush-left alignment keep the system exact.",
+      "Human-readable hierarchy and machine-readable provenance remain visibly distinct.",
+      "Empty, contradictory, active, review, and complete states each read without relying on color alone."
+    ],
+    "rules": [
+      { "name": "The Signal Is Scarce Rule", "body": "Signal Red marks an active, urgent, or structurally important fact; it never becomes ambient decoration.", "section": "colors" },
+      { "name": "The Contrast Carries Meaning Rule", "body": "State is never communicated by tint alone: pair color with text, border style, position, or shape.", "section": "colors" },
+      { "name": "The Two-Register Rule", "body": "Use Archivo to explain and prioritize; use monospace only to expose repository or runtime evidence.", "section": "typography" },
+      { "name": "The Flush-Left Rule", "body": "Headings, copy, row content, and labels inside wide controls align to the left edge rather than centering for decoration.", "section": "typography" },
+      { "name": "The Grid Must Be Seen Rule", "body": "Major structure is expressed with equal cells and strong 2px rules; whitespace supports the grid but never replaces it.", "section": "layout" },
+      { "name": "The Flat-by-Default Rule", "body": "If a border, tonal field, or attached edge can express hierarchy, use it before a shadow.", "section": "elevation" },
+      { "name": "The Zero Radius Rule", "body": "Do not round corners anywhere in the product interface; square edges are part of the product’s identity and information density.", "section": "shapes" },
+      { "name": "The State-First Rule", "body": "Every component must make its current state or provenance legible before it expresses personality.", "section": "components" }
+    ],
+    "dos": [
+      "Do use the existing color, type, spacing, radius, and shadow tokens instead of hard-coding parallel values.",
+      "Do expose the modular grid with 2px major rules and compact 1px row separators.",
+      "Do reserve Signal Red for active, urgent, or decisive information.",
+      "Do pair Archivo hierarchy with monospace repository evidence.",
+      "Do preserve visible keyboard focus, semantic labels, and reduced-motion behavior.",
+      "Do keep state readable through wording and structure, not color alone."
+    ],
+    "donts": [
+      "Don't round corners or introduce pill-shaped containers.",
+      "Don't turn the board into a generic Kanban or a collection of floating cards.",
+      "Don't center wide button labels, primary copy, or operational tables.",
+      "Don't soften major rules into whitespace-only separation or ornamental shadows.",
+      "Don't add decorative dashboard, poster, gradient, glow, or glass effects.",
+      "Don't use entity stamp colors as general-purpose accents."
+    ]
+  }
+}

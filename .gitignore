@@ -11,3 +11,4 @@ site-dist/
 test-results/
 playwright-report/
 .gstack/
+.impeccable/live/app-root.json
