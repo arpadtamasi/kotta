@@ -3,7 +3,7 @@ id: T-01kzzs5jvsdz9ahjx77h9dd54m
 title: >-
   A board fókuszálása frissességre, futási metrikákra és strukturált
   contract-részletekre
-status: review
+status: active
 origin: human
 types:
   - feature
@@ -216,33 +216,3 @@ None.
 ## Execution notes
 
 Start with the canonical data path: claim projection and execution event schema. Prefer adapter-specific structured-output parsing behind one normalization boundary. In the UI, centralize age and duration formatting, and keep historic missing data explicit. Distill rather than decorate: the default contract view contains only the operator's brief; provenance and activity remain reachable but secondary.
-
-## Review evidence
-
-| Acceptance condition | Evidence |
-|---|---|
-| ui: required_states_verified | npm test -- --no-file-parallelism: 46/46 test files passed, 314 passed, 1 skipped; npm run typecheck passed; git diff --check passed; desktop and 600px responsive browser inspection passed with no horizontal overflow; axe reported 0 serious or critical violations on Brief, Context, Activity, and mobile views. |
-| ui: accessibility_verified | npm test -- --no-file-parallelism: 46/46 test files passed, 314 passed, 1 skipped; npm run typecheck passed; git diff --check passed; desktop and 600px responsive browser inspection passed with no horizontal overflow; axe reported 0 serious or critical violations on Brief, Context, Activity, and mobile views. |
-| ui: visual_evidence_present | npm test -- --no-file-parallelism: 46/46 test files passed, 314 passed, 1 skipped; npm run typecheck passed; git diff --check passed; desktop and 600px responsive browser inspection passed with no horizontal overflow; axe reported 0 serious or critical violations on Brief, Context, Activity, and mobile views. |
-| metric: validation_cases_pass | npm test -- --no-file-parallelism: 46/46 test files passed, 314 passed, 1 skipped; npm run typecheck passed; git diff --check passed; desktop and 600px responsive browser inspection passed with no horizontal overflow; axe reported 0 serious or critical violations on Brief, Context, Activity, and mobile views. |
-| metric: source_data_reconciled | npm test -- --no-file-parallelism: 46/46 test files passed, 314 passed, 1 skipped; npm run typecheck passed; git diff --check passed; desktop and 600px responsive browser inspection passed with no horizontal overflow; axe reported 0 serious or critical violations on Brief, Context, Activity, and mobile views. |
-| metric: segmentation_and_time_boundaries_verified | npm test -- --no-file-parallelism: 46/46 test files passed, 314 passed, 1 skipped; npm run typecheck passed; git diff --check passed; desktop and 600px responsive browser inspection passed with no horizontal overflow; axe reported 0 serious or critical violations on Brief, Context, Activity, and mobile views. |
-| workflow: happy_path_verified | npm test -- --no-file-parallelism: 46/46 test files passed, 314 passed, 1 skipped; npm run typecheck passed; git diff --check passed; desktop and 600px responsive browser inspection passed with no horizontal overflow; axe reported 0 serious or critical violations on Brief, Context, Activity, and mobile views. |
-| workflow: failure_and_cancellation_paths_verified | npm test -- --no-file-parallelism: 46/46 test files passed, 314 passed, 1 skipped; npm run typecheck passed; git diff --check passed; desktop and 600px responsive browser inspection passed with no horizontal overflow; axe reported 0 serious or critical violations on Brief, Context, Activity, and mobile views. |
-| workflow: authorization_and_idempotency_verified | npm test -- --no-file-parallelism: 46/46 test files passed, 314 passed, 1 skipped; npm run typecheck passed; git diff --check passed; desktop and 600px responsive browser inspection passed with no horizontal overflow; axe reported 0 serious or critical violations on Brief, Context, Activity, and mobile views. |
-
-### Verification performed
-
-npm test -- --no-file-parallelism: 46/46 test files passed, 314 passed, 1 skipped; npm run typecheck passed; git diff --check passed; desktop and 600px responsive browser inspection passed with no horizontal overflow; axe reported 0 serious or critical violations on Brief, Context, Activity, and mobile views.
-
-### Deviations
-
-None.
-
-### Observations created
-
-None.
-
-### Known concerns
-
-kotta validate --json remains red because pre-existing done contract T-01kzgn32keps18769dp5rstcgt declares no deviations while its verification narrative names DEVIATIONS; this implementation did not alter that historical record.

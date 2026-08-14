@@ -18,11 +18,10 @@ None.
 
 ## Active contracts
 
-None.
+- a-board-fokuszalasa-frissessegre-futasi-metrikakra-es-strukt-7h9dd54m
 
 ## Review
 
-- a-board-fokuszalasa-frissessegre-futasi-metrikakra-es-strukt-7h9dd54m
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
 
 ## Blocked
