@@ -3,7 +3,7 @@ id: T-01kzzs5jvsdz9ahjx77h9dd54m
 title: >-
   A board fókuszálása frissességre, futási metrikákra és strukturált
   contract-részletekre
-status: active
+status: review
 origin: human
 types:
   - feature
@@ -216,3 +216,33 @@ None.
 ## Execution notes
 
 Start with the canonical data path: claim projection and execution event schema. Prefer adapter-specific structured-output parsing behind one normalization boundary. In the UI, centralize age and duration formatting, and keep historic missing data explicit. Distill rather than decorate: the default contract view contains only the operator's brief; provenance and activity remain reachable but secondary.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| ui: required_states_verified | Implementation commits 992b064, b3c175c, and ed3803b. Full npm test completed: 46 files passed, 318 tests passed, 1 skipped. UI suite: 7 files and 64 tests passed. npm run typecheck passed. git diff --check passed. Browser QA at 1280x720 and 375x812 verified a compact five-row batch overview, dependency trees confined to batch details, state filters and created sorting, no horizontal overflow, and no console errors. |
+| ui: accessibility_verified | Implementation commits 992b064, b3c175c, and ed3803b. Full npm test completed: 46 files passed, 318 tests passed, 1 skipped. UI suite: 7 files and 64 tests passed. npm run typecheck passed. git diff --check passed. Browser QA at 1280x720 and 375x812 verified a compact five-row batch overview, dependency trees confined to batch details, state filters and created sorting, no horizontal overflow, and no console errors. |
+| ui: visual_evidence_present | Implementation commits 992b064, b3c175c, and ed3803b. Full npm test completed: 46 files passed, 318 tests passed, 1 skipped. UI suite: 7 files and 64 tests passed. npm run typecheck passed. git diff --check passed. Browser QA at 1280x720 and 375x812 verified a compact five-row batch overview, dependency trees confined to batch details, state filters and created sorting, no horizontal overflow, and no console errors. |
+| metric: validation_cases_pass | Implementation commits 992b064, b3c175c, and ed3803b. Full npm test completed: 46 files passed, 318 tests passed, 1 skipped. UI suite: 7 files and 64 tests passed. npm run typecheck passed. git diff --check passed. Browser QA at 1280x720 and 375x812 verified a compact five-row batch overview, dependency trees confined to batch details, state filters and created sorting, no horizontal overflow, and no console errors. |
+| metric: source_data_reconciled | Implementation commits 992b064, b3c175c, and ed3803b. Full npm test completed: 46 files passed, 318 tests passed, 1 skipped. UI suite: 7 files and 64 tests passed. npm run typecheck passed. git diff --check passed. Browser QA at 1280x720 and 375x812 verified a compact five-row batch overview, dependency trees confined to batch details, state filters and created sorting, no horizontal overflow, and no console errors. |
+| metric: segmentation_and_time_boundaries_verified | Implementation commits 992b064, b3c175c, and ed3803b. Full npm test completed: 46 files passed, 318 tests passed, 1 skipped. UI suite: 7 files and 64 tests passed. npm run typecheck passed. git diff --check passed. Browser QA at 1280x720 and 375x812 verified a compact five-row batch overview, dependency trees confined to batch details, state filters and created sorting, no horizontal overflow, and no console errors. |
+| workflow: happy_path_verified | Implementation commits 992b064, b3c175c, and ed3803b. Full npm test completed: 46 files passed, 318 tests passed, 1 skipped. UI suite: 7 files and 64 tests passed. npm run typecheck passed. git diff --check passed. Browser QA at 1280x720 and 375x812 verified a compact five-row batch overview, dependency trees confined to batch details, state filters and created sorting, no horizontal overflow, and no console errors. |
+| workflow: failure_and_cancellation_paths_verified | Implementation commits 992b064, b3c175c, and ed3803b. Full npm test completed: 46 files passed, 318 tests passed, 1 skipped. UI suite: 7 files and 64 tests passed. npm run typecheck passed. git diff --check passed. Browser QA at 1280x720 and 375x812 verified a compact five-row batch overview, dependency trees confined to batch details, state filters and created sorting, no horizontal overflow, and no console errors. |
+| workflow: authorization_and_idempotency_verified | Implementation commits 992b064, b3c175c, and ed3803b. Full npm test completed: 46 files passed, 318 tests passed, 1 skipped. UI suite: 7 files and 64 tests passed. npm run typecheck passed. git diff --check passed. Browser QA at 1280x720 and 375x812 verified a compact five-row batch overview, dependency trees confined to batch details, state filters and created sorting, no horizontal overflow, and no console errors. |
+
+### Verification performed
+
+Implementation commits 992b064, b3c175c, and ed3803b. Full npm test completed: 46 files passed, 318 tests passed, 1 skipped. UI suite: 7 files and 64 tests passed. npm run typecheck passed. git diff --check passed. Browser QA at 1280x720 and 375x812 verified a compact five-row batch overview, dependency trees confined to batch details, state filters and created sorting, no horizontal overflow, and no console errors.
+
+### Deviations
+
+None.
+
+### Observations created
+
+None.
+
+### Known concerns
+
+Global kotta validate remains red because pre-existing done contract T-01kzgn32keps18769dp5rstcgt declares no deviations while its verification narrative names DEVIATIONS; unrelated to this change.
