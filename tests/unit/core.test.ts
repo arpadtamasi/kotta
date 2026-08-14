@@ -111,14 +111,14 @@ describe("core deterministic rules", () => {
     writeFileSync(join(root, "README.md"), "fixture\n");
     initializeWorkspace({ root });
     expect(readAgentPermissionMode(root)).toBeNull();
-    expect(resolveAgentCommand("claude", root).args).toEqual(["-p"]);
+    expect(resolveAgentCommand("claude", root).args).toEqual(["-p", "--output-format", "json"]);
 
     const configPath = join(root, ".kotta", "config.yaml");
     writeFileSync(configPath, readFileSync(configPath, "utf8").replace("permission_mode: null", "permission_mode: bypassPermissions"));
     expect(readAgentPermissionMode(root)).toBe("bypassPermissions");
-    expect(resolveAgentCommand("claude", root).args).toEqual(["-p", "--permission-mode", "bypassPermissions"]);
+    expect(resolveAgentCommand("claude", root).args).toEqual(["-p", "--output-format", "json", "--permission-mode", "bypassPermissions"]);
     // The mode is a claude concept; another agent's invocation is untouched by it.
-    expect(resolveAgentCommand("codex", root).args).toEqual(["exec", "-"]);
+    expect(resolveAgentCommand("codex", root).args).toEqual(["exec", "--json", "-"]);
   });
 
   test("rejects a duplicate decision without changing the existing record", () => {

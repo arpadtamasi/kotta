@@ -6,12 +6,13 @@ import { batch, contract, workspace } from "./fixtures";
 
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
 const members = [
   contract("T-001", "Finished foundation", { status: "done", batch: "P-001", assigned_agent: "codex", updated_at: "2026-08-01" }),
-  contract("T-002", "Active implementation", { status: "active", batch: "P-001", assigned_agent: "codex", branch: "feat/T-002", depends_on: ["T-001"], updated_at: "2026-08-04" }),
+  contract("T-002", "Active implementation", { status: "active", batch: "P-001", assigned_agent: "codex", branch: "feat/T-002", claim: { contract: "T-002", agent: "codex", branch: "feat/T-002", worktree: ".worktrees/T-002", started_at: "2026-08-14T08:00:00Z" }, depends_on: ["T-001"], updated_at: "2026-08-04" }),
   contract("T-003", "Review the implementation", { status: "review", batch: "P-001", assigned_agent: "claude", branch: "feat/T-003", depends_on: ["T-002"], updated_at: "2026-08-03" }),
   contract("T-004", "Waiting parallel work", { status: "defined", batch: "P-001", depends_on: ["T-002"], updated_at: "2026-08-02" }),
   contract("T-005", "Canonically blocked work", { status: "defined", blocked: true, batch: "P-001", depends_on: ["T-003"], sections: { blocker: "waiting for a human decision" } }),
@@ -24,6 +25,10 @@ const data = workspace({
     status: "active", contracts: members.map((member) => member.id),
     execution: { mode: "dependency-aware", parallelism: 3, stop_on_failure: true },
   })],
+  events: [{
+    id: "E-01kzzzzzzzzzzzzzzzzzzzzzzx", entity: "T-001", contract: "T-001", kind: "lifecycle", created_at: "2026-08-14T07:00:00Z",
+    state: "execution-implemented", summary: "Executor completed.", payload: { started_at: "2026-08-14T06:47:30Z", completed_at: "2026-08-14T07:00:00Z", duration_ms: 750_000, token_usage: { input_tokens: 1000, output_tokens: 250, total_tokens: 1250 } },
+  }],
 });
 
 function renderRun(over: { onClose?: () => void; onOpen?: (id: string) => void } = {}) {
@@ -62,12 +67,12 @@ describe("The Run overlay", () => {
     expect(cards.map((card) => card.textContent)).toEqual(expect.arrayContaining(members.map((member) => expect.stringContaining(member.title))));
 
     for (const state of ["done", "active", "review", "defined", "blocked", "backlog"]) {
-      expect(within(screen.getByRole("dialog", { name: "The run" })).getByText(state, { selector: ".state" })).toBeDefined();
+      expect(within(screen.getByRole("dialog", { name: "The run" })).getAllByText(state, { selector: ".state" }).length).toBeGreaterThan(0);
     }
     expect(screen.getByText("1 review · 1 waiting")).toBeDefined();
     expect(screen.getByText("1 blocked · 1 inconsistent")).toBeDefined();
     expect(screen.getByText("backlog member · inconsistent with an active batch")).toBeDefined();
-    expect(screen.getByText("dependency-aware · parallelism 3 · stop on failure")).toBeDefined();
+    expect(screen.getByText(/dependency-aware · parallelism 3 · stop on failure/)).toBeDefined();
     expect(screen.getByLabelText("1 of 6 complete")).toBeDefined();
   });
 
@@ -99,9 +104,10 @@ describe("The Run overlay", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Open full contract detail →" }));
     expect(onOpen).toHaveBeenCalledWith("T-002");
-    fireEvent.click(screen.getByRole("button", { name: "← Latest movements" }));
-    expect(screen.getByText("Latest movements")).toBeDefined();
-    expect(screen.getByText(/active · Active implementation/)).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: "← Recent executions" }));
+    expect(screen.getByText("Recent executions")).toBeDefined();
+    expect(screen.getByText(/implemented · Finished foundation/)).toBeDefined();
+    expect(screen.getAllByText("12m 30s · 1,250 tokens")).toHaveLength(2);
   });
 
   it("keeps opening, selecting, scrolling and closing passive", () => {
@@ -112,7 +118,7 @@ describe("The Run overlay", () => {
     const { container } = renderRun({ onClose, onOpen });
     fireEvent.scroll(container.querySelector(".run__graph-scroll") as Element, { target: { scrollLeft: 120 } });
     fireEvent.click(screen.getByRole("button", { name: /Waiting parallel work/ }));
-    fireEvent.click(screen.getByRole("button", { name: "← Latest movements" }));
+    fireEvent.click(screen.getByRole("button", { name: "← Recent executions" }));
     fireEvent.keyDown(window, { key: "Escape" });
 
     expect(fetch).not.toHaveBeenCalled();
@@ -129,5 +135,34 @@ describe("The Run overlay", () => {
     expect(within(stack).getByRole("button", { name: /Waiting parallel work/ })).toBeDefined();
     expect(container.querySelectorAll(".run__wave-unit")).toHaveLength(4);
     expect(container.querySelectorAll(".run__connector")).toHaveLength(3);
+  });
+
+  it("derives a live elapsed value from the claim instead of updated_at", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-08-14T09:30:00Z"));
+    renderRun();
+    const active = screen.getByRole("button", { name: /Active implementation/ });
+    expect(active.textContent).toContain("running 1h 30m");
+    expect(active.textContent).not.toContain("10d ago");
+  });
+
+  it("renders a batch-of-batches once, with the child named inside the parent tree", () => {
+    const nestedMembers = [
+      contract("T-100", "Nested foundation", { status: "done", batch: "P-101" }),
+      contract("T-101", "Nested active work", { status: "active", batch: "P-101", claim: { contract: "T-101", agent: "codex", branch: "feat/T-101", worktree: ".worktrees/T-101", started_at: "2026-08-14T08:00:00Z" }, depends_on: ["T-100"] }),
+    ];
+    const nested = workspace({
+      contracts: nestedMembers,
+      batches: [
+        batch("P-100", "Parent run", { status: "active", contracts: [], batches: ["P-101"] }),
+        batch("P-101", "Nested run", { status: "active", contracts: nestedMembers.map((item) => item.id) }),
+      ],
+    });
+    const { container } = render(<RunOverlay board={readBoard(nested)} onClose={() => undefined} onOpen={() => undefined} />);
+    expect(container.querySelectorAll(".batch-tree__root")).toHaveLength(1);
+    expect(screen.getByRole("region", { name: "Batch: Parent run" })).toBeDefined();
+    expect(within(screen.getByLabelText("Nested batches in Parent run")).getByRole("button", { name: /Nested run/ })).toBeDefined();
+    expect(container.querySelectorAll(".run__card")).toHaveLength(2);
+    expect(screen.getAllByText(/in Nested run/)).toHaveLength(2);
   });
 });

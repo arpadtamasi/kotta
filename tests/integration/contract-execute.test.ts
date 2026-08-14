@@ -43,7 +43,9 @@ if (mode === "hang") {
   writeFileSync("agent-output.txt", "implemented by the double\\n");
   execFileSync("git", ["add", "-A"], { cwd: process.cwd() });
   execFileSync("git", ["commit", "-m", "feat: double implementation"], { cwd: process.cwd() });
-  process.stdout.write("double: implemented\\n");
+  process.stdout.write(mode === "structured"
+    ? JSON.stringify({ type: "result", result: "double: implemented with metrics", usage: { input_tokens: 80, cache_read_input_tokens: 20, output_tokens: 25 } })
+    : "double: implemented\\n");
 }
 `;
 
@@ -144,6 +146,10 @@ interface ExecutionEvent {
     baseline_commit: string;
     commit: string;
     uncommitted_changes: boolean;
+    started_at: string;
+    completed_at: string;
+    duration_ms: number;
+    token_usage: { input_tokens: number; output_tokens: number; total_tokens: number; cached_input_tokens?: number } | null;
     claim_agent_replaced?: string;
     agent_report: { source: string; verified: boolean; output: string };
   };
@@ -187,7 +193,7 @@ describe("contract execute (T-035 / D-009)", () => {
     expect(recorded.stdin).toBe(brief.brief);
     // Kotta adds no permission flag of its own: an unconfigured workspace grants
     // nothing the caller had not already granted through the agent's settings.
-    expect(recorded.argv).toEqual(["-p"]);
+    expect(recorded.argv).toEqual(["-p", "--output-format", "json"]);
     expect(String(data.permissionWarning)).toContain("agents.permission_mode");
     expect(recorded.cwd.endsWith(join(".worktrees", id))).toBe(true);
     expect(recorded.stdin).not.toContain("Context inheritance");
@@ -200,10 +206,25 @@ describe("contract execute (T-035 / D-009)", () => {
     expect(JSON.parse(readFileSync(String(data.recordPath), "utf8"))).toMatchObject({ state: "execution-implemented" });
     expect(events[0].state).toBe("execution-implemented");
     expect(events[0].payload).toMatchObject({ agent: "claude", exit_code: 0, uncommitted_changes: false, resumed: false });
+    expect(Number.isFinite(Date.parse(events[0].payload.started_at))).toBe(true);
+    expect(Number.isFinite(Date.parse(events[0].payload.completed_at))).toBe(true);
+    expect(events[0].payload.duration_ms).toBeGreaterThanOrEqual(0);
+    expect(events[0].payload.token_usage).toBeNull();
     expect(events[0].payload.baseline_commit).not.toBe(events[0].payload.commit);
     expect(events[0].payload.commit).toBe(git(worktree, "rev-parse", "HEAD"));
     expect(events[0].payload.agent_report).toMatchObject({ source: "agent stdout", verified: false });
     expect(events[0].payload.agent_report.output).toContain("double: implemented");
+  });
+
+  test("records normalized token usage from supported structured agent output", () => {
+    const context = fixture("structured-usage");
+    const { repository, id } = context;
+    const parsed = expectOk(cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "structured"))) as { data: Record<string, unknown> };
+
+    expect(parsed.data.tokenUsage).toEqual({ input_tokens: 100, output_tokens: 25, total_tokens: 125, cached_input_tokens: 20 });
+    const event = executionEvents(repository, id)[0];
+    expect(event.payload.token_usage).toEqual({ input_tokens: 100, output_tokens: 25, total_tokens: 125, cached_input_tokens: 20 });
+    expect(event.payload.agent_report.output).toBe("double: implemented with metrics");
   });
 
   test("an agent that changes nothing is no-change, not implemented", () => {
@@ -307,7 +328,7 @@ describe("contract execute (T-035 / D-009)", () => {
     const data = (expectOk(result) as { data: Record<string, unknown> }).data;
     expect(data.permissionWarning).toBeNull();
     const recorded = JSON.parse(readFileSync(context.record, "utf8")) as { argv: string[] };
-    expect(recorded.argv).toEqual(["-p", "--permission-mode", "bypassPermissions"]);
+    expect(recorded.argv).toEqual(["-p", "--output-format", "json", "--permission-mode", "bypassPermissions"]);
   });
 
   test("refuses at launch when the configured mode forbids edits by definition", () => {
@@ -340,7 +361,7 @@ describe("contract execute (T-035 / D-009)", () => {
     // A later bare resume relaunches the agent that actually ran.
     const bare = (expectOk(cliRun(repository, ["contract", "execute", id, "--resume", "--json"], agentEnvironment(context, "no-change"))) as { data: Record<string, unknown> }).data;
     expect(bare).toMatchObject({ agent: "codex", state: "no-change" });
-    expect((JSON.parse(readFileSync(context.record, "utf8")) as { argv: string[] }).argv).toEqual(["exec", "-"]);
+    expect((JSON.parse(readFileSync(context.record, "utf8")) as { argv: string[] }).argv).toEqual(["exec", "--json", "-"]);
     expect(readFileSync(claimPath(repository, id), "utf8")).toContain("agent: codex");
     expect(expectOk(cliRun(repository, ["validate", "--json"]))).toMatchObject({ ok: true });
   });
@@ -357,7 +378,7 @@ describe("contract execute (T-035 / D-009)", () => {
     expect(result.stdout).toContain(join(".worktrees", id));
     expect(result.stdout).toContain("fresh (D-009 default)");
     const recorded = JSON.parse(readFileSync(context.record, "utf8")) as { argv: string[] };
-    expect(recorded.argv).toEqual(["exec", "-"]);
+    expect(recorded.argv).toEqual(["exec", "--json", "-"]);
   });
 
   test("a non-zero agent exit is agent-failed and preserves the execution context", () => {
