@@ -28,7 +28,7 @@ test("renders the approved content contract in order", async ({ page }) => {
   await expect(page.getByRole("link", { name: "See the workflow" })).toHaveAttribute("href", "#how");
   await expect(page.locator("tbody tr")).toHaveCount(4);
   await expect(page.locator("tbody th")).toHaveText(["Agent chat", "Jira / Linear", "Agent orchestrator", "Kotta"]);
-  await expect(page.locator("#install")).toContainText("@arpadtamasi/kotta@0.5.0");
+  await expect(page.locator("#install")).toContainText("@arpadtamasi/kotta@0.6.0");
   await expect(page.locator("#install")).toContainText("npx skills@1.5.20 add arpadtamasi/kotta");
   await expect(page.locator("#install")).toContainText("Continue in chat");
   await expect(page.locator("#install")).toContainText("## Acceptance");

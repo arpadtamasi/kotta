@@ -6,17 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-08-15
+
 ### Added
 
+- **The board answers age, run cost and intent at scan speed.** Every list exposes how old its
+  entities are; a running contract shows live elapsed time derived from its claim, and the last
+  execution shows its duration and token usage — `Not recorded` where a run recorded none, never a
+  guessed zero. A contract's drawer opens on a structured **Brief** — goal, success conditions,
+  scope, constraints, verification — with provenance and specialist sections under **Context** and
+  the conversation and lifecycle stream last under **Activity**, reached by an arrow-key tab strip.
+  Previously the drawer was one long wall that opened on frontmatter and buried the brief under the
+  chat.
+- **A batch reads as the tree it is.** Batches, the Run view and the batch drawer share one
+  hierarchy component: a parent, the child batches it groups and the contracts underneath them, with
+  progress counted over the whole subtree and the dependency waves drawn from the same tree. The
+  lists themselves share one control row — state chips with live counts and an explicit sort — so
+  Observations, Contracts and Batches narrow and order the same way. Previously nesting was recorded
+  on disk and invisible on screen, and each list had its own controls or none.
 - **`show` for every entity, and short ids that resolve.** `kotta contract show`,
   `kotta observation show`, `kotta decision show` and `kotta batch show` print one entity's state,
   its set facts and its body, with `--json` and as read-only chat tools. Separately, the short id
   the CLI displays everywhere — `T-rf5d4tfp` — is now accepted by every command that takes an id,
   not only by `show`; previously Kotta printed an identifier and then answered "not found" when it
   was typed back. An ambiguous short form is refused naming the full ids it matched.
-
-### Added
-
 - **`list` for every entity.** `kotta contract list`, `kotta observation list`, `kotta decision list`
   and `kotta batch list` print their entities with state, title and id, narrow with a repeatable
   `--state`, and support `--json` — the shape `kotta claim list` already had and nothing else did.
