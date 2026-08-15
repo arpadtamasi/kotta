@@ -44,10 +44,12 @@ None.
 - F-022-state-gates-are-bypassable-because-the-store-is-the-filesyst
 - F-025-progos-as-first-kotta-publisher-mcp-kottas-for-standard-sme-
 - F-030-package-szintu-review-hianyzik-a-ticketek-review-ban-tartasa
+- a-board-aria-modal-felu-letei-nem-tartja-k-bent-a-billentyu--nz688n4t
 - a-board-listai-nem-mutatjak-az-entitasok-korat-csak-az-obser-fx05szh7
 - a-board-nema-n-rejti-el-a-nem-commitolt-munkat-ha-a-fo-munka-88p5tm36
 - a-contract-that-proves-incomplete-during-execution-has-no-re-c26y53yb
 - a-decision-cannot-record-that-it-narrows-or-continues-anothe-8pv9r452
+- a-decisions-lista-az-egyetlen-amelynek-nincs-szu-ro-je-e-s-k-zcees10m
 - a-define-nem-javithatja-a-contract-cimet-igy-egy-observation-a469asbk
 - a-kiadatlan-changelog-bejegyzes-a-regi-binaris-nevet-hasznal-m4m7q531
 - a-markdown-h1-a-teljes-azonositot-hordozza-igy-a-mintazott-u-rb71ckkr
