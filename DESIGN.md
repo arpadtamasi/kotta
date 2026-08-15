@@ -186,7 +186,7 @@ The palette is near-monochrome: Archive Paper and Repository Ink carry the inter
 
 The app is a full-viewport grid with a persistent dark rail (212px) and an overflow-contained content stage. The rail collapses to a 60px icon-and-step strip below 820px without removing accessible labels. The top status bar, running strip, filters, and stage views stack as strong horizontal records.
 
-The home view uses three equal minimum-width bands separated by 2px rules; it becomes two columns below 1280px and one below 900px. Contract data uses dense five-column rows and folds to labeled single-column records below 1080px. Batch cards fill an auto-fitting grid with a 330px minimum. Drawers attach to the right edge at up to 680px; sheets center at up to 620px.
+The home view uses three equal minimum-width bands separated by 2px rules; it becomes two columns below 1280px and one below 900px. Contract data uses dense five-column rows and folds to labeled single-column records below 1080px. Batches use the same row language — five columns of batch, state, scope, progress and age — over a Repository Ink hierarchy that draws the child batches and contracts underneath a parent. Drawers attach to the right edge at up to 680px; sheets center at up to 620px.
 
 Spacing follows a compact 4px base rhythm with established steps at 4, 8, 12, 16, 24, and 32px. Major regions use visible 2px dividers, row structure uses 1px rules, and wide content scrolls inside its own container rather than forcing the page sideways. The dark Run view changes its dependency graph from horizontal waves to a vertical sequence below 900px.
 
@@ -249,6 +249,18 @@ The navigation rail is a permanent Repository Ink field. Items use uppercase Arc
 ### Entity Stamps
 
 Contracts, observations, and batches use small monospace identifiers with narrowly scoped blue, ochre, and violet treatments. The stamp identifies entity kind; lifecycle state remains a separate label.
+
+### List Controls
+
+Observations, Contracts and Batches narrow in the same Record Surface bar: an uppercase dimension label, square chips carrying live monospace counts, and an explicit sort. The bar does not move between views — the operator recognizes it rather than looking for it.
+
+### Batch Hierarchy
+
+A batch is drawn as the tree it is — parent, child batches, and the contracts underneath them — on a Repository Ink field, so grouping is read rather than inferred. Progress counts the whole subtree, and the Run view's dependency waves come from the same tree. A child batch appears under its parent, never as a root of its own.
+
+### Contract Registers
+
+A contract's record is tabbed rather than stacked: **Brief** carries goal, success conditions, scope, constraints and verification; **Context** carries provenance, dependencies and specialist sections; **Activity** carries the lifecycle and conversation stream last. The strip is uppercase with an ink underline on the selected register and arrow-key movement. Age, current run, last execution and token usage sit above it as monospace facts, and an unrecorded metric says so instead of showing zero.
 
 ### Derivation Panel
 
