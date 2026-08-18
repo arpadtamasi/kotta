@@ -139,6 +139,11 @@ If the Kotta skills are installed, prefer them — they encode the how: `explore
 the CLI above is the whole contract; nothing depends on the skills being present. `kotta sync`
 installs them.
 
+For optional specification workshops and analysis, use `impact-mapping`, `story-mapping`,
+`use-case-modeling`, `example-mapping`, `event-storming`, `ubiquitous-language`,
+`quality-scenarios`, `design-by-contract`, and `requirements-traceability`. They draft and read
+Markdown specification nodes under `{{workspace}}/`; they never make specification a lifecycle gate.
+
 A defect in Kotta itself is not a contract here: use `report-kotta-bug`, or the issue form at
 <https://github.com/arpadtamasi/kotta/issues>.
 

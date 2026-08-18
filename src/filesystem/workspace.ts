@@ -16,6 +16,7 @@ const DIRECTORIES = [
   "batches/active",
   "batches/done",
   "profiles",
+  "forms",
   "claims",
   "decisions",
   "events",
@@ -212,6 +213,7 @@ export function initializeWorkspace(options: InitOptions = {}): { root: string; 
       copyFileSync(join(bundledProfiles, filename), join(workspace, "profiles", filename));
     }
   }
+  syncWorkspaceForms(root);
 
   const gitignore = join(root, ".gitignore");
   const existing = existsSync(gitignore) ? readFileSync(gitignore, "utf8") : "";
@@ -221,6 +223,24 @@ export function initializeWorkspace(options: InitOptions = {}): { root: string; 
   ensureIndexMergeAttribute(root);
 
   return { root, created };
+}
+
+/**
+ * Install the data-driven specification form registry into a workspace.
+ *
+ * Form definitions are project-owned once installed: sync adds newly shipped forms but never
+ * replaces an existing YAML file. This also leaves custom forms alongside the bundled registry,
+ * so extending the model remains a data change rather than a TypeScript change.
+ */
+export function syncWorkspaceForms(root: string): void {
+  const bundledForms = fileURLToPath(new URL("../../templates/workspace/forms", import.meta.url));
+  if (!existsSync(bundledForms)) return;
+  const target = workspacePath(root, "forms");
+  mkdirSync(target, { recursive: true });
+  for (const filename of readdirSync(bundledForms).filter((name) => name.endsWith(".yaml")).sort()) {
+    const destination = join(target, filename);
+    if (!existsSync(destination)) copyFileSync(join(bundledForms, filename), destination);
+  }
 }
 
 /** The merge attribute for a workspace under `directory`; the name moved with the rename (T-020). */
