@@ -1,7 +1,7 @@
 ---
 id: T-01m0apvt0hm3wcmwa6qbvwqess
 title: 'A specifikációs réteg: forma-regiszter, nyolc műhely-skill és a nyomonkövetés'
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -22,6 +22,7 @@ execution_mode: fresh
 branch_origin: created
 start_ref: HEAD
 start_commit: 891c428223791c6a0472d80c1474e1e690ff11b2
+resolution: completed
 ---
 # T-01m0apvt0hm3wcmwa6qbvwqess — A specifikációs réteg: forma-regiszter, nyolc műhely-skill és a nyomonkövetés
 
