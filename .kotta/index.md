@@ -75,6 +75,7 @@ None.
 - kotta-hand-enumerates-the-agents-and-hosts-it-can-work-with--ccfd497m
 - kotta-integrate-only-supports-codex-so-claude-code-sessions--n5cp4s0q
 - kotta-migrate-writes-a-root-gitattributes-it-never-reports-i-hkr7tyh2
+- kotta-never-states-what-a-contract-is-the-one-agent-sizing-r-0nnk2emr
 - live-pages-quickstart-still-advertises-kotta-0-3-0-jdzchspa
 - migration-json-keeps-the-pre-vocabulary-words-and-nothing-de-3hcysj58
 - nincs-agents-md-semmi-nem-mondja-meg-egy-erkezo-agensnek-hog-pky2an1x
