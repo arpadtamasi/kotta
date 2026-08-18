@@ -1,7 +1,7 @@
 ---
 id: T-01m0b63d3xrhpnvbgaaedjwc92
 title: A Kotta workspace külön spec és process névteret kap
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -11,10 +11,17 @@ risk: high
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: >-
+  feat/T-01m0b63d3xrhpnvbgaaedjwc92-a-kotta-workspace-kulon-spec-es-process-nevteret-kap
 pull_request: null
 created_at: '2026-08-18'
 updated_at: '2026-08-18'
+assigned_agent: codex
+worktree: .worktrees/T-01m0b63d3xrhpnvbgaaedjwc92
+execution_mode: fresh
+branch_origin: created
+start_ref: HEAD
+start_commit: 8f3d75d374408ce20757344c67001ebad83f93f3
 ---
 # T-01m0b63d3xrhpnvbgaaedjwc92 — A Kotta workspace külön spec és process névteret kap
 
