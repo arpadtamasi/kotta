@@ -3,7 +3,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readEnv } from "../core/env.js";
-import { findRepositoryRoot, hasWorkspace } from "../filesystem/workspace.js";
+import { findRepositoryRoot, hasWorkspace, syncWorkspaceForms } from "../filesystem/workspace.js";
 import { linkProjectAgents, pointerLine, syncWorkspaceAgents } from "./agents.js";
 
 /**
@@ -156,6 +156,7 @@ export function syncCommand(options: { linkAgents?: boolean } = {}, environment:
   // `sync` installs the skills from anywhere; only the rules file needs a workspace to live in.
   const located = (() => { try { return findRepositoryRoot(); } catch { return null; } })();
   const root = located && hasWorkspace(located) ? located : null;
+  if (root) syncWorkspaceForms(root);
   const agents = root ? syncWorkspaceAgents(root) : null;
   const projectAgents = root && options.linkAgents ? linkProjectAgents(root) : null;
   return { ok: true as const, command: "sync" as const, data: { ...skills.data, agents, projectAgents, pointer: root ? pointerLine(root) : null } };

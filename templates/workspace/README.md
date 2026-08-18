@@ -6,6 +6,8 @@ This directory is the repository's canonical work record. Keep contracts and bat
 - `observations/new/` and `observations/resolved/` contain discovered work awaiting or following disposition.
 - `batches/` contains coordinated groups of contracts, organized by lifecycle state.
 - `profiles/` contains project-specific requirement profiles.
+- `forms/` contains the data-driven specification form registry; form-specific node directories
+  such as `goals/`, `user-stories/`, and `entities/` appear only when those optional nodes are used.
 - `claims/` contains temporary execution locks. Do not edit or remove an active claim casually.
 - `events/` contains immutable visible chat, lifecycle and scoped approval events.
 - `decisions/` contains durable human decisions. Create them with
