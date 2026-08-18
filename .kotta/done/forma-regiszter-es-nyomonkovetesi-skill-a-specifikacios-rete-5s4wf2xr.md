@@ -1,7 +1,7 @@
 ---
 id: T-01m0apr10hgh3zhh2t5s4wf2xr
 title: 'Forma-regiszter és nyomonkövetési skill: a specifikációs réteg alapja'
-status: backlog
+status: done
 origin: human
 types:
   - feature
@@ -15,6 +15,11 @@ branch: null
 pull_request: null
 created_at: '2026-08-18'
 updated_at: '2026-08-18'
+resolution: duplicate
+cancellation_reason: >-
+  Szűkebb című előd: a cím csak az alapot nevezte meg, a define a címet nem
+  javíthatja; a teljes scope az utódban él.
+superseded_by: T-01m0apvt0hm3wcmwa6qbvwqess
 ---
 # T-01m0apr10hgh3zhh2t5s4wf2xr — Forma-regiszter és nyomonkövetési skill: a specifikációs réteg alapja
 
