@@ -23,7 +23,6 @@ None.
 ## Review
 
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
-- a-specifikacios-munka-contract-nelkul-is-vegezheto-19axk9x8
 - contract-gate-treats-standalone-generated-documents-as-kotta-grgv0mtw
 
 ## Blocked

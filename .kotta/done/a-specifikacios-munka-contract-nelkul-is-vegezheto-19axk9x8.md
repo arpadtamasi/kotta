@@ -1,7 +1,7 @@
 ---
 id: T-01m0b3jq2yjxbe173w19axk9x8
 title: A specifikációs munka contract nélkül is végezhető
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -22,6 +22,12 @@ execution_mode: fresh
 branch_origin: created
 start_ref: HEAD
 start_commit: dc834e94f93c211ecb29887bab71529c194294ec
+resolution: obsolete
+cancellation_reason: >-
+  A review során jóváhagyott spec/process workspace-szétválasztás átfogóbb,
+  koherens replacement contractot igényel; a részleges központi szabály önállóan
+  nem kerül mainbe.
+superseded_by: T-01m0b63d3xrhpnvbgaaedjwc92
 ---
 # T-01m0b3jq2yjxbe173w19axk9x8 — A specifikációs munka contract nélkül is végezhető
 

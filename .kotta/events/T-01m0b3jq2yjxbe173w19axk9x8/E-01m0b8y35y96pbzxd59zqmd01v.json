@@ -1,0 +1,9 @@
+{
+  "entity": "T-01m0b3jq2yjxbe173w19axk9x8",
+  "contract": "T-01m0b3jq2yjxbe173w19axk9x8",
+  "kind": "lifecycle",
+  "state": "done",
+  "summary": "Contract cancelled from review with resolution obsolete. Reason: A review során jóváhagyott spec/process workspace-szétválasztás átfogóbb, koherens replacement contractot igényel; a részleges központi szabály önállóan nem kerül mainbe. Superseded by T-01m0b63d3xrhpnvbgaaedjwc92. The claim was released. Branch feat/T-01m0b3jq2yjxbe173w19axk9x8-a-specifikacios-munka-contract-nelkul-is-vegezheto was preserved.",
+  "id": "E-01m0b8y35y96pbzxd59zqmd01v",
+  "created_at": "2026-08-18T20:27:48.799Z"
+}
