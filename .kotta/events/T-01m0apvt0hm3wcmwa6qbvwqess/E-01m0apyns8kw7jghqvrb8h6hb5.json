@@ -1,0 +1,9 @@
+{
+  "entity": "T-01m0apvt0hm3wcmwa6qbvwqess",
+  "contract": "T-01m0apvt0hm3wcmwa6qbvwqess",
+  "kind": "message",
+  "role": "human",
+  "text": "Rejected in caller chat: contract.sign T-01m0apvt0hm3wcmwa6qbvwqess.",
+  "id": "E-01m0apyns8kw7jghqvrb8h6hb5",
+  "created_at": "2026-08-18T15:13:33.480Z"
+}
