@@ -1,7 +1,7 @@
 ---
 id: T-01m0b63d3xrhpnvbgaaedjwc92
 title: A Kotta workspace külön spec és process névteret kap
-status: backlog
+status: defined
 origin: human
 types:
   - feature
