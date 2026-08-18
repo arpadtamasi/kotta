@@ -1,7 +1,7 @@
 ---
 id: T-01m0apvt0hm3wcmwa6qbvwqess
 title: 'A specifikációs réteg: forma-regiszter, nyolc műhely-skill és a nyomonkövetés'
-status: backlog
+status: defined
 origin: human
 types:
   - feature
