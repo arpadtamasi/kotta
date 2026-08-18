@@ -1,0 +1,9 @@
+contract: T-01m0b3jq2yjxbe173w19axk9x8
+agent: codex
+branch: feat/T-01m0b3jq2yjxbe173w19axk9x8-a-specifikacios-munka-contract-nelkul-is-vegezheto
+worktree: .worktrees/T-01m0b3jq2yjxbe173w19axk9x8
+execution_mode: fresh
+origin: created
+start_ref: HEAD
+start_commit: dc834e94f93c211ecb29887bab71529c194294ec
+started_at: 2026-08-18T19:14:07.362Z

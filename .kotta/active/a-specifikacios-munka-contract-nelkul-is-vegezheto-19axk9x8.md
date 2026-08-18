@@ -1,7 +1,7 @@
 ---
 id: T-01m0b3jq2yjxbe173w19axk9x8
 title: A specifikációs munka contract nélkül is végezhető
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -11,10 +11,17 @@ risk: medium
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: >-
+  feat/T-01m0b3jq2yjxbe173w19axk9x8-a-specifikacios-munka-contract-nelkul-is-vegezheto
 pull_request: null
 created_at: '2026-08-18'
 updated_at: '2026-08-18'
+assigned_agent: codex
+worktree: .worktrees/T-01m0b3jq2yjxbe173w19axk9x8
+execution_mode: fresh
+branch_origin: created
+start_ref: HEAD
+start_commit: dc834e94f93c211ecb29887bab71529c194294ec
 ---
 # T-01m0b3jq2yjxbe173w19axk9x8 — A specifikációs munka contract nélkül is végezhető
 
