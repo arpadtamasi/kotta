@@ -1,7 +1,7 @@
 ---
 id: T-01m0apvt0hm3wcmwa6qbvwqess
 title: 'A specifikációs réteg: forma-regiszter, nyolc műhely-skill és a nyomonkövetés'
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -11,10 +11,17 @@ risk: medium
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: >-
+  feat/T-01m0apvt0hm3wcmwa6qbvwqess-a-specifikacios-reteg-forma-regiszter-nyolc-muhely-skill-es-
 pull_request: null
 created_at: '2026-08-18'
 updated_at: '2026-08-18'
+assigned_agent: codex
+worktree: .worktrees/T-01m0apvt0hm3wcmwa6qbvwqess
+execution_mode: fresh
+branch_origin: created
+start_ref: HEAD
+start_commit: 891c428223791c6a0472d80c1474e1e690ff11b2
 ---
 # T-01m0apvt0hm3wcmwa6qbvwqess — A specifikációs réteg: forma-regiszter, nyolc műhely-skill és a nyomonkövetés
 
