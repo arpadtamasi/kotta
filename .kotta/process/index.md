@@ -18,10 +18,11 @@ None.
 
 ## Active contracts
 
-- a-contract-megnevezi-a-specifikaciot-amire-tamaszkodik-m9zs70ym
+None.
 
 ## Review
 
+- a-contract-megnevezi-a-specifikaciot-amire-tamaszkodik-m9zs70ym
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
 - contract-gate-treats-standalone-generated-documents-as-kotta-grgv0mtw
 
