@@ -1,9 +1,0 @@
-contract: T-01m0b63d3xrhpnvbgaaedjwc92
-agent: codex
-branch: feat/T-01m0b63d3xrhpnvbgaaedjwc92-a-kotta-workspace-kulon-spec-es-process-nevteret-kap
-worktree: .worktrees/T-01m0b63d3xrhpnvbgaaedjwc92
-execution_mode: fresh
-origin: created
-start_ref: HEAD
-start_commit: 8f3d75d374408ce20757344c67001ebad83f93f3
-started_at: 2026-08-18T20:28:07.379Z

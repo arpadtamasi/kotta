@@ -1,7 +1,7 @@
 ---
 id: T-01m0b63d3xrhpnvbgaaedjwc92
 title: A Kotta workspace külön spec és process névteret kap
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -22,6 +22,7 @@ execution_mode: fresh
 branch_origin: created
 start_ref: HEAD
 start_commit: 8f3d75d374408ce20757344c67001ebad83f93f3
+resolution: completed
 ---
 # T-01m0b63d3xrhpnvbgaaedjwc92 — A Kotta workspace külön spec és process névteret kap
 
