@@ -167,6 +167,10 @@ describe("the workspace rules file", () => {
     expect(written).toContain("shaping, exploration, and specification may run without a contract");
     expect(written).toContain("specification itself is the accepted deliverable");
     expect(written).toContain("crosses into executing the accepted outcome");
+    // Absorbing one contract into another already dropped this clause once; the rule is only
+    // complete when it also says that maintaining Kotta is not the project's work.
+    expect(written).toContain("keeping kotta itself working");
+    expect(written).toContain("kotta is the project's tool, not its deliverable");
     expect(written).toContain("active contract you hold the claim for");
     expect(written).toContain("ask one focused question");
     expect(written).toContain("project-owned specification knowledge");

@@ -19,6 +19,7 @@ import { createDecision } from "../commands/decision.js";
 import { dedupeEntity, describeDedupe, type DedupeResult } from "../commands/dedupe.js";
 import { formatMigration, migrateWorkspace } from "../commands/migrate.js";
 import { assertCurrentWorkspaceShape, findRepositoryRoot } from "../filesystem/workspace.js";
+import { controlPlaneRoot } from "../git/control-plane.js";
 import { mcpCommand } from "../commands/mcp.js";
 import { integrateCodex } from "../commands/integrate.js";
 import { syncCommand } from "../commands/sync.js";
@@ -158,6 +159,22 @@ function humanize(result: unknown): string {
 const SHAPE_EXEMPT = new Set(["init", "migrate", "ui", "mcp"]);
 
 /**
+ * The shape that decides is the workspace the command will actually read and write — the control
+ * plane — not the checkout the command was typed in. An implementation worktree keeps the baseline
+ * `.kotta/` it branched from and routes every state change back to the control worktree, so judging
+ * the caller's copy refused commands over a workspace they never touch: after the control plane
+ * migrated, every worktree started before it was bricked. A caller that cannot resolve a control
+ * plane falls back to itself, which is also what `resolveControlPlane` returns for a single checkout.
+ */
+function shapeJudgementRoot(caller: string): string {
+  try {
+    return controlPlaneRoot(caller);
+  } catch {
+    return caller;
+  }
+}
+
+/**
  * Which entity an id argument belongs to, by the command group it was typed under.
  * Claims are keyed by the contract they belong to, so they resolve as contracts.
  */
@@ -193,7 +210,7 @@ program.hook("preAction", (_program, action) => {
   const names = [action.name(), action.parent?.name()].filter(Boolean) as string[];
   if (names.some((name) => SHAPE_EXEMPT.has(name))) return;
   try {
-    assertCurrentWorkspaceShape(findRepositoryRoot());
+    assertCurrentWorkspaceShape(shapeJudgementRoot(findRepositoryRoot()));
   } catch (error) {
     if (!(error instanceof Error) || !error.message.includes("kotta migrate")) return; // no repository, no workspace: not our refusal
     throw error;

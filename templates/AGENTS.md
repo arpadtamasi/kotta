@@ -107,8 +107,10 @@ terminal. `kotta ui` only displays the resulting canonical state and timeline.
    whose outcome can be checked against acceptance conditions. Shaping, exploration, and
    specification may run without a contract while they are discovering or proposing that
    commitment; they require one when the specification itself is the accepted deliverable or the
-   work crosses into executing the accepted outcome. Purpose and effect decide, not path or file
-   type. If it is unclear whether a commitment has been accepted, ask one focused question. Always
+   work crosses into executing the accepted outcome. Keeping Kotta itself working — installing it,
+   syncing it, migrating a workspace, repairing drift — never needs one either: Kotta is the
+   project's tool, not its deliverable, so its upkeep is not the project's work and is not recorded
+   as if it were. Purpose and effect decide, not path or file type. If it is unclear whether a commitment has been accepted, ask one focused question. Always
    obey stricter project rules, freely shape project-owned `spec/` nodes, and never hand-edit
    Kotta-owned `process/` records.
 2. **Stay inside the contract's scope.** Anything you notice outside it becomes an observation, not

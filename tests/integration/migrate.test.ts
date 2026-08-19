@@ -55,6 +55,19 @@ function write(path: string, data: Record<string, unknown>, body: string): void 
 }
 
 /** A git repository holding a workspace in the pre-vocabulary shape, under the pre-rename directory name. */
+/** A repository already on the current shape, committed, so linked worktrees can branch from it. */
+function currentRepository(label: string): string {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), `kotta-shape-${label}-`)));
+  git(root, "init", "-b", "main");
+  git(root, "config", "user.name", "Kotta Test");
+  git(root, "config", "user.email", "test@example.com");
+  const created = invoke(root, ["init"]);
+  if (created.status !== 0) throw new Error(created.stderr);
+  git(root, "add", "-A");
+  git(root, "commit", "-m", "init");
+  return root;
+}
+
 function legacyRepository(label: string, directory = ".a-team"): string {
   // realpath, so the board takes its git base-ref path: `git rev-parse --show-toplevel` reports the
   // resolved directory, and a mismatch would silently fall back to plain working-tree reads.
@@ -354,6 +367,35 @@ describe("the old shape outside the migration command", () => {
     for (const args of [["validate"], ["status"], ["sync"], ["contract", "validate", "T-002"], ["batch", "validate", "P-001"], ["claim", "list"]]) {
       const result = invoke(root, args);
       expect(result.status, `${args.join(" ")} was accepted`).toBe(1);
+      expect(result.stderr).toContain("legacy Kotta workspace shape");
+      expect(result.stderr).toContain("kotta migrate");
+    }
+  });
+
+  test("a linked worktree carrying its pre-migration baseline is judged by the control plane, not by its own copy", () => {
+    const root = currentRepository("worktree-baseline");
+    const worktree = join(root, "work");
+    git(root, "worktree", "add", "-b", "feat/baseline", worktree);
+    // An implementation worktree keeps the `.kotta/` it branched from, so one started before the
+    // control plane migrated still holds the flat shape. Its state changes route to the control
+    // plane anyway, so the copy it carries must not refuse the command.
+    mkdirSync(join(worktree, ".kotta", "backlog"), { recursive: true });
+
+    const result = invoke(worktree, ["status"]);
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain(join(root, ".kotta"));
+  });
+
+  test("a flat control plane is still refused, whichever worktree the command was typed in", () => {
+    const root = currentRepository("worktree-control-flat");
+    const worktree = join(root, "work");
+    git(root, "worktree", "add", "-b", "feat/control-flat", worktree);
+    // Here it is the workspace the command would actually write that carries the old shape.
+    mkdirSync(join(root, ".kotta", "backlog"), { recursive: true });
+
+    for (const cwd of [root, worktree]) {
+      const result = invoke(cwd, ["status"]);
+      expect(result.status, `${cwd} was accepted`).toBe(1);
       expect(result.stderr).toContain("legacy Kotta workspace shape");
       expect(result.stderr).toContain("kotta migrate");
     }
