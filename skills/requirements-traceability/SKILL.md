@@ -24,46 +24,38 @@ Run **impact mode** when given a node id. Produce the same structural diagnostic
 list every node that references the target directly or indirectly. Do not interpret “impact” as
 permission to edit dependants.
 
-## Validate the registry first
+## Start from the structural pass Kotta already ran
 
-Read every `.kotta/spec/forms/*.yaml` file, including project-added files. Require these keys on each
-form:
+`kotta validate` reads the form registry and measures every node against it: required frontmatter
+fields, required body headings, duplicate ids, outgoing edges below their `minimum`, references that
+resolve to nothing, references that resolve to the wrong form, a malformed or contradictory form
+file, and any node or form that names a contract. Run it first and treat its findings as given.
 
-- `id`, `version`, `directory`, `canonical_source`, `description`, and `identity`
-- `required_fields.frontmatter` and `required_fields.body_headings`
-- `required_edges`, including an explicit empty list when the form requires none
-- at least one `recognition_signals` entry
-
-Require every required-edge entry to contain `name`, `direction`, `fields`, `source_forms`,
-`target_forms`, `minimum`, and a non-empty `question`. Accept only `incoming` or `outgoing` as the
-direction, non-empty field and form lists, and a positive integer minimum. Require unique form ids
-and directories. Require every form named by an edge to have a loaded registry entry.
-
-Report an incomplete or contradictory registry file as a **registry error** with its path and
-missing key. Stop applying that invalid form's rules, but continue checking valid forms. This is the
-negative case for a hand-added incomplete form; do not silently infer its schema.
+Do not repeat those checks by reading the YAML yourself. They are enforced now, which means a
+workspace that passes `kotta validate` has no structural errors left for this report to find, and a
+workspace that fails it has errors this report should not restate. Report them as **structural
+errors**, quoting the validator, and spend this pass on what it does not do.
 
 ## Discover and normalize nodes
 
-For each valid form, scan `<workspace>/spec/<directory>/*.md`. Do not scan a hard-coded directory list.
+For each form, scan `<workspace>/spec/<directory>/*.md`. Do not scan a hard-coded directory list.
 Parse YAML frontmatter and the Markdown body, then build one map keyed by full `id`.
 
-Check the following structural facts:
+What remains for this pass, because the validator does not judge it:
 
-1. Every registered frontmatter field and body heading exists and is non-empty.
-2. `form` equals the registry id for the directory.
-3. Every full id is unique and follows the registered identity prefix and lowercase Crockford ULID
-   shape.
-4. Every filename ends in `-<last 8 id characters>.md` and has a non-empty slug before it.
-5. Frontmatter edges are ids, never titles or slugs.
+1. `form` equals the registry id for the directory.
+2. Every full id follows the registered identity prefix and lowercase Crockford ULID shape, and every
+   filename ends in `-<last 8 id characters>.md` with a non-empty slug before it.
+3. Frontmatter edges are ids, never titles or slugs.
 
-Report violations as **node errors**. Keep Mermaid and all other body notation opaque; only headings
-and textual content are canonical for this pass.
+Keep Mermaid and all other body notation opaque; only headings and textual content are canonical for
+this pass.
 
 Collect references from every frontmatter scalar or list item shaped as an entity id, excluding the
-node's own `id`. This catches optional as well as mandatory edges. Resolve each reference against the
-full-id map. Report every unresolved id as a **broken-reference error** with the referring file and
-frontmatter field. Never waive a broken reference through `accepted`.
+node's own `id`. The validator resolves the references a form declares as required edges; this pass
+adds the optional ones it never looks at. Resolve each against the full-id map, and report every
+unresolved id as a **broken-reference error** with the referring file and frontmatter field. Never
+waive a broken reference through `accepted`.
 
 ## Evaluate required edges
 

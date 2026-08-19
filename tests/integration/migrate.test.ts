@@ -35,6 +35,20 @@ const CONTRACT_BODY = [
   "## Execution notes", "", "None.", "",
 ].join("\n");
 
+const CUSTOM_FORM = [
+  "id: custom", "version: 1", "directory: custom-nodes", "canonical_source: Project",
+  "description: A project-owned node kind.",
+  "identity:", "  prefix: CU", '  format: "<prefix>-<26-character lowercase Crockford ULID>"', '  filename: "<slug>-<last 8 id characters>.md"',
+  "required_fields:", "  frontmatter: [id, form, title]", "  body_headings: [Note]",
+  "required_edges: []",
+  "recognition_signals:", "  - The project needs a node kind Kotta does not ship.", "",
+].join("\n");
+
+const CUSTOM_NODE = [
+  "---", "id: CU-01m0c000000000000cu000001", "form: custom", "title: Project-owned specification", "---", "",
+  "## Note", "project-owned specification", "",
+].join("\n");
+
 const OBSERVATION_BODY = [
   "## Observation", "", "Something was noticed.", "",
   "## Evidence", "", "A log line.", "",
@@ -158,8 +172,10 @@ function flatV2Repository(label: string): string {
   writeFileSync(join(workspace, "config.yaml"), "version: 2\nproject:\n  name: flat-v2\ngit:\n  base_branch: main\n");
   writeFileSync(join(workspace, "index.md"), "# Flat index\n");
   copyFileSync(resolve("templates/workspace/spec/forms/goal.yaml"), join(workspace, "forms/goal.yaml"));
-  writeFileSync(join(workspace, "forms/custom.yaml"), "id: custom\nversion: 1\ndirectory: custom-nodes\n");
-  writeFileSync(join(workspace, "custom-nodes/example.md"), "project-owned specification\n");
+  // A project-owned form, complete enough to be a real one: `kotta validate` measures spec nodes
+  // against their form, so a stand-in that could never resolve by id would fail the migrated workspace.
+  writeFileSync(join(workspace, "forms/custom.yaml"), CUSTOM_FORM);
+  writeFileSync(join(workspace, "custom-nodes/example-cu000001.md"), CUSTOM_NODE);
   writeFileSync(join(root, ".gitattributes"), ".kotta/index.md merge=union\n");
   git(root, "add", ".");
   git(root, "commit", "-m", "flat v2 workspace");
@@ -337,7 +353,7 @@ describe("flat v2 namespace migration", () => {
 
     run(root, ["migrate"]);
     expect(readFileSync(join(root, ".kotta/spec/forms/custom.yaml"), "utf8")).toContain("directory: custom-nodes");
-    expect(readFileSync(join(root, ".kotta/spec/custom-nodes/example.md"), "utf8")).toBe("project-owned specification\n");
+    expect(readFileSync(join(root, ".kotta/spec/custom-nodes/example-cu000001.md"), "utf8")).toBe(CUSTOM_NODE);
     expect(readFileSync(join(root, ".kotta/config.yaml"), "utf8")).toContain("version: 3");
     expect(readFileSync(join(root, ".gitattributes"), "utf8")).toBe(".kotta/process/index.md merge=union\n");
     expect(run(root, ["validate"])).toMatchObject({ ok: true, errors: [] });
