@@ -33,7 +33,7 @@ const setup = () => {
   return { root, worktree, id, filename: basename(path) };
 };
 
-const reviewedContract = (root: string, filename: string) => readFileSync(join(root, ".kotta/review", filename), "utf8");
+const reviewedContract = (root: string, filename: string) => readFileSync(join(root, ".kotta/process/review", filename), "utf8");
 const reviewEvidenceBlock = (content: string) => content.slice(content.indexOf("## Review evidence"));
 
 describe("review declarations", () => {

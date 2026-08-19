@@ -127,11 +127,11 @@ describe("core deterministic rules", () => {
     git(root, "init", "-b", "main");
     git(root, "config", "user.name", "Kotta Test");
     git(root, "config", "user.email", "test@example.com");
-    mkdirSync(join(root, ".a-team/decisions"), { recursive: true });
+    mkdirSync(join(root, ".a-team/process/decisions"), { recursive: true });
     const source = join(root, "decision.md");
     writeFileSync(source, "---\ntitle: Cut over\n---\n## Decision\n\nProceed.\n\n## Context\n\nReady.\n\n## Consequences\n\nMonitor.\n");
     createDecision({ from: source, id: "D-001", approved: true }, root);
-    const canonical = join(root, ".a-team/decisions/D-001.md");
+    const canonical = join(root, ".a-team/process/decisions/D-001.md");
     const before = readFileSync(canonical, "utf8");
     expect(() => createDecision({ from: source, id: "D-001", approved: true }, root)).toThrow("already exists");
     expect(readFileSync(canonical, "utf8")).toBe(before);
@@ -148,7 +148,7 @@ describe("short ids resolve to one entity", () => {
     initializeWorkspace({ root });
     const first = "T-01kzaaaaaaaaaaaaaacdefgh23";
     const second = "T-01kzbbbbbbbbbbbbbbcdefgh23";
-    const backlog = join(root, ".kotta", "backlog");
+    const backlog = join(root, ".kotta", "process", "backlog");
     // entityFilename derives the filename from the short id, so these two would collide
     // there too; the id in the frontmatter is what identifies the entity.
     for (const [slug, id] of [["colliding-one", first], ["colliding-two", second]] as const) {

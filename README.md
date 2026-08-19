@@ -99,6 +99,31 @@ If `kotta` is not found, inspect `npm prefix --global`, ensure its `bin` directo
 profile requirement, update the contract through `/define-contract`, and rerun both validation
 commands. The CLI never treats a validation failure as a defined contract.
 
+## Workspace layout and ownership
+
+Kotta keeps two sibling namespaces beneath `.kotta/`:
+
+```text
+.kotta/
+  AGENTS.md  README.md  config.yaml  .kotta-generated.json
+  spec/       # project-owned form registry and specification nodes
+    forms/
+    <form directory>/
+  process/    # Kotta-owned lifecycle and execution records
+    backlog/  defined/  active/  review/  done/
+    observations/  batches/  profiles/  claims/  events/  decisions/
+    index.md
+```
+
+A form's `directory` is relative to `spec/`: `directory: goals` means
+`.kotta/spec/goals/`. Projects may add forms and edit specification nodes without changing
+TypeScript. Lifecycle mutations under `process/` still go through the CLI or MCP services.
+
+A contract is required when work executes a human-accepted product or deliverable commitment with
+checkable acceptance conditions. Shaping, exploration, and specification can happen without a
+contract until the specification itself becomes the accepted deliverable or the work crosses into
+execution.
+
 ## Renamed from A-Team
 
 The product was called **A-Team** until 2026-08 (D-005, D-006, D-007). This section is the one
@@ -170,21 +195,25 @@ What moves:
 | Old | New |
 | --- | --- |
 | `.a-team/` | `.kotta/` |
-| `ready/`, `findings/`, `packages/` | `defined/`, `observations/`, `batches/` |
+| flat lifecycle directories | `.kotta/process/` |
+| `.kotta/forms/` and registered node directories | `.kotta/spec/` |
+| `ready/`, `findings/`, `packages/` | `process/defined/`, `process/observations/`, `process/batches/` |
+| `.kotta/index.md` | `.kotta/process/index.md` |
 | `status: ready` | `status: defined` |
 | a contract's `package:`, `source_finding:` | `batch:`, `source_observation:` |
 | a batch's `tickets:`, `kind:` | `contracts:`, removed |
 | an observation's `finding_type:`, `ticket:` | `observation_type:`, `contract:` |
 | a claim's `ticket:` | `contract:` |
-| `config.yaml` `packages:`, `version: 1` | `batches:`, `version: 2` |
+| `config.yaml` `packages:`, version 1 or 2 | `batches:`, `version: 3` |
 
 **Identifiers never move.** No id, no filename and no reference *value* changes — this is vocabulary,
 not identity (D-010). The command compares the id set before and after and refuses to lose one.
 
-It is idempotent and safe to interrupt: every step is derived from what is on disk rather than from a
-progress marker, so a second run reports "already on the current shape" and a partial run is finished
-by running the command again. Every other command refuses a pre-vocabulary workspace with an error
-that names `kotta migrate`; there is no compatibility layer behind that refusal on purpose.
+Migration preflights every source, destination, registered spec directory, and unclassified root
+directory before its first write. A conflict stops with concrete paths and leaves every byte
+unchanged. A completed run is idempotent: the second run reports "already on the current shape".
+Every other command refuses a legacy flat workspace with an error that names `kotta migrate`; there
+is no mixed-schema compatibility layer behind that refusal.
 
 **Commit the migration before you read the board.** `kotta ui` reads the workspace from the configured
 base ref through Git plumbing, not from the working tree, so a migration that has not reached that ref
@@ -242,7 +271,7 @@ idempotently. The CLI remains the human-operated recovery and terminal-first fal
 
 The caller can persist exact visible human and assistant messages through the MCP conversation tool;
 Kotta never stores hidden reasoning, raw tool output or transient streaming deltas. Restarting
-`kotta ui` reconstructs the same read-only contract timeline from `.kotta/events/`; [the event
+`kotta ui` reconstructs the same read-only contract timeline from `.kotta/process/events/`; [the event
 schema](schemas/event.schema.json) defines the stored format.
 
 Open the local filesystem-backed board from an initialized repository:
@@ -438,7 +467,7 @@ The agent binary is resolved from `--agent` (`claude`, `codex`, or any command o
 A decision draft contains `title` frontmatter and non-empty `Decision`, `Context`, and
 `Consequences` sections. `decision create` requires explicit human approval, assigns the
 next stable `D-001`-style identifier and current date (or validates supplied values), and
-atomically publishes the validated record beneath `.kotta/decisions/`. Pass `--id D-001`
+atomically publishes the validated record beneath `.kotta/process/decisions/`. Pass `--id D-001`
 when a caller needs to reserve a specific stable identity; an existing identity is never
 overwritten. The canonical filename is the identity alone (`D-001.md`), so different
 titles cannot race around the identity reservation.

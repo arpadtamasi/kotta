@@ -30,7 +30,7 @@ describe("Observations", () => {
     render(<ObservationsView board={board} filter="new" sort="created-desc" onFilter={() => {}} onSort={() => {}} onOpen={() => {}} />);
     expect(screen.getByRole("heading", { name: "Observations" })).toBeDefined();
     expect(screen.getByText("New information, ordered with its age visible.")).toBeDefined();
-    expect(screen.queryByText(".kotta/observations/")).toBeNull();
+    expect(screen.queryByText(".kotta/process/observations/")).toBeNull();
   });
 
   it("shows the waiting queue by title, ages it, and reports a filter change", () => {

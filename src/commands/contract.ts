@@ -1,7 +1,7 @@
 import { mkdirSync, readdirSync, writeFileSync, readFileSync, existsSync, unlinkSync, renameSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parse as parseYaml, stringify } from "yaml";
-import { findRepositoryRoot, regenerateIndex, workspaceDirectoryName, workspacePath } from "../filesystem/workspace.js";
+import { findRepositoryRoot, regenerateIndex, workspaceDirectoryName, processPath } from "../filesystem/workspace.js";
 import { canonicalEntityId, findContract, listEntities } from "../filesystem/entities.js";
 import { entityFilename, mintId } from "../core/identity.js";
 import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
@@ -39,7 +39,7 @@ export function newContract(options: { title: string; type: string; profiles: st
   const root = controlPlaneRoot(repositoryRoot ?? findRepositoryRoot());
   const id = mintId("T");
   const filename = entityFilename(id, slugify(options.title));
-  const directory = workspacePath(root, "backlog");
+  const directory = processPath(root, "backlog");
   // An empty state directory is not carried into a fresh worktree by Git; intake must still work there.
   mkdirSync(directory, { recursive: true });
   const path = join(directory, filename);
@@ -118,8 +118,8 @@ export function signContract(id: string, approved: boolean, repositoryRoot?: str
     for (const dependency of dependencies) findContract(root, dependency);
     entity.data.status = "defined";
     entity.data.updated_at = new Date().toISOString().slice(0, 10);
-    mkdirSync(workspacePath(root, "defined"), { recursive: true });
-    const destination = workspacePath(root, "defined", contract.filename);
+    mkdirSync(processPath(root, "defined"), { recursive: true });
+    const destination = processPath(root, "defined", contract.filename);
     writeFileSync(destination, renderMarkdown(entity.data, entity.content));
     try {
       assertValid(validateContractFile(destination, "defined"));
@@ -181,7 +181,7 @@ export function startContract(
     const contract = findContract(root, id);
     if (contract.state !== "defined") throw new Error(`Contract ${id} must be defined before start.`);
     assertValid(validateContractFile(contract.path, "defined"));
-    const claimInControl = workspacePath(root, "claims", `${id}.yaml`);
+    const claimInControl = processPath(root, "claims", `${id}.yaml`);
     if (existsSync(claimInControl)) throw new Error(`Contract ${id} already has a claim.`);
     const definedSnapshot = readFileSync(contract.path, "utf8");
     const entity = parseMarkdown(definedSnapshot);
@@ -228,15 +228,15 @@ export function startContract(
 
     let createdWorktree = false;
     let lifecyclePath: string | null = null;
-    const active = workspacePath(root, "active", contract.filename);
+    const active = processPath(root, "active", contract.filename);
     try {
       if (!adopting) {
         git(root, ["worktree", "add", worktree, "-b", branch, startCommit]);
         createdWorktree = true;
       }
       if (readEnv("TEST_FAIL_START_AT") === "after-worktree") throw new Error("Injected start failure after worktree creation.");
-      mkdirSync(workspacePath(root, "active"), { recursive: true });
-      mkdirSync(workspacePath(root, "claims"), { recursive: true });
+      mkdirSync(processPath(root, "active"), { recursive: true });
+      mkdirSync(processPath(root, "claims"), { recursive: true });
       entity.data.status = "active";
       entity.data.branch = branch;
       entity.data.assigned_agent = agent;
@@ -308,8 +308,8 @@ export function reviewContract(id: string, evidence: string, pullRequest?: strin
   // work happened, and it is the tree whose cleanliness matters here.
   const adopted = parseMarkdown(readFileSync(canonical.path, "utf8")).data.branch_origin === "adopted";
   const executionRoot = adopted ? root : join(root, ".worktrees", id);
-  const canonicalClaim = workspacePath(root, "claims", `${id}.yaml`);
-  const legacyClaim = workspacePath(executionRoot, "claims", `${id}.yaml`);
+  const canonicalClaim = processPath(root, "claims", `${id}.yaml`);
+  const legacyClaim = processPath(executionRoot, "claims", `${id}.yaml`);
   let contract = canonical;
   let legacy = false;
   if (canonical.state !== "active" && existsSync(executionRoot)) {
@@ -328,7 +328,7 @@ export function reviewContract(id: string, evidence: string, pullRequest?: strin
   entity.data.updated_at = new Date().toISOString().slice(0, 10);
   const acceptance = sections(entity.content).get("acceptance")?.split(/\r?\n/).map((line) => /^\s*[-*]\s+(.+)/.exec(line)?.[1]).filter((line): line is string => Boolean(line)) ?? [];
   const profileChecks = (Array.isArray(entity.data.profiles) ? entity.data.profiles.map(String) : []).flatMap((profile) => {
-    const path = workspacePath(root, "profiles", `${profile}.yaml`);
+    const path = processPath(root, "profiles", `${profile}.yaml`);
     if (!existsSync(path)) return [];
     const definition = parseYaml(readFileSync(path, "utf8")) as { done_checks?: unknown[] };
     return (definition.done_checks ?? []).map((check) => `${profile}: ${String(check)}`);
@@ -338,7 +338,7 @@ export function reviewContract(id: string, evidence: string, pullRequest?: strin
   const evidenceRows = (checks.length ? checks : ["Contract acceptance criteria"]).map((check) => `| ${check.replaceAll("|", "\\|")} | ${safeEvidence} |`).join("\n");
   const declared = (value: string | undefined) => (value !== undefined && value.trim() ? value.trim() : NOT_DECLARED);
   const reviewEvidence = `\n\n## Review evidence\n\n| Acceptance condition | Evidence |\n|---|---|\n${evidenceRows}\n\n### Verification performed\n\n${evidence}\n\n### Deviations\n\n${declared(declarations.deviations)}\n\n### Observations created\n\n${declared(declarations.observationsCreated)}\n\n### Known concerns\n\n${declared(declarations.knownConcerns)}\n`;
-  const destinationDirectory = workspacePath(root, "review");
+  const destinationDirectory = processPath(root, "review");
   mkdirSync(destinationDirectory, { recursive: true });
   const destination = join(destinationDirectory, contract.filename);
   writeFileSync(destination, renderMarkdown(entity.data, `${entity.content.trimEnd()}${reviewEvidence}`));
@@ -351,7 +351,7 @@ export function reviewContract(id: string, evidence: string, pullRequest?: strin
   // One-time adoption path for executions started before the control-plane model existed.
   // Restore the feature branch's original defined snapshot so its net diff contains code, not lifecycle state.
   if (legacy) {
-    const legacyDefinedDirectory = workspacePath(executionRoot, "defined");
+    const legacyDefinedDirectory = processPath(executionRoot, "defined");
     mkdirSync(legacyDefinedDirectory, { recursive: true });
     writeFileSync(join(legacyDefinedDirectory, canonical.filename), canonicalSnapshot);
     if (existsSync(contract.path)) unlinkSync(contract.path);
@@ -384,12 +384,12 @@ export function closeContract(id: string, approved: boolean, repositoryRoot?: st
   entity.data.status = "done";
   entity.data.resolution = "completed";
   entity.data.updated_at = new Date().toISOString().slice(0, 10);
-  const doneDirectory = workspacePath(root, "done");
+  const doneDirectory = processPath(root, "done");
   mkdirSync(doneDirectory, { recursive: true });
   const destination = join(doneDirectory, contract.filename);
   writeFileSync(destination, renderMarkdown(entity.data, entity.content));
   unlinkSync(contract.path);
-  const claimPath = workspacePath(root, "claims", `${id}.yaml`);
+  const claimPath = processPath(root, "claims", `${id}.yaml`);
   if (existsSync(claimPath)) unlinkSync(claimPath);
   updateContainingBatch(root, id);
   regenerateIndex(root);
@@ -491,7 +491,7 @@ export function cancelContract(
   entity.data.cancellation_reason = stated;
   if (superseding) entity.data.superseded_by = superseding;
   entity.data.updated_at = new Date().toISOString().slice(0, 10);
-  const doneDirectory = workspacePath(root, "done");
+  const doneDirectory = processPath(root, "done");
   mkdirSync(doneDirectory, { recursive: true });
   const destination = join(doneDirectory, contract.filename);
   const candidate = `${destination}.cancel-${process.pid}.tmp`;
@@ -504,7 +504,7 @@ export function cancelContract(
     throw error;
   }
   unlinkSync(contract.path);
-  const claimPath = workspacePath(root, "claims", `${canonicalId}.yaml`);
+  const claimPath = processPath(root, "claims", `${canonicalId}.yaml`);
   const claimReleased = existsSync(claimPath);
   if (claimReleased) unlinkSync(claimPath);
   const dependents = dependentContracts(root, canonicalId);
@@ -535,7 +535,7 @@ export function reopenContract(id: string, approved: boolean, repositoryRoot?: s
   if (!approved) throw new Error("Human approval is required to reopen terminal or reviewed work.");
   const entity = parseMarkdown(readFileSync(contract.path, "utf8"));
   const changesRequested = contract.state === "review";
-  if (changesRequested && !existsSync(workspacePath(root, "claims", `${id}.yaml`))) throw new Error(`Review changes cannot resume because ${id} has no claim.`);
+  if (changesRequested && !existsSync(processPath(root, "claims", `${id}.yaml`))) throw new Error(`Review changes cannot resume because ${id} has no claim.`);
   entity.data.status = changesRequested ? "active" : "backlog";
   if (!changesRequested) {
     entity.data.resolution = null;
@@ -545,7 +545,7 @@ export function reopenContract(id: string, approved: boolean, repositoryRoot?: s
   }
   entity.data.pull_request = null;
   entity.data.updated_at = new Date().toISOString().slice(0, 10);
-  const directory = workspacePath(root, changesRequested ? "active" : "backlog");
+  const directory = processPath(root, changesRequested ? "active" : "backlog");
   mkdirSync(directory, { recursive: true });
   const destination = join(directory, contract.filename);
   const content = changesRequested ? entity.content.replace(/\n\n## Review evidence[\s\S]*$/, "\n") : entity.content;
@@ -602,14 +602,14 @@ export function briefContract(id: string, options: { out?: string; warnTokens?: 
     try {
       const canonical = findContract(controlRoot, id);
       const local = findContract(requestedRoot, id);
-      if (canonical.state === "defined" && local.state === "active" && existsSync(workspacePath(requestedRoot, "claims", `${id}.yaml`))) root = requestedRoot;
+      if (canonical.state === "defined" && local.state === "active" && existsSync(processPath(requestedRoot, "claims", `${id}.yaml`))) root = requestedRoot;
     } catch { /* normal control-plane path below reports the useful error */ }
   }
   const contract = findContract(root, id);
   const entity = parseMarkdown(readFileSync(contract.path, "utf8"));
 
   const referenced = [...new Set([...entity.content.matchAll(/\bD-\d{3,}\b/g)].map((match) => match[0]))].sort();
-  const decisionsDirectory = workspacePath(root, "decisions");
+  const decisionsDirectory = processPath(root, "decisions");
   const decisions: { id: string; content: string }[] = [];
   const missingDecisions: string[] = [];
   for (const decisionId of referenced) {
@@ -620,11 +620,11 @@ export function briefContract(id: string, options: { out?: string; warnTokens?: 
 
   const profiles = Array.isArray(entity.data.profiles) ? entity.data.profiles.map(String) : [];
   const profileBlocks = profiles.flatMap((profile) => {
-    const path = workspacePath(root, "profiles", `${profile}.yaml`);
+    const path = processPath(root, "profiles", `${profile}.yaml`);
     return existsSync(path) ? [{ profile, content: readFileSync(path, "utf8").trim() }] : [];
   });
 
-  const claimPath = workspacePath(root, "claims", `${id}.yaml`);
+  const claimPath = processPath(root, "claims", `${id}.yaml`);
   const claim = existsSync(claimPath) ? readFileSync(claimPath, "utf8").trim() : null;
 
   const dependsOn = Array.isArray(entity.data.depends_on) ? entity.data.depends_on.map(String) : [];
@@ -684,7 +684,7 @@ const OPEN_BATCH_STATES = ["backlog", "defined", "active"] as const;
 
 function updateContainingBatch(root: string, contractId: string): void {
   for (const state of OPEN_BATCH_STATES) {
-    const directory = workspacePath(root, "batches", state);
+    const directory = processPath(root, "batches", state);
     if (!existsSync(directory)) continue;
     for (const filename of readdirSync(directory).filter((name) => name.endsWith(".md"))) {
       const path = join(directory, filename);
@@ -694,7 +694,7 @@ function updateContainingBatch(root: string, contractId: string): void {
       entity.data.updated_at = new Date().toISOString().slice(0, 10);
       if (contracts.every((id) => findContract(root, id).state === "done")) {
         entity.data.status = "done";
-        const done = workspacePath(root, "batches/done");
+        const done = processPath(root, "batches/done");
         mkdirSync(done, { recursive: true });
         writeFileSync(join(done, filename), renderMarkdown(entity.data, entity.content));
         unlinkSync(path);

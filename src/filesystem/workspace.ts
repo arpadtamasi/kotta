@@ -1,9 +1,9 @@
 import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { basename, join, resolve } from "node:path";
+import { basename, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { stringify } from "yaml";
+import { parse, stringify } from "yaml";
 
-const DIRECTORIES = [
+export const PROCESS_DIRECTORIES = [
   "backlog",
   "defined",
   "active",
@@ -16,11 +16,14 @@ const DIRECTORIES = [
   "batches/active",
   "batches/done",
   "profiles",
-  "forms",
   "claims",
   "decisions",
   "events",
-];
+] as const;
+
+export const WORKSPACE_SCHEMA_VERSION = 3;
+export const SPEC_DIRECTORY = "spec";
+export const PROCESS_DIRECTORY = "process";
 
 /** The primary workspace directory name: what `init` creates and what discovery looks for first (D-007). */
 export const WORKSPACE_DIRECTORY = ".kotta";
@@ -109,6 +112,16 @@ export function workspacePath(root: string, ...segments: string[]): string {
   return join(root, workspaceDirectoryName(root), ...segments);
 }
 
+/** Project-owned specification knowledge: form registry and every directory declared by a form. */
+export function specPath(root: string, ...segments: string[]): string {
+  return workspacePath(root, SPEC_DIRECTORY, ...segments);
+}
+
+/** Kotta-owned lifecycle, execution and generated process state. */
+export function processPath(root: string, ...segments: string[]): string {
+  return workspacePath(root, PROCESS_DIRECTORY, ...segments);
+}
+
 /** True when `root` holds a workspace under either name. */
 export function hasWorkspace(root: string): boolean {
   return WORKSPACE_DIRECTORIES.some((name) => isWorkspaceDirectory(join(root, name)));
@@ -126,6 +139,33 @@ export function legacyStateDirectories(root: string): string[] {
   return legacy;
 }
 
+/** Flat-v2 process/spec directories that must be migrated rather than partially read. */
+export function flatWorkspaceEntries(root: string): string[] {
+  if (!hasWorkspace(root)) return [];
+  const workspace = workspacePath(root);
+  const known = [
+    ...PROCESS_DIRECTORIES,
+    "forms",
+    "index.md",
+    ...LEGACY_STATE_DIRECTORIES.map(({ from }) => from),
+    "batches/ready",
+    "packages/ready",
+  ];
+  return known.filter((entry) => existsSync(join(workspace, entry)));
+}
+
+export function workspaceSchemaVersion(root: string): number | null {
+  if (!hasWorkspace(root)) return null;
+  const config = workspacePath(root, "config.yaml");
+  if (!existsSync(config)) return null;
+  try {
+    const value = (parse(readFileSync(config, "utf8")) as { version?: unknown } | null)?.version;
+    return typeof value === "number" ? value : Number(value);
+  } catch {
+    return Number.NaN;
+  }
+}
+
 /**
  * The refusal every ordinary command makes on a pre-vocabulary workspace. There is no compatibility
  * layer behind it on purpose: four workspaces exist in the world and all four are migrated by running
@@ -133,12 +173,17 @@ export function legacyStateDirectories(root: string): string[] {
  * that half-understands the old shape is worse than one that refuses it.
  */
 export function assertCurrentWorkspaceShape(root: string): void {
+  if (!hasWorkspace(root)) return;
   const legacy = legacyStateDirectories(root);
-  if (!legacy.length) return;
+  const flat = flatWorkspaceEntries(root);
+  const version = workspaceSchemaVersion(root);
+  if (!legacy.length && !flat.length && version === WORKSPACE_SCHEMA_VERSION) return;
   const directory = workspaceDirectoryName(root);
+  const entries = [...new Set([...legacy, ...flat])].map((name) => `${directory}/${name}${name.includes(".") ? "" : "/"}`);
+  if (version !== WORKSPACE_SCHEMA_VERSION) entries.push(`${directory}/config.yaml (schema version ${Number.isFinite(version) ? version : "unreadable"}; expected ${WORKSPACE_SCHEMA_VERSION})`);
   throw new Error(
-    `${root} is a pre-vocabulary Kotta workspace: ${legacy.map((name) => `${directory}/${name}/`).join(", ")} ${legacy.length === 1 ? "is" : "are"} still on the old names. `
-    + "Run 'kotta migrate --dry-run' to see exactly what would change, then 'kotta migrate'. No other command reads the old shape.",
+    `${root} uses a legacy Kotta workspace shape: ${entries.join(", ")} must move into the spec/ and process/ namespaces. `
+    + "Run 'kotta migrate --dry-run' to see exactly what would change, then 'kotta migrate'. No other command reads or writes the legacy shape.",
   );
 }
 
@@ -167,14 +212,16 @@ export function initializeWorkspace(options: InitOptions = {}): { root: string; 
   const workspace = join(root, WORKSPACE_DIRECTORY);
 
   const created: string[] = [];
-  for (const directory of DIRECTORIES) {
-    const path = join(workspace, directory);
+  for (const directory of PROCESS_DIRECTORIES) {
+    const path = join(workspace, PROCESS_DIRECTORY, directory);
     mkdirSync(path, { recursive: true });
     created.push(path);
   }
+  mkdirSync(join(workspace, SPEC_DIRECTORY, "forms"), { recursive: true });
+  created.push(join(workspace, SPEC_DIRECTORY, "forms"));
 
   const config = {
-    version: 2,
+    version: WORKSPACE_SCHEMA_VERSION,
     project: { name: options.projectName ?? basename(root) },
     workflow: {
       require_human_sign_approval: true,
@@ -202,15 +249,12 @@ export function initializeWorkspace(options: InitOptions = {}): { root: string; 
   };
 
   writeFileSync(join(workspace, "config.yaml"), stringify(config));
-  writeFileSync(
-    join(workspace, "README.md"),
-    "# Kotta workspace\n\nRepository files are canonical. Use the calling host chat's Kotta MCP tools for scoped human approvals and the `kotta` CLI as an automation-compatible fallback; both call the same validated mutation services. `kotta ui` is read-only.\n\nLive state and visible conversation stay on the configured control branch while implementation remains isolated in contract worktrees. Create durable human decisions from a reviewed Markdown draft with `kotta decision create --from <draft.md> --approve`; do not edit `decisions/` directly. Canonical records use identity-only filenames such as `D-001.md`.\n",
-  );
-  writeFileSync(join(workspace, "index.md"), renderEmptyIndex());
+  writeFileSync(join(workspace, "README.md"), readFileSync(fileURLToPath(new URL("../../templates/workspace/README.md", import.meta.url)), "utf8"));
+  writeFileSync(join(workspace, PROCESS_DIRECTORY, "index.md"), renderEmptyIndex());
   const bundledProfiles = fileURLToPath(new URL("../../profiles", import.meta.url));
   if (existsSync(bundledProfiles)) {
     for (const filename of readdirSync(bundledProfiles).filter((name) => name.endsWith(".yaml"))) {
-      copyFileSync(join(bundledProfiles, filename), join(workspace, "profiles", filename));
+      copyFileSync(join(bundledProfiles, filename), join(workspace, PROCESS_DIRECTORY, "profiles", filename));
     }
   }
   syncWorkspaceForms(root);
@@ -233,19 +277,48 @@ export function initializeWorkspace(options: InitOptions = {}): { root: string; 
  * so extending the model remains a data change rather than a TypeScript change.
  */
 export function syncWorkspaceForms(root: string): void {
-  const bundledForms = fileURLToPath(new URL("../../templates/workspace/forms", import.meta.url));
+  const bundledForms = bundledFormsDirectory();
   if (!existsSync(bundledForms)) return;
-  const target = workspacePath(root, "forms");
+  const target = specPath(root, "forms");
   mkdirSync(target, { recursive: true });
   for (const filename of readdirSync(bundledForms).filter((name) => name.endsWith(".yaml")).sort()) {
     const destination = join(target, filename);
     if (!existsSync(destination)) copyFileSync(join(bundledForms, filename), destination);
   }
+  for (const directory of registeredSpecDirectories(root)) mkdirSync(specPath(root, directory), { recursive: true });
+}
+
+export function bundledFormsDirectory(): string {
+  return fileURLToPath(new URL("../../templates/workspace/spec/forms", import.meta.url));
+}
+
+/** Validate a form directory as a portable path that cannot escape or occupy the registry itself. */
+export function validateSpecDirectory(value: unknown, source = "form"): string {
+  const directory = String(value ?? "").trim();
+  const segments = directory.split("/");
+  if (!directory || directory !== String(value ?? "") || isAbsolute(directory) || /^[A-Za-z]:\//.test(directory) || directory.includes("\\")
+    || segments.some((segment) => !segment || segment === "." || segment === "..") || directory === "forms" || directory.startsWith("forms/")) {
+    throw new Error(`${source} has invalid directory '${String(value ?? "")}': directory must be a relative path inside the workspace spec root and cannot use '.', '..', backslashes, absolute paths, or the reserved forms/ registry.`);
+  }
+  return directory;
+}
+
+/** All project-declared node libraries. New custom forms participate without TypeScript changes. */
+export function registeredSpecDirectories(root: string, formsDirectory = specPath(root, "forms")): string[] {
+  if (!existsSync(formsDirectory)) return [];
+  const directories = new Set<string>();
+  for (const filename of readdirSync(formsDirectory).filter((name) => name.endsWith(".yaml")).sort()) {
+    const path = join(formsDirectory, filename);
+    const data = parse(readFileSync(path, "utf8")) as { directory?: unknown } | null;
+    if (data?.directory === undefined) throw new Error(`${path} has no directory field.`);
+    directories.add(validateSpecDirectory(data.directory, path));
+  }
+  return [...directories].sort();
 }
 
 /** The merge attribute for a workspace under `directory`; the name moved with the rename (T-020). */
 export function indexMergeAttribute(directory: string): string {
-  return `${directory}/index.md merge=union`;
+  return `${directory}/${PROCESS_DIRECTORY}/index.md merge=union`;
 }
 
 export const INDEX_MERGE_ATTRIBUTE = indexMergeAttribute(WORKSPACE_DIRECTORY);
@@ -259,8 +332,15 @@ export function ensureIndexMergeAttribute(root: string): void {
   const attribute = indexMergeAttribute(workspaceDirectoryName(root));
   const path = join(root, ".gitattributes");
   const existing = existsSync(path) ? readFileSync(path, "utf8") : "";
-  if (existing.split(/\r?\n/).includes(attribute)) return;
-  writeFileSync(path, `${existing}${existing && !existing.endsWith("\n") ? "\n" : ""}${attribute}\n`);
+  const workspaceIndexAttributes = new Set(WORKSPACE_DIRECTORIES.flatMap((directory) => [
+    `${directory}/index.md merge=union`,
+    indexMergeAttribute(directory),
+  ]));
+  const lines = existing.split(/\r?\n/).filter((line) => line && (!workspaceIndexAttributes.has(line) || line === attribute));
+  const withoutDuplicate = lines.filter((line, index) => line !== attribute || lines.indexOf(line) === index);
+  if (!withoutDuplicate.includes(attribute)) withoutDuplicate.push(attribute);
+  const rendered = `${withoutDuplicate.join("\n")}\n`;
+  if (rendered !== existing) writeFileSync(path, rendered);
 }
 
 export function renderEmptyIndex(): string {
@@ -285,15 +365,15 @@ export function renderEmptyIndex(): string {
 }
 
 export function regenerateIndex(root: string): void {
-  const workspace = workspacePath(root);
-  if (!existsSync(workspace)) return;
+  const process = processPath(root);
+  if (!existsSync(process)) return;
   const entries = (directory: string) => {
-    const path = join(workspace, directory);
+    const path = join(process, directory);
     if (!existsSync(path)) return [];
     return readdirSync(path).filter((name) => name.endsWith(".md")).sort().map((name) => `- ${name.replace(/\.md$/, "")}`);
   };
   const section = (title: string, lines: string[]) => `## ${title}\n\n${lines.length ? lines.join("\n") : "None."}`;
-  writeFileSync(join(workspace, "index.md"), `# Kotta Status\n\n> Generated file. Do not edit manually.\n\n${[
+  writeFileSync(join(process, "index.md"), `# Kotta Status\n\n> Generated file. Do not edit manually.\n\n${[
     section("Defined batches", entries("batches/defined")),
     section("Active batches", entries("batches/active")),
     section("Defined contracts", entries("defined")),

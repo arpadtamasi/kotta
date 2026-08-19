@@ -12,7 +12,7 @@ review, close, validation, build, or deployment.
 
 Treat the registry as the only source of form-specific knowledge. Never hard-code the eleven
 shipped forms, their directories, edge fields, or required relationships into the analysis. A
-complete `.kotta/forms/risk.yaml` must participate exactly like a bundled form without a code or
+complete `.kotta/spec/forms/risk.yaml` must participate exactly like a bundled form without a code or
 skill change.
 
 ## Choose the mode
@@ -26,7 +26,7 @@ permission to edit dependants.
 
 ## Validate the registry first
 
-Read every `.kotta/forms/*.yaml` file, including project-added files. Require these keys on each
+Read every `.kotta/spec/forms/*.yaml` file, including project-added files. Require these keys on each
 form:
 
 - `id`, `version`, `directory`, `canonical_source`, `description`, and `identity`
@@ -45,7 +45,7 @@ negative case for a hand-added incomplete form; do not silently infer its schema
 
 ## Discover and normalize nodes
 
-For each valid form, scan `<workspace>/<directory>/*.md`. Do not scan a hard-coded directory list.
+For each valid form, scan `<workspace>/spec/<directory>/*.md`. Do not scan a hard-coded directory list.
 Parse YAML frontmatter and the Markdown body, then build one map keyed by full `id`.
 
 Check the following structural facts:

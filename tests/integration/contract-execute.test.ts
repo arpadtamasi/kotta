@@ -134,7 +134,7 @@ function agentEnvironment(fixtureUnderTest: Fixture, mode: string): Record<strin
 }
 
 function claimPath(repository: string, id: string): string {
-  return join(repository, ".kotta/claims", `${id}.yaml`);
+  return join(repository, ".kotta/process/claims", `${id}.yaml`);
 }
 
 interface ExecutionEvent {
@@ -157,7 +157,7 @@ interface ExecutionEvent {
 
 /** The stored account of every run, in order. `.kotta/` is the source of truth for it. */
 function executionEvents(repository: string, id: string): ExecutionEvent[] {
-  const directory = join(repository, ".kotta/events", id);
+  const directory = join(repository, ".kotta/process/events", id);
   if (!existsSync(directory)) return [];
   return readdirSync(directory)
     .filter((name) => name.endsWith(".json"))
@@ -248,7 +248,7 @@ describe("contract execute (T-035 / D-009)", () => {
     expect(human.status).toBe(0);
     expect(human.stdout).toContain(`kotta contract execute ${id}: no-change`);
     expect(human.stdout).toContain("Nothing to review");
-    expect(human.stdout).toContain(join(".kotta/events", id));
+    expect(human.stdout).toContain(join(".kotta/process/events", id));
     expect(human.stdout).toContain("Read what the agent reported in ");
     expect(human.stdout).not.toContain("--evidence");
     // A resume appends a second run record instead of rewriting the first.
@@ -389,7 +389,7 @@ describe("contract execute (T-035 / D-009)", () => {
     expect(json(result)).toMatchObject({ ok: false, data: { state: "agent-failed", exitCode: 3, contractState: "active" }, errors: [{ code: "AGENT_FAILED" }] });
     expect(existsSync(claimPath(repository, id))).toBe(true);
     expect(existsSync(join(repository, ".worktrees", id))).toBe(true);
-    expect(existsSync(join(repository, ".worktrees", id, ".kotta/review"))).toBe(false);
+    expect(existsSync(join(repository, ".worktrees", id, ".kotta/process/review"))).toBe(false);
   });
 
   test("an empty agent result is agent-failed", () => {

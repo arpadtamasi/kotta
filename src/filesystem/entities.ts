@@ -2,7 +2,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { parseMarkdown } from "../core/markdown.js";
 import { CONTRACT_ID, displayId, filenameMatchesId } from "../core/identity.js";
-import { workspacePath } from "./workspace.js";
+import { processPath } from "./workspace.js";
 
 export const CONTRACT_STATES = ["backlog", "defined", "active", "review", "done"] as const;
 export const BATCH_STATES = ["backlog", "defined", "active", "done"] as const;
@@ -29,7 +29,7 @@ export function stateDirectories(kind: EntityKind): Array<{ state: string; direc
 export function entityCopies(root: string, kind: EntityKind, id: string): EntityCopy[] {
   const copies: EntityCopy[] = [];
   for (const { state, directory } of stateDirectories(kind)) {
-    const path = workspacePath(root, directory);
+    const path = processPath(root, directory);
     if (!existsSync(path)) continue;
     for (const filename of readdirSync(path).filter((name) => name.endsWith(".md")).sort()) {
       const file = join(path, filename);
@@ -70,7 +70,7 @@ export function idFromEntityFile(path: string, filename: string): string | null 
 
 export function findContract(root: string, id: string): ContractLocation {
   for (const state of CONTRACT_STATES) {
-    const directory = workspacePath(root, state);
+    const directory = processPath(root, state);
     if (!existsSync(directory)) continue;
     const filename = readdirSync(directory).find((name) => name.endsWith(".md") && filenameMatchesId(name, id));
     if (filename) return { path: join(directory, filename), state, filename };
@@ -143,7 +143,7 @@ export interface ListedEntity {
  * than omitted: a listing that silently drops entities is worse than an ugly row.
  */
 export function listEntities(root: string, entity: ListableEntity, states?: string[]): ListedEntity[] {
-  const workspace = workspacePath(root);
+  const workspace = processPath(root);
   const wanted = states?.length ? new Set(states) : null;
   return entityStateDirectories(entity)
     .filter(({ state }) => !wanted || wanted.has(state))

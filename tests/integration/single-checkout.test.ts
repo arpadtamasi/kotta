@@ -66,7 +66,7 @@ describe("a single checkout that is not on the base branch", () => {
     expect(git(root, "branch", "--list").split("\n").filter((line) => line.trim())).toHaveLength(2); // main and the harness branch
     expect(existsSync(join(root, ".worktrees"))).toBe(false);
 
-    const claim = parse(readFileSync(join(root, ".kotta/claims", `${created.id}.yaml`), "utf8")) as Record<string, unknown>;
+    const claim = parse(readFileSync(join(root, ".kotta/process/claims", `${created.id}.yaml`), "utf8")) as Record<string, unknown>;
     expect(claim).toMatchObject({ branch: "claude/harness-branch", worktree: ".", origin: "adopted" });
 
     writeFileSync(join(root, "delivered.md"), "# Delivered\n");
@@ -81,7 +81,7 @@ describe("a single checkout that is not on the base branch", () => {
     // The session's own checkout and branch survive: Kotta removes only what Kotta created.
     expect(git(root, "rev-parse", "--abbrev-ref", "HEAD").trim()).toBe("claude/harness-branch");
     expect(existsSync(join(root, "delivered.md"))).toBe(true);
-    expect(existsSync(join(root, ".kotta/done", basename(created.path)))).toBe(true);
+    expect(existsSync(join(root, ".kotta/process/done", basename(created.path)))).toBe(true);
     expect(run(root, ["validate"])).toMatchObject({ ok: true });
   });
 

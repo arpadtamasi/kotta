@@ -39,13 +39,13 @@ describe("review and close", () => {
     writeFileSync(pending, "uncommitted\n");
     const refused = spawnSync("node", [cli, "contract", "close", id, "--approve", "--json"], { cwd: root, encoding: "utf8" });
     expect(refused.status).toBe(1);
-    expect(existsSync(join(root, ".kotta/review", filename))).toBe(true);
-    expect(existsSync(join(root, ".kotta/claims", `${id}.yaml`))).toBe(true);
+    expect(existsSync(join(root, ".kotta/process/review", filename))).toBe(true);
+    expect(existsSync(join(root, ".kotta/process/claims", `${id}.yaml`))).toBe(true);
     unlinkSync(pending);
     expect(run(root, ["contract", "close", id, "--approve"])).toMatchObject({ ok: true, command: "contract close" });
 
-    expect(existsSync(join(root, ".kotta/done", filename))).toBe(true);
-    expect(existsSync(join(root, ".kotta/claims", `${id}.yaml`))).toBe(false);
+    expect(existsSync(join(root, ".kotta/process/done", filename))).toBe(true);
+    expect(existsSync(join(root, ".kotta/process/claims", `${id}.yaml`))).toBe(false);
     expect(existsSync(worktree)).toBe(false);
     expect(git(root, "branch", "--list", `docs/${id}-document-flow`).trim()).toBe("");
   });

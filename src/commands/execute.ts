@@ -2,7 +2,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { accessSync, constants, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
-import { findRepositoryRoot, workspacePath } from "../filesystem/workspace.js";
+import { findRepositoryRoot, processPath } from "../filesystem/workspace.js";
 import { findContract } from "../filesystem/entities.js";
 import { assertClean, git } from "../git/git.js";
 import { briefContract, startContract } from "./contract.js";
@@ -148,9 +148,9 @@ export interface ExecutionContext {
 /** An execution context exists when a claim for the contract lives in its worktree. */
 export function locateExecutionContext(root: string, id: string): ExecutionContext | null {
   const controlRoot = controlPlaneRoot(root);
-  const canonicalClaim = workspacePath(controlRoot, "claims", `${id}.yaml`);
+  const canonicalClaim = processPath(controlRoot, "claims", `${id}.yaml`);
   const conventionalWorktree = join(controlRoot, ".worktrees", id);
-  const legacyClaim = workspacePath(conventionalWorktree, "claims", `${id}.yaml`);
+  const legacyClaim = processPath(conventionalWorktree, "claims", `${id}.yaml`);
   const claimPath = existsSync(canonicalClaim) ? canonicalClaim : existsSync(legacyClaim) ? legacyClaim : null;
   if (!claimPath) return null;
   const claim = parseYaml(readFileSync(claimPath, "utf8")) as Record<string, unknown>;
@@ -278,7 +278,7 @@ export async function executeContract(id: string, options: ExecuteOptions, launc
     throw new Error(`Contract ${id} already has an execution context (branch ${existing.branch}, worktree ${existing.worktree}). Execute refuses to start a second agent: retry inside it with '--resume', or release it with 'kotta claim release ${id} --force'.`);
   }
   if (contract.state !== "defined") throw new Error(`Contract ${id} must be defined before execute; it is ${contract.state}. Nothing was created.`);
-  if (existsSync(workspacePath(root, "claims", `${id}.yaml`))) throw new Error(`Contract ${id} already has a claim. Execute refuses to start a second agent.`);
+  if (existsSync(processPath(root, "claims", `${id}.yaml`))) throw new Error(`Contract ${id} already has a claim. Execute refuses to start a second agent.`);
   const agent = options.agent?.trim();
   if (!agent) throw new Error("--agent <agent> is required to create an execution context.");
   assertClean(root);
@@ -290,7 +290,7 @@ export async function executeContract(id: string, options: ExecuteOptions, launc
 
   const started = startContract(id, agent);
   const worktree = String(started.data.worktree);
-  const context: ExecutionContext = { worktree, branch: String(started.data.branch), agent, claimPath: workspacePath(root, "claims", `${id}.yaml`) };
+  const context: ExecutionContext = { worktree, branch: String(started.data.branch), agent, claimPath: processPath(root, "claims", `${id}.yaml`) };
   return await runAgent({ id, root, controlRoot: root, agent, command, args, context, inheritContext, resumed: false, launch });
 }
 

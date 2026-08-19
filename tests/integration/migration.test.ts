@@ -76,7 +76,7 @@ The final implementation issues one read.
 
     const result = spawnSync("node", [resolve("scripts/migrate-oneanda-demo.mjs"), source, output, "--replace"], { cwd: resolve("."), encoding: "utf8" });
     expect(result.status, result.stderr || result.stdout).toBe(0);
-    const filename = join(output, ".kotta/defined/O-119-slow-summary.md");
+    const filename = join(output, ".kotta/process/defined/O-119-slow-summary.md");
     const parsed = matter(readFileSync(filename, "utf8"));
     const body = sections(parsed.content);
 
@@ -86,7 +86,7 @@ The final implementation issues one read.
     expect(body.get("legacy source contract")).toContain("35,652 ms");
     expect(body.get("legacy source contract")).toContain("HTTP 429");
 
-    const observation = matter(readFileSync(join(output, ".kotta/observations/new/O-15-duplicate-read.md"), "utf8"));
+    const observation = matter(readFileSync(join(output, ".kotta/process/observations/new/O-15-duplicate-read.md"), "utf8"));
     const observationBody = sections(observation.content);
     expect(observationBody.get("evidence")).toContain("fetched twice per request");
     expect(observationBody.get("evidence")).not.toContain("final implementation issues one read");

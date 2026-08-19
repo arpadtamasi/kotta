@@ -36,7 +36,7 @@ describe("mutation safety", () => {
     expect(result.status).toBe(1);
     expect(JSON.parse(result.stdout)).toMatchObject({ ok: false });
     expect(existsSync(backlog)).toBe(true);
-    expect(existsSync(join(root, ".kotta/defined", basename(backlog)))).toBe(false);
+    expect(existsSync(join(root, ".kotta/process/defined", basename(backlog)))).toBe(false);
   });
 
   test("dirty repositories and duplicate starts are rejected without reusing a worktree", () => {

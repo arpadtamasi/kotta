@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { ANY_ENTITY_ID_SOURCE, CONTRACT_ID, mintEventId } from "./identity.js";
-import { workspacePath } from "../filesystem/workspace.js";
+import { processPath } from "../filesystem/workspace.js";
 
 export type EventKind = "message" | "turn-failed" | "lifecycle" | "approval";
 export type ApprovalPhase = "proposed" | "approved" | "rejected" | "cancelled" | "applied" | "failed";
@@ -55,11 +55,11 @@ export function validateEvent(event: KottaEvent): string[] {
 export type NewEvent = Omit<KottaEvent, "id" | "created_at"> & { id?: string; created_at?: string };
 
 function eventDirectory(root: string, entity: string): string {
-  return workspacePath(root, "events", entity);
+  return processPath(root, "events", entity);
 }
 
 export function readEvents(root: string, entity?: string): KottaEvent[] {
-  const base = workspacePath(root, "events");
+  const base = processPath(root, "events");
   if (!existsSync(base)) return [];
   const entities = entity ? [entity] : readdirSync(base).filter((name) => ENTITY_ID.test(name));
   return entities.flatMap((id) => {

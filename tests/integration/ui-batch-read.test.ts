@@ -40,14 +40,14 @@ function run(root: string, args: string[]): void {
 // Legacy-name fixture on purpose (T-020): the batched ref read must work on a `.a-team/` workspace too.
 function bigWorkspace(entities: number, options: { checkoutSideBranch: boolean }): string {
   const root = realpathSync(mkdtempSync(join(tmpdir(), "kotta-ui-batch-")));
-  mkdirSync(join(root, ".a-team/defined"), { recursive: true });
-  writeFileSync(join(root, ".a-team/config.yaml"), "version: 1\nproject:\n  name: batch-fixture\n");
+  mkdirSync(join(root, ".a-team/process/defined"), { recursive: true });
+  writeFileSync(join(root, ".a-team/config.yaml"), "version: 3\nproject:\n  name: batch-fixture\n");
   for (let index = 1; index <= entities; index++) {
     const id = `T-${String(index).padStart(3, "0")}`;
-    writeFileSync(join(root, `.a-team/defined/${id}-synthetic.md`), contract(id, "defined"));
+    writeFileSync(join(root, `.a-team/process/defined/${id}-synthetic.md`), contract(id, "defined"));
   }
-  mkdirSync(join(root, ".a-team/claims"), { recursive: true });
-  writeFileSync(join(root, ".a-team/claims/T-001.yaml"), "contract: T-001\nagent: codex\nbranch: feat/T-001\nworktree: .worktrees/T-001\nstarted_at: 2026-08-14T08:30:00Z\n");
+  mkdirSync(join(root, ".a-team/process/claims"), { recursive: true });
+  writeFileSync(join(root, ".a-team/process/claims/T-001.yaml"), "contract: T-001\nagent: codex\nbranch: feat/T-001\nworktree: .worktrees/T-001\nstarted_at: 2026-08-14T08:30:00Z\n");
   run(root, ["init", "-b", "main"]);
   run(root, ["add", "-A"]);
   run(root, ["commit", "-m", "fixture: synthetic workspace"]);
@@ -57,7 +57,7 @@ function bigWorkspace(entities: number, options: { checkoutSideBranch: boolean }
 
 function commitContractOnMain(root: string, id: string): void {
   run(root, ["checkout", "-q", "main"]);
-  writeFileSync(join(root, `.a-team/defined/${id}-synthetic.md`), contract(id, "defined"));
+  writeFileSync(join(root, `.a-team/process/defined/${id}-synthetic.md`), contract(id, "defined"));
   run(root, ["add", "-A"]);
   run(root, ["commit", "-m", `fixture: add ${id}`]);
   run(root, ["checkout", "-q", "work"]);
@@ -104,7 +104,7 @@ describe("batched, cached base-ref reads (T-029)", () => {
 
   test("on the base branch, uncommitted additions still show with one extra status call", () => {
     const base = bigWorkspace(3, { checkoutSideBranch: false });
-    writeFileSync(join(base, ".a-team/defined/T-004-synthetic.md"), contract("T-004", "defined"));
+    writeFileSync(join(base, ".a-team/process/defined/T-004-synthetic.md"), contract("T-004", "defined"));
     measure();
     const workspace = readWorkspace(base);
     const calls = measure();

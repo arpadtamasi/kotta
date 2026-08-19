@@ -48,12 +48,12 @@ describe("dependency-aware batch", () => {
       contracts.push({ id: created.data.id, filename: basename(path) });
     }
     const [parser, command] = contracts;
-    const second = join(root, ".kotta/defined", command.filename);
+    const second = join(root, ".kotta/process/defined", command.filename);
     writeFileSync(second, readFileSync(second, "utf8").replace("depends_on: []", `depends_on:\n  - ${parser.id}`));
     const batchId = (run(root, ["batch", "new", "--title", "Parser slice", "--goal", "Deliver a parser slice"]) as { data: { id: string } }).data.id;
     run(root, ["batch", "add", batchId, parser.id]);
     run(root, ["batch", "add", batchId, command.id]);
-    const blockedBacklog = join(root, ".kotta/backlog", command.filename);
+    const blockedBacklog = join(root, ".kotta/process/backlog", command.filename);
     writeFileSync(blockedBacklog, readFileSync(second, "utf8").replace("status: defined", "status: backlog"));
     unlinkSync(second);
     expect(run(root, ["batch", "sign", batchId, "--approve"])).toMatchObject({ ok: true, command: "batch sign" });
@@ -61,7 +61,7 @@ describe("dependency-aware batch", () => {
 
     expect(run(root, ["batch", "validate", batchId])).toMatchObject({ ok: true, data: { waves: [[parser.id], [command.id]] } });
     expect(run(root, ["batch", "start", batchId, "--agent", "codex"])).toMatchObject({ ok: true, data: { started: [parser.id], waiting: [command.id] } });
-    expect(existsSync(join(root, ".kotta/claims", `${parser.id}.yaml`))).toBe(true);
+    expect(existsSync(join(root, ".kotta/process/claims", `${parser.id}.yaml`))).toBe(true);
     expect(existsSync(join(root, ".worktrees", command.id))).toBe(false);
     expect(run(root, ["batch", "status", batchId])).toMatchObject({
       ok: true,
@@ -105,7 +105,7 @@ const snapshot = (root: string) => ({
   workspace: git(root, "ls-files", ".kotta"),
 });
 
-const batchFile = (root: string, state: string, filename: string) => join(root, ".kotta/batches", state, filename);
+const batchFile = (root: string, state: string, filename: string) => join(root, ".kotta/process/batches", state, filename);
 
 /**
  * The P-005 shape: a batch still in `backlog` whose contracts reached done outside the batch
@@ -130,7 +130,7 @@ function backlogBatchWithMembers(label: string, members: Array<"done" | "defined
 describe("batch close", () => {
   test("closes a backlog batch whose member contracts are all done", () => {
     const { root, batchId, filename, contracts } = backlogBatchWithMembers("closeable", ["done", "done"]);
-    const contractsBefore = contracts.map((contract) => readFileSync(join(root, ".kotta/done", contract.filename), "utf8"));
+    const contractsBefore = contracts.map((contract) => readFileSync(join(root, ".kotta/process/done", contract.filename), "utf8"));
 
     const closed = run(root, ["batch", "close", batchId, "--approve"]);
     expect(closed).toMatchObject({ ok: true, command: "batch close", data: { id: batchId, status: "done", changed: true } });
@@ -139,7 +139,7 @@ describe("batch close", () => {
     expect(run(root, ["batch", "status", batchId])).toMatchObject({ ok: true, data: { id: batchId, status: "done" } });
     expect(run(root, ["validate"])).toMatchObject({ ok: true });
     // Closing a batch never touches its contracts.
-    expect(contracts.map((contract) => readFileSync(join(root, ".kotta/done", contract.filename), "utf8"))).toEqual(contractsBefore);
+    expect(contracts.map((contract) => readFileSync(join(root, ".kotta/process/done", contract.filename), "utf8"))).toEqual(contractsBefore);
     expect(git(root, "status", "--porcelain")).toBe("");
 
     // Re-closing a finished batch is a no-op rather than an error.
@@ -159,7 +159,7 @@ describe("batch close", () => {
     expect(snapshot(root)).toEqual(before);
     expect(readFileSync(batchFile(root, "backlog", filename), "utf8")).toBe(batchBefore);
     expect(existsSync(batchFile(root, "done", filename))).toBe(false);
-    expect(existsSync(join(root, ".kotta/defined", contracts[1].filename))).toBe(true);
+    expect(existsSync(join(root, ".kotta/process/defined", contracts[1].filename))).toBe(true);
   });
 
   test("requires human approval", () => {

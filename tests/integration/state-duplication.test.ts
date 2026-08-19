@@ -67,11 +67,11 @@ describe("one entity in two state directories (T-036)", () => {
     const merge = spawnSync("git", ["merge", "--no-ff", "branch-defined", "-m", "merge"], { cwd: root, encoding: "utf8" });
     expect(`${merge.stdout}${merge.stderr}`).toContain("CONFLICT (rename/rename)");
     keepBothSides(root, [
-      { branch: "branch-defined", path: `.kotta/defined/${filename}` },
-      { branch: "main", path: `.kotta/done/${filename}` },
+      { branch: "branch-defined", path: `.kotta/process/defined/${filename}` },
+      { branch: "main", path: `.kotta/process/done/${filename}` },
     ]);
-    const defined = join(root, ".kotta/defined", filename);
-    const done = join(root, ".kotta/done", filename);
+    const defined = join(root, ".kotta/process/defined", filename);
+    const done = join(root, ".kotta/process/done", filename);
     expect(existsSync(defined) && existsSync(done)).toBe(true);
 
     // Acceptance 1: the duplicate is its own error case and names both places.
@@ -132,8 +132,8 @@ describe("one entity in two state directories (T-036)", () => {
     expect(`${merge.stdout}${merge.stderr}`).toContain("CONFLICT (modify/delete)");
     git(root, "add", "-A");
     git(root, "commit", "-m", "merge: kept both copies");
-    const backlog = join(root, ".kotta/batches/backlog", filename);
-    const defined = join(root, ".kotta/batches/defined", filename);
+    const backlog = join(root, ".kotta/process/batches/backlog", filename);
+    const defined = join(root, ".kotta/process/batches/defined", filename);
     expect(existsSync(backlog) && existsSync(defined)).toBe(true);
 
     const validation = attempt(root, ["validate"]);
@@ -182,8 +182,8 @@ describe("one entity in two state directories (T-036)", () => {
     expect(`${merge.stdout}${merge.stderr}`).toContain("CONFLICT (modify/delete)");
     git(root, "add", "-A");
     git(root, "commit", "-m", "merge: kept both copies");
-    const backlog = join(root, ".kotta/backlog", filename);
-    const defined = join(root, ".kotta/defined", filename);
+    const backlog = join(root, ".kotta/process/backlog", filename);
+    const defined = join(root, ".kotta/process/defined", filename);
     expect(existsSync(backlog) && existsSync(defined)).toBe(true);
 
     // Acceptance 3: divergent bodies are not a machine decision.
@@ -199,7 +199,7 @@ describe("one entity in two state directories (T-036)", () => {
   test("dedupe refuses an identifier collision inside one state directory", () => {
     const root = repository("collision");
     const contract = run(root, ["contract", "new", "--title", "Shared identity", "--type", "feature"]).data as { id: string; path: string };
-    const twin = join(root, ".kotta/backlog", `other-${basename(contract.path)}`);
+    const twin = join(root, ".kotta/process/backlog", `other-${basename(contract.path)}`);
     copyFileSync(contract.path, twin);
     writeFileSync(twin, readFileSync(twin, "utf8").replace("title: Shared identity", "title: A different entity"));
 

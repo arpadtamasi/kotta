@@ -11,7 +11,7 @@ Markdown; include wire examples or diagrams only as supporting illustrations.
 
 ## Recognize the form
 
-Read `.kotta/forms/interface.yaml` before drafting. Recognize an interface when components,
+Read `.kotta/spec/forms/interface.yaml` before drafting. Recognize an interface when components,
 organizations, or actors exchange a call, event, file, command, or message and correctness depends
 on shared input, output, error, or compatibility obligations.
 
@@ -29,7 +29,7 @@ failure, and which compatibility promise external consumers rely on. Draft from 
 label assumptions, then ask precise questions. Never ask the user to populate an empty contract
 shell.
 
-Write the node under `.kotta/interfaces/` with the registered identity and filename. Make the
+Write the node under `.kotta/spec/interfaces/` with the registered identity and filename. Make the
 reference canonical on the consuming use case or entity through its `interfaces` field; avoid a
 reciprocal `used_by` list on the interface.
 
@@ -41,7 +41,7 @@ implementation choices as preconditions merely to simplify the provider.
 
 ## Worked example
 
-`.kotta/interfaces/competency-catalog-search-0000000a.md`:
+`.kotta/spec/interfaces/competency-catalog-search-0000000a.md`:
 
 ```markdown
 ---

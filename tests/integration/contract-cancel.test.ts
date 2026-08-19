@@ -46,7 +46,7 @@ function decision(repository: string, title: string): string {
 }
 
 function lifecycleEvents(repository: string, id: string): Array<Record<string, unknown>> {
-  const directory = join(repository, ".kotta/events", id);
+  const directory = join(repository, ".kotta/process/events", id);
   if (!existsSync(directory)) return [];
   return readdirSync(directory).filter((name) => name.endsWith(".json")).sort()
     .map((name) => JSON.parse(readFileSync(join(directory, name), "utf8")) as Record<string, unknown>);
@@ -77,7 +77,7 @@ describe("contract cancel", () => {
     const cancelled = run(repository, ["contract", "cancel", contract.id, "--resolution", "duplicate", "--reason", "The same work is already captured", "--superseded-by", original.id, "--approve"]);
     expect(cancelled).toMatchObject({ ok: true, command: "contract cancel", data: { id: contract.id, resolution: "duplicate", supersededBy: original.id, claimReleased: false } });
 
-    const done = join(repository, ".kotta/done", basename(contract.path));
+    const done = join(repository, ".kotta/process/done", basename(contract.path));
     expect(existsSync(done)).toBe(true);
     expect(existsSync(contract.path)).toBe(false);
     const content = readFileSync(done, "utf8");
@@ -97,13 +97,13 @@ describe("contract cancel", () => {
     writeFileSync(join(worktree, "route.md"), "# Route\n");
     git(worktree, "add", ".");
     git(worktree, "commit", "-m", "feat: start the move");
-    const branch = readFileSync(join(repository, ".kotta/active", basename(contract.path)), "utf8").match(/^branch: (.+)$/m)?.[1] ?? "";
+    const branch = readFileSync(join(repository, ".kotta/process/active", basename(contract.path)), "utf8").match(/^branch: (.+)$/m)?.[1] ?? "";
 
     const cancelled = run(repository, ["contract", "cancel", contract.id, "--resolution", "obsolete", "--reason", "A decision established the opposite", "--superseded-by", superseding, "--approve"]);
     expect(cancelled).toMatchObject({ ok: true, data: { resolution: "obsolete", supersededBy: superseding, claimReleased: true } });
 
-    expect(existsSync(join(repository, ".kotta/done", basename(contract.path)))).toBe(true);
-    expect(existsSync(join(repository, ".kotta/claims", `${contract.id}.yaml`))).toBe(false);
+    expect(existsSync(join(repository, ".kotta/process/done", basename(contract.path)))).toBe(true);
+    expect(existsSync(join(repository, ".kotta/process/claims", `${contract.id}.yaml`))).toBe(false);
     expect(existsSync(worktree)).toBe(false);
     // The branch is the only copy of whatever was built; close deletes a merged branch, cancel never can.
     expect(git(repository, "branch", "--list", branch).trim()).not.toBe("");
@@ -128,12 +128,12 @@ describe("contract cancel", () => {
     git(worktree, "add", ".");
     git(worktree, "commit", "-m", "feat: extend the pipeline");
     run(worktree, ["contract", "review", contract.id, "--evidence", "The pipeline was extended and inspected"]);
-    expect(existsSync(join(repository, ".kotta/review", basename(contract.path)))).toBe(true);
+    expect(existsSync(join(repository, ".kotta/process/review", basename(contract.path)))).toBe(true);
 
     const cancelled = run(repository, ["contract", "cancel", contract.id, "--resolution", "obsolete", "--reason", "The work was thrown away after submission", "--superseded-by", superseding, "--approve"]);
     expect(cancelled).toMatchObject({ ok: true, data: { resolution: "obsolete", claimReleased: true } });
-    expect(existsSync(join(repository, ".kotta/done", basename(contract.path)))).toBe(true);
-    expect(existsSync(join(repository, ".kotta/claims", `${contract.id}.yaml`))).toBe(false);
+    expect(existsSync(join(repository, ".kotta/process/done", basename(contract.path)))).toBe(true);
+    expect(existsSync(join(repository, ".kotta/process/claims", `${contract.id}.yaml`))).toBe(false);
     expect(run(repository, ["validate"])).toMatchObject({ ok: true });
   });
 
@@ -147,8 +147,8 @@ describe("contract cancel", () => {
     const refused = fail(repository, ["contract", "cancel", contract.id, "--resolution", "cancelled", "--reason", "Abandoned", "--approve"]);
     expect(refused.status).not.toBe(0);
     expect(refused.stdout).toContain("contains uncommitted changes");
-    expect(existsSync(join(repository, ".kotta/active", basename(contract.path)))).toBe(true);
-    expect(existsSync(join(repository, ".kotta/claims", `${contract.id}.yaml`))).toBe(true);
+    expect(existsSync(join(repository, ".kotta/process/active", basename(contract.path)))).toBe(true);
+    expect(existsSync(join(repository, ".kotta/process/claims", `${contract.id}.yaml`))).toBe(true);
     expect(existsSync(worktree)).toBe(true);
     expect(existsSync(join(worktree, "draft.md"))).toBe(true);
   });
@@ -161,7 +161,7 @@ describe("contract cancel", () => {
 
     expect(run(repository, ["contract", "cancel", contract.id, "--resolution", "cancelled", "--reason", "Recovered a stuck execution", "--approve"]))
       .toMatchObject({ ok: true, data: { claimReleased: true } });
-    expect(existsSync(join(repository, ".kotta/claims", `${contract.id}.yaml`))).toBe(false);
+    expect(existsSync(join(repository, ".kotta/process/claims", `${contract.id}.yaml`))).toBe(false);
   });
 
   test("names the contracts that depended on the retired one without cancelling them", () => {
@@ -200,7 +200,7 @@ describe("contract cancel", () => {
     expect(unknown.stdout).toContain("Cancel resolution must be one of");
 
     expect(existsSync(contract.path)).toBe(true);
-    expect(existsSync(join(repository, ".kotta/done", basename(contract.path)))).toBe(false);
+    expect(existsSync(join(repository, ".kotta/process/done", basename(contract.path)))).toBe(false);
   });
 
   test("refuses a supersession that is unnamed, dangling, or circular", () => {
@@ -255,7 +255,7 @@ describe("contract cancel", () => {
     git(repository, "add", ".");
     git(repository, "commit", "-m", "capture contract");
     run(repository, ["contract", "cancel", contract.id, "--resolution", "cancelled", "--reason", "Abandoned", "--approve"]);
-    const cancelledPath = join(repository, ".kotta/done", basename(contract.path));
+    const cancelledPath = join(repository, ".kotta/process/done", basename(contract.path));
     expect(readFileSync(cancelledPath, "utf8")).not.toContain("## Review evidence");
     expect(run(repository, ["contract", "validate", contract.id])).toMatchObject({ ok: true, data: { state: "done" } });
 
@@ -264,8 +264,8 @@ describe("contract cancel", () => {
       .replace(`id: ${contract.id}`, "id: T-901")
       .replace("resolution: cancelled", "resolution: completed")
       .replace(`# ${contract.id}`, "# T-901");
-    mkdirSync(join(repository, ".kotta/done"), { recursive: true });
-    writeFileSync(join(repository, ".kotta/done/T-901-completed-path.md"), completed);
+    mkdirSync(join(repository, ".kotta/process/done"), { recursive: true });
+    writeFileSync(join(repository, ".kotta/process/done/T-901-completed-path.md"), completed);
     const report = fail(repository, ["contract", "validate", "T-901"]);
     expect(report.status).not.toBe(0);
     expect(report.stdout).toContain("MISSING_REVIEW_EVIDENCE");
