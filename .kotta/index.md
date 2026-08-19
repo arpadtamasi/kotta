@@ -18,11 +18,12 @@ None.
 
 ## Active contracts
 
-- a-kotta-workspace-kulon-spec-es-process-nevteret-kap-aedjwc92
+None.
 
 ## Review
 
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
+- a-kotta-workspace-kulon-spec-es-process-nevteret-kap-aedjwc92
 - contract-gate-treats-standalone-generated-documents-as-kotta-grgv0mtw
 
 ## Blocked
