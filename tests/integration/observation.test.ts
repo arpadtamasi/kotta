@@ -29,8 +29,8 @@ describe("observation disposition", () => {
     expect(resolved.ok).toBe(true);
     const contractId = resolved.data.contractId;
     expect(contractId).toMatch(/^T-[0-9a-hjkmnp-tv-z]{26}$/);
-    expect(existsSync(join(root, ".kotta/observations/resolved", basename(created.data.path)))).toBe(true);
-    const contract = join(root, ".kotta/backlog", `divergent-permission-checks-${contractId.slice(-8)}.md`);
+    expect(existsSync(join(root, ".kotta/process/observations/resolved", basename(created.data.path)))).toBe(true);
+    const contract = join(root, ".kotta/process/backlog", `divergent-permission-checks-${contractId.slice(-8)}.md`);
     expect(readFileSync(contract, "utf8")).toContain(`source_observation: ${observationId}`);
     expect(execFileSync("git", ["status", "--porcelain", "--", ".kotta"], { cwd: root, encoding: "utf8" })).toBe("");
     expect(execFileSync("git", ["log", "-1", "--format=%s"], { cwd: root, encoding: "utf8" }).trim()).toBe(`chore(kotta): resolve ${observationId}`);

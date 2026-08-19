@@ -11,7 +11,7 @@ view rather than canonical notation.
 
 ## Recognize the form
 
-Read `.kotta/forms/user-story.yaml` before drafting. Recognize a user story when an actor wants a
+Read `.kotta/spec/forms/user-story.yaml` before drafting. Recognize a user story when an actor wants a
 small capability for a stated benefit and concrete examples could demonstrate it. Treat task lists,
 technical components, and broad end-to-end processes as signals to reshape the conversation, not
 as stories automatically.
@@ -33,7 +33,7 @@ Draft from the conversation immediately. Record assumptions under Notes and foll
 questions. Never ask the user to complete a blank story-card template. Use an existing actor id;
 create an actor node only when the role itself needs definition.
 
-Write the node under `.kotta/user-stories/` using the registered ULID and slug-plus-short-id
+Write the node under `.kotta/spec/user-stories/` using the registered ULID and slug-plus-short-id
 filename. Supply `actor` directly. Supply evidence with an `example` node whose `subjects` contains
 the story id; do not add a second reciprocal edge.
 
@@ -46,7 +46,7 @@ force every backlog item into it.
 
 ## Worked example
 
-`.kotta/user-stories/explain-shortlist-eligibility-00000003.md`:
+`.kotta/spec/user-stories/explain-shortlist-eligibility-00000003.md`:
 
 ```markdown
 ---

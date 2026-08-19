@@ -12,7 +12,7 @@ Use `kotta contract close` as the canonical completion operation. Never delete c
 3. Inspect the claimed worktree and branch for uncommitted or unintegrated work. Stop rather than delete unsafe Git resources.
 4. Prepare contract close in chat and let the human inspect and approve the exact action there. The
    human-run CLI fallback is `kotta contract close <contract-id> --approve`.
-5. Verify that the contract moved to done, the claim was released, safe worktree and local-branch cleanup occurred, the containing batch was updated, and `.kotta/index.md` was regenerated.
+5. Verify that the contract moved to done, the claim was released, safe worktree and local-branch cleanup occurred, the containing batch was updated, and `.kotta/process/index.md` was regenerated.
 6. Report any resource intentionally retained and the exact safe follow-up.
 
 A merge alone is insufficient: completion requires accepted review and verified acceptance. Rejected review returns through a legal CLI transition instead of being closed.

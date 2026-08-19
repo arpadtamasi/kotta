@@ -200,16 +200,16 @@ None.
     ).replace("- Define an observable condition.", "- A filtered export file is produced.")
       .replace("- Explain how acceptance will be checked.", "- Run the export integration test."));
 
-    rmSync(join(repository, ".kotta/defined"), { recursive: true });
+    rmSync(join(repository, ".kotta/process/defined"), { recursive: true });
     expect(run(repository, ["contract", "sign", id, "--approve"])).toMatchObject({ ok: true, command: "contract sign" });
-    expect(existsSync(join(repository, ".kotta/defined", basename(contract)))).toBe(true);
+    expect(existsSync(join(repository, ".kotta/process/defined", basename(contract)))).toBe(true);
 
     const started = run(repository, ["contract", "start", id, "--agent", "codex"]);
     expect(started).toMatchObject({ ok: true, command: "contract start", data: { branch: `feat/${id}-ship-export` } });
     const worktree = join(repository, ".worktrees", id);
-    expect(existsSync(join(repository, ".kotta/active", basename(contract)))).toBe(true);
-    expect(existsSync(join(worktree, ".kotta/active", basename(contract)))).toBe(false);
-    expect(readFileSync(join(repository, ".kotta/claims", `${id}.yaml`), "utf8")).toContain("agent: codex");
+    expect(existsSync(join(repository, ".kotta/process/active", basename(contract)))).toBe(true);
+    expect(existsSync(join(worktree, ".kotta/process/active", basename(contract)))).toBe(false);
+    expect(readFileSync(join(repository, ".kotta/process/claims", `${id}.yaml`), "utf8")).toContain("agent: codex");
     expect(run(worktree, ["status"])).toMatchObject({ ok: true, data: { activeContracts: [id] } });
     expect(run(repository, ["claim", "list"])).toMatchObject({ ok: true, data: { claims: [{ contract: id, agent: "codex" }] } });
   });

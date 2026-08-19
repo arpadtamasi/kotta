@@ -42,7 +42,7 @@ function dependencyBatch(label: string) {
 
   const predecessor = defineContract(root, "Build predecessor");
   const dependent = defineContract(root, "Build dependent");
-  const dependentPath = join(root, ".kotta", "defined", dependent.filename);
+  const dependentPath = join(root, ".kotta", "process", "defined", dependent.filename);
   writeFileSync(dependentPath, readFileSync(dependentPath, "utf8")
     .replace("depends_on: []", `depends_on:\n  - ${predecessor.id}`));
 
@@ -87,12 +87,12 @@ describe("dependency-aware batch waves", () => {
     const dependentWorktree = join(root, ".worktrees", dependent.id);
     expect(git(dependentWorktree, "rev-parse", "HEAD")).toBe(coordinatorCommit);
     expect(readFileSync(join(dependentWorktree, "predecessor.txt"), "utf8")).toBe("integrated predecessor\n");
-    expect(readFileSync(join(root, ".kotta", "claims", `${dependent.id}.yaml`), "utf8")).toContain([
+    expect(readFileSync(join(root, ".kotta", "process", "claims", `${dependent.id}.yaml`), "utf8")).toContain([
       `start_ref: ${coordinatorBranch}`,
       `start_commit: ${coordinatorCommit}`,
       `dependency_integration_target: ${coordinatorBranch}`,
     ].join("\n"));
-    expect(existsSync(join(root, ".kotta", "review", predecessor.filename))).toBe(true);
+    expect(existsSync(join(root, ".kotta", "process", "review", predecessor.filename))).toBe(true);
     expect(run(root, ["batch", "status", batchId]).data).toMatchObject({ status: "active" });
     const closeWithoutApproval = attempt(root, ["contract", "close", predecessor.id]);
     expect(closeWithoutApproval.status).toBe(1);
@@ -111,7 +111,7 @@ describe("dependency-aware batch waves", () => {
 
     expect(next.data).toMatchObject({ started: [], waiting: expect.arrayContaining([dependent.id]) });
     expect(existsSync(join(root, ".worktrees", dependent.id))).toBe(false);
-    expect(existsSync(join(root, ".kotta", "claims", `${dependent.id}.yaml`))).toBe(false);
+    expect(existsSync(join(root, ".kotta", "process", "claims", `${dependent.id}.yaml`))).toBe(false);
     expect(git(root, "for-each-ref", "--format=%(refname) %(objectname)", "refs/heads")).toBe(headsBefore);
   });
 
@@ -124,7 +124,7 @@ describe("dependency-aware batch waves", () => {
     expect(refusal.status).toBe(1);
     expect(refusal.stdout + refusal.stderr).toContain(`Unresolved dependencies: ${predecessor.id}`);
     expect(existsSync(join(root, ".worktrees", dependent.id))).toBe(false);
-    expect(existsSync(join(root, ".kotta", "claims", `${dependent.id}.yaml`))).toBe(false);
+    expect(existsSync(join(root, ".kotta", "process", "claims", `${dependent.id}.yaml`))).toBe(false);
   });
 
   test("rolls a coordinator-based contract start back to no branch, worktree, claim, or active state", () => {
@@ -135,9 +135,9 @@ describe("dependency-aware batch waves", () => {
       .toThrow("Injected start failure after claim creation");
 
     expect(existsSync(join(root, ".worktrees", dependent.id))).toBe(false);
-    expect(existsSync(join(root, ".kotta", "claims", `${dependent.id}.yaml`))).toBe(false);
+    expect(existsSync(join(root, ".kotta", "process", "claims", `${dependent.id}.yaml`))).toBe(false);
     expect(git(root, "branch", "--list", `feat/${dependent.id}-build-dependent`)).toBe("");
-    expect(existsSync(join(root, ".kotta", "defined", dependent.filename))).toBe(true);
-    expect(existsSync(join(root, ".kotta", "active", dependent.filename))).toBe(false);
+    expect(existsSync(join(root, ".kotta", "process", "defined", dependent.filename))).toBe(true);
+    expect(existsSync(join(root, ".kotta", "process", "active", dependent.filename))).toBe(false);
   });
 });

@@ -52,15 +52,15 @@ function completeTemplate(path: string): void {
 /** backlog → defined, the shortest path that reads, writes, moves files and regenerates the index. */
 function contractRoundTrip(root: string, directory: string): { id: string; path: string } {
   const created = run(root, ["contract", "new", "--title", "Compatibility contract", "--type", "feature"]).data as { id: string; path: string };
-  expect(created.path).toContain(`${directory}/backlog`);
+  expect(created.path).toContain(`${directory}/process/backlog`);
   completeTemplate(created.path);
   run(root, ["contract", "sign", created.id, "--approve"]);
-  expect(existsSync(join(root, directory, "defined", basename(created.path)))).toBe(true);
-  expect(readFileSync(join(root, directory, "index.md"), "utf8")).toContain(basename(created.path).replace(/\.md$/, ""));
+  expect(existsSync(join(root, directory, "process", "defined", basename(created.path)))).toBe(true);
+  expect(readFileSync(join(root, directory, "process", "index.md"), "utf8")).toContain(basename(created.path).replace(/\.md$/, ""));
   const status = run(root, ["status"]).data as { definedContracts: string[] };
   expect(status.definedContracts).toContain(created.id);
   expect(run(root, ["validate"])).toMatchObject({ ok: true });
-  return { id: created.id, path: join(root, directory, "defined", basename(created.path)) };
+  return { id: created.id, path: join(root, directory, "process", "defined", basename(created.path)) };
 }
 
 describe("both binary names", () => {
@@ -84,7 +84,7 @@ describe("init creates the new workspace directory", () => {
     const root = repository("init");
     expect(existsSync(join(root, ".kotta/config.yaml"))).toBe(true);
     expect(existsSync(join(root, ".a-team"))).toBe(false);
-    expect(readFileSync(join(root, ".gitattributes"), "utf8")).toContain(".kotta/index.md merge=union");
+    expect(readFileSync(join(root, ".gitattributes"), "utf8")).toContain(".kotta/process/index.md merge=union");
     expect(run(root, ["validate"])).toMatchObject({ ok: true, errors: [] });
   });
 
@@ -124,7 +124,7 @@ describe("a symlink bridges the two directory names", () => {
     const contract = contractRoundTrip(root, ".a-team");
     // The link is a link, not a copy: nothing was migrated behind the operator's back.
     expect(lstatSync(join(root, ".kotta")).isSymbolicLink()).toBe(true);
-    expect(readdirSync(join(root, ".kotta/defined"))).toEqual(readdirSync(join(root, ".a-team/defined")));
+    expect(readdirSync(join(root, ".kotta/process/defined"))).toEqual(readdirSync(join(root, ".a-team/process/defined")));
 
     git(root, "add", ".");
     git(root, "commit", "-m", "contract");
@@ -144,7 +144,7 @@ describe("a symlink bridges the two directory names", () => {
 
     contractRoundTrip(root, ".kotta");
     expect(lstatSync(join(root, ".a-team")).isSymbolicLink()).toBe(true);
-    expect(readdirSync(join(root, ".a-team/defined"))).toEqual(readdirSync(join(root, ".kotta/defined")));
+    expect(readdirSync(join(root, ".a-team/process/defined"))).toEqual(readdirSync(join(root, ".kotta/process/defined")));
 
     git(root, "add", ".");
     git(root, "commit", "-m", "contract");

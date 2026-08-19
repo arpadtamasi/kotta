@@ -38,7 +38,7 @@ Then locate, and say what you found:
 - **Type sources** — the exported domain types (`libs/`, `src/core/`, `src/model/`).
 - **Wire and storage** — request/response schemas, stored document field names.
 - **User-facing vocabulary** — the spec, glossary, or README that states what things are
-  called *to a person*. In a Kotta workspace also `.kotta/decisions/`.
+  called *to a person*. In a Kotta workspace also `.kotta/process/decisions/`.
 - **Capability docs** — user story maps, requirement docs, anything shaped as
   "as a X I want Y".
 

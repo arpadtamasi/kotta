@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { findRepositoryRoot, regenerateIndex, workspaceDirectoryName, workspacePath } from "../filesystem/workspace.js";
+import { findRepositoryRoot, regenerateIndex, workspaceDirectoryName, processPath } from "../filesystem/workspace.js";
 import { findContract, resolveEffectiveContract } from "../filesystem/entities.js";
 import { BATCH_ID, entityFilename, filenameMatchesId, mintId } from "../core/identity.js";
 import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
@@ -21,7 +21,7 @@ interface BatchData {
 
 export function findBatch(root: string, id: string) {
   for (const state of ["backlog", "defined", "active", "done"]) {
-    const directory = workspacePath(root, "batches", state);
+    const directory = processPath(root, "batches", state);
     if (!existsSync(directory)) continue;
     const filename = readdirSync(directory).find((name) => name.endsWith(".md") && filenameMatchesId(name, id));
     if (filename) return { state, filename, path: join(directory, filename) };
@@ -88,7 +88,7 @@ function isKnownBatch(root: string, id: string): boolean {
 function parentsOf(root: string, childId: string): string[] {
   const parents: string[] = [];
   for (const state of ["backlog", "defined", "active", "done"]) {
-    const directory = workspacePath(root, "batches", state);
+    const directory = processPath(root, "batches", state);
     if (!existsSync(directory)) continue;
     for (const name of readdirSync(directory).filter((file) => file.endsWith(".md"))) {
       const data = parseMarkdown(readFileSync(join(directory, name), "utf8")).data;
@@ -153,7 +153,7 @@ export function newBatch(options: { title: string; goal?: string; parallelism?: 
   if (!Number.isInteger(parallelism) || parallelism < 1) throw new Error("Batch parallelism must be a positive integer.");
   const id = mintId("P");
   const filename = entityFilename(id, slugify(title));
-  const directory = workspacePath(root, "batches/backlog");
+  const directory = processPath(root, "batches/backlog");
   mkdirSync(directory, { recursive: true });
   const now = new Date().toISOString().slice(0, 10);
   const data = {
@@ -283,7 +283,7 @@ export function signBatch(id: string, approved: boolean, repositoryRoot?: string
   if (unsignedFrontier.length) throw new Error(`Every currently executable batch contract must be signed: ${unsignedFrontier.join(", ")}.`);
   entity.data.status = "defined";
   entity.data.updated_at = new Date().toISOString().slice(0, 10);
-  const directory = workspacePath(root, "batches/defined");
+  const directory = processPath(root, "batches/defined");
   mkdirSync(directory, { recursive: true });
   const destination = join(directory, batch.filename);
   writeFileSync(destination, renderMarkdown(entity.data, entity.content));
@@ -364,7 +364,7 @@ export function startBatch(id: string, agent: string) {
     const activating = batch.state === "defined";
     if (activating) data.status = "active";
     data.updated_at = new Date().toISOString().slice(0, 10);
-    const directory = workspacePath(root, "batches", activating ? "active" : batch.state);
+    const directory = processPath(root, "batches", activating ? "active" : batch.state);
     mkdirSync(directory, { recursive: true });
     writeFileSync(join(directory, batch.filename), renderMarkdown(data as Record<string, unknown>, entity.content));
     if (activating) unlinkSync(batch.path);
@@ -421,7 +421,7 @@ function inspectCoordinator(root: string, id: string, batchState: string, data: 
   if (git(root, ["status", "--porcelain"])) blockers.push(`The working tree at ${root} has pending changes; commit or remove them before cleanup.`);
   const contractIds = Array.isArray(data.contracts) ? data.contracts.map(String) : [];
   // Claims are written inside the contract's worktree, so check there as well as in the coordinator checkout.
-  const claimed = contractIds.filter((contractId) => [workspacePath(root, "claims", `${contractId}.yaml`), workspacePath(join(root, ".worktrees", contractId), "claims", `${contractId}.yaml`)].some((path) => existsSync(path)));
+  const claimed = contractIds.filter((contractId) => [processPath(root, "claims", `${contractId}.yaml`), processPath(join(root, ".worktrees", contractId), "claims", `${contractId}.yaml`)].some((path) => existsSync(path)));
   if (claimed.length) blockers.push(`Active claims remain for ${claimed.join(", ")}; close or release them before cleanup.`);
   const contractWorktrees = linked.filter((entry) => contractIds.some((contractId) => entry.path.endsWith(`/${contractId}`)));
   if (contractWorktrees.length) blockers.push(`Contract worktrees are still linked: ${contractWorktrees.map((entry) => entry.path).join(", ")}.`);
@@ -497,7 +497,7 @@ export function closeBatch(id: string, approved: boolean, repositoryRoot?: strin
   if (!options.skipClean) assertClean(root);
   data.status = "done";
   data.updated_at = new Date().toISOString().slice(0, 10);
-  const directory = workspacePath(root, "batches/done");
+  const directory = processPath(root, "batches/done");
   mkdirSync(directory, { recursive: true });
   const destination = join(directory, batch.filename);
   writeFileSync(destination, renderMarkdown(data as Record<string, unknown>, entity.content));

@@ -6,7 +6,7 @@ import { parse } from "yaml";
 import { beforeEach, describe, expect, test } from "vitest";
 
 const cli = resolve("dist/cli/index.js");
-const bundledForms = resolve("templates/workspace/forms");
+const bundledForms = resolve("templates/workspace/spec/forms");
 const shippedWorkshopSkills: Record<string, string[]> = {
   "impact-mapping": ["goal", "actor"],
   "story-mapping": ["user-story"],
@@ -41,13 +41,14 @@ describe("the specification layer", () => {
 
     const expectedForms = readdirSync(bundledForms).filter((name) => name.endsWith(".yaml")).sort();
     expect(expectedForms).toHaveLength(11);
-    expect(readdirSync(join(repository, ".kotta/forms")).filter((name) => name.endsWith(".yaml")).sort()).toEqual(expectedForms);
+    expect(readdirSync(join(repository, ".kotta/spec/forms")).filter((name) => name.endsWith(".yaml")).sort()).toEqual(expectedForms);
 
     for (const filename of expectedForms) {
-      const definition = parse(readFileSync(join(repository, ".kotta/forms", filename), "utf8")) as Record<string, unknown>;
+      const definition = parse(readFileSync(join(repository, ".kotta/spec/forms", filename), "utf8")) as Record<string, unknown>;
       expect(definition).toMatchObject({ version: 1 });
       expect(typeof definition.id).toBe("string");
       expect(typeof definition.directory).toBe("string");
+      expect(existsSync(join(repository, ".kotta/spec", String(definition.directory)))).toBe(true);
       expect(typeof definition.canonical_source).toBe("string");
       expect(definition.identity).toMatchObject({ prefix: expect.any(String), format: expect.any(String), filename: expect.any(String) });
       expect(definition.required_fields).toMatchObject({ frontmatter: expect.any(Array), body_headings: expect.any(Array) });
@@ -75,7 +76,7 @@ describe("the specification layer", () => {
 
   test("sync adds missing bundled forms without overwriting project-owned definitions", () => {
     run(["init"]);
-    const forms = join(repository, ".kotta/forms");
+    const forms = join(repository, ".kotta/spec/forms");
     const goal = join(forms, "goal.yaml");
     const actor = join(forms, "actor.yaml");
     const risk = join(forms, "risk.yaml");
@@ -83,6 +84,8 @@ describe("the specification layer", () => {
     const customRisk = "id: risk\nversion: 1\ndirectory: risks\n";
     writeFileSync(actor, customizedActor);
     writeFileSync(risk, customRisk);
+    const customNode = join(repository, ".kotta/spec/actors/custom-node.md");
+    writeFileSync(customNode, "project-owned\n");
     rmSync(goal);
 
     run(["sync"]);
@@ -90,6 +93,8 @@ describe("the specification layer", () => {
     expect(existsSync(goal)).toBe(true);
     expect(readFileSync(actor, "utf8")).toBe(customizedActor);
     expect(readFileSync(risk, "utf8")).toBe(customRisk);
+    expect(existsSync(join(repository, ".kotta/spec/risks"))).toBe(true);
+    expect(readFileSync(customNode, "utf8")).toBe("project-owned\n");
   });
 
   test("every workshop skill includes its guardrail and a worked node for each owned form", () => {

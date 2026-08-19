@@ -1,7 +1,7 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
 import matter from "gray-matter";
-import { stringify } from "yaml";
+import { parse, stringify } from "yaml";
 
 const sourceRoot = resolve(process.argv[2] ?? "/Users/rp/Dev/ezchops/oneanda");
 const outputRoot = resolve(process.argv[3] ?? "examples/oneanda-migration");
@@ -12,6 +12,8 @@ const workspace = WORKSPACE_NAMES.includes(basename(outputRoot))
   ? outputRoot
   : join(outputRoot, WORKSPACE_NAMES.find((name) => existsSync(join(outputRoot, name))) ?? ".kotta");
 const replace = process.argv.includes("--replace");
+const processRoot = join(workspace, "process");
+const specRoot = join(workspace, "spec");
 const contractSource = join(sourceRoot, "scrum/tickets");
 const backlogSource = join(sourceRoot, "scrum/backlog.md");
 const sprintSource = join(sourceRoot, "scrum/sprint.md");
@@ -223,11 +225,18 @@ const observationRecords = [];
 
 if (existsSync(workspace) && !replace) throw new Error(`Refusing to replace existing workspace ${workspace}; inspect it first or pass --replace.`);
 rmSync(workspace, { recursive: true, force: true });
-for (const directory of ["backlog", "defined", "active", "review", "done", "observations/new", "observations/resolved", "batches/backlog", "batches/defined", "batches/active", "batches/done", "profiles", "claims", "decisions"]) {
-  mkdirSync(join(workspace, directory), { recursive: true });
+for (const directory of ["backlog", "defined", "active", "review", "done", "observations/new", "observations/resolved", "batches/backlog", "batches/defined", "batches/active", "batches/done", "profiles", "claims", "events", "decisions"]) {
+  mkdirSync(join(processRoot, directory), { recursive: true });
 }
 for (const filename of readdirSync(resolve("profiles")).filter((name) => name.endsWith(".yaml"))) {
-  cpSync(resolve("profiles", filename), join(workspace, "profiles", filename));
+  cpSync(resolve("profiles", filename), join(processRoot, "profiles", filename));
+}
+mkdirSync(join(specRoot, "forms"), { recursive: true });
+for (const filename of readdirSync(resolve("templates/workspace/spec/forms")).filter((name) => name.endsWith(".yaml"))) {
+  const source = resolve("templates/workspace/spec/forms", filename);
+  cpSync(source, join(specRoot, "forms", filename));
+  const directory = parse(readFileSync(source, "utf8")).directory;
+  mkdirSync(join(specRoot, String(directory)), { recursive: true });
 }
 
 for (const item of expanded) {
@@ -267,7 +276,7 @@ for (const item of expanded) {
     ...(status.state === "active" ? { branch: String(legacy.data.branch), assigned_agent: "legacy-scrum" } : {}),
   };
   const filename = `${item.id}-${slugify(item.title)}.md`;
-  writeFileSync(join(workspace, status.state, filename), matter.stringify(content, data));
+  writeFileSync(join(processRoot, status.state, filename), matter.stringify(content, data));
   migrationRecords.push({
     id: item.id,
     legacy_id: legacyId,
@@ -320,14 +329,14 @@ observationLegacy.forEach((legacy) => {
   };
   const content = `# ${id} — ${title}\n\n## Observation\n\n${observation}\n\n## Evidence\n\n${evidence}\n\nLegacy source: ${legacyId} · scrum/tickets/${legacy.filename}.\n\n## Impact hypothesis\n\n${impact}\n\n## Confidence\n\n${data.confidence === "high" ? "High: the legacy record contains concrete observation or result evidence." : "Medium: the observation is recorded, but should be rechecked before scheduling work."}\n\n## Suggested disposition\n\n${suggested}\n\n## Legacy source contract\n\nThe complete legacy body is preserved below. Its headings are demoted only to keep the Kotta observation structure unambiguous.\n\n${preservedLegacyContract(legacy)}\n`;
   const filename = `${id}-${slugify(title)}.md`;
-  writeFileSync(join(workspace, "observations/new", filename), matter.stringify(content, data));
+  writeFileSync(join(processRoot, "observations/new", filename), matter.stringify(content, data));
   observationRecords.push({ id, legacy_id: legacyId, title, legacy_status: legacy.data.status, observation_type: data.observation_type, severity: data.severity, source_file: `scrum/tickets/${legacy.filename}` });
 });
 
 const activeRecord = migrationRecords.find((record) => record.status === "active");
 if (activeRecord) {
   const legacy = contractLegacy.find((candidate) => String(candidate.data.id) === activeRecord.legacy_id);
-  writeFileSync(join(workspace, "claims", `${activeRecord.id}.yaml`), stringify({
+  writeFileSync(join(processRoot, "claims", `${activeRecord.id}.yaml`), stringify({
     contract: activeRecord.id,
     agent: "legacy-scrum",
     branch: String(legacy?.data.branch),
@@ -345,7 +354,7 @@ for (const batch of batchDefinitions) {
     created_at: today, updated_at: today,
   };
   const content = `# ${batch.id} — ${batch.title}\n\n## Goal\n\n${batch.goal}\n\n## Completion\n\nEvery referenced contract is accepted and done; obsolete items have an explicit disposition.\n\n## Execution notes\n\nMigration preview batch. Ordering remains dependency-aware and requires human commitment before execution.\n`;
-  writeFileSync(join(workspace, "batches", batch.status, `${batch.id}-${slugify(batch.title)}.md`), matter.stringify(content, data));
+  writeFileSync(join(processRoot, "batches", batch.status, `${batch.id}-${slugify(batch.title)}.md`), matter.stringify(content, data));
 }
 
 const statusCounts = migrationRecords.reduce((counts, contract) => ({ ...counts, [contract.status]: (counts[contract.status] ?? 0) + 1 }), {});
@@ -371,7 +380,7 @@ const metadata = {
 };
 writeFileSync(join(workspace, "migration.json"), `${JSON.stringify(metadata, null, 2)}\n`);
 writeFileSync(join(workspace, "config.yaml"), stringify({
-  version: 1,
+  version: 3,
   project: { name: "one&a" },
   workflow: { require_human_sign_approval: true, require_human_done_approval: true, allow_agent_observations: true, allow_agent_defined_contracts: false },
   git: { base_branch: "main", protected_branches: ["main", "master", "develop"], worktrees: "auto", worktree_root: ".worktrees", branch_pattern: "{prefix}/{id}-{slug}" },
@@ -379,6 +388,6 @@ writeFileSync(join(workspace, "config.yaml"), stringify({
   validation: { strict: true, reject_unknown_profiles: true, require_verification_for_defined: true, require_review_evidence_for_done: true },
 }));
 writeFileSync(join(workspace, "README.md"), "# one&a Kotta workspace\n\nMigrated from the legacy Scrum files. Open work was deliberately separated into human-approved contracts and evidence awaiting disposition as observations. The legacy `scrum/` directory remains the historical source snapshot until cutover is explicitly accepted.\n");
-writeFileSync(join(workspace, "index.md"), `# Kotta Status\n\n> Generated migration workspace. Do not edit this index manually.\n\n- ${metadata.migrated_ticket_count} executable or explicitly requested contracts\n- ${metadata.observation_count} observations awaiting human disposition\n- ${metadata.excluded_terminal_count} terminal legacy records preserved only in migration.json\n- ${metadata.package_count} outcome batches\n- ${metadata.ready_candidate_count} backlog contracts have enough evidence to discuss readiness\n`);
+writeFileSync(join(processRoot, "index.md"), `# Kotta Status\n\n> Generated migration workspace. Do not edit this index manually.\n\n- ${metadata.migrated_ticket_count} executable or explicitly requested contracts\n- ${metadata.observation_count} observations awaiting human disposition\n- ${metadata.excluded_terminal_count} terminal legacy records preserved only in migration.json\n- ${metadata.package_count} outcome batches\n- ${metadata.ready_candidate_count} backlog contracts have enough evidence to discuss readiness\n`);
 
 console.log(JSON.stringify({ ok: true, source: legacyContracts.length, tickets: migrationRecords.length, findings: observationRecords.length, excludedTerminal: terminalLegacy.length, packages: batchDefinitions.length, output: workspace }, null, 2));

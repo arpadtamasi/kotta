@@ -61,7 +61,7 @@ function workspaceWithBatch(label: string, options: { contracts?: number } = {})
 function findBatchFile(root: string, batchId: string): string {
   const suffix = `-${batchId.slice(-8)}.md`;
   for (const state of ["backlog", "defined", "active", "done"]) {
-    const directory = join(root, ".kotta/batches", state);
+    const directory = join(root, ".kotta/process/batches", state);
     if (!existsSync(directory)) continue;
     const match = readdirSync(directory).find((name) => name.endsWith(suffix));
     if (match) return join(directory, match);
@@ -248,7 +248,7 @@ describe("batch finalize", () => {
     // Force the batch into done while the second contract is still claimed and checked out.
     const active = findBatchFile(root, batchId);
     writeFileSync(active, readFileSync(active, "utf8").replace("status: active", "status: done"));
-    const doneDirectory = join(root, ".kotta/batches/done");
+    const doneDirectory = join(root, ".kotta/process/batches/done");
     execFileSync("mkdir", ["-p", doneDirectory]);
     execFileSync("git", ["mv", active, join(doneDirectory, basename(active))], { cwd: root });
     git(root, "add", "-A");
@@ -410,6 +410,6 @@ describe("cleanup never touches unrelated resources", () => {
     attempt(root, ["batch", "finalize", batchId]);
     expect(readFileSync(findBatchFile(root, batchId), "utf8")).toBe(batchBefore);
     expect(git(root, "ls-remote", "origin")).toBe(remoteBefore);
-    for (const contract of contracts) expect(existsSync(join(root, ".kotta/done", contract.filename))).toBe(true);
+    for (const contract of contracts) expect(existsSync(join(root, ".kotta/process/done", contract.filename))).toBe(true);
   });
 });

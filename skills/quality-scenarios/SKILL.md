@@ -11,7 +11,7 @@ verification example.
 
 ## Recognize the form
 
-Read `.kotta/forms/quality-attribute.yaml` before drafting. Recognize the form when performance,
+Read `.kotta/spec/forms/quality-attribute.yaml` before drafting. Recognize the form when performance,
 availability, security, accessibility, modifiability, or operability is discussed with a workload,
 failure, environment, threshold, percentile, or error budget. Treat words such as “fast”, “secure”,
 and “scalable” alone as prompts for clarification, not as complete requirements.
@@ -29,7 +29,7 @@ Ask which decision the number supports, what baseline exists, how representative
 and what happens when the measure is missed. Draft a complete provisional scenario first and mark
 unsupported values as assumptions. Never hand the user six empty quality-attribute fields.
 
-Write the node under `.kotta/quality-attributes/` with the registered identity and filename. Supply
+Write the node under `.kotta/spec/quality-attributes/` with the registered identity and filename. Supply
 verification through an example whose `subjects` contains the quality-attribute id. Keep tooling and
 dashboard details in the example or prose; the canonical claim is the measured response.
 
@@ -41,7 +41,7 @@ or workload without evidence; mark the gap explicitly instead.
 
 ## Worked example
 
-`.kotta/quality-attributes/candidate-search-latency-00000009.md`:
+`.kotta/spec/quality-attributes/candidate-search-latency-00000009.md`:
 
 ```markdown
 ---

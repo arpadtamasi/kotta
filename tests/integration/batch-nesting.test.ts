@@ -89,7 +89,7 @@ describe("a batch that groups other batches", () => {
     expect(secondParent.stdout).toContain(`already belongs to ${middle}`);
 
     // Nothing was written by any of the three refusals.
-    expect(readFileSync(join(root, ".kotta/index.md"), "utf8")).toBeTruthy();
+    expect(readFileSync(join(root, ".kotta/process/index.md"), "utf8")).toBeTruthy();
     expect(run(root, ["batch", "status", top]) as { data: { children: unknown[] } }).toMatchObject({ data: { children: [{ id: middle }] } });
   });
 
@@ -154,7 +154,7 @@ describe("a batch that groups other batches", () => {
     run(root, ["batch", "add", first, second]);
 
     // Written by hand, which is exactly the state `kotta validate` exists to catch.
-    const secondPath = join(root, ".kotta/batches/backlog", `second-${second.slice(-8)}.md`);
+    const secondPath = join(root, ".kotta/process/batches/backlog", `second-${second.slice(-8)}.md`);
     writeFileSync(secondPath, readFileSync(secondPath, "utf8").replace("contracts: []", `contracts: []\nbatches:\n  - ${first}`));
 
     const report = attempt(root, ["validate"]);

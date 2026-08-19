@@ -2,7 +2,7 @@ import { existsSync, linkSync, mkdirSync, readFileSync, readdirSync, unlinkSync,
 import { join, resolve } from "node:path";
 import { decisionDraftFromSource, renderDecision, validateDecision, validateDecisionFile } from "../core/decision.js";
 import { mintId } from "../core/identity.js";
-import { WORKSPACE_DIRECTORY_LABEL, findRepositoryRoot, workspacePath } from "../filesystem/workspace.js";
+import { WORKSPACE_DIRECTORY_LABEL, findRepositoryRoot, processPath, workspacePath } from "../filesystem/workspace.js";
 import { readEnv } from "../core/env.js";
 import { controlPlaneRoot } from "../git/control-plane.js";
 
@@ -28,7 +28,7 @@ export function createDecision(options: CreateDecisionOptions, repositoryRoot?: 
 
   // Git does not carry empty directories into a linked worktree, so `<workspace>/decisions`
   // can be absent there even though the workspace exists.
-  const directory = join(workspace, "decisions");
+  const directory = processPath(root, "decisions");
   mkdirSync(directory, { recursive: true });
   const duplicate = readdirSync(directory).find((name) => name === `${id}.md` || (name.startsWith(`${id}-`) && name.endsWith(".md")));
   if (duplicate) throw new Error(`Decision ${id} already exists at ${join(directory, duplicate)}. Choose a different id or inspect the existing record.`);

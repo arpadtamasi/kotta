@@ -154,27 +154,24 @@ describe("the workspace rules file", () => {
     expect(result.data.pointer).toBe("@.kotta/AGENTS.md");
   });
 
-  test("renders a generic effect-based contract boundary without product-specific exceptions", () => {
+  test("renders the accepted-commitment threshold and the spec/process ownership boundary", () => {
     run(["init"]);
     const status = run(["status"]) as { data: { activeContracts: unknown[] } };
 
     expect(status.data.activeContracts).toEqual([]);
     const written = readFileSync(rules(), "utf8").toLowerCase().replace(/\s+/g, " ");
     expect(written).not.toContain("no change without an active contract");
-    expect(written).toContain("explicitly requested by the human");
-    expect(written).toContain("process-only documentation");
-    expect(written).toContain("tool or agent context");
-    expect(written).toContain("non-product housekeeping");
-    expect(written).toContain("product behaviour");
-    expect(written).toContain("source code");
-    expect(written).toContain("user-visible or published documentation");
-    expect(written).toContain("shipped artifacts or configuration");
-    expect(written).toContain("build or release behaviour");
-    expect(written).toContain("production operations");
-    expect(written).toContain("acceptance-relevant deliverable");
+    expect(written).toContain("a contract gates execution of an accepted commitment");
+    expect(written).toContain("a human has accepted");
+    expect(written).toContain("checked against acceptance conditions");
+    expect(written).toContain("shaping, exploration, and specification may run without a contract");
+    expect(written).toContain("specification itself is the accepted deliverable");
+    expect(written).toContain("crosses into executing the accepted outcome");
     expect(written).toContain("active contract you hold the claim for");
     expect(written).toContain("ask one focused question");
-    expect(written).toContain("never hand-edit `.kotta/`");
+    expect(written).toContain("project-owned specification knowledge");
+    expect(written).toContain("kotta-owned execution and lifecycle state");
+    expect(written).toContain("never hand-edit kotta-owned `process/` records");
   });
 
   test("sync refreshes its own copy and leaves an edited one alone", () => {

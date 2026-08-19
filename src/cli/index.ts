@@ -155,7 +155,7 @@ function humanize(result: unknown): string {
  * `migrate` exists precisely to read the old shape, and `ui` explains the gap on the board rather than
  * refusing to start — everything else stops with a message that names `kotta migrate`.
  */
-const SHAPE_EXEMPT = new Set(["init", "migrate", "ui", "mcp", "sync"]);
+const SHAPE_EXEMPT = new Set(["init", "migrate", "ui", "mcp"]);
 
 /**
  * Which entity an id argument belongs to, by the command group it was typed under.
@@ -203,7 +203,7 @@ program.hook("preAction", (_program, action) => {
 
 program
   .command("migrate")
-  .description("Carry a pre-vocabulary workspace to the current shape: directories, stored states and references")
+  .description("Carry a legacy or flat workspace into the spec/ and process/ namespaces")
   .option("--workspace <path>", "Repository root or workspace directory; omitted uses the repository around the cwd")
   .option("--dry-run", "Report every change without writing anything")
   .option("--json")

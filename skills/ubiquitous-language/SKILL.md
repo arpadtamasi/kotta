@@ -11,7 +11,7 @@ bounded definition over a catalog of plausible synonyms.
 
 ## Recognize the form
 
-Read `.kotta/forms/glossary-term.yaml` before drafting. Recognize a glossary term when the same
+Read `.kotta/spec/forms/glossary-term.yaml` before drafting. Recognize a glossary term when the same
 concept appears under several names, one word carries several meanings, or an inclusion boundary
 changes behavior. Repeated ordinary language is not enough; the term must matter to decisions or
 system behavior.
@@ -29,7 +29,7 @@ Ask what qualifies, what almost qualifies but does not, who uses the term, and w
 loses if a collision exists. Draft the definition and examples from available evidence before asking
 for a decision. Never ask for an alphabetic list of empty glossary entries.
 
-Write the node under `.kotta/glossary-terms/` using the registered identity and filename convention.
+Write the node under `.kotta/spec/glossary-terms/` using the registered identity and filename convention.
 Use prose links to related ids when helpful; glossary terms have no mandatory edges. Keep a term in
 the language in which the domain uses it, regardless of the skill's English instructions.
 
@@ -41,7 +41,7 @@ entity when identity, attributes, and invariants are the real subject.
 
 ## Worked example
 
-`.kotta/glossary-terms/available-person-0000000b.md`:
+`.kotta/spec/glossary-terms/available-person-0000000b.md`:
 
 ```markdown
 ---

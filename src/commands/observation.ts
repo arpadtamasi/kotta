@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { findRepositoryRoot, regenerateIndex, workspacePath } from "../filesystem/workspace.js";
+import { findRepositoryRoot, regenerateIndex, processPath } from "../filesystem/workspace.js";
 import { findContract } from "../filesystem/entities.js";
 import { entityFilename, filenameMatchesId, mintId } from "../core/identity.js";
 import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
@@ -14,7 +14,7 @@ function slugify(value: string): string {
 
 export function findObservation(root: string, id: string) {
   for (const state of ["new", "resolved"]) {
-    const directory = workspacePath(root, "observations", state);
+    const directory = processPath(root, "observations", state);
     if (!existsSync(directory)) continue;
     const filename = readdirSync(directory).find((name) => name.endsWith(".md") && filenameMatchesId(name, id));
     if (filename) return { state, filename, path: join(directory, filename) };
@@ -39,7 +39,7 @@ export function newObservation(options: { title: string; type: string; evidence:
 function writeObservation(root: string, options: { title: string; type: string; evidence: string; discoveredDuring?: string }) {
   const id = mintId("F");
   const filename = entityFilename(id, slugify(options.title));
-  const directory = workspacePath(root, "observations/new");
+  const directory = processPath(root, "observations/new");
   mkdirSync(directory, { recursive: true });
   const data = { id, title: options.title, status: "new", origin: "agent", observation_type: options.type, confidence: "high", severity: "medium", discovered_during: options.discoveredDuring ?? null, created_at: new Date().toISOString().slice(0, 10) };
   const content = `# ${id} — ${options.title}\n\n## Observation\n\n${options.title}.\n\n## Evidence\n\n${options.evidence}\n\n## Impact hypothesis\n\nThis may cause incorrect or inconsistent behaviour.\n\n## Confidence\n\nHigh: the evidence is directly observable.\n\n## Suggested disposition\n\nInvestigate and create the smallest appropriate contract after human approval.\n`;
@@ -59,7 +59,7 @@ export function validateObservation(id: string, repositoryRoot?: string) {
   const title = String(entity.data.title ?? "").trim().toLowerCase();
   const duplicates: string[] = [];
   for (const state of ["new", "resolved"]) {
-    const directory = workspacePath(root, "observations", state);
+    const directory = processPath(root, "observations", state);
     if (!existsSync(directory)) continue;
     for (const filename of readdirSync(directory).filter((name) => name.endsWith(".md") && !filenameMatchesId(name, id))) {
       const candidate = parseMarkdown(readFileSync(join(directory, filename), "utf8"));
@@ -67,7 +67,7 @@ export function validateObservation(id: string, repositoryRoot?: string) {
     }
   }
   for (const state of ["backlog", "defined", "active", "review", "done"]) {
-    const directory = workspacePath(root, state);
+    const directory = processPath(root, state);
     if (!existsSync(directory)) continue;
     for (const filename of readdirSync(directory).filter((name) => name.endsWith(".md"))) {
       const candidate = parseMarkdown(readFileSync(join(directory, filename), "utf8"));
@@ -102,7 +102,7 @@ export function resolveObservation(id: string, disposition: string, approved: bo
     entity.data.disposition = disposition;
     entity.data.resolved_at = new Date().toISOString();
     if (contractId) entity.data.contract = contractId;
-    const directory = workspacePath(root, "observations/resolved");
+    const directory = processPath(root, "observations/resolved");
     mkdirSync(directory, { recursive: true });
     const destination = join(directory, observation.filename);
     writeFileSync(destination, renderMarkdown(entity.data, entity.content));

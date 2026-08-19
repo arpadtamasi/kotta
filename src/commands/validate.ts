@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
-import { WORKSPACE_DIRECTORY_LABEL, findRepositoryRoot, hasWorkspace, workspacePath } from "../filesystem/workspace.js";
+import { WORKSPACE_DIRECTORY_LABEL, findRepositoryRoot, hasWorkspace, processPath, workspacePath } from "../filesystem/workspace.js";
 import { BATCH_STATES, CONTRACT_STATES, idFromEntityFile } from "../filesystem/entities.js";
 import { validateContractFile } from "../core/validation.js";
 import { validateBatch } from "./batch.js";
@@ -48,7 +48,7 @@ export function validateWorkspace() {
   const seen = new Map<string, Located[]>();
   const references: Array<{ id: string; field: "depends_on" | "blocks"; reference: string; path: string }> = [];
   for (const state of CONTRACT_STATES) {
-    const directory = workspacePath(root, state);
+    const directory = processPath(root, state);
     if (!existsSync(directory)) continue;
     for (const filename of readdirSync(directory).filter((name) => name.endsWith(".md"))) {
       const path = join(directory, filename);
@@ -67,7 +67,7 @@ export function validateWorkspace() {
         // validateContractFile already reports malformed frontmatter for this path.
       }
       if (state === "active") {
-        const claimPath = workspacePath(root, "claims", `${id}.yaml`);
+        const claimPath = processPath(root, "claims", `${id}.yaml`);
         if (!existsSync(claimPath)) errors.push({ code: "MISSING_CLAIM", message: `Active contract ${id} has no claim.`, path });
         else {
           const claimErrors = validateClaim(parse(readFileSync(claimPath, "utf8")) as Record<string, unknown>);
@@ -88,7 +88,7 @@ export function validateWorkspace() {
   }
   const seenBatches = new Map<string, Located[]>();
   for (const state of BATCH_STATES) {
-    const directory = workspacePath(root, "batches", state);
+    const directory = processPath(root, "batches", state);
     if (!existsSync(directory)) continue;
     for (const filename of readdirSync(directory).filter((name) => name.endsWith(".md"))) {
       const path = join(directory, filename);
@@ -103,7 +103,7 @@ export function validateWorkspace() {
     }
   }
   errors.push(...duplicateIssues(seenBatches, "batch"));
-  const decisionsDirectory = workspacePath(root, "decisions");
+  const decisionsDirectory = processPath(root, "decisions");
   const decisions = existsSync(decisionsDirectory)
     ? readdirSync(decisionsDirectory).filter((name) => name.endsWith(".md"))
     : [];
@@ -120,10 +120,10 @@ export function validateWorkspace() {
   let events: ReturnType<typeof readEvents> = [];
   try { events = readEvents(root); }
   catch (error) {
-    errors.push({ code: "INVALID_EVENT", message: error instanceof Error ? error.message : String(error), path: workspacePath(root, "events") });
+    errors.push({ code: "INVALID_EVENT", message: error instanceof Error ? error.message : String(error), path: processPath(root, "events") });
   }
   for (const event of events) {
-    const path = workspacePath(root, "events", event.entity, `${event.id}.json`);
+    const path = processPath(root, "events", event.entity, `${event.id}.json`);
     for (const message of validateEvent(event)) errors.push({ code: "INVALID_EVENT", message: `${event.id}: ${message}.`, path });
     if (event.contract && !seen.has(event.contract)) errors.push({ code: "DANGLING_EVENT_CONTRACT", message: `${event.id} references missing contract ${event.contract}.`, path });
   }

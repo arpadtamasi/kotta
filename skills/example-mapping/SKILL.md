@@ -11,7 +11,7 @@ store only established facts and explicitly accepted gaps in canonical nodes.
 
 ## Recognize the forms
 
-Read `.kotta/forms/business-rule.yaml` and `.kotta/forms/example.yaml` before drafting. Recognize a
+Read `.kotta/spec/forms/business-rule.yaml` and `.kotta/spec/forms/example.yaml` before drafting. Recognize a
 business rule in durable “must”, “only”, “never”, eligibility, threshold, classification, or
 derivation language. Recognize an example when concrete inputs, context, and observable outcomes can
 prove or falsify a story, use case, rule, or quality scenario.
@@ -29,7 +29,7 @@ Ask for real values, boundary values, observable outcomes, and the business cons
 violation. Draft a plausible case from stated facts first, then ask narrow questions about remaining
 ambiguity. Never ask the user to fill a blank Given/When/Then card.
 
-Write nodes under `.kotta/business-rules/` and `.kotta/examples/`. Let the example's `subjects`
+Write nodes under `.kotta/spec/business-rules/` and `.kotta/spec/examples/`. Let the example's `subjects`
 edge be canonical; do not mirror it onto the proved nodes. Keep setup facts in Given, the single
 event under When, and externally observable results under Then.
 
@@ -41,7 +41,7 @@ load or failure. Avoid turning incidental implementation details into business r
 
 ## Worked examples
 
-`.kotta/business-rules/availability-covers-assignment-00000005.md`:
+`.kotta/spec/business-rules/availability-covers-assignment-00000005.md`:
 
 ```markdown
 ---
@@ -65,7 +65,7 @@ Apply the rule to automatic matching and manual shortlist additions. Approved sp
 are separate staffing requests rather than exceptions.
 ```
 
-`.kotta/examples/unavailable-candidate-is-excluded-00000006.md`:
+`.kotta/spec/examples/unavailable-candidate-is-excluded-00000006.md`:
 
 ```markdown
 ---

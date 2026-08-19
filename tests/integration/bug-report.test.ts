@@ -212,12 +212,12 @@ describe("maintainer triage of a submitted issue", () => {
     const unapproved = spawnSync("node", [cli, "observation", "resolve", observationId, "--disposition", "create-contract", "--json"], { cwd: root, encoding: "utf8" });
     expect(unapproved.status).not.toBe(0);
     expect(`${unapproved.stdout}${unapproved.stderr}`).toMatch(/approval/i);
-    expect(readdirSync(join(root, ".kotta/backlog")).filter((name) => name.endsWith(".md"))).toEqual([]);
+    expect(readdirSync(join(root, ".kotta/process/backlog")).filter((name) => name.endsWith(".md"))).toEqual([]);
 
     const resolved = run(root, ["observation", "resolve", observationId, "--disposition", "create-contract", "--approve"]) as { ok: boolean; data: { contractId: string } };
     expect(resolved.ok).toBe(true);
-    const contractFile = readdirSync(join(root, ".kotta/backlog")).filter((name) => name.endsWith(".md"));
+    const contractFile = readdirSync(join(root, ".kotta/process/backlog")).filter((name) => name.endsWith(".md"));
     expect(contractFile).toEqual([`kotta-contract-brief-fails-without-profiles-${resolved.data.contractId.slice(-8)}.md`]);
-    expect(readFileSync(join(root, ".kotta/backlog", contractFile[0]), "utf8")).toContain(`source_observation: ${observationId}`);
+    expect(readFileSync(join(root, ".kotta/process/backlog", contractFile[0]), "utf8")).toContain(`source_observation: ${observationId}`);
   });
 });

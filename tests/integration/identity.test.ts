@@ -40,7 +40,7 @@ function writeSequentialContract(root: string, id: string, slug: string, extra: 
   const body = ["Outcome", "Scope", "Non-goals", "Acceptance", "Verification", "Constraints", "Open decisions", "Execution notes"]
     .map((heading) => `## ${heading}\n\n${heading === "Open decisions" ? "None." : "Preserved."}`)
     .join("\n\n");
-  const path = join(root, ".kotta/backlog", `${id}-${slug}.md`);
+  const path = join(root, ".kotta/process/backlog", `${id}-${slug}.md`);
   writeFileSync(path, `---\n${frontmatter}\n---\n# ${id} — ${slug}\n\n${body}\n`);
   return path;
 }
@@ -79,13 +79,13 @@ describe("coordination-free identity (D-003, narrowed by D-010)", () => {
     expect(alpha.batch.id).not.toBe(beta.batch.id);
 
     // The generated index is already canonical; there is no state merge to perform.
-    const index = readFileSync(join(root, ".kotta/index.md"), "utf8");
+    const index = readFileSync(join(root, ".kotta/process/index.md"), "utf8");
     expect(index).not.toContain("<<<<<<<");
     for (const entry of minted) expect(index).toContain(`${entry.observation.id.slice(-8)}`);
 
     const validation = run(root, ["validate"]);
     expect(validation).toMatchObject({ ok: true });
-    expect(readdirSync(join(root, ".kotta/backlog")).filter((name) => name.endsWith(".md"))).toHaveLength(2);
+    expect(readdirSync(join(root, ".kotta/process/backlog")).filter((name) => name.endsWith(".md"))).toHaveLength(2);
 
     for (const { path } of worktrees) git(root, "worktree", "remove", path, "--force");
   });
@@ -108,7 +108,7 @@ describe("coordination-free identity (D-003, narrowed by D-010)", () => {
 
     // The legacy contract still moves through the workflow under its own id and filename.
     expect(run(root, ["contract", "sign", "T-001", "--approve"])).toMatchObject({ ok: true });
-    expect(readdirSync(join(root, ".kotta/defined"))).toEqual(["T-001-legacy-work.md"]);
+    expect(readdirSync(join(root, ".kotta/process/defined"))).toEqual(["T-001-legacy-work.md"]);
   });
 
   test("validate reports DUPLICATE_ID when two entities share one id, in either form", () => {
@@ -120,7 +120,7 @@ describe("coordination-free identity (D-003, narrowed by D-010)", () => {
       // Two distinct entities claiming one id inside a single state directory. One entity left in two
       // state directories is a different failure with a deterministic resolution (T-036).
       const twin = duplicate ? `${duplicate}-second-entity.md` : `second-entity-${basename(source).split("-").pop()}`;
-      copyFileSync(source, join(root, ".kotta/backlog", twin));
+      copyFileSync(source, join(root, ".kotta/process/backlog", twin));
 
       const report = attempt(root, ["validate"]);
       expect(report.status).toBe(1);

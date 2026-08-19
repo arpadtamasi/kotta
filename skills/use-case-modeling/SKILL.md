@@ -11,7 +11,7 @@ requiring an UML diagram.
 
 ## Recognize the form
 
-Read `.kotta/forms/use-case.yaml` before drafting. Recognize a use case when the conversation has an
+Read `.kotta/spec/forms/use-case.yaml` before drafting. Recognize a use case when the conversation has an
 initiating actor, a meaningful result, several ordered system interactions, and alternatives or
 failures that must remain understandable together. Treat screen-by-screen instructions and internal
 call traces as implementation detail unless they express actor-visible behavior.
@@ -29,7 +29,7 @@ Ask whether the actor can observe each system response, which guarantee survives
 must be true when the interaction ends. Draft the likely flow before asking follow-ups. Mark uncertain
 facts as assumptions in prose; never hand over an empty use-case template.
 
-Write the node under `.kotta/use-cases/` with its registered ULID prefix and filename convention.
+Write the node under `.kotta/spec/use-cases/` with its registered ULID prefix and filename convention.
 Supply `actor` and `goal` directly. Supply evidence through example nodes whose `subjects` includes
 the use-case id.
 
@@ -42,7 +42,7 @@ independently meaningful outcomes.
 
 ## Worked example
 
-`.kotta/use-cases/build-qualified-shortlist-00000004.md`:
+`.kotta/spec/use-cases/build-qualified-shortlist-00000004.md`:
 
 ```markdown
 ---

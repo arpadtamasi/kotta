@@ -6,12 +6,12 @@ description: This skill should be used when the user asks to "map an outcome", "
 # Impact mapping
 
 Turn a proposed output into a small chain of measurable outcomes and participating roles. Use
-the canonical `goal` and `actor` forms from `.kotta/forms/`; keep the workshop notation in
+the canonical `goal` and `actor` forms from `.kotta/spec/forms/`; keep the workshop notation in
 Markdown. Treat diagrams as optional illustrations, never as the canonical record.
 
 ## Recognize the forms
 
-Read `.kotta/forms/goal.yaml` and `.kotta/forms/actor.yaml` before drafting. Recognize a goal
+Read `.kotta/spec/forms/goal.yaml` and `.kotta/spec/forms/actor.yaml` before drafting. Recognize a goal
 when the conversation names a desired change, success measure, baseline, or target. Recognize an
 actor when it names a user role, stakeholder, or external system that can change the outcome.
 Separate roles by goals and responsibilities, not by demographic labels or UI permissions alone.
@@ -52,7 +52,7 @@ unless their goals or responsibilities actually differ.
 
 ## Worked examples
 
-`.kotta/goals/reduce-staffing-lead-time-00000001.md`:
+`.kotta/spec/goals/reduce-staffing-lead-time-00000001.md`:
 
 ```markdown
 ---
@@ -78,7 +78,7 @@ Reduce median elapsed time from an approved request to a three-person shortlist 
 days to 4 working hours during the first quarter after rollout.
 ```
 
-`.kotta/actors/staffing-coordinator-00000002.md`:
+`.kotta/spec/actors/staffing-coordinator-00000002.md`:
 
 ```markdown
 ---

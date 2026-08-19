@@ -11,7 +11,7 @@ they reveal a durable canonical form. Keep Mermaid optional and subordinate to t
 
 ## Recognize the forms
 
-Read `.kotta/forms/entity.yaml` and `.kotta/forms/state-machine.yaml` before drafting. Recognize an
+Read `.kotta/spec/forms/entity.yaml` and `.kotta/spec/forms/state-machine.yaml` before drafting. Recognize an
 entity when something retains identity while its attributes change and multiple behaviors rely on
 its invariants. Recognize a state machine when valid actions or outcomes depend on current state,
 especially around approval, retry, cancellation, expiry, and terminal conditions.
@@ -32,7 +32,7 @@ rejects a transition, and whether repeated commands are safe. Draft the discover
 conversation, label uncertain policies, and ask targeted follow-ups. Never begin with empty entity
 or state tables.
 
-Write nodes under `.kotta/entities/` and `.kotta/state-machines/` with their registered identity and
+Write nodes under `.kotta/spec/entities/` and `.kotta/spec/state-machines/` with their registered identity and
 filename conventions. Keep attributes semantic; defer storage types and indexes unless they are
 domain constraints.
 
@@ -44,7 +44,7 @@ are incidental persistence flags. Avoid treating every event-storming sticky as 
 
 ## Worked examples
 
-`.kotta/entities/staffing-request-00000007.md`:
+`.kotta/spec/entities/staffing-request-00000007.md`:
 
 ```markdown
 ---
@@ -75,7 +75,7 @@ The end date is not before the start date. An approved request has at least one 
 competency. A published shortlist belongs to this request only.
 ```
 
-`.kotta/state-machines/staffing-request-lifecycle-00000008.md`:
+`.kotta/spec/state-machines/staffing-request-lifecycle-00000008.md`:
 
 ```markdown
 ---

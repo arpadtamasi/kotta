@@ -1,0 +1,38 @@
+id: use-case
+version: 1
+directory: use-cases
+canonical_source: Jacobson
+description: A goal-directed interaction between an actor and the system, including alternatives.
+identity:
+  prefix: UC
+  format: "<prefix>-<26-character lowercase Crockford ULID>"
+  filename: "<slug>-<last 8 id characters>.md"
+required_fields:
+  frontmatter: [id, form, title]
+  body_headings: [Intent, Preconditions, Main success scenario, Alternatives]
+required_edges:
+  - name: actor
+    direction: outgoing
+    fields: [actor]
+    source_forms: [use-case]
+    target_forms: [actor]
+    minimum: 1
+    question: Which actor owns this interaction?
+  - name: goal
+    direction: outgoing
+    fields: [goal]
+    source_forms: [use-case]
+    target_forms: [goal]
+    minimum: 1
+    question: Which goal does this use case serve?
+  - name: evidence
+    direction: incoming
+    fields: [subjects]
+    source_forms: [example]
+    target_forms: [use-case]
+    minimum: 1
+    question: What example proves this use case?
+recognition_signals:
+  - A multi-step interaction has a clear initiating actor and result.
+  - Preconditions, alternative paths, failures, or cancellation matter.
+  - Several stories describe one end-to-end user goal.

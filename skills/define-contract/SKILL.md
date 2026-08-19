@@ -14,7 +14,7 @@ Investigate before asking the human. Use the `kotta` CLI for every contract crea
 5. Record unresolved human choices under open decisions. When none remain, write `None`, `N/A`, or
    `No open decisions`, optionally followed by a period; these are the accepted empty markers. Never
    invent intent or trade-offs.
-   When a human resolves a choice and asks to retain it durably, use `kotta decision create --from <draft.md> --approve` instead of editing `.kotta/decisions/`.
+   When a human resolves a choice and asks to retain it durably, use `kotta decision create --from <draft.md> --approve` instead of editing `.kotta/process/decisions/`.
 6. Create the item with `kotta contract new`, write the investigated definition to a temporary Markdown file, then apply it with `kotta contract define <contract-id> --from <file>`. Keep incomplete work in backlog.
 7. Run `kotta contract validate <contract-id>` and `kotta validate`.
 8. Only after the definition is complete, call the Kotta `approval_request` tool for
