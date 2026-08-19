@@ -12,14 +12,13 @@ None.
 
 ## Defined contracts
 
-- a-contract-megnevezi-a-specifikaciot-amire-tamaszkodik-m9zs70ym
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
 - one-operation-registry-derives-both-the-cli-and-the-mcp-surf-06fw8n0g
 - the-agent-rules-reach-the-calling-chat-as-a-generated-file-n-atnxppcm
 
 ## Active contracts
 
-None.
+- a-contract-megnevezi-a-specifikaciot-amire-tamaszkodik-m9zs70ym
 
 ## Review
 
