@@ -5,7 +5,7 @@ title: >-
   csak szamjegyes D-xxx alakot ismer
 status: new
 origin: agent
-finding_type: bug
+observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null

@@ -11,7 +11,7 @@ The rules below are enforced by the `kotta` CLI and by the Kotta MCP server. The
 package do not share a name, so the package cannot be guessed from the command:
 
 ```bash
-npm install --global @arpadtamasi/kotta@0.5.0   # or: npx -y -p @arpadtamasi/kotta@0.5.0 kotta status
+npm install --global @arpadtamasi/kotta@0.6.0   # or: npx -y -p @arpadtamasi/kotta@0.6.0 kotta status
 ```
 
 If you can install neither — a hosted environment with no network or no npm — you still do not
@@ -20,12 +20,14 @@ leave every lifecycle change to an environment that has one of the two surfaces.
 
 ## The rule everything else follows from
 
-`.kotta/` is the canonical source of truth for work: contracts, observations, batches, lifecycle
-state, claims and decisions. Chat, the board (`kotta ui`), pull requests and CI are views or
-history — they never override `.kotta/`. The board is read-only. Never hand-edit workspace files;
-use the calling chat's Kotta MCP tools for actions and human approvals, and the CLI for automation
-and recovery. Both validate before writing and name the
-violated rule when they refuse.
+`.kotta/` is the canonical source of truth, with two deliberately different ownership
+boundaries. `.kotta/spec/` is project-owned specification knowledge: its form registry and
+the nodes stored in form-declared directories may be shaped directly. `.kotta/process/` is
+Kotta-owned execution and lifecycle state: contracts, observations, batches, profiles, claims,
+events, decisions, and the generated index. Chat, the board (`kotta ui`), pull requests and CI are
+views or history — they never override these files. The board is read-only. Never hand-edit
+`process/`; use the calling chat's Kotta MCP tools for actions and human approvals, and the CLI for
+automation and recovery. Both validate before writing and name the violated rule when they refuse.
 
 ## Orient yourself first
 
@@ -100,17 +102,15 @@ terminal. `kotta ui` only displays the resulting canonical state and timeline.
 
 ## Rules for agents
 
-1. **Gate product and deliverable work, not supporting housekeeping.** A bounded repository change
-   explicitly requested by the human needs no contract only when its effect is confined to
-   process-only documentation, tool or agent context, or similar non-product housekeeping and it
-   changes no product or promised deliverable. Product behaviour, source code, user-visible or
-   published documentation, shipped artifacts or configuration, build or release behaviour,
-   production operations, and any other acceptance-relevant deliverable require an active contract
-   you hold the claim for.
-   Purpose and effect decide, not path or extension. If an artifact's role is ambiguous, ask one
-   focused question; do not create a contract or assume an exemption. If supporting work reveals
-   product or deliverable impact, stop before that impact and enter the contract lifecycle. Always
-   obey stricter project rules, and never hand-edit `.kotta/`.
+1. **A contract gates execution of an accepted commitment.** Use an active contract you hold the
+   claim for when the work executes a product or deliverable commitment a human has accepted and
+   whose outcome can be checked against acceptance conditions. Shaping, exploration, and
+   specification may run without a contract while they are discovering or proposing that
+   commitment; they require one when the specification itself is the accepted deliverable or the
+   work crosses into executing the accepted outcome. Purpose and effect decide, not path or file
+   type. If it is unclear whether a commitment has been accepted, ask one focused question. Always
+   obey stricter project rules, freely shape project-owned `spec/` nodes, and never hand-edit
+   Kotta-owned `process/` records.
 2. **Stay inside the contract's scope.** Anything you notice outside it becomes an observation, not
    a silent fix: `kotta observation new --title "…" --type <type> --evidence "…"`.
 3. **An observation is not a contract.** It is dispositioned by `kotta observation validate <id>`
@@ -138,6 +138,11 @@ If the Kotta skills are installed, prefer them — they encode the how: `explore
 `execute-batch`, `submit-review`, `close-contract`, `consolidate-model`, `report-kotta-bug`. If they are not installed,
 the CLI above is the whole contract; nothing depends on the skills being present. `kotta sync`
 installs them.
+
+For optional specification workshops and analysis, use `impact-mapping`, `story-mapping`,
+`use-case-modeling`, `example-mapping`, `event-storming`, `ubiquitous-language`,
+`quality-scenarios`, `design-by-contract`, and `requirements-traceability`. They draft and read
+Markdown specification nodes under `.kotta/spec/`; they never make specification a lifecycle gate.
 
 A defect in Kotta itself is not a contract here: use `report-kotta-bug`, or the issue form at
 <https://github.com/arpadtamasi/kotta/issues>.
