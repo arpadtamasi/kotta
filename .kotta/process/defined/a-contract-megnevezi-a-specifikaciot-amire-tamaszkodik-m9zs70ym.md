@@ -1,7 +1,7 @@
 ---
 id: T-01m0bvztry5z4j3k72m9zs70ym
 title: 'A contract megnevezi a specifikációt, amire támaszkodik'
-status: backlog
+status: defined
 origin: human
 types:
   - feature
