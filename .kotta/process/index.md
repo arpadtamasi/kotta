@@ -58,10 +58,12 @@ None.
 - a-resolve-disposition-enumja-elte-r-a-publikalt-sematol-atta-dm37tkv3
 - a-signed-contract-cannot-be-revised-narrowing-one-requires-c-xvjsfgbq
 - a-slug-hash-emberi-azonosito-mar-letezik-es-dokumentalt-a-ui-1p7xrhzb
+- a-specifika-cio-s-munka-ra-tova-bbra-is-contract-ke-szu-l-a--vc4e2xry
 - a-ticket-brief-nem-szedi-fel-a-mintazott-azonositoju-dontese-phd95n90
 - a-vitest-a-worktrees-ala-is-benez-egy-elo-ticket-worktree-me-cahhcmt5
 - a-workspace-konyvtar-atnevezese-uressen-mutatja-a-boardot-am-0n2rjcpt
 - a1-form-installation-contradicts-the-no-code-invariant-p15dnp69
+- az-approval-chatben-ke-rde-s-a-gyakorlatban-me-gis-parancsli-197dfjs9
 - az-approve-kapu-ceremonia-bizonyitek-nelkul-senki-nem-elleno-md9f1zcv
 - az-entitast-letrehozo-parancsok-nem-irjak-ki-az-azonositot-e-9mg56yk6
 - az-id-azert-szivarog-a-human-kommunikaciora-mert-o-az-egyetl-szetd8cz
