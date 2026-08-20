@@ -67,6 +67,7 @@ None.
 - a-vitest-a-worktrees-ala-is-benez-egy-elo-ticket-worktree-me-cahhcmt5
 - a-workspace-konyvtar-atnevezese-uressen-mutatja-a-boardot-am-0n2rjcpt
 - a1-form-installation-contradicts-the-no-code-invariant-p15dnp69
+- an-observation-has-no-exit-into-the-spec-so-every-constructi-f5c4wer9
 - az-approval-chatben-ke-rde-s-a-gyakorlatban-me-gis-parancsli-197dfjs9
 - az-approve-kapu-ceremonia-bizonyitek-nelkul-senki-nem-elleno-md9f1zcv
 - az-entitast-letrehozo-parancsok-nem-irjak-ki-az-azonositot-e-9mg56yk6
@@ -97,6 +98,7 @@ None.
 - renaming-the-workspace-drops-tracked-but-now-ignored-files-o-nkb8sbc4
 - schemas-package-schema-json-rejects-every-started-package-an-8et554b5
 - state-drift-has-no-reconcile-command-so-the-board-can-only-p-5mqcvk49
+- tests-integration-batch-coordinator-test-ts-fails-non-determ-b316tnhj
 - tests-integration-ui-port-cli-test-ts-is-flaky-aftereach-tim-hqqt57nj
 - the-a-team-directory-name-outlives-the-vocabulary-migration--1n909nqf
 - the-advertised-install-version-is-hardcoded-in-three-files-a-wn3kw5t7
