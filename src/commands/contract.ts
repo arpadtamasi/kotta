@@ -221,7 +221,11 @@ export function startContract(
     if (adopting && git(root, ["rev-parse", "HEAD"]) !== startCommit) {
       throw new Error(`The adopted checkout is not at start ref '${startRef}' commit ${startCommit}; Kotta cannot move an environment-owned checkout.`);
     }
-    if (!adopting) {
+    // Releasing a claim returns the contract to defined and preserves its branch and worktree on
+    // purpose, so a start that finds exactly the pair this contract records is resuming that work
+    // rather than colliding with it. Any other existing branch of the same name still refuses.
+    const resuming = !adopting && entity.data.branch === branch && Boolean(git(root, ["branch", "--list", branch]));
+    if (!adopting && !resuming) {
       assertSafeWorktreePath(worktree);
       if (git(root, ["branch", "--list", branch])) throw new Error(`Branch already exists: ${branch}`);
     }
@@ -230,8 +234,11 @@ export function startContract(
     let lifecyclePath: string | null = null;
     const active = processPath(root, "active", contract.filename);
     try {
-      if (!adopting) {
+      if (!adopting && !resuming) {
         git(root, ["worktree", "add", worktree, "-b", branch, startCommit]);
+        createdWorktree = true;
+      } else if (resuming && !existsSync(worktree)) {
+        git(root, ["worktree", "add", worktree, branch]);
         createdWorktree = true;
       }
       if (readEnv("TEST_FAIL_START_AT") === "after-worktree") throw new Error("Injected start failure after worktree creation.");
@@ -260,7 +267,7 @@ export function startContract(
       if (readEnv("TEST_FAIL_START_AT") === "after-claim") throw new Error("Injected start failure after claim creation.");
       assertValid(validateContractFile(active, "active"));
       regenerateIndex(root);
-      lifecyclePath = appendLifecycleEvent(root, id, "active", `Execution started on ${branch} with ${agent} from ${startRef} at ${startCommit}${adopting ? ", adopting the only checkout; Kotta created no branch and no worktree." : "."}`).path;
+      lifecyclePath = appendLifecycleEvent(root, id, "active", `Execution started on ${branch} with ${agent} from ${startRef} at ${startCommit}${adopting ? ", adopting the only checkout; Kotta created no branch and no worktree." : resuming ? ", resuming the branch and worktree a released claim left behind." : "."}`).path;
       commitControlState(root, `chore(kotta): start ${id}`);
     } catch (error) {
       if (lifecyclePath && existsSync(lifecyclePath)) unlinkSync(lifecyclePath);

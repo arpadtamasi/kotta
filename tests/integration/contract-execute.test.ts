@@ -525,6 +525,38 @@ describe("contract execute (T-035 / D-009)", () => {
     expect(git(context.repository, "status", "--porcelain")).toBe("");
   });
 
+  test("releasing a claim returns the contract to defined, so start and execute accept it again (F-01kzhnkbpdfc2v4bste7bbdr58)", () => {
+    const context = fixture("release-restart");
+    const { repository, id } = context;
+    const started = (expectOk(cliRun(repository, ["contract", "start", id, "--agent", "codex", "--caller", "--json"])) as { data: { worktree: string; branch: string } }).data;
+    const executionWorktree = resolve(repository, started.worktree);
+
+    expectOk(cliRun(executionWorktree, ["claim", "release", id, "--force", "--json"]));
+
+    // Acceptance 1: defined again, with no claim left behind.
+    expect(expectOk(cliRun(repository, ["contract", "validate", id, "--json"]))).toMatchObject({ data: { state: "defined" } });
+    expect(existsSync(claimPath(repository, id))).toBe(false);
+
+    // Acceptance 3: the claim deletion and the return to defined are one commit, and the control
+    // plane is left clean — no intermediate commit shows an active contract with no claim.
+    const released = git(repository, "show", "--name-only", "--format=", "HEAD").trim().split("\n");
+    expect(released).toContain(`.kotta/process/claims/${id}.yaml`);
+    expect(released.some((path) => path.startsWith(".kotta/process/defined/"))).toBe(true);
+    expect(git(repository, "status", "--porcelain")).toBe("");
+
+    // Acceptance 4: release preserved the branch and the worktree, and start reuses that pair
+    // instead of refusing with "Branch already exists".
+    expect(git(repository, "branch", "--list", started.branch).trim()).not.toBe("");
+    const restarted = (expectOk(cliRun(repository, ["contract", "start", id, "--agent", "codex", "--json"])) as { data: Record<string, unknown> }).data;
+    expect(restarted).toMatchObject({ branch: started.branch, worktree: started.worktree });
+    expect(existsSync(claimPath(repository, id))).toBe(true);
+
+    // Acceptance 2: execute accepts a released contract too, and reaches the agent.
+    expectOk(cliRun(executionWorktree, ["claim", "release", id, "--force", "--json"]));
+    const executed = (expectOk(cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "commit"))) as { data: Record<string, unknown> }).data;
+    expect(executed).toMatchObject({ state: "implemented", contractState: "active", branch: started.branch });
+  });
+
   test.each(["after-worktree", "after-active", "after-claim"])("start rolls back cleanly when it fails %s", (boundary) => {
     const context = fixture(`rollback-${boundary}`);
     const result = cliRun(context.repository, ["contract", "start", context.id, "--agent", "codex", "--json"], { KOTTA_TEST_FAIL_START_AT: boundary });
