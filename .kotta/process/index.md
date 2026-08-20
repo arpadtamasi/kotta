@@ -21,7 +21,6 @@ None.
 
 ## Active contracts
 
-- kotta-validate-reads-the-spec-graph-ebskv4c0
 - review-evidence-must-answer-its-own-check-duplicate-blobs-ar-tv3d65m7
 
 ## Review
@@ -30,6 +29,7 @@ None.
 - a-task-is-revisable-until-execution-define-amends-backlog-an-tfpam55r
 - contract-gate-treats-standalone-generated-documents-as-kotta-grgv0mtw
 - every-approval-leaves-a-receipt-approved-by-approved-at-appr-6vs5h0w6
+- kotta-validate-reads-the-spec-graph-ebskv4c0
 
 ## Blocked
 
