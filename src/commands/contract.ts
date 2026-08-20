@@ -55,7 +55,15 @@ export function newContract(options: { title: string; type: string; profiles: st
   return { ok: true, command: "contract new", data: { id, path } };
 }
 
-const DEFINITION_FIELDS = new Set(["id", "types", "profiles", "priority", "risk", "depends_on", "blocks", "spec"]);
+const DEFINITION_FIELDS = new Set(["id", "title", "types", "profiles", "priority", "risk", "depends_on", "blocks", "spec"]);
+
+/** A title changes only through the explicit definition field; body headings are prose. */
+function definitionTitle(draft: ReturnType<typeof parseMarkdown>, current: unknown): string {
+  if (draft.data.title === undefined) return String(current ?? "").trim();
+  const explicit = String(draft.data.title).trim();
+  if (!explicit) throw new Error("Contract title is required.");
+  return explicit;
+}
 
 /** The `spec` entries a contract carries, normalised; absent and empty are the same thing. */
 export function specReferences(data: Record<string, unknown>): string[] {
@@ -77,14 +85,18 @@ function assertSpecReferences(root: string, id: string, value: unknown): void {
 export function defineContract(id: string, definition: string, repositoryRoot?: string) {
   const root = controlPlaneRoot(repositoryRoot ?? findRepositoryRoot());
   const contract = findContract(root, id);
-  if (contract.state !== "backlog") throw new Error(`Contract ${id} can only be defined while it is in backlog.`);
-  const current = parseMarkdown(readFileSync(contract.path, "utf8"));
+  if (!["backlog", "defined"].includes(contract.state)) {
+    throw new Error(`Contract ${id} can only be defined before execution, while it is in backlog or defined; it is ${contract.state}.`);
+  }
+  const original = readFileSync(contract.path, "utf8");
+  const current = parseMarkdown(original);
   const draft = parseMarkdown(definition);
   const unknown = Object.keys(draft.data).filter((field) => !DEFINITION_FIELDS.has(field));
   if (unknown.length) throw new Error(`Unsupported definition fields: ${unknown.join(", ")}.`);
   if (draft.data.id !== undefined && String(draft.data.id) !== id) throw new Error(`Definition id '${String(draft.data.id)}' does not match ${id}.`);
   if (!draft.content.trim()) throw new Error("Contract definition body is required.");
 
+  current.data.title = definitionTitle(draft, current.data.title);
   for (const field of ["types", "profiles", "priority", "risk", "depends_on", "blocks", "spec"] as const) {
     if (draft.data[field] !== undefined) current.data[field] = draft.data[field];
   }
@@ -95,17 +107,31 @@ export function defineContract(id: string, definition: string, repositoryRoot?: 
   }
   assertSpecReferences(root, id, current.data.spec);
   current.data.updated_at = new Date().toISOString().slice(0, 10);
+  const filename = entityFilename(id, slugify(String(current.data.title)));
+  const destination = join(processPath(root, contract.state), filename);
+  if (destination !== contract.path && existsSync(destination)) {
+    throw new Error(`Contract ${id} cannot be retitled because ${destination} already exists.`);
+  }
   const candidate = `${contract.path}.define-${process.pid}.tmp`;
   writeFileSync(candidate, renderMarkdown(current.data, draft.content));
+  let published = false;
   try {
-    assertValid(validateContractDefinitionFile(candidate));
+    assertValid(contract.state === "backlog"
+      ? validateContractDefinitionFile(candidate)
+      : validateContractFile(candidate, "defined"));
     renameSync(candidate, contract.path);
+    published = true;
+    if (destination !== contract.path) renameSync(contract.path, destination);
   } catch (error) {
     if (existsSync(candidate)) unlinkSync(candidate);
+    if (published && destination !== contract.path && existsSync(contract.path)) writeFileSync(contract.path, original);
     throw error;
   }
+  appendLifecycleEvent(root, id, contract.state, contract.state === "defined"
+    ? "Contract definition amended before execution."
+    : "Contract definition updated while in backlog.");
   regenerateIndex(root);
-  return { ok: true, command: "contract define", data: { id, path: contract.path } };
+  return { ok: true, command: "contract define", data: { id, path: destination } };
 }
 
 function profileHeadings(profile: string): string[] {

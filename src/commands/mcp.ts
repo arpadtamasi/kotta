@@ -116,7 +116,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
 
   server.registerTool("contract_define", {
     title: "Define a Kotta contract",
-    description: "Replace a backlog contract placeholder with a complete Markdown definition, preserving canonical identity and validating before publication.",
+    description: "Apply a complete Markdown definition to a backlog or defined contract before execution, preserving canonical identity and validating before publication.",
     inputSchema: {
       id: z.string().min(1),
       definition: z.string().min(1),
@@ -129,7 +129,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
         commitControlState(controlRoot, `chore(kotta): define ${id}`);
         return defined;
       }, { requireClean: false });
-      return toolResult(result as unknown as ToolPayload, `Defined ${id}; it is ready for validation.`);
+      return toolResult(result as unknown as ToolPayload, `Updated ${id}; it is ready for validation.`);
     } catch (error) { return toolError(error); }
   });
 
