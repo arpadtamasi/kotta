@@ -28,6 +28,15 @@ branch: null
 pull_request: null
 created_at: '2026-08-20'
 updated_at: '2026-08-20'
+coverage:
+  Every surface names the work unit task; contract appears only in compatibility shims and history.:
+    - GT-01m0f0wn89w5k8sk1rgegc9rxm
+    - E-01m0f0wn898ayyrvy613zjx3ye
+  'A workspace written by the previous version is read correctly, with a deprecation warning naming the migration.':
+    - SM-01m0f0wn89gjy6dbk1j6fjpv6j
+  kotta sync regenerates AGENTS.md and skills in the new vocabulary; the migration note reaches the CHANGELOG and the site.:
+    - GT-01m0f0wn89w5k8sk1rgegc9rxm
+    - SM-01m0f0wn89gjy6dbk1j6fjpv6j
 ---
 ## Outcome
 
