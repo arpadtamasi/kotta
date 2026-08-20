@@ -3,7 +3,7 @@ id: T-01m0fq2zthr89c1qyx6hdkdv3k
 title: >-
   The product speaks task: contract → task on every surface, with read
   compatibility
-status: active
+status: review
 origin: human
 types:
   - workflow
@@ -80,3 +80,29 @@ None.
 ## Execution notes
 
 Third rename on these files; D-006/D-007 staging precedent applies.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| Every surface names the work unit task; contract appears only in compatibility shims and history. | Public source, CLI, MCP, board, schemas, templates, skills, docs and site use task; the repository grep gate found the legacy term only in src/compatibility/task-v3.ts, src/commands/migrate.ts and historical material. The full Vitest suite passed: 55 files, 386 tests passed, 1 skipped. |
+| A workspace written by the previous version is read correctly, with a deprecation warning naming the migration. | tests/integration/task-vocabulary-compat.test.ts proves a schema-v3 workspace is readable through task list and the legacy command alias, both warnings name kotta migrate --dry-run and kotta migrate; board normalization and ID-stable v4 migration also pass. |
+| kotta sync regenerates AGENTS.md and skills in the new vocabulary; the migration note reaches the CHANGELOG and the site. | tests/integration/sync.test.ts verifies new task skills and safe removal of Kotta-owned legacy skill directories; templates/AGENTS.md, CHANGELOG.md and site/index.html carry the new vocabulary and migration path; all 5 Playwright site tests passed and npm run verify:pack passed. |
+
+### Verification performed
+
+Every surface names the work unit task; contract appears only in compatibility shims and history.: Public source, CLI, MCP, board, schemas, templates, skills, docs and site use task; the repository grep gate found the legacy term only in src/compatibility/task-v3.ts, src/commands/migrate.ts and historical material. The full Vitest suite passed: 55 files, 386 tests passed, 1 skipped.
+A workspace written by the previous version is read correctly, with a deprecation warning naming the migration.: tests/integration/task-vocabulary-compat.test.ts proves a schema-v3 workspace is readable through task list and the legacy command alias, both warnings name kotta migrate --dry-run and kotta migrate; board normalization and ID-stable v4 migration also pass.
+kotta sync regenerates AGENTS.md and skills in the new vocabulary; the migration note reaches the CHANGELOG and the site.: tests/integration/sync.test.ts verifies new task skills and safe removal of Kotta-owned legacy skill directories; templates/AGENTS.md, CHANGELOG.md and site/index.html carry the new vocabulary and migration path; all 5 Playwright site tests passed and npm run verify:pack passed.
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.

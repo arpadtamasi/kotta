@@ -10,15 +10,15 @@ None.
 
 - a-kotta-a-megallapodas-a-spec-first-modell-landolasa-a-futo--wrq3bs61
 
-## Defined contracts
+## Defined tasks
 
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
 - one-operation-registry-derives-both-the-cli-and-the-mcp-surf-06fw8n0g
 - the-agent-rules-reach-the-calling-chat-as-a-generated-file-n-atnxppcm
 
-## Active contracts
+## Active tasks
 
-- the-product-speaks-task-contract-task-on-every-surface-with--6hdkdv3k
+None.
 
 ## Review
 
@@ -30,6 +30,7 @@ None.
 - kotta-validate-reads-the-spec-graph-ebskv4c0
 - review-evidence-must-answer-its-own-check-duplicate-blobs-ar-tv3d65m7
 - the-gap-report-what-the-spec-promises-and-the-system-lacks-xhxpb5jf
+- the-product-speaks-task-contract-task-on-every-surface-with--6hdkdv3k
 
 ## Blocked
 
