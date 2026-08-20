@@ -23,6 +23,7 @@ import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "
 import { mcpCommand } from "../commands/mcp.js";
 import { integrateCodex } from "../commands/integrate.js";
 import { syncCommand } from "../commands/sync.js";
+import { gapReport } from "../commands/gap.js";
 
 const program = new Command();
 const packagePath = fileURLToPath(new URL("../../package.json", import.meta.url));
@@ -62,6 +63,9 @@ function humanize(result: unknown): string {
     const command = String((result as { command: unknown }).command);
     if ((command === "contract dedupe" || command === "batch dedupe") && "data" in result) {
       return describeDedupe((result as DedupeResult).data);
+    }
+    if (command === "gap report" && "data" in result) {
+      return String((result as { data: { report: unknown } }).data.report).trimEnd();
     }
     if (command === "contract start" && "data" in result) {
       const data = (result as { data: { id: unknown; branch: unknown; worktree: unknown; startRef: unknown; startCommit: unknown; nextStep: unknown; executionMode?: unknown; callerStep?: unknown } }).data;
@@ -249,6 +253,12 @@ program
   .description("Show canonical workspace status")
   .option("--json")
   .action((options: { json?: boolean }) => print(statusCommand(), Boolean(options.json)));
+
+program
+  .command("gap")
+  .description("Report accepted spec promises without repository evidence and enforcement without a spec trace")
+  .option("--json")
+  .action((options: { json?: boolean }) => print(gapReport(findRepositoryRoot()), Boolean(options.json)));
 
 program
   .command("sync")
