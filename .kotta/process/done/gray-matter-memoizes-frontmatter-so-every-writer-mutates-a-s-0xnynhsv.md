@@ -1,7 +1,7 @@
 ---
 id: T-01m0f27dqfp9xzgmbe0xnynhsv
 title: 'gray-matter memoizes frontmatter, so every writer mutates a shared object'
-status: review
+status: done
 origin: observation
 types:
   - fix
@@ -23,6 +23,7 @@ execution_mode: inherited
 branch_origin: created
 start_ref: HEAD
 start_commit: 32ab9f0eaae11b8214036cea3fcff48914422824
+resolution: completed
 ---
 ## Outcome
 
