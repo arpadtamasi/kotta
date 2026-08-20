@@ -44,6 +44,7 @@ None.
 - F-022-state-gates-are-bypassable-because-the-store-is-the-filesyst
 - F-025-progos-as-first-kotta-publisher-mcp-kottas-for-standard-sme-
 - F-030-package-szintu-review-hianyzik-a-ticketek-review-ban-tartasa
+- a-batch-hulla-m-terve-e-s-az-indi-ta-s-ke-t-ku-lo-nbo-zo-ind-91m2f4q0
 - a-board-aria-modal-felu-letei-nem-tartja-k-bent-a-billentyu--nz688n4t
 - a-board-listai-nem-mutatjak-az-entitasok-korat-csak-az-obser-fx05szh7
 - a-board-nema-n-rejti-el-a-nem-commitolt-munkat-ha-a-fo-munka-88p5tm36
