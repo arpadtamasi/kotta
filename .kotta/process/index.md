@@ -27,7 +27,6 @@ None.
 - contract-gate-treats-standalone-generated-documents-as-kotta-grgv0mtw
 - define-validates-coverage-the-sign-gate-retires-for-covered--bkgg3d1k
 - kotta-validate-reads-the-spec-graph-ebskv4c0
-- review-evidence-must-answer-its-own-check-duplicate-blobs-ar-tv3d65m7
 - the-gap-report-what-the-spec-promises-and-the-system-lacks-xhxpb5jf
 - the-product-speaks-task-contract-task-on-every-surface-with--6hdkdv3k
 

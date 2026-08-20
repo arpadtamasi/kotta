@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq318dpmktbc2jtv3d65m7
 title: 'Review evidence must answer its own check: duplicate blobs are refused'
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -26,6 +26,10 @@ branch_origin: created
 start_ref: coord/P-01m0fq77101axprvcjwrq3bs61
 start_commit: f9efa3912433498c4a8f01cb6750cf73bdf81f7e
 dependency_integration_target: coord/P-01m0fq77101axprvcjwrq3bs61
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-20T21:02:52.467Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
