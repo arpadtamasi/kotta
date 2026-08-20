@@ -1,7 +1,7 @@
 ---
 id: T-01m0f27dqfp9xzgmbe0xnynhsv
 title: 'gray-matter memoizes frontmatter, so every writer mutates a shared object'
-status: defined
+status: active
 origin: observation
 types:
   - fix
@@ -11,11 +11,18 @@ risk: low
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: >-
+  feat/T-01m0f27dqfp9xzgmbe0xnynhsv-gray-matter-memoizes-frontmatter-so-every-writer-mutates-a-s
 pull_request: null
 created_at: '2026-08-20'
 updated_at: '2026-08-20'
 source_observation: F-01kz294gj4sy9gcc56s8j3h62g
+assigned_agent: claude
+worktree: .worktrees/T-01m0f27dqfp9xzgmbe0xnynhsv
+execution_mode: inherited
+branch_origin: created
+start_ref: HEAD
+start_commit: 32ab9f0eaae11b8214036cea3fcff48914422824
 ---
 ## Outcome
 
