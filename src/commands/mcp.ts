@@ -45,7 +45,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
         "Kotta is the canonical contract control plane for this repository.",
         "Use these structured tools instead of asking the human to copy ids or run lifecycle commands.",
         "Caller execution uses contract_start_caller; fresh context remains available through the CLI for automation.",
-        "For sign, close, cancel, request-changes, observation disposition, or batch close, call approval_request: it elicits the exact human decision in the host chat and records the receipt before applying.",
+        "For close, cancel, request-changes, observation disposition, batch close, or a workspace-configured compatibility sign gate, call approval_request: it elicits the exact human decision in the host chat and records the receipt before applying.",
         "The Kotta board is read-only. Record only visible user/assistant contract messages; never hidden reasoning or raw tool output.",
       ].join(" "),
     },
@@ -116,7 +116,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
 
   server.registerTool("contract_define", {
     title: "Define a Kotta contract",
-    description: "Apply a complete Markdown definition to a backlog or defined contract before execution, preserving canonical identity and validating before publication.",
+    description: "Apply a complete Markdown definition before execution. Every acceptance condition must explicitly map to a referenced accepted spec node; valid coverage moves the task to defined unless the workspace retains the compatibility sign gate.",
     inputSchema: {
       id: z.string().min(1),
       definition: z.string().min(1),
@@ -129,7 +129,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
         commitControlState(controlRoot, `chore(kotta): define ${id}`);
         return defined;
       }, { requireClean: false });
-      return toolResult(result as unknown as ToolPayload, `Updated ${id}; it is ready for validation.`);
+      return toolResult(result as unknown as ToolPayload, `Updated ${id}; it is ${result.data.state}. ${result.data.nextStep}`);
     } catch (error) { return toolError(error); }
   });
 

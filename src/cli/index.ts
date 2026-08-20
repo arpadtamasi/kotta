@@ -19,7 +19,7 @@ import { createDecision } from "../commands/decision.js";
 import { dedupeEntity, describeDedupe, type DedupeResult } from "../commands/dedupe.js";
 import { formatMigration, migrateWorkspace } from "../commands/migrate.js";
 import { assertCurrentWorkspaceShape, findRepositoryRoot } from "../filesystem/workspace.js";
-import { controlPlaneRoot } from "../git/control-plane.js";
+import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
 import { mcpCommand } from "../commands/mcp.js";
 import { integrateCodex } from "../commands/integrate.js";
 import { syncCommand } from "../commands/sync.js";
@@ -287,13 +287,19 @@ contract
   .action((id: string, options: { from: string; json?: boolean }) => {
     const sourcePath = resolve(options.from);
     if (!existsSync(sourcePath)) throw new Error(`Contract definition was not found: ${sourcePath}`);
-    print(defineContract(id, readFileSync(sourcePath, "utf8")), Boolean(options.json));
+    const definition = readFileSync(sourcePath, "utf8");
+    const result = withControlPlaneMutation(findRepositoryRoot(), (root) => {
+      const defined = defineContract(id, definition, root);
+      commitControlState(root, `chore(kotta): define ${id}`);
+      return defined;
+    }, { requireClean: false });
+    print(result, Boolean(options.json));
   });
 contract
-  // `define` writes the contract; `sign` is the human gate that makes it binding and moves it to
-  // `defined`. Two different acts, so two different verbs (D-01kz240dn155hb97h6px6n2p85).
+  // Accepted-spec coverage normally makes define the backlog -> defined transition. This command
+  // remains only for workspaces that deliberately retain the compatibility gate.
   .command("sign <id>")
-  .description("Human gate: sign a validated backlog contract, moving it to defined")
+  .description("Opt-in compatibility gate: sign a covered backlog contract, moving it to defined")
   .option("--approve")
   .option("--json")
   .action((id: string, options: { approve?: boolean; json?: boolean }) => print(signContract(id, Boolean(options.approve)), Boolean(options.json)));

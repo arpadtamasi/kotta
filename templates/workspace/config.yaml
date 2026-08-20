@@ -4,7 +4,7 @@ project:
   name: example-project
 
 workflow:
-  require_human_sign_approval: true
+  require_human_sign_approval: false
   require_human_done_approval: true
   allow_agent_observations: true
   allow_agent_defined_contracts: false

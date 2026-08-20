@@ -224,7 +224,7 @@ export function initializeWorkspace(options: InitOptions = {}): { root: string; 
     version: WORKSPACE_SCHEMA_VERSION,
     project: { name: options.projectName ?? basename(root) },
     workflow: {
-      require_human_sign_approval: true,
+      require_human_sign_approval: false,
       require_human_done_approval: true,
       allow_agent_observations: true,
       allow_agent_defined_contracts: false,

@@ -48,8 +48,8 @@ backlog → defined → active → review → done
 | Step | Command | Who |
 | --- | --- | --- |
 | Capture intent | `kotta contract new --title "…" --type <type> [--profile …]` | human, or agent if allowed by config |
-| Formalize | `kotta contract define <id> --from <file>` then `kotta contract validate <id>` | agent |
-| Approve for execution | `kotta contract sign <id> --approve`, after the human said yes in chat | **human decides** (rule 5) |
+| Formalize | `kotta contract define <id> --from <file>`; every acceptance condition maps to a referenced accepted spec node | agent; valid coverage moves it to `defined` |
+| Optional legacy sign | `kotta contract sign <id> --approve` only when `workflow.require_human_sign_approval: true` kept it in backlog | **human decides** (rule 5) |
 | Execute | `kotta contract execute <id> --agent <agent>` | agent, in its own claim + branch + worktree |
 | Submit | `kotta contract review <id> --evidence "<exact check>=<evidence>" --pull-request <ref>` (repeat evidence per check) | agent |
 | Close | `kotta contract close <id> --approve`, after the human said yes in chat | **human decides** (rule 5) |
@@ -63,13 +63,17 @@ plain `execute` is refused rather than starting a second agent.
 worktree to the current caller without launching another agent. Fresh remains the default.
 
 A contract with no unresolved choice may use `None`, `N/A`, or `No open decisions` (with or
-without a final period) under `Open decisions`. Any substantive text there blocks signing.
+without a final period) under `Open decisions`. Any substantive text there blocks defining.
+Coverage is named, never inferred: each acceptance bullet either contains a referenced spec id or
+has an exact-text entry in frontmatter `coverage` mapping it to one or more ids from `spec`. If the
+accepted specification does not promise a condition, record an observation and amend the spec;
+never widen the task to make the validator pass. The validated coverage map travels in the brief.
 
 A batch may group other batches — `kotta batch add <parent> <child>` takes either kind of member.
 Nesting is grouping only: a child has no coordinator branch and no execution of its own, and
 `batch start` runs leaf batches, never a parent. To carry out a whole parent, read it with
 `kotta batch status <id>`, which reports every contract underneath it in dependency order, and work
-that list. Each contract keeps its own human gates; grouping approves nothing.
+that list. Each contract keeps its close gate (and any configured compatibility gate); grouping approves nothing.
 
 Inside a running leaf batch, technical dependency readiness is separate from human acceptance. A
 dependency can release the next wave when it is `done`, or when it is in `review` and Git proves its
@@ -144,7 +148,8 @@ installs them.
 For optional specification workshops and analysis, use `impact-mapping`, `story-mapping`,
 `use-case-modeling`, `example-mapping`, `event-storming`, `ubiquitous-language`,
 `quality-scenarios`, `design-by-contract`, and `requirements-traceability`. They draft and read
-Markdown specification nodes under `{{workspace}}/spec/`; they never make specification a lifecycle gate.
+Markdown specification nodes under `{{workspace}}/spec/`; landing those nodes is how agreement is
+accepted, while the workshop skills themselves perform no lifecycle transition.
 
 A defect in Kotta itself is not a contract here: use `report-kotta-bug`, or the issue form at
 <https://github.com/arpadtamasi/kotta/issues>.

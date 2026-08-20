@@ -23,6 +23,16 @@
     },
     "priority": { "enum": ["low", "medium", "high", "critical"] },
     "risk": { "enum": ["low", "medium", "high", "critical"] },
+    "spec": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "string", "minLength": 1 },
+          { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+        ]
+      }
+    },
     "batch": { "oneOf": [{ "type": "null" }, { "type": "string", "pattern": "^(P-[0-9]{3,}|P-[0-9a-hjkmnp-tv-z]{26})$" }] },
     "depends_on": { "$ref": "#/$defs/contractIds" },
     "blocks": { "$ref": "#/$defs/contractIds" },

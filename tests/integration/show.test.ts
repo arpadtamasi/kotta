@@ -3,8 +3,10 @@ import { mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from 
 import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
 const cli = resolve("dist/cli/index.js");
+const SHOW_SPEC_ID = "GT-01m0c0000000000000000000sh";
 
 function cliRun(repository: string, args: string[]): { status: number | null; stdout: string; stderr: string } {
   return spawnSync("node", [cli, ...args], { cwd: repository, encoding: "utf8" });
@@ -41,6 +43,11 @@ function fixture(label: string): { repository: string; id: string; short: string
   git(repository, "config", "user.email", "test@example.com");
   writeFileSync(join(repository, "README.md"), "fixture\n");
   cliRun(repository, ["init", "--json"]);
+  retainLegacySignGate(repository);
+  writeFileSync(join(repository, ".kotta/spec/glossary-terms/shipped-000000sh.md"), [
+    "---", `id: ${SHOW_SPEC_ID}`, "form: glossary-term", "title: Shipped", "---", "",
+    "## Definition", "It ships.", "", "## Usage", "Task acceptance.", "", "## Non-examples", "It waits.", "",
+  ].join("\n"));
   const created = json<{ data: { id: string } }>(repository, ["contract", "new", "--title", "Ship the exporter", "--type", "feature"]);
   cliRun(repository, ["observation", "new", "--title", "The importer logs nothing", "--type", "bug", "--evidence", "Observed in the fixture.", "--json"]);
   const listed = json<{ data: { entities: { id: string }[] } }>(repository, ["contract", "list"]);
@@ -86,6 +93,7 @@ describe("showing one entity", () => {
     const { repository, short } = fixture("short-elsewhere");
     const definition = join(repository, "definition.md");
     writeFileSync(definition, [
+      "---", `spec: [${SHOW_SPEC_ID}]`, "coverage:", `  \"It ships.\": [${SHOW_SPEC_ID}]`, "---", "",
       "## Outcome", "", "The exporter ships.", "", "## Scope", "", "1. Ship it.", "",
       "## Non-goals", "", "- Anything else.", "", "## Acceptance", "", "- It ships.", "",
       "## Verification", "", "- Run it.", "", "## Constraints", "", "- Ship nothing else.", "",

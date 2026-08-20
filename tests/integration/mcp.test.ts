@@ -11,8 +11,10 @@ import { integrateCodex } from "../../src/commands/integrate.js";
 import { readWorkspace } from "../../src/commands/ui.js";
 import { readEvents } from "../../src/core/events.js";
 import { findContract } from "../../src/filesystem/entities.js";
+import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
 const cli = resolve("dist/cli/index.js");
+const MCP_TASK_SPEC_ID = "GT-01m0c0000000000000000000mc";
 const clients: Client[] = [];
 const servers: ReturnType<typeof createKottaMcpServer>[] = [];
 
@@ -27,6 +29,11 @@ function fixture(): string {
   execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: root });
   writeFileSync(join(root, "README.md"), "fixture\n");
   execFileSync("node", [cli, "init", "--json"], { cwd: root });
+  retainLegacySignGate(root);
+  writeFileSync(join(root, ".kotta/spec/glossary-terms/caller-approval-000000mc.md"), [
+    "---", `id: ${MCP_TASK_SPEC_ID}`, "form: glossary-term", "title: Caller approval", "---", "",
+    "## Definition", "Human approval is recorded from host-chat elicitation.", "", "## Usage", "MCP lifecycle fixture.", "", "## Non-examples", "An unrecorded response.", "",
+  ].join("\n"));
   execFileSync("git", ["add", "-A"], { cwd: root });
   execFileSync("git", ["commit", "-m", "init"], { cwd: root });
   return root;
@@ -60,6 +67,9 @@ async function connectWithoutElicitation(root: string) {
 function definition(id: string): string {
   return `---
 id: ${id}
+spec: [${MCP_TASK_SPEC_ID}]
+coverage:
+  "Human approval is recorded from host-chat elicitation.": [${MCP_TASK_SPEC_ID}]
 ---
 # ${id} — Caller chat contract
 
@@ -283,8 +293,12 @@ describe("Kotta caller-chat MCP", () => {
     const mappedDefinition = definition(id).replace(
       "- Human approval is recorded from host-chat elicitation.",
       `- ${first}\n- ${second}`,
+    ).replace(
+      `  "Human approval is recorded from host-chat elicitation.": [${MCP_TASK_SPEC_ID}]`,
+      `  "${first}": [${MCP_TASK_SPEC_ID}]\n  "${second}": [${MCP_TASK_SPEC_ID}]`,
     );
-    await connected.client.callTool({ name: "contract_define", arguments: { id, definition: mappedDefinition } });
+    const mapped = await connected.client.callTool({ name: "contract_define", arguments: { id, definition: mappedDefinition } });
+    expect(mapped.isError).not.toBe(true);
     await connected.client.callTool({ name: "approval_request", arguments: { entity: id, action: "contract.sign", payload: {} } });
     await connected.client.callTool({ name: "contract_start_caller", arguments: { id, agent: "codex" } });
 

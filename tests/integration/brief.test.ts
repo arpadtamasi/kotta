@@ -5,6 +5,7 @@ import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 
 const cli = resolve("dist/cli/index.js");
+const BRIEF_SPEC_ID = "GT-01m0c0000000000000000000bf";
 
 function run(repository: string, args: string[]): Record<string, unknown> {
   const result = spawnSync("node", [cli, ...args, "--json"], { cwd: repository, encoding: "utf8" });
@@ -19,11 +20,22 @@ function git(repository: string, ...args: string[]): void {
 function fixtureRepository(): { repository: string; id: string } {
   const repository = mkdtempSync(join(tmpdir(), "kotta-brief-"));
   git(repository, "init", "-b", "main");
+  git(repository, "config", "user.name", "Kotta Test");
+  git(repository, "config", "user.email", "test@example.com");
   writeFileSync(join(repository, "README.md"), "fixture\n");
   run(repository, ["init"]);
+  writeFileSync(join(repository, ".kotta/spec/glossary-terms/export-file-000000bf.md"), [
+    "---", `id: ${BRIEF_SPEC_ID}`, "form: glossary-term", "title: Export file", "---", "",
+    "## Definition", "Exporter produces a file.", "", "## Usage", "Exporter acceptance.", "", "## Non-examples", "No output.", "",
+  ].join("\n"));
   const id = (run(repository, ["contract", "new", "--title", "Ship the exporter", "--type", "feature"]) as { data: { id: string } }).data.id;
   const definition = join(repository, "definition.md");
-  writeFileSync(definition, `# ${id} — Ship the exporter
+  writeFileSync(definition, `---
+spec: [${BRIEF_SPEC_ID}]
+coverage:
+  "Exporter produces a file.": [${BRIEF_SPEC_ID}]
+---
+# ${id} — Ship the exporter
 
 ## Outcome
 

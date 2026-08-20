@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } fro
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 import { classifyBaseUpdate, classifyIntegration, coordinatorBranchName, linkedWorktrees } from "../../src/git/coordinator.js";
 import { readWorkspaceConfig } from "../../src/core/config.js";
 
@@ -46,6 +47,7 @@ function workspaceWithBatch(label: string, options: { contracts?: number } = {})
   git(root, "add", ".");
   git(root, "commit", "-m", "initial");
   run(root, ["init"]);
+  retainLegacySignGate(root);
   const contracts = Array.from({ length: options.contracts ?? 1 }, (_unused, index) => definedContract(root, `Deliver slice ${index + 1}`));
   const ids = contracts.map((contract) => contract.id);
   const batchId = (run(root, ["batch", "new", "--title", `Coordinated ${label}`, "--goal", "Ship the slice"]).data as { id: string }).id;
