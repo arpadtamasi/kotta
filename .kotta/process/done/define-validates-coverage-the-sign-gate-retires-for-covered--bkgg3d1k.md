@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq30yzdteeqa14bkgg3d1k
 title: Define validates coverage; the sign gate retires for covered tasks
-status: review
+status: done
 origin: human
 types:
   - workflow
@@ -31,6 +31,10 @@ branch_origin: created
 start_ref: coord/P-01m0fq77101axprvcjwrq3bs61
 start_commit: ef86ca51af1888a3a2a83596adb773ea12d9f00b
 dependency_integration_target: coord/P-01m0fq77101axprvcjwrq3bs61
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-20T21:06:29.072Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
