@@ -74,7 +74,6 @@ None.
 - contract-validate-can-pass-a-backlog-contract-that-sign-imme-0ms18ejw
 - crm-kit-and-flowbench-cannot-be-migrated-unrelated-dirty-tre-9m3dkmxv
 - entity-filenames-are-keyed-on-the-same-eight-characters-the--dvhj455d
-- gray-matter-memoizes-frontmatter-so-every-writer-mutates-a-s-s8j3h62g
 - harom-szomszed-repo-agents-md-je-ideiglenes-szabalyblokkot-h-10cpc3k3
 - kotta-hand-enumerates-the-agents-and-hosts-it-can-work-with--ccfd497m
 - kotta-integrate-only-supports-codex-so-claude-code-sessions--n5cp4s0q
