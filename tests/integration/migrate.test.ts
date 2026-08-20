@@ -6,7 +6,7 @@ import { join, relative, resolve } from "node:path";
 import matter from "gray-matter";
 import { describe, expect, test } from "vitest";
 import { readWorkspace } from "../../src/commands/ui.js";
-import { workspaceIds, type MigrateResult } from "../../src/commands/migrate.js";
+import { migrateWorkspace, workspaceIds, type MigrateResult } from "../../src/commands/migrate.js";
 
 /**
  * `kotta migrate` is the only reader of the pre-vocabulary shape, and the next contract migrates three
@@ -406,6 +406,16 @@ describe("the old shape outside the migration command", () => {
     const planned = run(root, ["migrate", "--dry-run"]).data as MigrateResult["data"];
     expect(planned.ids).toEqual(["F-001", "F-002", "P-001", "T-001", "T-002", "T-003"]);
     expect(planned.changes.filter((change) => change.kind === "move").length).toBeGreaterThanOrEqual(10);
+  });
+
+  test("planning twice in one process reports the same changes both times (F-01kz294gj4sy9gcc56s8j3h62g)", () => {
+    const root = legacyRepository("shared-frontmatter");
+
+    const first = migrateWorkspace({ dryRun: true }, root).data;
+    const second = migrateWorkspace({ dryRun: true }, root).data;
+
+    expect(second.ids).toEqual(first.ids);
+    expect(second.changes).toEqual(first.changes);
   });
 
   test("the board says why it looks incomplete instead of showing an empty page", () => {

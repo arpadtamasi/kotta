@@ -5,9 +5,12 @@ export interface MarkdownEntity {
   content: string;
 }
 
+// gray-matter memoizes on the source string and hands every caller the same frontmatter object.
+// Commands edit frontmatter in place, so a shared instance lets one caller's edit reach the next
+// parse of an identical file. Each caller gets its own copy instead.
 export function parseMarkdown(source: string): MarkdownEntity {
   const parsed = matter(source);
-  return { data: parsed.data as Record<string, unknown>, content: parsed.content };
+  return { data: structuredClone(parsed.data) as Record<string, unknown>, content: parsed.content };
 }
 
 export function renderMarkdown(data: Record<string, unknown>, content: string): string {

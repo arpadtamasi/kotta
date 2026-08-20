@@ -128,9 +128,7 @@ function markdownFiles(directory: string): string[] {
 
 function planEntity(path: string, entity: "contract" | "batch" | "observation"): Rewrite {
   const parsed = parseMarkdown(readFileSync(path, "utf8"));
-  // gray-matter memoizes on the source string and hands back the same object; a migration must never
-  // mutate that shared instance, so every planner works on its own copy.
-  const data = structuredClone(parsed.data);
+  const data = parsed.data;
   const fields: string[] = [];
 
   if (entity === "contract") {
