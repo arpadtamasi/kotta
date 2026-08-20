@@ -4,10 +4,10 @@ title: 'gray-matter memoizes frontmatter, so every writer mutates a shared objec
 status: backlog
 origin: observation
 types:
-  - feature
+  - fix
 profiles: []
-priority: medium
-risk: medium
+priority: high
+risk: low
 batch: null
 depends_on: []
 blocks: []
@@ -17,31 +17,42 @@ created_at: '2026-08-20'
 updated_at: '2026-08-20'
 source_observation: F-01kz294gj4sy9gcc56s8j3h62g
 ---
-# T-01m0f27dqfp9xzgmbe0xnynhsv — gray-matter memoizes frontmatter, so every writer mutates a shared object
-
 ## Outcome
 
-Describe the observable outcome.
+Two parses of the same file yield two independent objects. `parseMarkdown` hands every caller its
+own frontmatter, so one command's in-place edit can never be observed by the next parse inside the
+same process, and no caller has to remember to clone defensively.
 
 ## Scope
 
-Describe what is included.
+`parseMarkdown` in `src/core/markdown.ts`: return frontmatter the caller owns, defeating
+gray-matter's memoization of `matter(source)`. The private `structuredClone` that
+`src/commands/migrate.ts` added to work around this, which becomes redundant once the shared
+parser is safe.
 
 ## Non-goals
 
-Describe what is excluded.
+Replacing gray-matter, changing the frontmatter format, or altering `renderMarkdown`. Auditing
+every existing mutation site — the point is that the parser stops handing out shared state, not
+that callers stop mutating.
 
 ## Acceptance
 
-- Define an observable condition.
+- Parsing the same source twice returns objects that are not the same reference, and mutating the
+  first leaves the second unchanged.
+- `kotta migrate` plans the same file twice with the same reported change list both times.
+- `migrate.ts` no longer carries its own clone of parsed frontmatter.
 
 ## Verification
 
-- Explain how acceptance will be checked.
+- A unit test parses one source twice, mutates the first result, and asserts the second is
+  unaffected.
+- A test plans a migration twice in one process and asserts both runs report the same changes.
+- `npm test` passes.
 
 ## Constraints
 
-None.
+Nested frontmatter values must be copied too, not shared one level down.
 
 ## Open decisions
 
@@ -49,4 +60,6 @@ None.
 
 ## Execution notes
 
-None.
+Reported as F-01kz294gj4sy9gcc56s8j3h62g. It bit `kotta migrate` during T-023: planning a file
+twice reported an empty change list the second time. Single-command CLI runs mostly hide it; the
+UI server is long-lived and parses repeatedly, so it is exposed there.
