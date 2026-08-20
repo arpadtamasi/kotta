@@ -1,7 +1,7 @@
 ---
 id: T-01m0f27dqfp9xzgmbe0xnynhsv
 title: 'gray-matter memoizes frontmatter, so every writer mutates a shared object'
-status: backlog
+status: defined
 origin: observation
 types:
   - fix
