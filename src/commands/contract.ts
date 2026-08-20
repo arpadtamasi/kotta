@@ -10,6 +10,7 @@ import { assertValid, validateContractDefinitionFile, validateContractFile } fro
 import { BRANCH_PREFIXES } from "../core/profiles.js";
 import { assertClean, assertSafeWorktreePath, git } from "../git/git.js";
 import { commitControlState, controlPlaneRoot, resolveControlPlane, withControlPlaneMutation } from "../git/control-plane.js";
+import { findSpecNode, readSpecNodeText } from "../spec/registry.js";
 import { readWorkspaceConfig } from "../core/config.js";
 import { appendCliApprovalAudit, appendLifecycleEvent } from "../core/events.js";
 import { readEnv } from "../core/env.js";
@@ -45,7 +46,7 @@ export function newContract(options: { title: string; type: string; profiles: st
   mkdirSync(directory, { recursive: true });
   const path = join(directory, filename);
   const now = new Date().toISOString().slice(0, 10);
-  const data = { id, title: options.title, status: "backlog", origin: "human", types: [options.type], profiles: options.profiles, priority: "medium", risk: "medium", batch: null, depends_on: [], blocks: [], branch: null, pull_request: null, created_at: now, updated_at: now };
+  const data = { id, title: options.title, status: "backlog", origin: "human", types: [options.type], profiles: options.profiles, priority: "medium", risk: "medium", batch: null, depends_on: [], blocks: [], spec: [], branch: null, pull_request: null, created_at: now, updated_at: now };
   const profileSections = options.profiles.flatMap((profile) => profileHeadings(profile)).map((heading) => `## ${heading}\n\nDescribe ${heading.toLowerCase()}.`).join("\n\n");
   const content = `# ${id} — ${options.title}\n\n## Outcome\n\nDescribe the observable outcome.\n\n${profileSections ? `${profileSections}\n\n` : ""}## Scope\n\nDescribe what is included.\n\n## Non-goals\n\nDescribe what is excluded.\n\n## Acceptance\n\n- Define an observable condition.\n\n## Verification\n\n- Explain how acceptance will be checked.\n\n## Constraints\n\nNone.\n\n## Open decisions\n\nNone.\n\n## Execution notes\n\nNone.\n`;
   writeFileSync(path, renderMarkdown(data, content));
@@ -53,7 +54,24 @@ export function newContract(options: { title: string; type: string; profiles: st
   return { ok: true, command: "contract new", data: { id, path } };
 }
 
-const DEFINITION_FIELDS = new Set(["id", "types", "profiles", "priority", "risk", "depends_on", "blocks"]);
+const DEFINITION_FIELDS = new Set(["id", "types", "profiles", "priority", "risk", "depends_on", "blocks", "spec"]);
+
+/** The `spec` entries a contract carries, normalised; absent and empty are the same thing. */
+export function specReferences(data: Record<string, unknown>): string[] {
+  return Array.isArray(data.spec) ? data.spec.map(String).map((value) => value.trim()).filter(Boolean) : [];
+}
+
+/**
+ * A contract may name the specification it rests on; the specification never names the contract, so
+ * this is the only place the two meet. Storing an id that resolves to nothing would make the
+ * reference decoration, so an unresolvable one is refused by name.
+ */
+function assertSpecReferences(root: string, id: string, value: unknown): void {
+  const missing = specReferences({ spec: value }).filter((reference) => !findSpecNode(root, reference));
+  if (missing.length) {
+    throw new Error(`Contract ${id} references specification ${missing.length === 1 ? "node" : "nodes"} that ${missing.length === 1 ? "does" : "do"} not exist: ${missing.join(", ")}.`);
+  }
+}
 
 export function defineContract(id: string, definition: string, repositoryRoot?: string) {
   const root = controlPlaneRoot(repositoryRoot ?? findRepositoryRoot());
@@ -66,7 +84,7 @@ export function defineContract(id: string, definition: string, repositoryRoot?: 
   if (draft.data.id !== undefined && String(draft.data.id) !== id) throw new Error(`Definition id '${String(draft.data.id)}' does not match ${id}.`);
   if (!draft.content.trim()) throw new Error("Contract definition body is required.");
 
-  for (const field of ["types", "profiles", "priority", "risk", "depends_on", "blocks"] as const) {
+  for (const field of ["types", "profiles", "priority", "risk", "depends_on", "blocks", "spec"] as const) {
     if (draft.data[field] !== undefined) current.data[field] = draft.data[field];
   }
   for (const field of ["depends_on", "blocks"] as const) {
@@ -74,6 +92,7 @@ export function defineContract(id: string, definition: string, repositoryRoot?: 
     if (references.includes(id)) throw new Error(`Contract ${id} cannot reference itself in ${field}.`);
     for (const reference of references) findContract(root, reference);
   }
+  assertSpecReferences(root, id, current.data.spec);
   current.data.updated_at = new Date().toISOString().slice(0, 10);
   const candidate = `${contract.path}.define-${process.pid}.tmp`;
   writeFileSync(candidate, renderMarkdown(current.data, draft.content));
@@ -105,7 +124,14 @@ export function validateContract(id: string, repositoryRoot?: string) {
   const root = controlPlaneRoot(repositoryRoot ?? findRepositoryRoot());
   const contract = findContract(root, id);
   const report = validateContractFile(contract.path);
-  return { ok: report.valid, command: "contract validate", data: { id, state: contract.state }, errors: report.errors };
+  const errors = [...report.errors];
+  const entity = parseMarkdown(readFileSync(contract.path, "utf8"));
+  for (const reference of specReferences(entity.data)) {
+    if (!findSpecNode(root, reference)) {
+      errors.push({ code: "SPEC_NOT_FOUND", message: `References specification node '${reference}', which does not exist in this workspace.`, path: contract.path });
+    }
+  }
+  return { ok: errors.length === 0, command: "contract validate", data: { id, state: contract.state }, errors };
 }
 
 export function signContract(id: string, approved: boolean, repositoryRoot?: string, options: { approvalRecorded?: boolean; locked?: boolean; commit?: boolean } = {}) {
@@ -586,6 +612,8 @@ export interface BriefResult {
     sections: BriefSection[];
     decisions: string[];
     missingDecisions: string[];
+    spec: string[];
+    missingSpec: string[];
     path: string | null;
     brief: string;
   };
@@ -635,6 +663,17 @@ export function briefContract(id: string, options: { out?: string; warnTokens?: 
   const claimPath = processPath(root, "claims", `${id}.yaml`);
   const claim = existsSync(claimPath) ? readFileSync(claimPath, "utf8").trim() : null;
 
+  // Rule 8 makes the brief the executor's whole world, so a referenced node that stays outside it
+  // governs nothing. Missing ones are named rather than dropped: silence would read as "none".
+  const specIds = specReferences(entity.data);
+  const specNodes: { id: string; form: string; content: string }[] = [];
+  const missingSpec: string[] = [];
+  for (const specId of specIds) {
+    const node = findSpecNode(root, specId);
+    if (node) specNodes.push({ id: specId, form: node.form, content: readSpecNodeText(node) });
+    else missingSpec.push(specId);
+  }
+
   const dependsOn = Array.isArray(entity.data.depends_on) ? entity.data.depends_on.map(String) : [];
   const header = [
     `# Execution brief — ${id}`,
@@ -644,6 +683,7 @@ export function briefContract(id: string, options: { out?: string; warnTokens?: 
     `- state: ${contract.state}`,
     `- profiles: ${profiles.length ? profiles.join(", ") : "none"}`,
     `- depends_on: ${dependsOn.length ? dependsOn.join(", ") : "none"}`,
+    `- spec: ${specIds.length ? specIds.join(", ") : "none"}`,
     `- branch: ${entity.data.branch ? String(entity.data.branch) : "none"}`,
     "",
     "This brief is the complete intent context for executing this contract (D-009).",
@@ -657,6 +697,8 @@ export function briefContract(id: string, options: { out?: string; warnTokens?: 
     { name: "header", text: header },
     { name: `contract ${id}`, text: `## Contract\n\n${entity.content.trim()}` },
   ];
+  for (const node of specNodes) parts.push({ name: `spec ${node.id}`, text: `## Specification ${node.id} (${node.form})\n\n${node.content}` });
+  if (missingSpec.length) parts.push({ name: "missing specification", text: `## Missing specification\n\nReferenced but not found under the workspace spec root: ${missingSpec.join(", ")}` });
   for (const decision of decisions) parts.push({ name: `decision ${decision.id}`, text: `## Decision ${decision.id}\n\n${decision.content}` });
   if (missingDecisions.length) parts.push({ name: "missing decisions", text: `## Missing decisions\n\nReferenced but not found in the workspace decisions directory: ${missingDecisions.join(", ")}` });
   for (const block of profileBlocks) parts.push({ name: `profile ${block.profile}`, text: `## Profile: ${block.profile}\n\n\`\`\`yaml\n${block.content}\n\`\`\`` });
@@ -680,7 +722,7 @@ export function briefContract(id: string, options: { out?: string; warnTokens?: 
   return {
     ok: true,
     command: "contract brief",
-    data: { id, state: contract.state, tokens, warnTokens, warning, largestSection, sections: sectionSizes, decisions: decisions.map((decision) => decision.id), missingDecisions, path: outPath, brief },
+    data: { id, state: contract.state, tokens, warnTokens, warning, largestSection, sections: sectionSizes, decisions: decisions.map((decision) => decision.id), missingDecisions, spec: specNodes.map((node) => node.id), missingSpec, path: outPath, brief },
   };
 }
 

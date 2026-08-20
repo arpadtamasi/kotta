@@ -10,6 +10,7 @@ import { parseMarkdown } from "../core/markdown.js";
 import { validateDecisionFile } from "../core/decision.js";
 import { readEvents, validateEvent } from "../core/events.js";
 import { controlPlaneRoot } from "../git/control-plane.js";
+import { readFormRegistry, readSpecNodes, validateSpecWorkspace } from "../spec/registry.js";
 
 interface Located { state: string; path: string }
 
@@ -127,5 +128,10 @@ export function validateWorkspace() {
     for (const message of validateEvent(event)) errors.push({ code: "INVALID_EVENT", message: `${event.id}: ${message}.`, path });
     if (event.contract && !seen.has(event.contract)) errors.push({ code: "DANGLING_EVENT_CONTRACT", message: `${event.id} references missing contract ${event.contract}.`, path });
   }
-  return { ok: errors.length === 0, command: "validate", data: { contracts: seen.size, decisions: decisions.length, events: events.length }, errors };
+  // The specification carries its own schema in the form registry; until now nothing enforced it.
+  const spec = validateSpecWorkspace(root);
+  errors.push(...spec);
+  const specNodes = readSpecNodes(root, readFormRegistry(root).forms).nodes.length;
+
+  return { ok: errors.length === 0, command: "validate", data: { contracts: seen.size, decisions: decisions.length, events: events.length, specNodes }, errors };
 }
