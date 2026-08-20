@@ -110,6 +110,7 @@ None.
 - ready-ticket-szovege-nem-javithato-a-define-csak-backlogbol--147t946f
 - renaming-the-workspace-drops-tracked-but-now-ignored-files-o-nkb8sbc4
 - schemas-package-schema-json-rejects-every-started-package-an-8et554b5
+- standalone-mcp-observation-create-nests-control-plane-mutati-v0pwfx9h
 - state-drift-has-no-reconcile-command-so-the-board-can-only-p-5mqcvk49
 - tests-integration-batch-coordinator-test-ts-fails-non-determ-b316tnhj
 - tests-integration-ui-port-cli-test-ts-is-flaky-aftereach-tim-hqqt57nj
