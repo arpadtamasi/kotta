@@ -15,6 +15,7 @@ None.
 - a-task-is-revisable-until-execution-define-amends-backlog-an-tfpam55r
 - an-observation-can-amend-the-spec-the-amend-spec-disposition-43bwk94f
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
+- define-validates-coverage-the-sign-gate-retires-for-covered--bkgg3d1k
 - every-approval-leaves-a-receipt-approved-by-approved-at-appr-6vs5h0w6
 - kotta-validate-reads-the-spec-graph-ebskv4c0
 - one-operation-registry-derives-both-the-cli-and-the-mcp-surf-06fw8n0g

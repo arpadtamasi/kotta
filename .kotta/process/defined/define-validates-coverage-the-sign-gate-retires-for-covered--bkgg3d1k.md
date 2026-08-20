@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq30yzdteeqa14bkgg3d1k
 title: Define validates coverage; the sign gate retires for covered tasks
-status: backlog
+status: defined
 origin: human
 types:
   - workflow
