@@ -4,11 +4,11 @@
 
 ## Defined batches
 
-- a-kotta-a-megallapodas-a-spec-first-modell-landolasa-a-futo--wrq3bs61
+None.
 
 ## Active batches
 
-None.
+- a-kotta-a-megallapodas-a-spec-first-modell-landolasa-a-futo--wrq3bs61
 
 ## Defined contracts
 

@@ -1,7 +1,7 @@
 ---
 id: P-01m0fq77101axprvcjwrq3bs61
 title: 'A kotta a megállapodás: a spec-first modell landolása a futó rendszerben'
-status: defined
+status: active
 contracts:
   - T-01m0fq306xed253zf243bwk94f
   - T-01m0fq30n1ntmbvamm6vs5h0w6
@@ -22,6 +22,12 @@ authority:
   change_scope: false
 created_at: '2026-08-20'
 updated_at: '2026-08-20'
+coordinator:
+  branch: coord/P-01m0fq77101axprvcjwrq3bs61
+  base_branch: main
+  base_commit: 167d13306d61dd7fa52bc4fb24e49abae96da9d2
+  worktree: .worktrees/batches/P-01m0fq77101axprvcjwrq3bs61
+  cleaned_at: null
 ---
 # P-01m0fq77101axprvcjwrq3bs61 — A kotta a megállapodás: a spec-first modell landolása a futó rendszerben
 
