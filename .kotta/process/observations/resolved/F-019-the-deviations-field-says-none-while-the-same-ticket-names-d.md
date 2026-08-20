@@ -10,9 +10,9 @@ confidence: high
 severity: high
 discovered_during: null
 created_at: '2026-08-01'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-02T03:14:31.513Z'
-contract: T-032
+task: T-032
 ---
 # F-019 — The Deviations field says "None." while the same ticket names deviations in prose — the structured field is the one that lies
 

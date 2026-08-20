@@ -1,11 +1,11 @@
 {
   "id": "E-01kzwydgzz06z18w2wb7tdkwkq",
   "entity": "T-01kzwxfdabqvrtct2vzfzqzpfd",
-  "contract": "T-01kzwxfdabqvrtct2vzfzqzpfd",
+  "task": "T-01kzwxfdabqvrtct2vzfzqzpfd",
   "kind": "approval",
   "approval_id": "E-01kzwydgzz06z18w2wb7tdkwkq",
   "phase": "proposed",
-  "action": "contract.sign",
+  "action": "task.sign",
   "payload": {
     "surface": "caller-chat"
   },

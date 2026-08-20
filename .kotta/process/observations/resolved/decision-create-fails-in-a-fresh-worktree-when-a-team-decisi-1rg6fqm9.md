@@ -8,9 +8,9 @@ confidence: high
 severity: medium
 discovered_during: T-034
 created_at: '2026-08-02'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-02T15:04:38.927Z'
-contract: T-01kz1g2vra99x0xhw144x6rke4
+task: T-01kz1g2vra99x0xhw144x6rke4
 ---
 # F-01kz1dbnrr9tcghwnr1rg6fqm9 — decision create fails in a fresh worktree when .a-team/decisions is empty
 

@@ -10,9 +10,9 @@ confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-02'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-02T02:56:12.513Z'
-contract: T-031
+task: T-031
 ---
 # F-026 — A ticket review CLI maga irja be a 'Deviations: None.' szoveget — az F-019 hazugsag-mintaja beepitett
 

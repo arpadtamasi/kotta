@@ -1,6 +1,6 @@
 {
   "entity": "T-01m0apvt0hm3wcmwa6qbvwqess",
-  "contract": "T-01m0apvt0hm3wcmwa6qbvwqess",
+  "task": "T-01m0apvt0hm3wcmwa6qbvwqess",
   "kind": "lifecycle",
   "state": "execution-no-change",
   "summary": "Agent completed and changed nothing: /private/tmp/kotta-control-20260814/.worktrees/T-01m0apvt0hm3wcmwa6qbvwqess still matches the pre-run baseline 891c42822379. This run produced no implementation.",

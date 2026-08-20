@@ -1,6 +1,6 @@
 {
   "entity": "F-01kztt37st3xy3dmfnr23getrn",
-  "contract": null,
+  "task": null,
   "kind": "lifecycle",
   "state": "resolved",
   "summary": "Observation resolved with disposition attach-existing.",

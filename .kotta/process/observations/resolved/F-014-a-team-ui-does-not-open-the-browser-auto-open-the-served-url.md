@@ -8,9 +8,9 @@ confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-07-28'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-02T15:04:39.124Z'
-contract: T-01kz1g2vyhfn5ezzvvyzn4w2gr
+task: T-01kz1g2vyhfn5ezzvvyzn4w2gr
 ---
 # F-014 — a-team ui does not open the browser — auto-open the served URL on start
 

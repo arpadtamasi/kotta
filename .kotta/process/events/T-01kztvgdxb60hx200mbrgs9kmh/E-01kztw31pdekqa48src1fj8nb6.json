@@ -1,6 +1,6 @@
 {
   "entity": "T-01kztvgdxb60hx200mbrgs9kmh",
-  "contract": "T-01kztvgdxb60hx200mbrgs9kmh",
+  "task": "T-01kztvgdxb60hx200mbrgs9kmh",
   "kind": "lifecycle",
   "state": "active",
   "summary": "Execution started on feat/T-01kztvgdxb60hx200mbrgs9kmh-a-hosted-session-runs-kotta-on-the-one-branch-it-was-given with claude.",

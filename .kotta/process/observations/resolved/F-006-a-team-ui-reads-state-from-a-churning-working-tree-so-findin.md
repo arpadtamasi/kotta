@@ -10,9 +10,9 @@ confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-07-26'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-07-26T20:13:07.495Z'
-contract: T-016
+task: T-016
 ---
 # F-006 — a-team ui reads state from a churning working tree, so findings flicker/vanish from the UI
 

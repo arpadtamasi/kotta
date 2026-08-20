@@ -1,6 +1,6 @@
 {
   "entity": "T-01kz3kx1ex19tjw82tbd1366pk",
-  "contract": "T-01kz3kx1ex19tjw82tbd1366pk",
+  "task": "T-01kz3kx1ex19tjw82tbd1366pk",
   "kind": "message",
   "role": "human",
   "text": "Approved in CLI: contract.reopen",

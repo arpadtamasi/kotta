@@ -2,7 +2,7 @@
 id: P-005
 title: 'Parhuzamos, friss-kontextusu vegrehajtas'
 status: done
-contracts:
+tasks:
   - T-034
   - T-036
   - T-035
@@ -12,8 +12,8 @@ execution:
   stop_on_failure: true
 authority:
   create_observations: true
-  create_subcontracts: false
-  reorder_independent_contracts: false
+  create_subtasks: false
+  reorder_independent_tasks: false
   change_scope: false
 created_at: '2026-08-02'
 updated_at: '2026-08-02'

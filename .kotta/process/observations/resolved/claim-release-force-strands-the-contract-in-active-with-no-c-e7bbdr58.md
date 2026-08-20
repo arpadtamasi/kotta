@@ -10,9 +10,9 @@ confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-08'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-20T07:47:31.359Z'
-contract: T-01m0f27cwtzc2dbgv24ctjgjm8
+task: T-01m0f27cwtzc2dbgv24ctjgjm8
 ---
 # F-01kzhnkbpdfc2v4bste7bbdr58 — 'claim release --force' strands the contract in active with no command able to act on it
 

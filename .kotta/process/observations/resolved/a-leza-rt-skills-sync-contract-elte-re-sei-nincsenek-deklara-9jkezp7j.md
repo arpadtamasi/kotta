@@ -8,9 +8,9 @@ confidence: high
 severity: medium
 discovered_during: T-01m00afb9wt2vrbs3qgrgv0mtw
 created_at: '2026-08-14'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-14T15:34:48.309Z'
-contract: T-01m00ejpqkrqy4mcpk05txpc2t
+task: T-01m00ejpqkrqy4mcpk05txpc2t
 ---
 # F-01m00e988sfbhses939jkezp7j — A lezárt skills-sync contract eltérései nincsenek deklarálva
 

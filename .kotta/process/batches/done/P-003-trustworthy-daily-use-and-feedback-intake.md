@@ -2,7 +2,7 @@
 id: P-003
 title: Trustworthy daily use and feedback intake
 status: done
-contracts:
+tasks:
   - T-010
   - T-011
   - T-012
@@ -15,8 +15,8 @@ execution:
   stop_on_failure: true
 authority:
   create_observations: true
-  create_subcontracts: false
-  reorder_independent_contracts: false
+  create_subtasks: false
+  reorder_independent_tasks: false
   change_scope: false
 created_at: '2026-07-23'
 updated_at: '2026-08-02'

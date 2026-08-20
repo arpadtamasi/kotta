@@ -8,9 +8,9 @@ confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-12'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-12T22:23:21.874Z'
-contract: T-01kzw15bre7s0wms8d42xfajx0
+task: T-01kzw15bre7s0wms8d42xfajx0
 ---
 # F-01kzw13qka26pq2jgjja1t562m — Dependency-aware batches pause and start the next wave from main
 

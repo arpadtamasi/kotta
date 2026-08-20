@@ -8,9 +8,9 @@ confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-07-26'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-07-27T15:16:43.576Z'
-contract: T-017
+task: T-017
 ---
 # F-005 — UI has no dedicated detail view for tickets or findings (only packages do)
 

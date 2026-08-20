@@ -1,11 +1,11 @@
 {
   "id": "E-01m0b8y360zn64vd9ke7vhk89z",
   "entity": "T-01m0b3jq2yjxbe173w19axk9x8",
-  "contract": "T-01m0b3jq2yjxbe173w19axk9x8",
+  "task": "T-01m0b3jq2yjxbe173w19axk9x8",
   "kind": "approval",
   "approval_id": "E-01m0b8y360zn64vd9ke7vhk89z",
   "phase": "proposed",
-  "action": "contract.cancel",
+  "action": "task.cancel",
   "payload": {
     "resolution": "obsolete",
     "reason": "A review során jóváhagyott spec/process workspace-szétválasztás átfogóbb, koherens replacement contractot igényel; a részleges központi szabály önállóan nem kerül mainbe.",

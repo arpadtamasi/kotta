@@ -1,6 +1,6 @@
 {
   "entity": "T-01m0fp2a84fj8tx209he82kc90",
-  "contract": "T-01m0fp2a84fj8tx209he82kc90",
+  "task": "T-01m0fp2a84fj8tx209he82kc90",
   "kind": "message",
   "role": "human",
   "text": "Approved in CLI: contract.cancel",

@@ -10,9 +10,9 @@ confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-03'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-03T10:49:51.333Z'
-contract: T-01kz3kx1ex19tjw82tbd1366pk
+task: T-01kz3kx1ex19tjw82tbd1366pk
 ---
 # F-01kz3k2axqqy6r4rgqmgt5ybtt — Az agenseknek szolo szabalyok csak egy masolt AGENTS.md-ben elnek, pedig a termeknek kellene hordoznia oket (brief header + kotta guide)
 

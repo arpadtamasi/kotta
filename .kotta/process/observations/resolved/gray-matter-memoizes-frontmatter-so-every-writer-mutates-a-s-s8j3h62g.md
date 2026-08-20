@@ -8,9 +8,9 @@ confidence: high
 severity: medium
 discovered_during: T-023
 created_at: '2026-08-02'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-20T07:47:32.211Z'
-contract: T-01m0f27dqfp9xzgmbe0xnynhsv
+task: T-01m0f27dqfp9xzgmbe0xnynhsv
 ---
 # F-01kz294gj4sy9gcc56s8j3h62g — gray-matter memoizes frontmatter, so every writer mutates a shared object
 

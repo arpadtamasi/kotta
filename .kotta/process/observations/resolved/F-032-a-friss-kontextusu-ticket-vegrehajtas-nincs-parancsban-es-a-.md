@@ -10,9 +10,9 @@ confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-02'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-02T12:23:07.364Z'
-contract: T-035
+task: T-035
 ---
 # F-032 — A friss-kontextusu ticket-vegrehajtas nincs parancsban es a rendszer nem is tereli felé — a D-009 skill-szovegben el, nem a szerszamban
 

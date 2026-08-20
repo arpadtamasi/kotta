@@ -10,9 +10,9 @@ confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-02'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-02T02:56:10.743Z'
-contract: T-029
+task: T-029
 ---
 # F-029 — UI reload masodpercekig tart — fajlonkent kulon git show subprocess, cache nelkul
 

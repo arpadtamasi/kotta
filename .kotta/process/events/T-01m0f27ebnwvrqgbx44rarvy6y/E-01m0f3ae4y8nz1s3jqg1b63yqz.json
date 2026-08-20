@@ -1,6 +1,6 @@
 {
   "entity": "T-01m0f27ebnwvrqgbx44rarvy6y",
-  "contract": "T-01m0f27ebnwvrqgbx44rarvy6y",
+  "task": "T-01m0f27ebnwvrqgbx44rarvy6y",
   "kind": "lifecycle",
   "state": "active",
   "summary": "Execution started on feat/T-01m0f27ebnwvrqgbx44rarvy6y-observation-new-without-discovered-during-writes-without-com with claude from HEAD at 1938f571639d71d0f6353bb6f763db9afe9825a2.",

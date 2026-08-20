@@ -2,7 +2,7 @@
 id: P-004
 title: 'Teljes rename: a-team → kotta'
 status: done
-contracts:
+tasks:
   - T-020
   - T-021
   - T-023
@@ -13,8 +13,8 @@ execution:
   stop_on_failure: true
 authority:
   create_observations: true
-  create_subcontracts: false
-  reorder_independent_contracts: false
+  create_subtasks: false
+  reorder_independent_tasks: false
   change_scope: false
 created_at: '2026-08-01'
 updated_at: '2026-08-03'

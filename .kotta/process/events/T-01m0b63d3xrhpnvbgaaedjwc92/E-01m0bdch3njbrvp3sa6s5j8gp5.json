@@ -1,6 +1,6 @@
 {
   "entity": "T-01m0b63d3xrhpnvbgaaedjwc92",
-  "contract": "T-01m0b63d3xrhpnvbgaaedjwc92",
+  "task": "T-01m0b63d3xrhpnvbgaaedjwc92",
   "kind": "lifecycle",
   "state": "execution-implemented",
   "summary": "Executor codex completed its implementation run.",

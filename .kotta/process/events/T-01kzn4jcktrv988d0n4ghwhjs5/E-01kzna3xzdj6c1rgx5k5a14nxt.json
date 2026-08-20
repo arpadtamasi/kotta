@@ -1,6 +1,6 @@
 {
   "entity": "T-01kzn4jcktrv988d0n4ghwhjs5",
-  "contract": "T-01kzn4jcktrv988d0n4ghwhjs5",
+  "task": "T-01kzn4jcktrv988d0n4ghwhjs5",
   "kind": "lifecycle",
   "state": "review",
   "summary": "Submitted for review in https://github.com/arpadtamasi/kotta/pull/33.",

@@ -10,9 +10,9 @@ confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-01'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-02T02:49:16.110Z'
-contract: T-028
+task: T-028
 ---
 # F-023 — The CLI is not reachable where the work happens, and the skills are bypassed — 831 a-team commands, 5 skill invocations
 

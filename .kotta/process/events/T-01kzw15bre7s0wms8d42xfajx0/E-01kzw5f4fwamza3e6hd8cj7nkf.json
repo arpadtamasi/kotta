@@ -1,6 +1,6 @@
 {
   "entity": "T-01kzw15bre7s0wms8d42xfajx0",
-  "contract": "T-01kzw15bre7s0wms8d42xfajx0",
+  "task": "T-01kzw15bre7s0wms8d42xfajx0",
   "kind": "lifecycle",
   "state": "execution-no-change",
   "summary": "Agent completed and changed nothing: /Users/rp/Dev/progos/kotta/.worktrees/T-01kzw15bre7s0wms8d42xfajx0 still matches the pre-run baseline 9d46c1747c66. This run produced no implementation.",

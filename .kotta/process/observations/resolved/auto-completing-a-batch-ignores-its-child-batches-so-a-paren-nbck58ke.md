@@ -10,9 +10,9 @@ confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-20'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-20T07:47:33.904Z'
-contract: T-01m0f27fc9ds5y3rm0h2fjxngc
+task: T-01m0f27fc9ds5y3rm0h2fjxngc
 ---
 # F-01m0f1mqaydrtkx3x2nbck58ke — Auto-completing a batch ignores its child batches, so a parent with direct contracts can close while children are open
 

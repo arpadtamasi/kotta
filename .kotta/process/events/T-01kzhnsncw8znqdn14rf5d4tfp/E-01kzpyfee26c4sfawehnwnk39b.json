@@ -1,6 +1,6 @@
 {
   "entity": "T-01kzhnsncw8znqdn14rf5d4tfp",
-  "contract": "T-01kzhnsncw8znqdn14rf5d4tfp",
+  "task": "T-01kzhnsncw8znqdn14rf5d4tfp",
   "kind": "lifecycle",
   "state": "active",
   "summary": "Execution started on feat/T-01kzhnsncw8znqdn14rf5d4tfp-a-contract-that-proves-incomplete-has-a-way-back with claude.",

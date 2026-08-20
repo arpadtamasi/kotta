@@ -8,9 +8,9 @@ confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-14'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-14T14:23:04.000Z'
-contract: T-01m00afb9wt2vrbs3qgrgv0mtw
+task: T-01m00afb9wt2vrbs3qgrgv0mtw
 ---
 # F-01m007x3gsqznhbcnytnjqpfy5 — Contract gate treats standalone generated documents as Kotta product work
 

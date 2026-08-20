@@ -1,6 +1,6 @@
 {
   "entity": "F-01m00e988sfbhses939jkezp7j",
-  "contract": "T-01m00afb9wt2vrbs3qgrgv0mtw",
+  "task": "T-01m00afb9wt2vrbs3qgrgv0mtw",
   "kind": "lifecycle",
   "state": "new",
   "summary": "Observation captured during T-01m00afb9wt2vrbs3qgrgv0mtw.",

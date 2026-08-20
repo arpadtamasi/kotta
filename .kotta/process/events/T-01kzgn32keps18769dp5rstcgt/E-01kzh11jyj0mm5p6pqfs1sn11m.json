@@ -1,11 +1,11 @@
 {
   "id": "E-01kzh11jyj0mm5p6pqfs1sn11m",
   "entity": "T-01kzgn32keps18769dp5rstcgt",
-  "contract": "T-01kzgn32keps18769dp5rstcgt",
+  "task": "T-01kzgn32keps18769dp5rstcgt",
   "kind": "approval",
   "approval_id": "E-01kzh11jyj0mm5p6pqfs1sn11m",
   "phase": "proposed",
-  "action": "contract.close",
+  "action": "task.close",
   "payload": {
     "surface": "cli"
   },

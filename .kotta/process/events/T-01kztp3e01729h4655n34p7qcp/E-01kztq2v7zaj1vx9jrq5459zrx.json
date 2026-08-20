@@ -1,11 +1,11 @@
 {
   "id": "E-01kztq2v7zaj1vx9jrq5459zrx",
   "entity": "T-01kztp3e01729h4655n34p7qcp",
-  "contract": "T-01kztp3e01729h4655n34p7qcp",
+  "task": "T-01kztp3e01729h4655n34p7qcp",
   "kind": "approval",
   "approval_id": "E-01kztq2v7zaj1vx9jrq5459zrx",
   "phase": "proposed",
-  "action": "contract.sign",
+  "action": "task.sign",
   "payload": {
     "surface": "cli"
   },

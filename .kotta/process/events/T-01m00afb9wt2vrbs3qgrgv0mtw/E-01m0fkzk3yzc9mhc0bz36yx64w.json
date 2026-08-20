@@ -1,6 +1,6 @@
 {
   "entity": "T-01m00afb9wt2vrbs3qgrgv0mtw",
-  "contract": "T-01m00afb9wt2vrbs3qgrgv0mtw",
+  "task": "T-01m00afb9wt2vrbs3qgrgv0mtw",
   "kind": "message",
   "role": "human",
   "text": "Approved in CLI: contract.request-changes",

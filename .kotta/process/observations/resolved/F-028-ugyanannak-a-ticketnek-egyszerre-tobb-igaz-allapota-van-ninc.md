@@ -10,9 +10,9 @@ confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-02'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-02T15:04:39.219Z'
-contract: T-01kz1g2w1fs2qx0bs72e9pkmg4
+task: T-01kz1g2w1fs2qx0bs72e9pkmg4
 ---
 # F-028 — Ugyanannak a ticketnek egyszerre tobb igaz allapota van — nincs kimondott olvasasi szabaly a git-kontextusok folott
 

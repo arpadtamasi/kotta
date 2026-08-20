@@ -10,9 +10,9 @@ confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-02'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-02T20:47:37.469Z'
-contract: T-01kz23pvzscenqavzx4tg62x1b
+task: T-01kz23pvzscenqavzx4tg62x1b
 ---
 # F-01kz23nj69srgr2w13htpyyahh — A vegrehajto agens jelentese sehova nem kerul — csak az el belole, amit a koordinator kezzel atir a review-evidenciaba
 

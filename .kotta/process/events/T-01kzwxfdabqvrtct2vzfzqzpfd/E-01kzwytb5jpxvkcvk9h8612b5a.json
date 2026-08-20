@@ -1,6 +1,6 @@
 {
   "entity": "T-01kzwxfdabqvrtct2vzfzqzpfd",
-  "contract": "T-01kzwxfdabqvrtct2vzfzqzpfd",
+  "task": "T-01kzwxfdabqvrtct2vzfzqzpfd",
   "kind": "lifecycle",
   "state": "active",
   "summary": "Execution started on fix/T-01kzwxfdabqvrtct2vzfzqzpfd-the-unconditional-agent-rule-turns-process-documentation-and with codex from HEAD at a0c8bf34fab7b7330617070b7f0753022b12393e.",

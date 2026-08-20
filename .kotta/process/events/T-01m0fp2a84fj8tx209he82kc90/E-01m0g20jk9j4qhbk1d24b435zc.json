@@ -1,6 +1,6 @@
 {
   "entity": "T-01m0fp2a84fj8tx209he82kc90",
-  "contract": "T-01m0fp2a84fj8tx209he82kc90",
+  "task": "T-01m0fp2a84fj8tx209he82kc90",
   "kind": "lifecycle",
   "state": "done",
   "summary": "Contract cancelled from backlog with resolution cancelled. Reason: A munka a OneAndA repóban, a T-01m0fp31g9z3148cczqhek1g1x contract keretében elkészült, lezárult és a main ágra került (51f96742); a Kotta repóban tévesen létrehozott párhuzamos contractnak nincs önálló tárgya.",

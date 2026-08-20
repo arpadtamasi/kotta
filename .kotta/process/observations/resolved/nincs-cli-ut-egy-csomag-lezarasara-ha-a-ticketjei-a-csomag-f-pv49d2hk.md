@@ -10,9 +10,9 @@ confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-02'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-02T15:04:39.027Z'
-contract: T-01kz1g2vvgqvvzef92qdtczv8w
+task: T-01kz1g2vvgqvvzef92qdtczv8w
 ---
 # F-01kz1fndr7se26q7bcpv49d2hk — Nincs CLI-ut egy csomag lezarasara, ha a ticketjei a csomag-folyamaton kivul keszultek el
 

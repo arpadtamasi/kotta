@@ -2,7 +2,7 @@
 id: P-002
 title: Trustworthy A-Team onboarding path
 status: done
-contracts:
+tasks:
   - T-008
   - T-009
 execution:
@@ -11,8 +11,8 @@ execution:
   stop_on_failure: true
 authority:
   create_observations: true
-  create_subcontracts: false
-  reorder_independent_contracts: false
+  create_subtasks: false
+  reorder_independent_tasks: false
   change_scope: false
 created_at: '2026-07-22'
 updated_at: '2026-07-23'

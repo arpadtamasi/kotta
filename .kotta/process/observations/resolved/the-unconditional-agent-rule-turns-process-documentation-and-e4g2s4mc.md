@@ -10,9 +10,9 @@ confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-13'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-13T06:38:11.280Z'
-contract: T-01kzwxfdabqvrtct2vzfzqzpfd
+task: T-01kzwxfdabqvrtct2vzfzqzpfd
 ---
 # F-01kzwwsjvcbcxf5vpee4g2s4mc — The unconditional agent rule turns process documentation and non-product housekeeping into contract work
 

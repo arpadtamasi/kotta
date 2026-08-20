@@ -8,9 +8,9 @@ confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-07-23'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-07-23T16:41:20.944Z'
-contract: T-014
+task: T-014
 ---
 # F-001 — UI port collision returns raw EADDRINUSE without recovery guidance
 

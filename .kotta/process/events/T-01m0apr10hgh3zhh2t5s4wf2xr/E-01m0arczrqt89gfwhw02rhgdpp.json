@@ -1,6 +1,6 @@
 {
   "entity": "T-01m0apr10hgh3zhh2t5s4wf2xr",
-  "contract": "T-01m0apr10hgh3zhh2t5s4wf2xr",
+  "task": "T-01m0apr10hgh3zhh2t5s4wf2xr",
   "kind": "lifecycle",
   "state": "done",
   "summary": "Contract cancelled from backlog with resolution duplicate. Reason: Szűkebb című előd: a cím csak az alapot nevezte meg, a define a címet nem javíthatja; a teljes scope az utódban él. Superseded by T-01m0apvt0hm3wcmwa6qbvwqess.",

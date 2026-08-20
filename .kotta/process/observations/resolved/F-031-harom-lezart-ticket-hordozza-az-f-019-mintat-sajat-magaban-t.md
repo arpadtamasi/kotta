@@ -10,9 +10,9 @@ confidence: high
 severity: medium
 discovered_during: T-032
 created_at: '2026-08-02'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-02T09:55:59.258Z'
-contract: T-033
+task: T-033
 ---
 # F-031 — Harom lezart ticket hordozza az F-019 mintat sajat magaban: T-026, T-029, T-030 Deviations mezoje None, a prozajuk DEVIACIO-t sorol
 

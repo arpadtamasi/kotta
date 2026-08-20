@@ -10,9 +10,9 @@ confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-07-26'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-02T12:23:07.215Z'
-contract: T-034
+task: T-034
 ---
 # F-008 — Sequential IDs collide and lifecycle states duplicate under concurrent worktrees/merges
 

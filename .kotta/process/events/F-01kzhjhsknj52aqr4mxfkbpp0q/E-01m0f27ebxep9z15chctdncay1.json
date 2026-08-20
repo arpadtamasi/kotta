@@ -1,6 +1,6 @@
 {
   "entity": "F-01kzhjhsknj52aqr4mxfkbpp0q",
-  "contract": null,
+  "task": null,
   "kind": "message",
   "role": "human",
   "text": "Approved in CLI: observation.resolve",

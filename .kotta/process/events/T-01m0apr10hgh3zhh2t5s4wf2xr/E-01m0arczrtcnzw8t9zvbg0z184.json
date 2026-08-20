@@ -1,10 +1,10 @@
 {
   "entity": "T-01m0apr10hgh3zhh2t5s4wf2xr",
-  "contract": "T-01m0apr10hgh3zhh2t5s4wf2xr",
+  "task": "T-01m0apr10hgh3zhh2t5s4wf2xr",
   "kind": "approval",
   "approval_id": "E-01m0arczrr3m3mc81hrq2ydv8w",
   "phase": "approved",
-  "action": "contract.cancel",
+  "action": "task.cancel",
   "payload": {
     "resolution": "duplicate",
     "reason": "Szűkebb című előd: a cím csak az alapot nevezte meg, a define a címet nem javíthatja; a teljes scope az utódban él.",

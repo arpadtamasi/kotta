@@ -2,7 +2,7 @@
 id: P-01m0fq77101axprvcjwrq3bs61
 title: 'A kotta a megállapodás: a spec-first modell landolása a futó rendszerben'
 status: done
-contracts:
+tasks:
   - T-01m0fq306xed253zf243bwk94f
   - T-01m0fq30n1ntmbvamm6vs5h0w6
   - T-01m0fq318dpmktbc2jtv3d65m7
@@ -17,8 +17,8 @@ execution:
   stop_on_failure: true
 authority:
   create_observations: true
-  create_subcontracts: false
-  reorder_independent_contracts: false
+  create_subtasks: false
+  reorder_independent_tasks: false
   change_scope: false
 created_at: '2026-08-20'
 updated_at: '2026-08-20'

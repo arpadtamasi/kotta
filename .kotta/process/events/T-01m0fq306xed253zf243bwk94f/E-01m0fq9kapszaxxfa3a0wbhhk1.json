@@ -1,6 +1,6 @@
 {
   "entity": "T-01m0fq306xed253zf243bwk94f",
-  "contract": "T-01m0fq306xed253zf243bwk94f",
+  "task": "T-01m0fq306xed253zf243bwk94f",
   "kind": "message",
   "role": "human",
   "text": "Approved in CLI: contract.sign",

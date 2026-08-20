@@ -1,10 +1,10 @@
 {
   "entity": "T-01kzhnsncw8znqdn14rf5d4tfp",
-  "contract": "T-01kzhnsncw8znqdn14rf5d4tfp",
+  "task": "T-01kzhnsncw8znqdn14rf5d4tfp",
   "kind": "approval",
   "approval_id": "E-01m0fkzjrgdqfc2nvcery4j856",
   "phase": "applied",
-  "action": "contract.request-changes",
+  "action": "task.request-changes",
   "payload": {
     "surface": "cli"
   },

@@ -1,6 +1,6 @@
 {
   "entity": "T-01m0apvt0hm3wcmwa6qbvwqess",
-  "contract": "T-01m0apvt0hm3wcmwa6qbvwqess",
+  "task": "T-01m0apvt0hm3wcmwa6qbvwqess",
   "kind": "message",
   "role": "human",
   "text": "Rejected in caller chat: contract.sign T-01m0apvt0hm3wcmwa6qbvwqess.",

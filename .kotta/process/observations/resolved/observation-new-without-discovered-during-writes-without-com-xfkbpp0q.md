@@ -10,9 +10,9 @@ confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-08'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-20T07:47:32.858Z'
-contract: T-01m0f27ebnwvrqgbx44rarvy6y
+task: T-01m0f27ebnwvrqgbx44rarvy6y
 ---
 # F-01kzhjhsknj52aqr4mxfkbpp0q — 'observation new' without --discovered-during writes without committing and blocks the next command
 

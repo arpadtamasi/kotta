@@ -8,9 +8,9 @@ confidence: high
 severity: medium
 discovered_during: T-013
 created_at: '2026-08-02'
-disposition: create-contract
+disposition: create-task
 resolved_at: '2026-08-02T16:47:46.869Z'
-contract: T-01kz1nzpnafm6n5t0fz43g7nwh
+task: T-01kz1nzpnafm6n5t0fz43g7nwh
 ---
 # F-033 — No component-test harness exists for the React board
 

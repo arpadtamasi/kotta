@@ -1,6 +1,6 @@
 {
   "entity": "F-01kze54x7ykmsz496c77s7jgtd",
-  "contract": null,
+  "task": null,
   "kind": "message",
   "role": "human",
   "text": "Rejected in caller chat: observation.resolve F-01kze54x7ykmsz496c77s7jgtd --disposition create-contract.",

@@ -2,7 +2,7 @@
 id: P-001
 title: Code-aware finding synthesis V1
 status: backlog
-contracts:
+tasks:
   - T-001
   - T-002
   - T-003

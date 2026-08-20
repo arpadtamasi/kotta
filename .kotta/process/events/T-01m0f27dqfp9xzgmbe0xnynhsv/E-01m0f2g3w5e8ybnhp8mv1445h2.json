@@ -1,6 +1,6 @@
 {
   "entity": "T-01m0f27dqfp9xzgmbe0xnynhsv",
-  "contract": "T-01m0f27dqfp9xzgmbe0xnynhsv",
+  "task": "T-01m0f27dqfp9xzgmbe0xnynhsv",
   "kind": "lifecycle",
   "state": "active",
   "summary": "Execution started on feat/T-01m0f27dqfp9xzgmbe0xnynhsv-gray-matter-memoizes-frontmatter-so-every-writer-mutates-a-s with claude from HEAD at 32ab9f0eaae11b8214036cea3fcff48914422824.",

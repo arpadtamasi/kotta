@@ -1,11 +1,11 @@
 {
   "id": "E-01m0f2fb05gkn6sfaz1drtkpnk",
   "entity": "T-01m0f27dqfp9xzgmbe0xnynhsv",
-  "contract": "T-01m0f27dqfp9xzgmbe0xnynhsv",
+  "task": "T-01m0f27dqfp9xzgmbe0xnynhsv",
   "kind": "approval",
   "approval_id": "E-01m0f2fb05gkn6sfaz1drtkpnk",
   "phase": "proposed",
-  "action": "contract.sign",
+  "action": "task.sign",
   "payload": {
     "surface": "cli"
   },
