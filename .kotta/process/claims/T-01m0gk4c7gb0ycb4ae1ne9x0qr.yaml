@@ -1,0 +1,9 @@
+task: T-01m0gk4c7gb0ycb4ae1ne9x0qr
+agent: codex
+branch: fix/T-01m0gk4c7gb0ycb4ae1ne9x0qr-the-public-site-bug-report-test-follows-behavior-not-a-retir
+worktree: .worktrees/T-01m0gk4c7gb0ycb4ae1ne9x0qr
+execution_mode: inherited
+origin: created
+start_ref: HEAD
+start_commit: 83e495b677d9874a821d27639ba003cbbb446666
+started_at: 2026-08-20T22:10:45.027Z

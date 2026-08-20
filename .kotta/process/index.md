@@ -15,11 +15,10 @@ None.
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
 - one-operation-registry-derives-both-the-cli-and-the-mcp-surf-06fw8n0g
 - the-agent-rules-reach-the-calling-chat-as-a-generated-file-n-atnxppcm
-- the-public-site-bug-report-test-follows-behavior-not-a-retir-1ne9x0qr
 
 ## Active tasks
 
-None.
+- the-public-site-bug-report-test-follows-behavior-not-a-retir-1ne9x0qr
 
 ## Review
 
