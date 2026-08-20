@@ -3,7 +3,7 @@ id: T-01m0f27ebnwvrqgbx44rarvy6y
 title: >-
   'observation new' without --discovered-during writes without committing and
   blocks the next command
-status: defined
+status: active
 origin: observation
 types:
   - fix
@@ -13,11 +13,18 @@ risk: low
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: >-
+  feat/T-01m0f27ebnwvrqgbx44rarvy6y-observation-new-without-discovered-during-writes-without-com
 pull_request: null
 created_at: '2026-08-20'
 updated_at: '2026-08-20'
 source_observation: F-01kzhjhsknj52aqr4mxfkbpp0q
+assigned_agent: claude
+worktree: .worktrees/T-01m0f27ebnwvrqgbx44rarvy6y
+execution_mode: inherited
+branch_origin: created
+start_ref: HEAD
+start_commit: 1938f571639d71d0f6353bb6f763db9afe9825a2
 ---
 ## Outcome
 
