@@ -3,7 +3,7 @@ id: T-01m0f27fc9ds5y3rm0h2fjxngc
 title: >-
   Auto-completing a batch ignores its child batches, so a parent with direct
   contracts can close while children are open
-status: review
+status: done
 origin: observation
 types:
   - fix
@@ -25,6 +25,7 @@ execution_mode: inherited
 branch_origin: created
 start_ref: HEAD
 start_commit: bfb47c147fdcfd5c55609065efc380cca56f9d15
+resolution: completed
 ---
 ## Outcome
 
