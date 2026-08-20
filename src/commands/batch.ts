@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFile
 import { join, resolve } from "node:path";
 import { findRepositoryRoot, regenerateIndex, workspaceDirectoryName, processPath } from "../filesystem/workspace.js";
 import { findContract, resolveEffectiveContract } from "../filesystem/entities.js";
+import { batchTree, findBatch, openSubtreeMembers, subtreeContracts, type BatchTree } from "../filesystem/batches.js";
 import { BATCH_ID, entityFilename, filenameMatchesId, mintId } from "../core/identity.js";
 import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
 import { readWorkspaceConfig } from "../core/config.js";
@@ -17,55 +18,6 @@ interface BatchData {
   contracts: string[];
   execution: { mode: string; parallelism: number; stop_on_failure: boolean };
   [key: string]: unknown;
-}
-
-export function findBatch(root: string, id: string) {
-  for (const state of ["backlog", "defined", "active", "done"]) {
-    const directory = processPath(root, "batches", state);
-    if (!existsSync(directory)) continue;
-    const filename = readdirSync(directory).find((name) => name.endsWith(".md") && filenameMatchesId(name, id));
-    if (filename) return { state, filename, path: join(directory, filename) };
-  }
-  throw new Error(`Batch ${id} was not found.`);
-}
-
-/**
- * Nesting is grouping and nothing else (D-01kztxvppd40r77cq7kw9b8wzr): a child batch has no
- * coordinator branch, no execution block of its own and no merge target. What it buys is a level
- * above the contract for a large product, and one readable answer to "what is under this".
- */
-export interface BatchTree {
-  id: string;
-  title: string;
-  state: string;
-  contracts: string[];
-  children: BatchTree[];
-}
-
-function batchMembers(root: string, id: string): { contracts: string[]; batches: string[]; title: string; state: string } {
-  const batch = findBatch(root, id);
-  const data = parseMarkdown(readFileSync(batch.path, "utf8")).data;
-  return {
-    contracts: Array.isArray(data.contracts) ? data.contracts.map(String) : [],
-    batches: Array.isArray(data.batches) ? data.batches.map(String) : [],
-    title: typeof data.title === "string" ? data.title : "",
-    state: batch.state,
-  };
-}
-
-/** The subtree under a batch. `seen` is the path back to the root, so a cycle names its own loop. */
-export function batchTree(root: string, id: string, seen: string[] = []): BatchTree {
-  if (seen.includes(id)) throw new Error(`Batch nesting is cyclic: ${[...seen, id].join(" → ")}.`);
-  const members = batchMembers(root, id);
-  return {
-    id, title: members.title, state: members.state, contracts: members.contracts,
-    children: members.batches.map((child) => batchTree(root, child, [...seen, id])),
-  };
-}
-
-/** Every contract under a batch, direct members first, then each child in declaration order. */
-export function subtreeContracts(tree: BatchTree): string[] {
-  return [...tree.contracts, ...tree.children.flatMap(subtreeContracts)];
 }
 
 /**
@@ -483,17 +435,12 @@ export function closeBatch(id: string, approved: boolean, repositoryRoot?: strin
   // Re-running on a finished batch is a no-op, so a retried coordinator never has to guess.
   if (batch.state === "done") return { ok: true, command: "batch close", data: { id, status: "done", path: batch.path, changed: false } };
   if (!approved) throw new Error(`Human close approval is required. Re-run with --approve after verifying every contract of ${id} is complete.`);
-  const tree = batchTree(root, id);
-  // A parent is finished when its whole subtree is: the same rule as before, one level deeper.
-  const openChildren = tree.children.filter((child) => child.state !== "done");
-  if (openChildren.length) throw new Error(`Batch ${id} cannot close while ${openChildren.map((child) => `${child.id} is ${child.state}`).join(", ")}. Every child batch must reach done first.`);
-  const contractIds = [...new Set(subtreeContracts(tree))];
-  if (!contractIds.length) throw new Error(`Batch ${id} has no member contracts; there is nothing to close.`);
-  // A contract executing in its own worktree still reads as defined here, so ask for the effective state.
-  const open = contractIds
-    .map((contractId) => ({ id: contractId, state: resolveEffectiveContract(root, contractId, (contract) => contract.state).value }))
-    .filter((member) => member.state !== "done");
-  if (open.length) throw new Error(`Batch ${id} cannot close while ${open.map((member) => `${member.id} is ${member.state}`).join(", ")}. Every member contract must reach done first.`);
+  // A parent is finished when its whole subtree is. The automatic completion a closing contract
+  // triggers asks the same question, so the two paths cannot drift apart.
+  const open = openSubtreeMembers(root, id);
+  if (open.children.length) throw new Error(`Batch ${id} cannot close while ${open.children.map((child) => `${child.id} is ${child.state}`).join(", ")}. Every child batch must reach done first.`);
+  if (!open.contractCount) throw new Error(`Batch ${id} has no member contracts; there is nothing to close.`);
+  if (open.contracts.length) throw new Error(`Batch ${id} cannot close while ${open.contracts.map((member) => `${member.id} is ${member.state}`).join(", ")}. Every member contract must reach done first.`);
   if (!options.skipClean) assertClean(root);
   data.status = "done";
   data.updated_at = new Date().toISOString().slice(0, 10);
