@@ -3,7 +3,7 @@ id: T-01m0f27ebnwvrqgbx44rarvy6y
 title: >-
   'observation new' without --discovered-during writes without committing and
   blocks the next command
-status: backlog
+status: defined
 origin: observation
 types:
   - fix
