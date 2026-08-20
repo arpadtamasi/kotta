@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import matter from "gray-matter";
-import { closeBatch, findBatch } from "./batch.js";
+import { closeBatch } from "./batch.js";
+import { findBatch } from "../filesystem/batches.js";
 import { cancelContract, closeContract, reopenContract, signContract } from "./contract.js";
 import { findObservation, resolveObservation } from "./observation.js";
 import { appendEvent, approvalHistory, mintApprovalId, readEvents, type KottaEvent } from "../core/events.js";

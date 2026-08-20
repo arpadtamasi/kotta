@@ -3,6 +3,7 @@ import { join, resolve } from "node:path";
 import { parse as parseYaml, stringify } from "yaml";
 import { findRepositoryRoot, regenerateIndex, workspaceDirectoryName, processPath } from "../filesystem/workspace.js";
 import { canonicalEntityId, findContract, listEntities } from "../filesystem/entities.js";
+import { batchSubtreeComplete, batchTree, subtreeContracts } from "../filesystem/batches.js";
 import { entityFilename, mintId } from "../core/identity.js";
 import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
 import { assertValid, validateContractDefinitionFile, validateContractFile } from "../core/validation.js";
@@ -682,25 +683,38 @@ export function briefContract(id: string, options: { out?: string; warnTokens?: 
  */
 const OPEN_BATCH_STATES = ["backlog", "defined", "active"] as const;
 
+/**
+ * A contract reaching a terminal state can finish the batch that holds it, and finishing that batch
+ * can in turn finish the parent grouping it. So every open batch carrying this contract anywhere in
+ * its subtree is reconsidered, and reconsidered again until a pass changes nothing: a batch reads
+ * its children's state from where their files sit, so a parent can only be judged after its child
+ * has moved. The completeness test is the one `batch close` asks, so the automatic path and the
+ * explicit path cannot drift apart (F-01m0f1mqaydrtkx3x2nbck58ke).
+ */
 function updateContainingBatch(root: string, contractId: string): void {
-  for (const state of OPEN_BATCH_STATES) {
-    const directory = processPath(root, "batches", state);
-    if (!existsSync(directory)) continue;
-    for (const filename of readdirSync(directory).filter((name) => name.endsWith(".md"))) {
-      const path = join(directory, filename);
-      const entity = parseMarkdown(readFileSync(path, "utf8"));
-      const contracts = Array.isArray(entity.data.contracts) ? entity.data.contracts.map(String) : [];
-      if (!contracts.includes(contractId)) continue;
-      entity.data.updated_at = new Date().toISOString().slice(0, 10);
-      if (contracts.every((id) => findContract(root, id).state === "done")) {
-        entity.data.status = "done";
-        const done = processPath(root, "batches/done");
-        mkdirSync(done, { recursive: true });
-        writeFileSync(join(done, filename), renderMarkdown(entity.data, entity.content));
-        unlinkSync(path);
-        appendLifecycleEvent(root, String(entity.data.id), "done", "All member contracts completed; batch closed.", null);
-      } else {
-        writeFileSync(path, renderMarkdown(entity.data, entity.content));
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const state of OPEN_BATCH_STATES) {
+      const directory = processPath(root, "batches", state);
+      if (!existsSync(directory)) continue;
+      for (const filename of readdirSync(directory).filter((name) => name.endsWith(".md"))) {
+        const path = join(directory, filename);
+        const entity = parseMarkdown(readFileSync(path, "utf8"));
+        const id = String(entity.data.id);
+        if (!subtreeContracts(batchTree(root, id)).includes(contractId)) continue;
+        entity.data.updated_at = new Date().toISOString().slice(0, 10);
+        if (batchSubtreeComplete(root, id)) {
+          entity.data.status = "done";
+          const done = processPath(root, "batches/done");
+          mkdirSync(done, { recursive: true });
+          writeFileSync(join(done, filename), renderMarkdown(entity.data, entity.content));
+          unlinkSync(path);
+          appendLifecycleEvent(root, id, "done", "Every contract and child batch underneath completed; batch closed.", null);
+          changed = true;
+        } else {
+          writeFileSync(path, renderMarkdown(entity.data, entity.content));
+        }
       }
     }
   }

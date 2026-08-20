@@ -131,6 +131,29 @@ describe("a batch that groups other batches", () => {
     expect(run(root, ["batch", "close", parent, "--approve"])).toMatchObject({ ok: true, data: { status: "done" } });
   });
 
+  test("a parent mixing direct contracts with child batches waits for both (F-01m0f1mqaydrtkx3x2nbck58ke)", () => {
+    const root = repository("mixed-completion");
+    const direct = contract(root, "Direct work");
+    const nested = contract(root, "Nested work");
+    const child = batch(root, "Child");
+    const parent = batch(root, "Parent");
+    run(root, ["batch", "add", child, nested.id]);
+    run(root, ["batch", "add", parent, direct.id]);
+    run(root, ["batch", "add", parent, child]);
+    git(root, "add", ".");
+    git(root, "commit", "-m", "compose the tree");
+
+    // The parent's last direct contract finishes while the child batch is still open.
+    run(root, ["contract", "cancel", direct.id, "--resolution", "cancelled", "--reason", "Direct work retired", "--approve"]);
+    expect(run(root, ["batch", "status", parent])).toMatchObject({ data: { id: parent, status: "backlog" } });
+    expect(run(root, ["batch", "status", child])).toMatchObject({ data: { id: child, status: "backlog" } });
+
+    // Finishing the child's only contract completes the child, and the parent with it.
+    run(root, ["contract", "cancel", nested.id, "--resolution", "cancelled", "--reason", "Nested work retired", "--approve"]);
+    expect(run(root, ["batch", "status", child])).toMatchObject({ data: { id: child, status: "done" } });
+    expect(run(root, ["batch", "status", parent])).toMatchObject({ data: { id: parent, status: "done" } });
+  });
+
   test("removing a child returns it to a root with its own members intact", () => {
     const root = repository("remove");
     const work = contract(root, "Only work");
