@@ -36,7 +36,7 @@ the use-case id.
 ## When not to use
 
 Do not use a use case for a one-step rule, a domain definition, or internal architecture with no
-actor-visible contract. Use a state machine when valid behavior mainly depends on current state.
+actor-visible task. Use a state machine when valid behavior mainly depends on current state.
 Avoid decomposing one actor goal into CRUD use cases unless create, read, update, and delete are
 independently meaningful outcomes.
 

@@ -2,7 +2,7 @@
 id: P-012
 title: Export sprint
 status: active
-contracts:
+tasks:
   - T-014
   - T-015
   - T-018
@@ -12,8 +12,8 @@ execution:
   stop_on_failure: true
 authority:
   create_observations: true
-  create_subcontracts: false
-  reorder_independent_contracts: true
+  create_subtasks: false
+  reorder_independent_tasks: true
   change_scope: false
 created_at: '2026-07-21'
 updated_at: '2026-07-21'

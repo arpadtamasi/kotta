@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { RunOverlay, computeRunWaves, readBoard } from "../../ui/src/App";
-import { batch, contract, workspace } from "./fixtures";
+import { batch, task, workspace } from "./fixtures";
 
 afterEach(() => {
   cleanup();
@@ -11,22 +11,22 @@ afterEach(() => {
 });
 
 const members = [
-  contract("T-001", "Finished foundation", { status: "done", batch: "P-001", assigned_agent: "codex", updated_at: "2026-08-01" }),
-  contract("T-002", "Active implementation", { status: "active", batch: "P-001", assigned_agent: "codex", branch: "feat/T-002", claim: { contract: "T-002", agent: "codex", branch: "feat/T-002", worktree: ".worktrees/T-002", started_at: "2026-08-14T08:00:00Z" }, depends_on: ["T-001"], updated_at: "2026-08-04" }),
-  contract("T-003", "Review the implementation", { status: "review", batch: "P-001", assigned_agent: "claude", branch: "feat/T-003", depends_on: ["T-002"], updated_at: "2026-08-03" }),
-  contract("T-004", "Waiting parallel work", { status: "defined", batch: "P-001", depends_on: ["T-002"], updated_at: "2026-08-02" }),
-  contract("T-005", "Canonically blocked work", { status: "defined", blocked: true, batch: "P-001", depends_on: ["T-003"], sections: { blocker: "waiting for a human decision" } }),
-  contract("T-006", "Inconsistent backlog member", { status: "backlog", batch: "P-001", depends_on: ["T-003"] }),
+  task("T-001", "Finished foundation", { status: "done", batch: "P-001", assigned_agent: "codex", updated_at: "2026-08-01" }),
+  task("T-002", "Active implementation", { status: "active", batch: "P-001", assigned_agent: "codex", branch: "feat/T-002", claim: { task: "T-002", agent: "codex", branch: "feat/T-002", worktree: ".worktrees/T-002", started_at: "2026-08-14T08:00:00Z" }, depends_on: ["T-001"], updated_at: "2026-08-04" }),
+  task("T-003", "Review the implementation", { status: "review", batch: "P-001", assigned_agent: "claude", branch: "feat/T-003", depends_on: ["T-002"], updated_at: "2026-08-03" }),
+  task("T-004", "Waiting parallel work", { status: "defined", batch: "P-001", depends_on: ["T-002"], updated_at: "2026-08-02" }),
+  task("T-005", "Canonically blocked work", { status: "defined", blocked: true, batch: "P-001", depends_on: ["T-003"], sections: { blocker: "waiting for a human decision" } }),
+  task("T-006", "Inconsistent backlog member", { status: "backlog", batch: "P-001", depends_on: ["T-003"] }),
 ];
 
 const data = workspace({
-  contracts: members,
+  tasks: members,
   batches: [batch("P-001", "Wave restoration", {
-    status: "active", contracts: members.map((member) => member.id),
+    status: "active", tasks: members.map((member) => member.id),
     execution: { mode: "dependency-aware", parallelism: 3, stop_on_failure: true },
   })],
   events: [{
-    id: "E-01kzzzzzzzzzzzzzzzzzzzzzzx", entity: "T-001", contract: "T-001", kind: "lifecycle", created_at: "2026-08-14T07:00:00Z",
+    id: "E-01kzzzzzzzzzzzzzzzzzzzzzzx", entity: "T-001", task: "T-001", kind: "lifecycle", created_at: "2026-08-14T07:00:00Z",
     state: "execution-implemented", summary: "Executor completed.", payload: { started_at: "2026-08-14T06:47:30Z", completed_at: "2026-08-14T07:00:00Z", duration_ms: 750_000, token_usage: { input_tokens: 1000, output_tokens: 250, total_tokens: 1250 } },
   }],
 });
@@ -49,9 +49,9 @@ describe("Run wave derivation", () => {
 
   it("ignores out-of-batch edges but leaves cyclic in-batch topology in an explicit remainder", () => {
     const malformed = [
-      contract("T-010", "Cycle one", { depends_on: ["T-011"] }),
-      contract("T-011", "Cycle two", { depends_on: ["T-010"] }),
-      contract("T-012", "Missing dependency", { depends_on: ["T-999"] }),
+      task("T-010", "Cycle one", { depends_on: ["T-011"] }),
+      task("T-011", "Cycle two", { depends_on: ["T-010"] }),
+      task("T-012", "Missing dependency", { depends_on: ["T-999"] }),
     ];
     const result = computeRunWaves(malformed);
     expect(result.waves.map((wave) => wave.map((member) => member.id))).toEqual([["T-012"]]);
@@ -78,12 +78,12 @@ describe("The Run overlay", () => {
 
   it("renders cyclic topology as an unresolved remainder instead of inventing waves", () => {
     const cyclic = [
-      contract("T-010", "Cycle one", { status: "defined", batch: "P-010", depends_on: ["T-011"] }),
-      contract("T-011", "Cycle two", { status: "defined", batch: "P-010", depends_on: ["T-010"] }),
+      task("T-010", "Cycle one", { status: "defined", batch: "P-010", depends_on: ["T-011"] }),
+      task("T-011", "Cycle two", { status: "defined", batch: "P-010", depends_on: ["T-010"] }),
     ];
     const cyclicData = workspace({
-      contracts: cyclic,
-      batches: [batch("P-010", "Malformed run", { status: "active", contracts: cyclic.map((member) => member.id) })],
+      tasks: cyclic,
+      batches: [batch("P-010", "Malformed run", { status: "active", tasks: cyclic.map((member) => member.id) })],
     });
     render(<RunOverlay board={readBoard(cyclicData)} onClose={() => undefined} onOpen={() => undefined} />);
     expect(screen.getByText("Unresolved topology")).toBeDefined();
@@ -97,12 +97,12 @@ describe("The Run overlay", () => {
     fireEvent.click(screen.getByRole("button", { name: /Active implementation/ }));
 
     expect(screen.getByLabelText("Execution waves for Wave restoration")).toBeDefined();
-    expect(screen.getByText("Contract context")).toBeDefined();
+    expect(screen.getByText("Task context")).toBeDefined();
     expect(screen.getByText("feat/T-002")).toBeDefined();
     expect(screen.getByText("T-001", { selector: ".run__facts dd" })).toBeDefined();
     expect(screen.getByRole("button", { name: /Active implementation/ }).getAttribute("aria-pressed")).toBe("true");
 
-    fireEvent.click(screen.getByRole("button", { name: "Open full contract detail →" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open full task detail →" }));
     expect(onOpen).toHaveBeenCalledWith("T-002");
     fireEvent.click(screen.getByRole("button", { name: "← Recent executions" }));
     expect(screen.getByText("Recent executions")).toBeDefined();
@@ -148,14 +148,14 @@ describe("The Run overlay", () => {
 
   it("renders a batch-of-batches once, with the child named inside the parent tree", () => {
     const nestedMembers = [
-      contract("T-100", "Nested foundation", { status: "done", batch: "P-101" }),
-      contract("T-101", "Nested active work", { status: "active", batch: "P-101", claim: { contract: "T-101", agent: "codex", branch: "feat/T-101", worktree: ".worktrees/T-101", started_at: "2026-08-14T08:00:00Z" }, depends_on: ["T-100"] }),
+      task("T-100", "Nested foundation", { status: "done", batch: "P-101" }),
+      task("T-101", "Nested active work", { status: "active", batch: "P-101", claim: { task: "T-101", agent: "codex", branch: "feat/T-101", worktree: ".worktrees/T-101", started_at: "2026-08-14T08:00:00Z" }, depends_on: ["T-100"] }),
     ];
     const nested = workspace({
-      contracts: nestedMembers,
+      tasks: nestedMembers,
       batches: [
-        batch("P-100", "Parent run", { status: "active", contracts: [], batches: ["P-101"] }),
-        batch("P-101", "Nested run", { status: "active", contracts: nestedMembers.map((item) => item.id) }),
+        batch("P-100", "Parent run", { status: "active", tasks: [], batches: ["P-101"] }),
+        batch("P-101", "Nested run", { status: "active", tasks: nestedMembers.map((item) => item.id) }),
       ],
     });
     const { container } = render(<RunOverlay board={readBoard(nested)} onClose={() => undefined} onOpen={() => undefined} />);

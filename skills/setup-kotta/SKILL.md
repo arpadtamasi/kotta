@@ -1,6 +1,6 @@
 ---
 name: setup-kotta
-description: Initialize Kotta's repository-native contract workspace in a Git repository. Use when a user asks to install, set up, bootstrap, or initialize Kotta for a project.
+description: Initialize Kotta's repository-native task workspace in a Git repository. Use when a user asks to install, set up, bootstrap, or initialize Kotta for a project.
 ---
 
 # Set up Kotta
@@ -15,7 +15,7 @@ Use the `kotta` CLI as the canonical mutation interface. Do not create or edit `
 6. When the caller is Codex, run `kotta integrate codex`. It idempotently adds the local Kotta MCP server to the project `.codex/config.toml` without replacing existing host settings. Tell the user a new chat or host restart is required before newly configured MCP tools appear.
 7. Run `kotta validate` and report actionable validation failures.
 8. Summarize the created workspace and configuration, including the base branch and worktree policy.
-9. Tell the user that `/define-contract` creates the first executable work contract and `kotta status` shows current state.
+9. Tell the user that `/define-task` creates the first executable work task and `kotta status` shows current state.
 
 The filesystem under `.kotta/` is canonical. Project-owned forms and specification nodes live under
 `.kotta/spec/`; Kotta-owned lifecycle and execution records live under `.kotta/process/`, and every

@@ -21,7 +21,7 @@ import {
   validateSpecDirectory,
   workspaceDirectoryName,
 } from "../filesystem/workspace.js";
-import { CONTRACT_STATES } from "../filesystem/entities.js";
+import { TASK_STATES } from "../filesystem/entities.js";
 
 /**
  * `kotta migrate` — one command that carries a workspace from any older shape to the current one.
@@ -60,27 +60,36 @@ export interface MigrateResult {
   data: MigrateData;
 }
 
-const CONTRACT_KEYS: Record<string, string> = { package: "batch", source_finding: "source_observation" };
-const BATCH_KEYS: Record<string, string> = { tickets: "contracts" };
+const TASK_KEYS: Record<string, string> = { package: "batch", source_finding: "source_observation" };
+// Compatibility: v3 and earlier workspaces called the work unit `contract`. Migration is the
+// one writer that understands those stored names and rewrites them into the v4 task vocabulary.
+const BATCH_KEYS: Record<string, string> = { tickets: "tasks", contracts: "tasks" };
 const BATCH_AUTHORITY_KEYS: Record<string, string> = {
   create_findings: "create_observations",
-  create_subtickets: "create_subcontracts",
-  reorder_independent_tickets: "reorder_independent_contracts",
+  create_subtickets: "create_subtasks",
+  reorder_independent_tickets: "reorder_independent_tasks",
+  create_subcontracts: "create_subtasks",
+  reorder_independent_contracts: "reorder_independent_tasks",
 };
 const OBSERVATION_KEYS: Record<string, string> = {
   finding_type: "observation_type",
-  related_ticket: "related_contract",
-  ticket: "contract",
+  related_ticket: "related_task",
+  ticket: "task",
+  related_contract: "related_task",
+  contract: "task",
 };
 const OBSERVATION_DISPOSITIONS: Record<string, string> = {
-  "create-ticket": "create-contract",
-  "attach-to-existing-ticket": "attach-to-existing-contract",
+  "create-ticket": "create-task",
+  "attach-to-existing-ticket": "attach-to-existing-task",
+  "create-contract": "create-task",
+  "attach-to-existing-contract": "attach-to-existing-task",
 };
-const CLAIM_KEYS: Record<string, string> = { ticket: "contract" };
+const CLAIM_KEYS: Record<string, string> = { ticket: "task", contract: "task" };
 const CONFIG_WORKFLOW_KEYS: Record<string, string> = {
   require_human_ready_approval: "require_human_sign_approval",
   allow_agent_findings: "allow_agent_observations",
-  allow_agent_ready_tickets: "allow_agent_defined_contracts",
+  allow_agent_ready_tickets: "allow_agent_defined_tasks",
+  allow_agent_defined_contracts: "allow_agent_defined_tasks",
 };
 const CONFIG_VALIDATION_KEYS: Record<string, string> = { require_verification_for_ready: "require_verification_for_defined" };
 const CONFIG_VERSION = WORKSPACE_SCHEMA_VERSION;
@@ -126,13 +135,13 @@ function markdownFiles(directory: string): string[] {
   return readdirSync(directory).filter((name) => name.endsWith(".md")).sort().map((name) => join(directory, name));
 }
 
-function planEntity(path: string, entity: "contract" | "batch" | "observation"): Rewrite {
+function planEntity(path: string, entity: "task" | "batch" | "observation"): Rewrite {
   const parsed = parseMarkdown(readFileSync(path, "utf8"));
   const data = parsed.data;
   const fields: string[] = [];
 
-  if (entity === "contract") {
-    fields.push(...renameKeys(data, CONTRACT_KEYS));
+  if (entity === "task") {
+    fields.push(...renameKeys(data, TASK_KEYS));
     if (data.status === "ready") { data.status = "defined"; fields.push("status: ready → defined"); }
     if (data.origin === "finding") { data.origin = "observation"; fields.push("origin: finding → observation"); }
   }
@@ -160,6 +169,16 @@ function planClaim(path: string): Rewrite {
   const data = (parseYaml(readFileSync(path, "utf8")) ?? {}) as Record<string, unknown>;
   const fields = renameKeys(data, CLAIM_KEYS);
   return { fields, write: (target) => writeFileSync(target, stringifyYaml(data)) };
+}
+
+function planEvent(path: string): Rewrite {
+  const data = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
+  const fields = renameKeys(data, { contract: "task" });
+  if (typeof data.action === "string" && data.action.startsWith("contract.")) {
+    data.action = `task.${data.action.slice("contract.".length)}`;
+    fields.push("action: contract.* → task.*");
+  }
+  return { fields, write: (target) => writeFileSync(target, `${JSON.stringify(data, null, 2)}\n`) };
 }
 
 function planConfig(path: string): Rewrite {
@@ -193,7 +212,7 @@ function moveDirectory(from: string, to: string): void {
 
 /** Every entity directory an id can live in, under either vocabulary. Used for the id-stability proof. */
 const ID_DIRECTORIES = [
-  ...CONTRACT_STATES.map(String), "ready",
+  ...TASK_STATES.map(String), "ready",
   "observations/new", "observations/resolved", "findings/new", "findings/resolved",
   ...["backlog", "ready", "defined", "active", "done"].flatMap((state) => [`batches/${state}`, `packages/${state}`]),
   "decisions",
@@ -326,7 +345,7 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
     changes.push({ kind: "move", from: `${label}/${reportedFrom}`, to: `${WORKSPACE_DIRECTORY}/${to}` });
   };
 
-  for (const state of CONTRACT_STATES) move(state, `${PROCESS_DIRECTORY}/${state}`);
+  for (const state of TASK_STATES) move(state, `${PROCESS_DIRECTORY}/${state}`);
   move("ready", `${PROCESS_DIRECTORY}/defined`);
   move("findings", `${PROCESS_DIRECTORY}/observations`);
   move("observations", `${PROCESS_DIRECTORY}/observations`);
@@ -356,8 +375,8 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
   };
 
   for (const prefix of ["", PROCESS_DIRECTORY]) {
-    for (const state of [...CONTRACT_STATES.map(String), "ready"]) {
-      for (const path of markdownFiles(join(workspace, prefix, state))) plan(path, (file) => planEntity(file, "contract"));
+    for (const state of [...TASK_STATES.map(String), "ready"]) {
+      for (const path of markdownFiles(join(workspace, prefix, state))) plan(path, (file) => planEntity(file, "task"));
     }
   }
   for (const prefix of ["", PROCESS_DIRECTORY]) {
@@ -375,6 +394,14 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
   for (const claims of [join(workspace, "claims"), join(workspace, PROCESS_DIRECTORY, "claims")]) {
     if (existsSync(claims)) {
       for (const name of readdirSync(claims).filter((entry) => entry.endsWith(".yaml")).sort()) plan(join(claims, name), planClaim);
+    }
+  }
+  for (const events of [join(workspace, "events"), join(workspace, PROCESS_DIRECTORY, "events")]) {
+    if (!existsSync(events)) continue;
+    for (const entity of readdirSync(events, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort()) {
+      for (const name of readdirSync(join(events, entity)).filter((entry) => entry.endsWith(".json")).sort()) {
+        plan(join(events, entity, name), planEvent);
+      }
     }
   }
   const config = join(workspace, "config.yaml");

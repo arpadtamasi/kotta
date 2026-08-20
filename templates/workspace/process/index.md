@@ -6,9 +6,9 @@
 
 ## Active batches
 
-## Defined contracts
+## Defined tasks
 
-## Active contracts
+## Active tasks
 
 ## Review
 

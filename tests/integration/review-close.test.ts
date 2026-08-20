@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, unlinkSync, writeFileSync } from
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
 const cli = resolve("dist/cli/index.js");
 const run = (cwd: string, args: string[]) => {
@@ -21,28 +22,29 @@ describe("review and close", () => {
     writeFileSync(join(root, "README.md"), "fixture\n");
     git(root, "add", "."); git(root, "commit", "-m", "initial");
     run(root, ["init"]);
+    retainLegacySignGate(root);
     git(root, "add", ".gitattributes", ".gitignore"); git(root, "commit", "-m", "initialize Kotta metadata");
-    const created = (run(root, ["contract", "new", "--title", "Document flow", "--type", "documentation"]) as { data: { id: string; path: string } }).data;
+    const created = (run(root, ["task", "new", "--title", "Document flow", "--type", "documentation"]) as { data: { id: string; path: string } }).data;
     const id = created.id;
     const filename = basename(created.path);
     const path = created.path;
     writeFileSync(path, readFileSync(path, "utf8").replace("Describe the observable outcome.", "The flow is documented.").replace("- Define an observable condition.", "- Documentation describes the flow.").replace("- Explain how acceptance will be checked.", "- Read the rendered documentation."));
-    run(root, ["contract", "sign", id, "--approve"]);
-    run(root, ["contract", "start", id, "--agent", "codex"]);
+    run(root, ["task", "sign", id, "--approve"]);
+    run(root, ["task", "start", id, "--agent", "codex"]);
     const worktree = join(root, ".worktrees", id);
     writeFileSync(join(worktree, "flow.md"), "# Flow\n");
     git(worktree, "add", "."); git(worktree, "commit", "-m", "docs: document flow");
 
-    expect(run(worktree, ["contract", "review", id, "--evidence", "flow.md renders and was inspected", "--pull-request", "PR-1"])).toMatchObject({ ok: true, command: "contract review" });
-    git(root, "merge", "--no-ff", `docs/${id}-document-flow`, "-m", "merge contract");
+    expect(run(worktree, ["task", "review", id, "--evidence", "flow.md renders and was inspected", "--pull-request", "PR-1"])).toMatchObject({ ok: true, command: "task review" });
+    git(root, "merge", "--no-ff", `docs/${id}-document-flow`, "-m", "merge task");
     const pending = join(worktree, "pending.txt");
     writeFileSync(pending, "uncommitted\n");
-    const refused = spawnSync("node", [cli, "contract", "close", id, "--approve", "--json"], { cwd: root, encoding: "utf8" });
+    const refused = spawnSync("node", [cli, "task", "close", id, "--approve", "--json"], { cwd: root, encoding: "utf8" });
     expect(refused.status).toBe(1);
     expect(existsSync(join(root, ".kotta/process/review", filename))).toBe(true);
     expect(existsSync(join(root, ".kotta/process/claims", `${id}.yaml`))).toBe(true);
     unlinkSync(pending);
-    expect(run(root, ["contract", "close", id, "--approve"])).toMatchObject({ ok: true, command: "contract close" });
+    expect(run(root, ["task", "close", id, "--approve"])).toMatchObject({ ok: true, command: "task close" });
 
     expect(existsSync(join(root, ".kotta/process/done", filename))).toBe(true);
     expect(existsSync(join(root, ".kotta/process/claims", `${id}.yaml`))).toBe(false);

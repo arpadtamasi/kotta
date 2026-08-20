@@ -3,6 +3,7 @@ import { existsSync, lstatSync, mkdtempSync, readFileSync, readdirSync, realpath
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 import { readWorkspace } from "../../src/commands/ui.js";
 import { duplicateWorkspaceWarning, hasWorkspace, workspaceDirectoryName } from "../../src/filesystem/workspace.js";
 
@@ -35,6 +36,7 @@ function repository(label: string, directory = ".kotta"): string {
   git(root, "config", "user.email", "test@example.com");
   writeFileSync(join(root, "README.md"), "fixture\n");
   run(root, ["init"]);
+  retainLegacySignGate(root);
   // An existing workspace predates the rename: it is the `.a-team` directory `init` no longer writes.
   if (directory !== ".kotta") renameSync(join(root, ".kotta"), join(root, directory));
   git(root, "add", ".");
@@ -50,15 +52,15 @@ function completeTemplate(path: string): void {
 }
 
 /** backlog → defined, the shortest path that reads, writes, moves files and regenerates the index. */
-function contractRoundTrip(root: string, directory: string): { id: string; path: string } {
-  const created = run(root, ["contract", "new", "--title", "Compatibility contract", "--type", "feature"]).data as { id: string; path: string };
+function taskRoundTrip(root: string, directory: string): { id: string; path: string } {
+  const created = run(root, ["task", "new", "--title", "Compatibility task", "--type", "feature"]).data as { id: string; path: string };
   expect(created.path).toContain(`${directory}/process/backlog`);
   completeTemplate(created.path);
-  run(root, ["contract", "sign", created.id, "--approve"]);
+  run(root, ["task", "sign", created.id, "--approve"]);
   expect(existsSync(join(root, directory, "process", "defined", basename(created.path)))).toBe(true);
   expect(readFileSync(join(root, directory, "process", "index.md"), "utf8")).toContain(basename(created.path).replace(/\.md$/, ""));
-  const status = run(root, ["status"]).data as { definedContracts: string[] };
-  expect(status.definedContracts).toContain(created.id);
+  const status = run(root, ["status"]).data as { definedTasks: string[] };
+  expect(status.definedTasks).toContain(created.id);
   expect(run(root, ["validate"])).toMatchObject({ ok: true });
   return { id: created.id, path: join(root, directory, "process", "defined", basename(created.path)) };
 }
@@ -100,19 +102,19 @@ describe("init creates the new workspace directory", () => {
 describe("an existing .a-team workspace keeps working untouched", () => {
   test("the full backlog → defined round trip runs inside .a-team and creates no .kotta", () => {
     const root = repository("legacy", ".a-team");
-    contractRoundTrip(root, ".a-team");
+    taskRoundTrip(root, ".a-team");
     expect(existsSync(join(root, ".kotta"))).toBe(false);
     expect(workspaceDirectoryName(root)).toBe(".a-team");
   });
 
   test("the board reads a .a-team workspace through git", () => {
     const root = repository("legacy-ui", ".a-team");
-    const created = run(root, ["contract", "new", "--title", "Board contract", "--type", "feature"]).data as { id: string };
+    const created = run(root, ["task", "new", "--title", "Board task", "--type", "feature"]).data as { id: string };
     git(root, "add", ".");
-    git(root, "commit", "-m", "contract");
+    git(root, "commit", "-m", "task");
     const board = readWorkspace(root);
     expect(board.workspace).toBe(join(root, ".a-team"));
-    expect(board.contracts.map((contract) => contract.id)).toContain(created.id);
+    expect(board.tasks.map((task) => task.id)).toContain(created.id);
   });
 });
 
@@ -121,37 +123,37 @@ describe("a symlink bridges the two directory names", () => {
     const root = repository("link-new-to-old", ".a-team");
     symlinkSync(".a-team", join(root, ".kotta"));
 
-    const contract = contractRoundTrip(root, ".a-team");
+    const task = taskRoundTrip(root, ".a-team");
     // The link is a link, not a copy: nothing was migrated behind the operator's back.
     expect(lstatSync(join(root, ".kotta")).isSymbolicLink()).toBe(true);
     expect(readdirSync(join(root, ".kotta/process/defined"))).toEqual(readdirSync(join(root, ".a-team/process/defined")));
 
     git(root, "add", ".");
-    git(root, "commit", "-m", "contract");
+    git(root, "commit", "-m", "task");
     // Git plumbing sees `.kotta` as a link entry, so the board must resolve to the real tree.
     // Deleting the file from the working tree proves which side answered: only the ref-side read —
     // `git archive` of the resolved directory, which a symlink entry could not have produced — survives it.
-    rmSync(contract.path);
+    rmSync(task.path);
     const board = readWorkspace(root);
     expect(board.workspace).toBe(join(root, ".a-team"));
-    expect(board.contracts).toHaveLength(1);
-    expect(readWorkspace(join(root, ".kotta")).contracts).toHaveLength(1);
+    expect(board.tasks).toHaveLength(1);
+    expect(readWorkspace(join(root, ".kotta")).tasks).toHaveLength(1);
   });
 
   test(".a-team → .kotta: pre-rename scripts and paths keep resolving after a project moves over", () => {
     const root = repository("link-old-to-new");
     symlinkSync(".kotta", join(root, ".a-team"));
 
-    contractRoundTrip(root, ".kotta");
+    taskRoundTrip(root, ".kotta");
     expect(lstatSync(join(root, ".a-team")).isSymbolicLink()).toBe(true);
     expect(readdirSync(join(root, ".a-team/process/defined"))).toEqual(readdirSync(join(root, ".kotta/process/defined")));
 
     git(root, "add", ".");
-    git(root, "commit", "-m", "contract");
+    git(root, "commit", "-m", "task");
     const board = readWorkspace(root);
     expect(board.workspace).toBe(join(root, ".kotta"));
-    expect(board.contracts).toHaveLength(1);
-    expect(readWorkspace(join(root, ".a-team")).contracts).toHaveLength(1);
+    expect(board.tasks).toHaveLength(1);
+    expect(readWorkspace(join(root, ".a-team")).tasks).toHaveLength(1);
   });
 
   test("two real directories resolve to .kotta, and the CLI says so on stderr", () => {

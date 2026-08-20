@@ -2,20 +2,21 @@ import { readFileSync } from "node:fs";
 import matter from "gray-matter";
 import { closeBatch } from "./batch.js";
 import { findBatch } from "../filesystem/batches.js";
-import { cancelContract, closeContract, reopenContract, signContract } from "./contract.js";
-import { findObservation, resolveObservation } from "./observation.js";
+import { cancelTask, closeTask, reopenTask, signTask } from "./task.js";
+import { OBSERVATION_DISPOSITIONS as DISPOSITION_VALUES, findObservation, resolveObservation } from "./observation.js";
 import { appendEvent, approvalHistory, mintApprovalId, readEvents, type KottaEvent } from "../core/events.js";
-import { CONTRACT_ID, OBSERVATION_ID, BATCH_ID } from "../core/identity.js";
-import { findContract } from "../filesystem/entities.js";
+import { chatApprovalReceipt, type ApprovalReceipt } from "../core/approval-receipt.js";
+import { TASK_ID, OBSERVATION_ID, BATCH_ID } from "../core/identity.js";
+import { findTask } from "../filesystem/entities.js";
 import { findRepositoryRoot } from "../filesystem/workspace.js";
 import { commitControlState, withControlPlaneMutation } from "../git/control-plane.js";
 
 export const APPROVAL_ACTIONS = [
-  "contract.sign",
+  "task.sign",
   "observation.resolve",
-  "contract.close",
-  "contract.cancel",
-  "contract.request-changes",
+  "task.close",
+  "task.cancel",
+  "task.request-changes",
   "batch.close",
 ] as const;
 
@@ -23,49 +24,61 @@ export type ApprovalAction = typeof APPROVAL_ACTIONS[number];
 export type ApprovalDecision = "approved" | "rejected" | "cancelled";
 
 const ACTIONS = new Set<string>(APPROVAL_ACTIONS);
-const OBSERVATION_DISPOSITIONS = new Set(["create-contract", "attach-existing", "investigate", "accept-risk", "reject", "merge-duplicate"]);
+const OBSERVATION_DISPOSITIONS = new Set<string>(DISPOSITION_VALUES);
 const CANCEL_RESOLUTIONS = new Set(["duplicate", "obsolete", "cancelled"]);
 const SUPERSEDING_RESOLUTIONS = new Set(["duplicate", "obsolete"]);
 /** Cancelling is the one gated action whose whole point is the payload: what ends, why, and what replaced it. */
 const CANCEL_PAYLOAD_FIELDS = new Set(["resolution", "reason", "supersededBy"]);
 
 function validateEntity(action: ApprovalAction, entity: string): void {
-  const pattern = action.startsWith("contract.") ? CONTRACT_ID : action === "observation.resolve" ? OBSERVATION_ID : BATCH_ID;
+  const pattern = action.startsWith("task.") ? TASK_ID : action === "observation.resolve" ? OBSERVATION_ID : BATCH_ID;
   if (!pattern.test(entity)) throw new Error(`${action} requires the matching Kotta entity id.`);
 }
 
 function validatePayload(action: ApprovalAction, payload: Record<string, unknown>): void {
-  if (action === "contract.cancel") {
+  if (action === "task.cancel") {
     const resolution = typeof payload.resolution === "string" ? payload.resolution : "";
-    if (!CANCEL_RESOLUTIONS.has(resolution)) throw new Error("contract.cancel requires one explicit valid resolution.");
-    if (!(typeof payload.reason === "string" && payload.reason.trim())) throw new Error("contract.cancel requires a stated reason.");
+    if (!CANCEL_RESOLUTIONS.has(resolution)) throw new Error("task.cancel requires one explicit valid resolution.");
+    if (!(typeof payload.reason === "string" && payload.reason.trim())) throw new Error("task.cancel requires a stated reason.");
     const supersededBy = typeof payload.supersededBy === "string" ? payload.supersededBy.trim() : "";
-    if (SUPERSEDING_RESOLUTIONS.has(resolution) && !supersededBy) throw new Error(`Resolution '${resolution}' requires supersededBy naming the contract or decision that took this work's place.`);
-    if (Object.keys(payload).some((key) => !CANCEL_PAYLOAD_FIELDS.has(key))) throw new Error("contract.cancel accepts only the resolution, reason and supersededBy payload.");
+    if (SUPERSEDING_RESOLUTIONS.has(resolution) && !supersededBy) throw new Error(`Resolution '${resolution}' requires supersededBy naming the task or decision that took this work's place.`);
+    if (Object.keys(payload).some((key) => !CANCEL_PAYLOAD_FIELDS.has(key))) throw new Error("task.cancel accepts only the resolution, reason and supersededBy payload.");
     return;
   }
   if (action === "observation.resolve") {
     const disposition = typeof payload.disposition === "string" ? payload.disposition : "";
     if (!OBSERVATION_DISPOSITIONS.has(disposition)) throw new Error("observation.resolve requires one explicit valid disposition.");
-    if (Object.keys(payload).some((key) => key !== "disposition")) throw new Error("observation.resolve accepts only the scoped disposition payload.");
+    if (Object.keys(payload).some((key) => key !== "disposition" && key !== "spec")) throw new Error("observation.resolve accepts only the scoped disposition and spec payload.");
+    // amend-spec is the one disposition that carries references: it must name at least one amended
+    // specification node, and no other disposition may.
+    if (disposition === "amend-spec") {
+      if (!Array.isArray(payload.spec) || !payload.spec.length || payload.spec.some((entry) => typeof entry !== "string" || !entry.trim())) {
+        throw new Error("observation.resolve with disposition amend-spec requires spec naming at least one amended specification node.");
+      }
+    } else if (payload.spec !== undefined) {
+      throw new Error("observation.resolve accepts spec only with the amend-spec disposition.");
+    }
     return;
   }
   if (Object.keys(payload).length) throw new Error(`${action} does not accept an approval payload.`);
 }
 
-function relatedContract(root: string, entity: string, action: ApprovalAction): string | null {
-  if (action.startsWith("contract.")) return entity;
+function relatedTask(root: string, entity: string, action: ApprovalAction): string | null {
+  if (action.startsWith("task.")) return entity;
   if (action === "observation.resolve") {
     const observation = findObservation(root, entity);
     const data = matter(readFileSync(observation.path, "utf8")).data;
-    return typeof data.discovered_during === "string" && CONTRACT_ID.test(data.discovered_during) ? data.discovered_during : null;
+    return typeof data.discovered_during === "string" && TASK_ID.test(data.discovered_during) ? data.discovered_during : null;
   }
   return null;
 }
 
 export function approvalDescription(action: ApprovalAction, entity: string, payload: Record<string, unknown> = {}): string {
-  if (action === "observation.resolve") return `${action} ${entity} --disposition ${String(payload.disposition)}`;
-  if (action === "contract.cancel") {
+  if (action === "observation.resolve") {
+    const spec = Array.isArray(payload.spec) && payload.spec.length ? ` --spec ${payload.spec.map(String).join(",")}` : "";
+    return `${action} ${entity} --disposition ${String(payload.disposition)}${spec}`;
+  }
+  if (action === "task.cancel") {
     const superseded = typeof payload.supersededBy === "string" && payload.supersededBy.trim() ? ` --superseded-by ${payload.supersededBy.trim()}` : "";
     return `${action} ${entity} --resolution ${String(payload.resolution)}${superseded} --reason "${String(payload.reason)}"`;
   }
@@ -73,16 +86,16 @@ export function approvalDescription(action: ApprovalAction, entity: string, payl
 }
 
 function assertApplicable(root: string, entity: string, action: ApprovalAction): void {
-  if (action === "contract.cancel") {
-    const state = findContract(root, entity).state;
-    // Cancelling is the exception among the contract actions: it reaches the work wherever it
-    // got to, and only a contract already at done has nothing left to retire.
-    if (state === "done") throw new Error(`contract.cancel requires ${entity} to still be live; it is already done. Reopen it first if it must change.`);
+  if (action === "task.cancel") {
+    const state = findTask(root, entity).state;
+    // Cancelling is the exception among the task actions: it reaches the work wherever it
+    // got to, and only a task already at done has nothing left to retire.
+    if (state === "done") throw new Error(`task.cancel requires ${entity} to still be live; it is already done. Reopen it first if it must change.`);
     return;
   }
-  if (action.startsWith("contract.")) {
-    const state = findContract(root, entity).state;
-    const expected = action === "contract.sign" ? "backlog" : "review";
+  if (action.startsWith("task.")) {
+    const state = findTask(root, entity).state;
+    const expected = action === "task.sign" ? "backlog" : "review";
     if (state !== expected) throw new Error(`${action} requires ${entity} to be ${expected}; it is ${state}. Refresh state before preparing another action.`);
     return;
   }
@@ -92,25 +105,34 @@ function assertApplicable(root: string, entity: string, action: ApprovalAction):
     return;
   }
   const batch = findBatch(root, entity);
-  const data = matter(readFileSync(batch.path, "utf8")).data as { contracts?: unknown[] };
-  const open = (data.contracts ?? []).map(String).filter((id) => findContract(root, id).state !== "done");
-  if (batch.state === "done" || open.length) throw new Error(`${entity} is not ready to close${open.length ? `; open contracts: ${open.join(", ")}` : ""}.`);
+  const data = matter(readFileSync(batch.path, "utf8")).data as { tasks?: unknown[] };
+  const open = (data.tasks ?? []).map(String).filter((id) => findTask(root, id).state !== "done");
+  if (batch.state === "done" || open.length) throw new Error(`${entity} is not ready to close${open.length ? `; open tasks: ${open.join(", ")}` : ""}.`);
 }
 
-function apply(root: string, proposal: KottaEvent): unknown {
+function apply(root: string, proposal: KottaEvent, receipt: ApprovalReceipt): unknown {
   const payload = proposal.payload ?? {};
   switch (proposal.action as ApprovalAction) {
-    case "contract.sign": return signContract(proposal.entity, true, root, { approvalRecorded: true, locked: true, commit: false });
-    case "observation.resolve": return resolveObservation(proposal.entity, String(payload.disposition), true, root, { approvalRecorded: true, locked: true, commit: false });
-    case "contract.close": return closeContract(proposal.entity, true, root, { locked: true, commit: false, approvalRecorded: true });
-    case "contract.cancel": return cancelContract(proposal.entity, String(payload.resolution), String(payload.reason), true, root, {
+    // Signing exists only as a workspace opt-in compatibility gate; when enabled it is still a
+    // real consequential transition and therefore carries the same durable receipt as other gates.
+    case "task.sign": return signTask(proposal.entity, true, root, { approvalRecorded: true, locked: true, commit: false, receipt });
+    case "observation.resolve": return resolveObservation(proposal.entity, String(payload.disposition), true, root, {
+      approvalRecorded: true,
+      locked: true,
+      commit: false,
+      spec: Array.isArray(payload.spec) ? payload.spec.map(String) : undefined,
+      receipt,
+    });
+    case "task.close": return closeTask(proposal.entity, true, root, { locked: true, commit: false, approvalRecorded: true, receipt });
+    case "task.cancel": return cancelTask(proposal.entity, String(payload.resolution), String(payload.reason), true, root, {
       supersededBy: typeof payload.supersededBy === "string" ? payload.supersededBy : undefined,
       locked: true,
       commit: false,
       approvalRecorded: true,
+      receipt,
     });
-    case "contract.request-changes": return reopenContract(proposal.entity, true, root, { locked: true, commit: false, approvalRecorded: true });
-    case "batch.close": return closeBatch(proposal.entity, true, root, { skipClean: true, commit: false, approvalRecorded: true });
+    case "task.request-changes": return reopenTask(proposal.entity, true, root, { locked: true, commit: false, approvalRecorded: true, receipt });
+    case "batch.close": return closeBatch(proposal.entity, true, root, { skipClean: true, commit: false, approvalRecorded: true, receipt });
   }
 }
 
@@ -145,7 +167,7 @@ export function proposeApproval(options: {
     const result = appendEvent(root, {
       id: approvalId,
       entity: options.entity,
-      contract: relatedContract(root, options.entity, action),
+      task: relatedTask(root, options.entity, action),
       kind: "approval",
       approval_id: approvalId,
       phase: "proposed",
@@ -175,7 +197,7 @@ export function failApproval(approvalId: string, error: string, repositoryRoot?:
     if (terminal) return terminal;
     const failed = appendEvent(root, {
       entity: proposal.entity,
-      contract: proposal.contract,
+      task: proposal.task,
       kind: "approval",
       approval_id: approvalId,
       phase: "failed",
@@ -205,14 +227,14 @@ export function decideApproval(options: {
 
     const human = appendEvent(root, {
       entity: proposal.entity,
-      contract: proposal.contract,
+      task: proposal.task,
       kind: "message",
       role: "human",
       text: options.sourceText.trim(),
     }).event;
     const decision = appendEvent(root, {
       entity: proposal.entity,
-      contract: proposal.contract,
+      task: proposal.task,
       kind: "approval",
       approval_id: options.approvalId,
       phase: options.decision,
@@ -227,10 +249,11 @@ export function decideApproval(options: {
     }
 
     try {
-      const appliedResult = apply(root, proposal);
+      const receipt = chatApprovalReceipt(String(proposal.action), human.id);
+      const appliedResult = apply(root, proposal, receipt);
       const applied = appendEvent(root, {
         entity: proposal.entity,
-        contract: proposal.contract,
+        task: proposal.task,
         kind: "approval",
         approval_id: options.approvalId,
         phase: "applied",
@@ -244,7 +267,7 @@ export function decideApproval(options: {
       const message = error instanceof Error ? error.message : String(error);
       const failed = appendEvent(root, {
         entity: proposal.entity,
-        contract: proposal.contract,
+        task: proposal.task,
         kind: "approval",
         approval_id: options.approvalId,
         phase: "failed",

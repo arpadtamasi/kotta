@@ -3,21 +3,21 @@ import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
-import { branchName } from "../../src/commands/contract.js";
+import { branchName } from "../../src/commands/task.js";
 import { planBatchWaves } from "../../src/commands/batch.js";
 import { validateClaim } from "../../src/core/claim.js";
 import { invocationWriteFailure, invocationWriteWarning, resolveAgentCommand } from "../../src/commands/execute.js";
 import { readAgentPermissionMode } from "../../src/core/config.js";
 import { initializeWorkspace } from "../../src/filesystem/workspace.js";
 import { canonicalEntityId } from "../../src/filesystem/entities.js";
-import { CONTRACT_ID, displayId, entityFilename, filenameMatchesId, isMintedId, mintId, shortId } from "../../src/core/identity.js";
+import { TASK_ID, displayId, entityFilename, filenameMatchesId, isMintedId, mintId, shortId } from "../../src/core/identity.js";
 import { createDecision } from "../../src/commands/decision.js";
 import { decisionDraftFromSource, renderDecision, validateDecision } from "../../src/core/decision.js";
 
 const git = (cwd: string, ...args: string[]): string => execFileSync("git", args, { cwd, encoding: "utf8" }).trim();
 
 describe("core deterministic rules", () => {
-  test("generates stable branch names from contract type and title", () => {
+  test("generates stable branch names from task type and title", () => {
     expect(branchName("performance", "T-018", "Faster export: P95 ≤ 2s")).toBe("perf/T-018-faster-export-p95-2s");
   });
 
@@ -33,15 +33,15 @@ describe("core deterministic rules", () => {
   test("mints identifiers without reading the workspace, so two branches cannot collide", () => {
     const minted = new Set(Array.from({ length: 2000 }, () => mintId("T")));
     expect(minted.size).toBe(2000);
-    for (const id of minted) expect(CONTRACT_ID.test(id)).toBe(true);
+    for (const id of minted) expect(TASK_ID.test(id)).toBe(true);
     // Time-sortable: an id minted later sorts after one minted earlier, lexicographically.
     expect(mintId("T", 1_700_000_000_000) < mintId("T", 1_700_000_000_001)).toBe(true);
     expect(isMintedId("T-034")).toBe(false);
   });
 
   test("keeps sequential identifiers valid and resolvable beside minted ones (D-010)", () => {
-    for (const legacy of ["T-001", "T-034", "O-107", "O-38.1"]) expect(CONTRACT_ID.test(legacy)).toBe(true);
-    expect(CONTRACT_ID.test("T-01")).toBe(false);
+    for (const legacy of ["T-001", "T-034", "O-107", "O-38.1"]) expect(TASK_ID.test(legacy)).toBe(true);
+    expect(TASK_ID.test("T-01")).toBe(false);
 
     const id = mintId("T");
     expect(entityFilename(id, "ship-export")).toBe(`ship-export-${shortId(id)}.md`);
@@ -57,13 +57,13 @@ describe("core deterministic rules", () => {
     expect(filenameMatchesId("ship-export-deadbeef.md", id)).toBe(false);
   });
 
-  test("validates the complete claim contract", () => {
-    expect(validateClaim({ contract: "T-014", agent: "codex", branch: "feat/T-014-export", worktree: ".worktrees/T-014", started_at: "2026-07-21T10:15:00+02:00" })).toEqual([]);
-    expect(validateClaim({ contract: "O-107", agent: "codex", branch: "feat/O-107-audit", worktree: ".worktrees/O-107", started_at: "2026-07-21T10:15:00+02:00" })).toEqual([]);
+  test("validates the complete claim task", () => {
+    expect(validateClaim({ task: "T-014", agent: "codex", branch: "feat/T-014-export", worktree: ".worktrees/T-014", started_at: "2026-07-21T10:15:00+02:00" })).toEqual([]);
+    expect(validateClaim({ task: "O-107", agent: "codex", branch: "feat/O-107-audit", worktree: ".worktrees/O-107", started_at: "2026-07-21T10:15:00+02:00" })).toEqual([]);
     const minted = mintId("T");
-    expect(validateClaim({ contract: minted, agent: "codex", branch: `feat/${minted}-export`, worktree: `.worktrees/${minted}`, started_at: "2026-07-21T10:15:00+02:00" })).toEqual([]);
-    expect(validateClaim({ contract: "bad" })).toEqual([
-      "contract must be a minted id, T-001, or an imported O-1 identifier", "agent is required", "branch is required", "worktree is required", "started_at must be an ISO timestamp",
+    expect(validateClaim({ task: minted, agent: "codex", branch: `feat/${minted}-export`, worktree: `.worktrees/${minted}`, started_at: "2026-07-21T10:15:00+02:00" })).toEqual([]);
+    expect(validateClaim({ task: "bad" })).toEqual([
+      "task must be a minted id, T-001, or an imported O-1 identifier", "agent is required", "branch is required", "worktree is required", "started_at must be an ISO timestamp",
     ]);
   });
 
@@ -155,12 +155,12 @@ describe("short ids resolve to one entity", () => {
       writeFileSync(join(backlog, `${slug}-${id.slice(-8)}.md`), `---\nid: ${id}\ntitle: Colliding\nstatus: backlog\n---\n# ${id}\n`);
     }
 
-    expect(() => canonicalEntityId(root, "contract", "T-cdefgh23")).toThrow(/ambiguous/);
-    expect(() => canonicalEntityId(root, "contract", "T-cdefgh23")).toThrow(new RegExp(first));
-    expect(() => canonicalEntityId(root, "contract", "T-cdefgh23")).toThrow(new RegExp(second));
+    expect(() => canonicalEntityId(root, "task", "T-cdefgh23")).toThrow(/ambiguous/);
+    expect(() => canonicalEntityId(root, "task", "T-cdefgh23")).toThrow(new RegExp(first));
+    expect(() => canonicalEntityId(root, "task", "T-cdefgh23")).toThrow(new RegExp(second));
     // Naming one in full is never ambiguous, and an unknown id is passed through
     // unchanged so the command's own "not found" is what the reader sees.
-    expect(canonicalEntityId(root, "contract", first)).toBe(first);
-    expect(canonicalEntityId(root, "contract", "T-nope")).toBe("T-nope");
+    expect(canonicalEntityId(root, "task", first)).toBe(first);
+    expect(canonicalEntityId(root, "task", "T-nope")).toBe("T-nope");
   });
 });

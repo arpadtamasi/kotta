@@ -1,7 +1,7 @@
 id: interface
 version: 1
 directory: interfaces
-canonical_source: Design by Contract
+canonical_source: Design by Task
 description: A boundary whose obligations are stated as preconditions, postconditions, and invariants.
 identity:
   prefix: IF

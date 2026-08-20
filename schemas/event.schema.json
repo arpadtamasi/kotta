@@ -3,11 +3,11 @@
   "$id": "https://github.com/arpadtamasi/kotta/schemas/event.schema.json",
   "title": "Kotta immutable event",
   "type": "object",
-  "required": ["id", "entity", "contract", "kind", "created_at"],
+  "required": ["id", "entity", "task", "kind", "created_at"],
   "properties": {
     "id": { "type": "string", "pattern": "^E-[0-9a-hjkmnp-tv-z]{26}$" },
     "entity": { "type": "string", "pattern": "^(O-[0-9]+(?:\\.[0-9]+)?|[TFPD]-[0-9]+|[TFPD]-[0-9a-hjkmnp-tv-z]{26})$" },
-    "contract": { "oneOf": [{ "type": "null" }, { "type": "string", "pattern": "^(T-[0-9]{3,}|O-[0-9]+(?:\\.[0-9]+)?|T-[0-9a-hjkmnp-tv-z]{26})$" }] },
+    "task": { "oneOf": [{ "type": "null" }, { "type": "string", "pattern": "^(T-[0-9]{3,}|O-[0-9]+(?:\\.[0-9]+)?|T-[0-9a-hjkmnp-tv-z]{26})$" }] },
     "kind": { "enum": ["message", "turn-failed", "lifecycle", "approval"] },
     "created_at": { "type": "string", "format": "date-time" },
     "role": { "enum": ["human", "assistant"] },

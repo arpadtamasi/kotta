@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- **The executable work unit is now `task` on every current surface.** CLI commands, MCP tools,
+  schemas, stored relationships, board data, templates, generated rules, shipped skills, docs and
+  the site now use the specification's accepted vocabulary. Existing `T-` identifiers never change.
+  `kotta migrate` upgrades version-3 workspaces to version 4, including batch membership,
+  observation and claim links, event links and approval actions, and the workflow configuration.
+  The former CLI group and read-only MCP list/show tools remain one-version compatibility aliases;
+  reading their stored form emits a warning naming the migration. `kotta sync` installs the renamed
+  skills and removes only legacy directories proven Kotta-owned by its manifest.
+
 ## [0.7.0] - 2026-08-20
 
 ### Added
