@@ -174,7 +174,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     description: "Submit an active contract with acceptance evidence after implementation and verification are complete.",
     inputSchema: {
       id: z.string().min(1),
-      evidence: z.string().min(1),
+      evidence: z.union([z.string().min(1), z.record(z.string(), z.string().min(1))]),
       pullRequest: z.string().optional(),
       deviations: z.string().optional(),
       observationsCreated: z.string().optional(),

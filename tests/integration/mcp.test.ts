@@ -274,6 +274,37 @@ describe("Kotta caller-chat MCP", () => {
     expect(execFileSync("git", ["status", "--porcelain", "--", ".kotta"], { cwd: root, encoding: "utf8" })).toBe("");
   });
 
+  test("accepts named review evidence and refuses duplicated answers through MCP", async () => {
+    const root = fixture();
+    const connected = await connect(root);
+    const id = await createAndDefine(connected.client, root);
+    const first = "Caller-chat approval is recorded.";
+    const second = "The submitted task remains auditable.";
+    const mappedDefinition = definition(id).replace(
+      "- Human approval is recorded from host-chat elicitation.",
+      `- ${first}\n- ${second}`,
+    );
+    await connected.client.callTool({ name: "contract_define", arguments: { id, definition: mappedDefinition } });
+    await connected.client.callTool({ name: "approval_request", arguments: { entity: id, action: "contract.sign", payload: {} } });
+    await connected.client.callTool({ name: "contract_start_caller", arguments: { id, agent: "codex" } });
+
+    const duplicate = await connected.client.callTool({
+      name: "contract_submit_review",
+      arguments: { id, evidence: { [first]: "one copied blob", [second]: "one   copied\nblob" } },
+    });
+    expect(duplicate.isError).toBe(true);
+    expect(JSON.stringify(duplicate.structuredContent)).toContain(first);
+    expect(JSON.stringify(duplicate.structuredContent)).toContain(second);
+    expect(findContract(root, id).state).toBe("active");
+
+    const distinct = await connected.client.callTool({
+      name: "contract_submit_review",
+      arguments: { id, evidence: { [first]: "approval event phases inspected", [second]: "review record inspected on the control plane" } },
+    });
+    expect(distinct.isError).not.toBe(true);
+    expect(findContract(root, id).state).toBe("review");
+  });
+
   test("retires a signed contract from the caller chat, with the reason and the supersession in the prompt", async () => {
     const root = fixture();
     const connected = await connect(root);

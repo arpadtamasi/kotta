@@ -410,7 +410,10 @@ kotta contract start T-014 --agent codex --caller
 kotta contract brief T-014 --out /tmp/T-014-brief.md
 kotta contract execute T-014 --agent claude
 kotta contract execute T-014 --resume
-kotta contract review T-014 --evidence "Acceptance tests and visual evidence passed" --pull-request PR-123
+kotta contract review T-014 \
+  --evidence "Filtered export is produced=tests/export.test.ts passes" \
+  --evidence "Export respects active filters=tests/export-filter.test.ts passes" \
+  --pull-request PR-123
 kotta contract close T-014 --approve
 
 kotta batch validate P-012
