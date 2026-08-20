@@ -11,6 +11,39 @@ const run = (cwd: string, args: string[]) => {
   return JSON.parse(result.stdout) as Record<string, unknown>;
 };
 
+describe("a standalone observation", () => {
+  test("is committed, so the next command that needs a clean control plane is not refused (F-01kzhjhsknj52aqr4mxfkbpp0q)", () => {
+    const root = mkdtempSync(join(tmpdir(), "kotta-observation-standalone-"));
+    execFileSync("git", ["init", "-b", "main"], { cwd: root });
+    execFileSync("git", ["config", "user.name", "Kotta Test"], { cwd: root });
+    execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: root });
+    writeFileSync(join(root, "README.md"), "fixture\n");
+    run(root, ["init"]);
+    const commitFixture = (message: string) => {
+      execFileSync("git", ["add", "-A"], { cwd: root });
+      execFileSync("git", ["commit", "-m", message], { cwd: root });
+    };
+    commitFixture("fixture: initialised workspace");
+    const contract = run(root, ["contract", "new", "--title", "Something to retire", "--type", "fix"]) as { data: { id: string } };
+    // 'contract new' does not commit either, so commit it here: this test is about what
+    // 'observation new' leaves behind, not about what precedes it.
+    commitFixture("fixture: contract new");
+    const status = () => execFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" });
+    expect(status()).toBe("");
+
+    const created = run(root, ["observation", "new", "--title", "Two writers disagree", "--type", "inconsistency", "--evidence", "src/a.ts and src/b.ts differ"]) as { data: { id: string; path: string } };
+
+    expect(status()).toBe("");
+    expect(execFileSync("git", ["log", "-1", "--format=%s"], { cwd: root, encoding: "utf8" }).trim()).toBe(`chore(kotta): capture ${created.data.id}`);
+    expect(execFileSync("git", ["show", "--name-only", "--format=", "HEAD"], { cwd: root, encoding: "utf8" }).trim().split("\n").sort())
+      .toEqual([".kotta/process/index.md", `.kotta/process/observations/new/${basename(created.data.path)}`].sort());
+
+    // 'contract cancel' refuses a dirty control plane, and it is one of the two commands the
+    // report saw fail immediately after a successful 'observation new'.
+    expect(run(root, ["contract", "cancel", contract.data.id, "--resolution", "cancelled", "--reason", "the fixture no longer needs it", "--approve"])).toMatchObject({ ok: true });
+  });
+});
+
 describe("observation disposition", () => {
   test("keeps a observation separate until a human resolves it into backlog work", () => {
     const root = mkdtempSync(join(tmpdir(), "kotta-observation-"));

@@ -33,7 +33,16 @@ export function newObservation(options: { title: string; type: string; evidence:
       return result;
     });
   }
-  return writeObservation(controlPlaneRoot(requestedRoot), options);
+  // A standalone observation has no contract to attribute a lifecycle event to, but it is still
+  // canonical state Kotta owns: written without a commit it leaves the control plane dirty, and the
+  // next command that requires a clean one is refused. It takes the same lock and the same commit as
+  // the attributed path, and tolerates a dirty tree the way 'observation resolve' and 'contract sign'
+  // do — where a single checkout is also the control plane, it carries the work being observed.
+  return withControlPlaneMutation(requestedRoot, (root) => {
+    const result = writeObservation(root, options);
+    commitControlState(root, `chore(kotta): capture ${result.data.id}`);
+    return result;
+  }, { requireClean: false });
 }
 
 function writeObservation(root: string, options: { title: string; type: string; evidence: string; discoveredDuring?: string }) {
