@@ -3,7 +3,7 @@ id: T-01m0fq2zthr89c1qyx6hdkdv3k
 title: >-
   The product speaks task: contract → task on every surface, with read
   compatibility
-status: review
+status: done
 origin: human
 types:
   - workflow
@@ -45,6 +45,10 @@ branch_origin: created
 start_ref: coord/P-01m0fq77101axprvcjwrq3bs61
 start_commit: 9027fe170d9f2a54cfacf416c527b45c3925f294
 dependency_integration_target: coord/P-01m0fq77101axprvcjwrq3bs61
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-20T21:07:02.914Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 

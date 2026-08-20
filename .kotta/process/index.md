@@ -8,7 +8,7 @@ None.
 
 ## Active batches
 
-- a-kotta-a-megallapodas-a-spec-first-modell-landolasa-a-futo--wrq3bs61
+None.
 
 ## Defined tasks
 
@@ -24,7 +24,6 @@ None.
 
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
 - contract-gate-treats-standalone-generated-documents-as-kotta-grgv0mtw
-- the-product-speaks-task-contract-task-on-every-surface-with--6hdkdv3k
 
 ## Blocked
 
