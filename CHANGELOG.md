@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-08-20
+
+### Added
+
+- **A contract can name the specification it rests on.** A contract's frontmatter carries an
+  optional `spec` list of specification node ids, accepted by `contract define` alongside the other
+  definition fields and left empty by default, so the whole lifecycle runs exactly as before for a
+  contract that names none. A reference that resolves is accepted; one that does not is refused by
+  name at `contract define`, and `contract validate` reports it as `SPEC_NOT_FOUND` afterwards, so a
+  node deleted after definition surfaces instead of rotting silently. The reference runs one way
+  only: a contract names specification, specification never names a contract.
+- **The brief carries the specification the contract was defined from.** `contract brief` appends
+  each referenced node's full text as its own `## Specification <id> (<form>)` section, separate
+  from the contract body, and names any it could not resolve under `## Missing specification`. An
+  agent executing from a fresh context therefore receives the material the contract was written
+  against, not just a reference to it.
+- **`kotta validate` measures the specification against its own forms.** The form registry under
+  `spec/forms/` is now enforced: a missing required frontmatter field, a missing required body
+  heading, and an edge below its declared minimum are each reported with their file and their form,
+  and a dangling edge is told apart from one that resolves to a node of the wrong form. A form the
+  project adds participates on the same terms as a shipped one.
+
 ## [0.6.1] - 2026-08-20
 
 ### Fixed
