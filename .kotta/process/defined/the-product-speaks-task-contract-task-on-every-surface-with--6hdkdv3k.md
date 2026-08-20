@@ -3,7 +3,7 @@ id: T-01m0fq2zthr89c1qyx6hdkdv3k
 title: >-
   The product speaks task: contract → task on every surface, with read
   compatibility
-status: backlog
+status: defined
 origin: human
 types:
   - workflow
