@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq30yzdteeqa14bkgg3d1k
 title: Define validates coverage; the sign gate retires for covered tasks
-status: active
+status: review
 origin: human
 types:
   - workflow
@@ -67,3 +67,31 @@ None.
 ## Execution notes
 
 Spec side: "A task executes accepted spec, and nothing else", "The spec is the agreement", Coverage, task lifecycle SM, "Define a task", "Proportionate ceremony".
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| Define refuses a task with an acceptance condition covered by no referenced accepted spec node, naming the condition. | tests/integration/coverage.test.ts exercises ACCEPTANCE_NOT_COVERED and asserts the exact condition plus corrective observation path while backlog state remains unchanged. |
+| A covered task reaches defined with no sign interaction, and start/execute accept it. | tests/integration/coverage.test.ts proves define returns state defined under the default config and contract start accepts the result; the full 53-file suite passes. |
+| With the workspace opt-in flag set, the sign gate still elicits - and records its receipt. | tests/integration/coverage.test.ts sets require_human_sign_approval true, proves define remains backlog, refusal occurs without approval, and the approved transition stores contract.sign in the receipt. |
+| Uncovered need mid-definition is guided to the observation path in the refusal text. | The uncovered integration case asserts the refusal contains record an observation and amend the spec, and src/core/coverage.ts emits that corrective action with the named acceptance condition. |
+
+### Verification performed
+
+Define refuses a task with an acceptance condition covered by no referenced accepted spec node, naming the condition.: tests/integration/coverage.test.ts exercises ACCEPTANCE_NOT_COVERED and asserts the exact condition plus corrective observation path while backlog state remains unchanged.
+A covered task reaches defined with no sign interaction, and start/execute accept it.: tests/integration/coverage.test.ts proves define returns state defined under the default config and contract start accepts the result; the full 53-file suite passes.
+With the workspace opt-in flag set, the sign gate still elicits - and records its receipt.: tests/integration/coverage.test.ts sets require_human_sign_approval true, proves define remains backlog, refusal occurs without approval, and the approved transition stores contract.sign in the receipt.
+Uncovered need mid-definition is guided to the observation path in the refusal text.: The uncovered integration case asserts the refusal contains record an observation and amend the spec, and src/core/coverage.ts emits that corrective action with the named acceptance condition.
+
+### Deviations
+
+None.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+The repository-wide kotta validate still reports the pre-existing DEVIATION_MISMATCH on T-01kzgn32keps18769dp5rstcgt; it reports no coverage defect.
