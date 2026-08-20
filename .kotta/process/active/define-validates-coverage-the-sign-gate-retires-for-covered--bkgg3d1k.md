@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq30yzdteeqa14bkgg3d1k
 title: Define validates coverage; the sign gate retires for covered tasks
-status: defined
+status: active
 origin: human
 types:
   - workflow
@@ -19,10 +19,18 @@ spec:
   - SM-01m0f0wn89gjy6dbk1j6fjpv6j
   - UC-01m0f0wn89tta6w4w3a7zw45xr
   - QA-01m0fp2hdkq55yrx9qr5t8pweh
-branch: null
+branch: >-
+  feat/T-01m0fq30yzdteeqa14bkgg3d1k-define-validates-coverage-the-sign-gate-retires-for-covered-
 pull_request: null
 created_at: '2026-08-20'
 updated_at: '2026-08-20'
+assigned_agent: codex
+worktree: .worktrees/T-01m0fq30yzdteeqa14bkgg3d1k
+execution_mode: fresh
+branch_origin: created
+start_ref: coord/P-01m0fq77101axprvcjwrq3bs61
+start_commit: ef86ca51af1888a3a2a83596adb773ea12d9f00b
+dependency_integration_target: coord/P-01m0fq77101axprvcjwrq3bs61
 ---
 ## Outcome
 
