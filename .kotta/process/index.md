@@ -59,6 +59,7 @@ None.
 - a-markdown-h1-a-teljes-azonositot-hordozza-igy-a-mintazott-u-rb71ckkr
 - a-prioritas-szuletesi-attributum-pedig-valtozo-tulajdonsag-a-9666rqce
 - a-resolve-disposition-enumja-elte-r-a-publikalt-sematol-atta-dm37tkv3
+- a-run-wave-card-keeps-counting-elapsed-time-for-a-contract-a-ea2n3c6t
 - a-signed-contract-cannot-be-revised-narrowing-one-requires-c-xvjsfgbq
 - a-slug-hash-emberi-azonosito-mar-letezik-es-dokumentalt-a-ui-1p7xrhzb
 - a-specifika-cio-s-munka-ra-tova-bbra-is-contract-ke-szu-l-a--vc4e2xry
@@ -78,6 +79,7 @@ None.
 - entity-filenames-are-keyed-on-the-same-eight-characters-the--dvhj455d
 - harom-szomszed-repo-agents-md-je-ideiglenes-szabalyblokkot-h-10cpc3k3
 - kotta-hand-enumerates-the-agents-and-hosts-it-can-work-with--ccfd497m
+- kotta-has-one-gauge-for-governed-work-a-two-minute-page-and--tsb4m5qh
 - kotta-integrate-only-supports-codex-so-claude-code-sessions--n5cp4s0q
 - kotta-migrate-writes-a-root-gitattributes-it-never-reports-i-hkr7tyh2
 - kotta-never-states-what-a-contract-is-the-one-agent-sizing-r-0nnk2emr
@@ -104,6 +106,7 @@ None.
 - the-defined-operation-registry-contract-pins-its-acceptance--n9k18wbv
 - the-published-json-schemas-are-documentation-nothing-checks-ge5asz8x
 - the-skills-sync-feature-shipped-without-a-changelog-entry-pxwst12g
+- the-spec-namespace-has-no-writing-service-so-changing-the-ma-yhpzreqm
 - the-test-suite-reads-a-dist-the-merge-hook-is-still-rebuildi-k0ty0f0m
 - ui-port-cli-tests-silently-assert-nothing-when-4311-is-alrea-nbxc71r5
 - ui-ux-spec-md-describes-the-pre-v2-board-and-has-no-owner-af-a4dg5622
