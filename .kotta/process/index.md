@@ -18,12 +18,13 @@ None.
 
 ## Active tasks
 
-- the-public-site-bug-report-test-follows-behavior-not-a-retir-1ne9x0qr
+None.
 
 ## Review
 
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
 - contract-gate-treats-standalone-generated-documents-as-kotta-grgv0mtw
+- the-public-site-bug-report-test-follows-behavior-not-a-retir-1ne9x0qr
 
 ## Blocked
 
