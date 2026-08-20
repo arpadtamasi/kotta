@@ -3,7 +3,7 @@ id: T-01m0f27ebnwvrqgbx44rarvy6y
 title: >-
   'observation new' without --discovered-during writes without committing and
   blocks the next command
-status: review
+status: done
 origin: observation
 types:
   - fix
@@ -25,6 +25,7 @@ execution_mode: inherited
 branch_origin: created
 start_ref: HEAD
 start_commit: 1938f571639d71d0f6353bb6f763db9afe9825a2
+resolution: completed
 ---
 ## Outcome
 

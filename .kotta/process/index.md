@@ -27,7 +27,6 @@ None.
 - auto-completing-a-batch-ignores-its-child-batches-so-a-paren-h2fjxngc
 - claim-release-force-strands-the-contract-in-active-with-no-c-4ctjgjm8
 - contract-gate-treats-standalone-generated-documents-as-kotta-grgv0mtw
-- observation-new-without-discovered-during-writes-without-com-4rarvy6y
 
 ## Blocked
 
