@@ -6,6 +6,8 @@ workflow:
   require_human_done_approval: true
   allow_agent_observations: true
   allow_agent_defined_contracts: false
+agents:
+  permission_mode: acceptEdits
 git:
   base_branch: main
   protected_branches:
