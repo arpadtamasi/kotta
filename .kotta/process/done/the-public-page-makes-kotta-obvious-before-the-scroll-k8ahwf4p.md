@@ -1,7 +1,7 @@
 ---
 id: T-01m0ggf64xdh1644m2k8ahwf4p
 title: The public page makes Kotta obvious before the scroll
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -31,14 +31,15 @@ coverage:
     - EX-01m0ggd2q6n0vr7ks0skeh1264
     - QA-01m0f0wn89pg0x4zymz08mh15w
 approved_by: cli
-approved_at: '2026-08-20T21:26:43.165Z'
-approval_basis: 'CLI --approve: task.sign'
+approved_at: '2026-08-20T21:50:34.301Z'
+approval_basis: 'CLI --approve: task.close'
 assigned_agent: codex
 worktree: .worktrees/T-01m0ggf64xdh1644m2k8ahwf4p
 execution_mode: inherited
 branch_origin: created
 start_ref: HEAD
 start_commit: 9f301f159ffc81ab53a598800a9ca92a90f56f20
+resolution: completed
 ---
 ## Outcome
 

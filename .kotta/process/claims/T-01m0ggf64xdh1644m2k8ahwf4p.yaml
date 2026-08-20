@@ -1,9 +1,0 @@
-task: T-01m0ggf64xdh1644m2k8ahwf4p
-agent: codex
-branch: feat/T-01m0ggf64xdh1644m2k8ahwf4p-the-public-page-makes-kotta-obvious-before-the-scroll
-worktree: .worktrees/T-01m0ggf64xdh1644m2k8ahwf4p
-execution_mode: inherited
-origin: created
-start_ref: HEAD
-start_commit: 9f301f159ffc81ab53a598800a9ca92a90f56f20
-started_at: 2026-08-20T21:26:51.502Z
