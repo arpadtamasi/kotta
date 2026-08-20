@@ -1,0 +1,57 @@
+---
+id: T-01m0fq31tbjb4xpdybxhxpb5jf
+title: 'The gap report: what the spec promises and the system lacks'
+status: backlog
+origin: human
+types:
+  - feature
+profiles: []
+priority: medium
+risk: medium
+batch: P-01m0fq77101axprvcjwrq3bs61
+depends_on:
+  - T-01m0fq31gx2wpe2jzaebskv4c0
+blocks: []
+spec:
+  - UC-01m0fpqfxjvet99wbz0v1ag64q
+  - EX-01m0fpqfysk1bwdr53jdk7rtk6
+  - QA-01m0f0wn89nx49z82gh2ssx6j1
+branch: null
+pull_request: null
+created_at: '2026-08-20'
+updated_at: '2026-08-20'
+---
+## Outcome
+
+A read that answers, from the repository alone, what the accepted spec promises that the running system does not implement or verify - in both directions: promises with no implementing evidence, and enforced behavior no node states. Fresh landings are reported delta-first: the diff's nodes lead. The report is the input to defining tasks; it creates nothing itself.
+
+## Scope
+
+A new read operation (CLI subcommand and MCP tool) over the accepted spec on the base branch: per node, look for implementing or verifying evidence (code, tests, commands) and report gaps by node title with the evidence looked for; list deliberately accepted gaps with their recorded reason; order a fresh delta's nodes first. Deterministic, zero writes.
+
+## Non-goals
+
+No task or observation creation. No semantic completeness proof - the report names where it looked and what it did not find, and the human line judges. No CI wiring in this task.
+
+## Acceptance
+
+- The command reports a spec node whose promise has no implementing evidence, naming the node by title and the evidence sought.
+- The reverse direction reports an enforced behavior (a validation rule, a gate) that no spec node states.
+- Repeated runs on an unchanged repository yield identical bytes and no filesystem writes.
+- After a spec landing, the changed nodes lead the report.
+
+## Verification
+
+- Integration tests over fixture workspaces for both directions, the delta-first ordering, and byte-identical repetition.
+
+## Constraints
+
+Builds on the spec-graph reader shipped by the validate task; the registry is the only source of form knowledge.
+
+## Open decisions
+
+None.
+
+## Execution notes
+
+Spec side: "Analyze the implementation gap", "The gap report names the unimplemented promise", deterministic reads QA.

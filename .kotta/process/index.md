@@ -12,6 +12,7 @@ None.
 
 ## Defined contracts
 
+- an-observation-can-amend-the-spec-the-amend-spec-disposition-43bwk94f
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
 - one-operation-registry-derives-both-the-cli-and-the-mcp-surf-06fw8n0g
 - the-agent-rules-reach-the-calling-chat-as-a-generated-file-n-atnxppcm
