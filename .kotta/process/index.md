@@ -12,7 +12,6 @@ None.
 
 ## Defined contracts
 
-- a-task-is-revisable-until-execution-define-amends-backlog-an-tfpam55r
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
 - define-validates-coverage-the-sign-gate-retires-for-covered--bkgg3d1k
 - kotta-validate-reads-the-spec-graph-ebskv4c0
@@ -24,7 +23,7 @@ None.
 
 ## Active contracts
 
-None.
+- a-task-is-revisable-until-execution-define-amends-backlog-an-tfpam55r
 
 ## Review
 

@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq323xrdk0ytawtfpam55r
 title: 'A task is revisable until execution: define amends backlog and defined'
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -14,10 +14,17 @@ blocks: []
 spec:
   - BR-01m0fp2hdk2czsca5jrk73wh2a
   - EX-01m0fp2hdkczd788pgpstv0cq7
-branch: null
+branch: >-
+  feat/T-01m0fq323xrdk0ytawtfpam55r-a-task-is-revisable-until-execution-define-amends-backlog-an
 pull_request: null
 created_at: '2026-08-20'
 updated_at: '2026-08-20'
+assigned_agent: codex
+worktree: .worktrees/T-01m0fq323xrdk0ytawtfpam55r
+execution_mode: inherited
+branch_origin: created
+start_ref: HEAD
+start_commit: 16b1ffd85a45e0ed12fa7bff764ebc91b8bd46ec
 ---
 ## Outcome
 
