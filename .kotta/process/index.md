@@ -23,11 +23,12 @@ None.
 
 ## Active contracts
 
-- a-task-is-revisable-until-execution-define-amends-backlog-an-tfpam55r
+None.
 
 ## Review
 
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
+- a-task-is-revisable-until-execution-define-amends-backlog-an-tfpam55r
 - contract-gate-treats-standalone-generated-documents-as-kotta-grgv0mtw
 - every-approval-leaves-a-receipt-approved-by-approved-at-appr-6vs5h0w6
 
