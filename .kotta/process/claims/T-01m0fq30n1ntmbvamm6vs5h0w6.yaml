@@ -1,0 +1,10 @@
+contract: T-01m0fq30n1ntmbvamm6vs5h0w6
+agent: claude
+branch: feat/T-01m0fq30n1ntmbvamm6vs5h0w6-every-approval-leaves-a-receipt-approved-by-approved-at-appr
+worktree: .worktrees/T-01m0fq30n1ntmbvamm6vs5h0w6
+execution_mode: fresh
+origin: created
+start_ref: coord/P-01m0fq77101axprvcjwrq3bs61
+start_commit: 167d13306d61dd7fa52bc4fb24e49abae96da9d2
+dependency_integration_target: coord/P-01m0fq77101axprvcjwrq3bs61
+started_at: 2026-08-20T14:07:02.339Z

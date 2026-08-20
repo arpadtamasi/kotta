@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq30n1ntmbvamm6vs5h0w6
 title: 'Every approval leaves a receipt: approved_by, approved_at, approval_basis'
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -15,10 +15,18 @@ spec:
   - BR-01m0f0wn89zb3wfb3t3y4d20a7
   - UC-01m0f0wn89p42025mt5vg5012n
   - EX-01m0f0wn8am4hb2vy03wmn4brs
-branch: null
+branch: >-
+  feat/T-01m0fq30n1ntmbvamm6vs5h0w6-every-approval-leaves-a-receipt-approved-by-approved-at-appr
 pull_request: null
 created_at: '2026-08-20'
 updated_at: '2026-08-20'
+assigned_agent: claude
+worktree: .worktrees/T-01m0fq30n1ntmbvamm6vs5h0w6
+execution_mode: fresh
+branch_origin: created
+start_ref: coord/P-01m0fq77101axprvcjwrq3bs61
+start_commit: 167d13306d61dd7fa52bc4fb24e49abae96da9d2
+dependency_integration_target: coord/P-01m0fq77101axprvcjwrq3bs61
 ---
 ## Outcome
 
