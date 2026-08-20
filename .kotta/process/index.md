@@ -19,7 +19,7 @@ None.
 
 ## Active contracts
 
-- the-gap-report-what-the-spec-promises-and-the-system-lacks-xhxpb5jf
+None.
 
 ## Review
 
@@ -30,6 +30,7 @@ None.
 - every-approval-leaves-a-receipt-approved-by-approved-at-appr-6vs5h0w6
 - kotta-validate-reads-the-spec-graph-ebskv4c0
 - review-evidence-must-answer-its-own-check-duplicate-blobs-ar-tv3d65m7
+- the-gap-report-what-the-spec-promises-and-the-system-lacks-xhxpb5jf
 
 ## Blocked
 
