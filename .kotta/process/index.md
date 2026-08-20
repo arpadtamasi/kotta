@@ -80,6 +80,7 @@ None.
 - az-approve-kapu-ceremonia-bizonyitek-nelkul-senki-nem-elleno-md9f1zcv
 - az-entitast-letrehozo-parancsok-nem-irjak-ki-az-azonositot-e-9mg56yk6
 - az-id-azert-szivarog-a-human-kommunikaciora-mert-o-az-egyetl-szetd8cz
+- batch-sign-commit-ne-lku-l-i-rja-a-t-az-a-llapotot-e-s-a-ko--80e02tt6
 - calling-codex-chat-has-no-kotta-approval-adapter-and-falls-b-txr0k995
 - contract-new-human-output-hides-the-created-contract-id-xwja20bg
 - contract-reopen-is-a-human-gate-with-no-chat-path-so-correct-nz0vwxnz
