@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq31tbjb4xpdybxhxpb5jf
 title: 'The gap report: what the spec promises and the system lacks'
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -28,6 +28,10 @@ branch_origin: created
 start_ref: coord/P-01m0fq77101axprvcjwrq3bs61
 start_commit: ef86ca51af1888a3a2a83596adb773ea12d9f00b
 dependency_integration_target: coord/P-01m0fq77101axprvcjwrq3bs61
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-20T21:06:40.831Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 

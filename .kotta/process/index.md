@@ -24,7 +24,6 @@ None.
 
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
 - contract-gate-treats-standalone-generated-documents-as-kotta-grgv0mtw
-- the-gap-report-what-the-spec-promises-and-the-system-lacks-xhxpb5jf
 - the-product-speaks-task-contract-task-on-every-surface-with--6hdkdv3k
 
 ## Blocked
