@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq318dpmktbc2jtv3d65m7
 title: 'Review evidence must answer its own check: duplicate blobs are refused'
-status: active
+status: review
 origin: human
 types:
   - feature
@@ -61,3 +61,29 @@ None.
 ## Execution notes
 
 Spec side: "Evidence answers its own check", "Duplicated evidence is refused".
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| Submitting a review with byte-identical evidence in two checks is refused, naming both checks. | tests/unit/review-evidence.test.ts and tests/integration/review-evidence.test.ts reproduce whitespace-normalized duplication and assert both check names in the refusal. |
+| Distinct evidence per check submits exactly as before. | CLI integration and MCP integration submit distinct exact-check mappings and verify separate evidence rows plus review state. |
+| The refusal names the violated rule as the spec states it. | Unit and CLI integration assertions require the exact rule phrase Evidence answers its own check. |
+
+### Verification performed
+
+Submitting a review with byte-identical evidence in two checks is refused, naming both checks.: tests/unit/review-evidence.test.ts and tests/integration/review-evidence.test.ts reproduce whitespace-normalized duplication and assert both check names in the refusal.
+Distinct evidence per check submits exactly as before.: CLI integration and MCP integration submit distinct exact-check mappings and verify separate evidence rows plus review state.
+The refusal names the violated rule as the spec states it.: Unit and CLI integration assertions require the exact rule phrase Evidence answers its own check.
+
+### Deviations
+
+None.
+
+### Observations created
+
+F-01m0g6hsgby0yb89zrrgyj9wyh
+
+### Known concerns
+
+None.
