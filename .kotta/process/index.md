@@ -53,6 +53,7 @@ None.
 - a-decisions-lista-az-egyetlen-amelynek-nincs-szu-ro-je-e-s-k-zcees10m
 - a-define-nem-javithatja-a-contract-cimet-igy-egy-observation-a469asbk
 - a-kiadatlan-changelog-bejegyzes-a-regi-binaris-nevet-hasznal-m4m7q531
+- a-kotta-validate-nem-la-tja-a-spec-gra-fot-i-gy-a-to-ro-tt-h-5cnxb5vb
 - a-markdown-h1-a-teljes-azonositot-hordozza-igy-a-mintazott-u-rb71ckkr
 - a-prioritas-szuletesi-attributum-pedig-valtozo-tulajdonsag-a-9666rqce
 - a-resolve-disposition-enumja-elte-r-a-publikalt-sematol-atta-dm37tkv3
