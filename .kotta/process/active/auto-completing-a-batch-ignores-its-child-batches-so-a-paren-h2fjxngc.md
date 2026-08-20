@@ -3,7 +3,7 @@ id: T-01m0f27fc9ds5y3rm0h2fjxngc
 title: >-
   Auto-completing a batch ignores its child batches, so a parent with direct
   contracts can close while children are open
-status: defined
+status: active
 origin: observation
 types:
   - fix
@@ -13,11 +13,18 @@ risk: low
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: >-
+  feat/T-01m0f27fc9ds5y3rm0h2fjxngc-auto-completing-a-batch-ignores-its-child-batches-so-a-paren
 pull_request: null
 created_at: '2026-08-20'
 updated_at: '2026-08-20'
 source_observation: F-01m0f1mqaydrtkx3x2nbck58ke
+assigned_agent: claude
+worktree: .worktrees/T-01m0f27fc9ds5y3rm0h2fjxngc
+execution_mode: inherited
+branch_origin: created
+start_ref: HEAD
+start_commit: bfb47c147fdcfd5c55609065efc380cca56f9d15
 ---
 ## Outcome
 

@@ -1,0 +1,9 @@
+contract: T-01m0f27fc9ds5y3rm0h2fjxngc
+agent: claude
+branch: feat/T-01m0f27fc9ds5y3rm0h2fjxngc-auto-completing-a-batch-ignores-its-child-batches-so-a-paren
+worktree: .worktrees/T-01m0f27fc9ds5y3rm0h2fjxngc
+execution_mode: inherited
+origin: created
+start_ref: HEAD
+start_commit: bfb47c147fdcfd5c55609065efc380cca56f9d15
+started_at: 2026-08-20T08:47:18.365Z
