@@ -4,8 +4,10 @@ import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 import { readEvents } from "../../src/core/events.js";
+import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
 const cli = resolve("dist/cli/index.js");
+const FLOW_SPEC_ID = "GT-01m0c0000000000000000000fl";
 
 function run(repository: string, args: string[]): Record<string, unknown> {
   const result = spawnSync("node", [cli, ...args, "--json"], { cwd: repository, encoding: "utf8" });
@@ -23,6 +25,7 @@ describe("contract execution vertical slice", () => {
     git(repository, "init", "-b", "main");
     writeFileSync(join(repository, "README.md"), "fixture\n");
     run(repository, ["init"]);
+    retainLegacySignGate(repository);
     const created = spawnSync("node", [cli, "contract", "new", "--title", "Visible id", "--type", "feature"], { cwd: repository, encoding: "utf8" });
     expect(created.status).toBe(0);
     expect(created.stdout).toMatch(/^Created contract T-[0-9a-hjkmnp-tv-z]{26} at .+\.md\.\n$/);
@@ -36,11 +39,19 @@ describe("contract execution vertical slice", () => {
     git(repository, "config", "user.email", "test@example.com");
     writeFileSync(join(repository, "README.md"), "fixture\n");
     run(repository, ["init"]);
+    retainLegacySignGate(repository);
+    writeFileSync(join(repository, ".kotta/spec/glossary-terms/clean-install-000000fl.md"), [
+      "---", `id: ${FLOW_SPEC_ID}`, "form: glossary-term", "title: Clean install", "---", "",
+      "## Definition", "A clean install succeeds.", "", "## Usage", "Release verification.", "", "## Non-examples", "An existing installation.", "",
+    ].join("\n"));
     const first = run(repository, ["contract", "new", "--title", "Release CLI", "--type", "feature", "--profile", "workflow"]) as { data: { id: string; path: string } };
     const second = run(repository, ["contract", "new", "--title", "Publish site", "--type", "feature"]) as { data: { id: string } };
     const definition = join(repository, "definition.md");
     writeFileSync(definition, `---
 id: ${first.data.id}
+spec: [${FLOW_SPEC_ID}]
+coverage:
+  "A clean install succeeds.": [${FLOW_SPEC_ID}]
 priority: high
 risk: high
 depends_on: []
@@ -138,6 +149,11 @@ None.
     git(repository, "config", "user.email", "test@example.com");
     writeFileSync(join(repository, "README.md"), "fixture\n");
     run(repository, ["init"]);
+    retainLegacySignGate(repository);
+    writeFileSync(join(repository, ".kotta/spec/glossary-terms/corrected-task-000000fl.md"), [
+      "---", `id: ${FLOW_SPEC_ID}`, "form: glossary-term", "title: Corrected task", "---", "",
+      "## Definition", "The title and body are corrected in place.", "", "## Usage", "Pre-execution amendment.", "", "## Non-examples", "Changing active work.", "",
+    ].join("\n"));
     const created = run(repository, ["contract", "new", "--title", "Shpi the exporter", "--type", "feature"]) as { data: { id: string; path: string } };
     run(repository, ["contract", "sign", created.data.id, "--approve"]);
 
@@ -148,6 +164,9 @@ None.
     writeFileSync(definition, `---
 id: ${created.data.id}
 title: Ship the exporter
+spec: [${FLOW_SPEC_ID}]
+coverage:
+  "The title and body are corrected in place.": [${FLOW_SPEC_ID}]
 priority: high
 ---
 # ${created.data.id} — Ship the exporter
@@ -208,6 +227,7 @@ None.
     git(repository, "config", "user.email", "test@example.com");
     writeFileSync(join(repository, "README.md"), "fixture\n");
     run(repository, ["init"]);
+    retainLegacySignGate(repository);
     const created = run(repository, ["contract", "new", "--title", `Immutable ${state}`, "--type", "feature"]) as { data: { id: string; path: string } };
     run(repository, ["contract", "sign", created.data.id, "--approve"]);
     const defined = join(repository, ".kotta/process/defined", basename(created.data.path));
@@ -230,6 +250,7 @@ None.
     git(repository, "init", "-b", "main");
     writeFileSync(join(repository, "README.md"), "fixture\n");
     run(repository, ["init"]);
+    retainLegacySignGate(repository);
     const created = run(repository, ["contract", "new", "--title", "Safe definition", "--type", "feature"]) as { data: { id: string; path: string } };
     const contract = created.data.path;
     const before = readFileSync(contract, "utf8");
@@ -246,6 +267,7 @@ None.
     git(repository, "init", "-b", "main");
     writeFileSync(join(repository, "README.md"), "fixture\n");
     run(repository, ["init"]);
+    retainLegacySignGate(repository);
     const created = run(repository, ["contract", "new", "--title", "Missing source", "--type", "feature"]) as { data: { id: string; path: string } };
     const missing = join(repository, "no-such-definition.md");
     const result = spawnSync("node", [cli, "contract", "define", created.data.id, "--from", missing, "--json"], { cwd: repository, encoding: "utf8" });
@@ -262,6 +284,7 @@ None.
     git(repository, "config", "user.email", "test@example.com");
     writeFileSync(join(repository, "README.md"), "fixture\n");
     run(repository, ["init"]);
+    retainLegacySignGate(repository);
     const created = run(repository, ["contract", "new", "--title", "Flexible approval", "--type", "feature"]) as { data: { id: string; path: string } };
     writeFileSync(created.data.path, readFileSync(created.data.path, "utf8")
       .replace("Describe the observable outcome.", "Approval is not punctuation-sensitive.")
@@ -281,6 +304,7 @@ None.
     git(repository, "commit", "-m", "initial");
 
     run(repository, ["init"]);
+    retainLegacySignGate(repository);
     git(repository, "add", ".gitattributes", ".gitignore");
     git(repository, "commit", "-m", "initialize Kotta metadata");
     const created = run(repository, ["contract", "new", "--title", "Ship export", "--type", "feature", "--profile", "workflow"]) as { data: { id: string; path: string } };

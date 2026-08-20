@@ -4,8 +4,10 @@ import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { parse } from "yaml";
 import { describe, expect, test } from "vitest";
+import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
 const cli = resolve("dist/cli/index.js");
+const HOSTED_SPEC_ID = "GT-01m0c0000000000000000000hs";
 
 function run(cwd: string, args: string[]): Record<string, unknown> {
   const result = spawnSync("node", [cli, ...args, "--json"], { cwd, encoding: "utf8" });
@@ -35,6 +37,11 @@ function hostedRepository(branch = "claude/harness-branch"): string {
   git(root, "add", ".");
   git(root, "commit", "-m", "initial");
   run(root, ["init"]);
+  retainLegacySignGate(root);
+  writeFileSync(join(root, ".kotta/spec/glossary-terms/file-exists-000000hs.md"), [
+    "---", `id: ${HOSTED_SPEC_ID}`, "form: glossary-term", "title: File exists", "---", "",
+    "## Definition", "The file exists.", "", "## Usage", "Hosted task acceptance.", "", "## Non-examples", "A missing file.", "",
+  ].join("\n"));
   git(root, "add", ".");
   git(root, "commit", "-m", "initialize Kotta metadata");
   if (branch !== "main") git(root, "checkout", "-b", branch);
@@ -42,7 +49,7 @@ function hostedRepository(branch = "claude/harness-branch"): string {
 }
 
 function definition(id: string): string {
-  return `---\nid: ${id}\n---\n# ${id} — Hosted work\n\n## Outcome\n\nThe work is done in the checkout the host provided.\n\n## Scope\n\nOne file.\n\n## Non-goals\n\nNothing else.\n\n## Acceptance\n\n- The file exists.\n\n## Verification\n\n- Read the file.\n\n## Constraints\n\nNone.\n\n## Open decisions\n\nNone.\n\n## Execution notes\n\nNone.\n`;
+  return `---\nid: ${id}\nspec: [${HOSTED_SPEC_ID}]\ncoverage:\n  \"The file exists.\": [${HOSTED_SPEC_ID}]\n---\n# ${id} — Hosted work\n\n## Outcome\n\nThe work is done in the checkout the host provided.\n\n## Scope\n\nOne file.\n\n## Non-goals\n\nNothing else.\n\n## Acceptance\n\n- The file exists.\n\n## Verification\n\n- Read the file.\n\n## Constraints\n\nNone.\n\n## Open decisions\n\nNone.\n\n## Execution notes\n\nNone.\n`;
 }
 
 describe("a single checkout that is not on the base branch", () => {

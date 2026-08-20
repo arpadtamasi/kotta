@@ -64,8 +64,10 @@ kotta integrate codex
 ```
 
 After that, create, define, validate, start and review contracts by asking in the calling chat.
-Kotta returns identifiers as structured tool results and presents sign/close/change-request
-decisions as scoped host-chat prompts; the human does not relay ids or run lifecycle commands.
+Kotta returns identifiers as structured tool results. A covered definition becomes executable
+without re-asking the agreement already accepted in the spec; close and change-request decisions
+remain scoped host-chat prompts. Workspaces that explicitly retain the compatibility sign gate get
+the same prompt and durable receipt there. The human does not relay ids or run lifecycle commands.
 
 Then open an existing Git repository in the supported host and run:
 
@@ -229,6 +231,9 @@ backlog → defined → active → review → done
 ```
 
 - Contracts define an observable outcome, bounded scope, acceptance conditions, and verification.
+- Every acceptance condition explicitly maps to a referenced accepted spec node. A valid covered
+  definition moves from backlog to defined; there is no separate sign gate by default. Set
+  `workflow.require_human_sign_approval: true` only to retain that compatibility gate.
 - Work that should not continue leaves through `kotta contract cancel <id> --resolution <resolution>
   --reason "…" --approve`, from any state before `done`. `close` is for work that was finished and
   merged; `cancel` is for work whose purpose is gone — superseded by a decision, duplicated by
@@ -336,7 +341,7 @@ branch, and re-running it after success is a no-op.
 
 ## Core safety rules
 
-- A backlog item is not executable until it is valid and explicitly defined.
+- A backlog item is not executable until it is valid, explicitly covered by accepted spec, and defined.
 - An observation is not automatically a contract.
 - Agents do not invent missing product intent or accepted trade-offs.
 - Every active contract has at most one claim and one feature branch.
@@ -404,7 +409,6 @@ kotta status
 kotta contract new --title "Add filtered export" --type feature --profile ui workflow
 kotta contract define T-014 --from /tmp/T-014-definition.md
 kotta contract validate T-014
-kotta contract sign T-014 --approve
 kotta contract start T-014 --agent codex
 kotta contract start T-014 --agent codex --caller
 kotta contract brief T-014 --out /tmp/T-014-brief.md
@@ -446,9 +450,13 @@ kotta observation show F-01kz9d5nqwdwb7r2c0jdzchspa
 
 Every command supports `--json`. Mutations validate before writing and report both the violated rule and corrective action when rejected.
 
-Before a contract can be signed, its `Open decisions` section must say that no decision remains.
+Before a contract can be defined, its `Open decisions` section must say that no decision remains.
 Kotta accepts `None`, `None.`, `N/A`, `N/A.`, `No open decisions` and `No open decisions.`
-case-insensitively; real unresolved choices still keep the contract in backlog.
+case-insensitively; real unresolved choices still keep the contract in backlog. Every acceptance
+bullet must also name a referenced spec id or have an exact-text entry in frontmatter `coverage`.
+If no accepted node covers it, create an observation and amend the spec first. The legacy
+`contract sign` step exists only when `workflow.require_human_sign_approval: true`; it leaves an
+approval receipt.
 
 **Small contexts by default.** Each contract executes in a fresh agent context whose intent input is `kotta contract brief <id>` — the contract body, its referenced decisions, its profiles and its claim, nothing else. The brief is deterministic and reports an approximate token count; above a threshold (`--warn-tokens`, default 12000) it warns that the contract is probably too large or under-referenced. This is a quality gauge, not a thrift trick: if a contract cannot be executed from its brief plus the code in the worktree, the contract is incomplete — record the gap instead of widening the context.
 

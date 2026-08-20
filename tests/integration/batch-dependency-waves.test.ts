@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 import { readEvents } from "../../src/core/events.js";
 
 const cli = resolve("dist/cli/index.js");
@@ -39,6 +40,7 @@ function dependencyBatch(label: string) {
   git(root, "add", ".");
   git(root, "commit", "-m", "initial");
   run(root, ["init"]);
+  retainLegacySignGate(root);
 
   const predecessor = defineContract(root, "Build predecessor");
   const dependent = defineContract(root, "Build dependent");

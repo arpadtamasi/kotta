@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, unlinkSync, writeFileSync } from
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 import { readWorkspace } from "../../src/commands/ui.js";
 
 const cli = resolve("dist/cli/index.js");
@@ -20,6 +21,7 @@ describe("dependency-aware batch", () => {
     git(root, "init", "-b", "main");
     writeFileSync(join(root, "README.md"), "fixture\n");
     run(root, ["init"]);
+    retainLegacySignGate(root);
     const batch = (run(root, ["batch", "new", "--title", "Launch batch", "--goal", "Ship the first slice", "--parallelism", "1"]) as { ok: boolean; data: { id: string; path: string } });
     expect(batch.ok).toBe(true);
     expect(batch.data.id).toMatch(/^P-[0-9a-hjkmnp-tv-z]{26}$/);
@@ -39,6 +41,7 @@ describe("dependency-aware batch", () => {
     git(root, "init", "-b", "main"); git(root, "config", "user.name", "Kotta Test"); git(root, "config", "user.email", "test@example.com");
     writeFileSync(join(root, "README.md"), "fixture\n"); git(root, "add", "."); git(root, "commit", "-m", "initial");
     run(root, ["init"]);
+    retainLegacySignGate(root);
     const contracts: Array<{ id: string; filename: string }> = [];
     for (const title of ["Build parser", "Expose command"]) {
       const created = run(root, ["contract", "new", "--title", title, "--type", "feature"]) as { data: { id: string; path: string } };
@@ -84,6 +87,7 @@ function workspaceRepository(label: string): string {
   git(root, "add", ".");
   git(root, "commit", "-m", "initial");
   run(root, ["init"]);
+  retainLegacySignGate(root);
   return root;
 }
 

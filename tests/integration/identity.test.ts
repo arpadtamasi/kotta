@@ -3,6 +3,7 @@ import { copyFileSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } f
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
 const cli = resolve("dist/cli/index.js");
 const MINTED = /^[TFP]-[0-9a-hjkmnp-tv-z]{26}$/;
@@ -24,6 +25,7 @@ function repository(label: string): string {
   git(root, "add", ".");
   git(root, "commit", "-m", "initial");
   run(root, ["init"]);
+  retainLegacySignGate(root);
   git(root, "add", "-A");
   git(root, "commit", "-m", "init kotta");
   return root;

@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, unlinkSy
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
 const cli = resolve("dist/cli/index.js");
 
@@ -61,6 +62,7 @@ function fixture(prefix: string): string {
   git(repository, "add", ".");
   git(repository, "commit", "-m", "initial");
   run(repository, ["init"]);
+  retainLegacySignGate(repository);
   git(repository, "add", ".gitattributes", ".gitignore");
   git(repository, "commit", "-m", "initialize Kotta metadata");
   return repository;

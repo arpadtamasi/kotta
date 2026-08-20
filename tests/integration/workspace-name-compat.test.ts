@@ -3,6 +3,7 @@ import { existsSync, lstatSync, mkdtempSync, readFileSync, readdirSync, realpath
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 import { readWorkspace } from "../../src/commands/ui.js";
 import { duplicateWorkspaceWarning, hasWorkspace, workspaceDirectoryName } from "../../src/filesystem/workspace.js";
 
@@ -35,6 +36,7 @@ function repository(label: string, directory = ".kotta"): string {
   git(root, "config", "user.email", "test@example.com");
   writeFileSync(join(root, "README.md"), "fixture\n");
   run(root, ["init"]);
+  retainLegacySignGate(root);
   // An existing workspace predates the rename: it is the `.a-team` directory `init` no longer writes.
   if (directory !== ".kotta") renameSync(join(root, ".kotta"), join(root, directory));
   git(root, "add", ".");

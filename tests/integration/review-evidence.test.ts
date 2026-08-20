@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 import { findContract } from "../../src/filesystem/entities.js";
 
 const cli = resolve("dist/cli/index.js");
@@ -24,6 +25,7 @@ function fixture() {
   execFileSync("git", ["add", "."], { cwd: root });
   execFileSync("git", ["commit", "-m", "initial"], { cwd: root });
   run(root, ["init"]);
+  retainLegacySignGate(root);
   execFileSync("git", ["add", ".gitattributes", ".gitignore"], { cwd: root });
   execFileSync("git", ["commit", "-m", "initialize Kotta metadata"], { cwd: root });
   const created = (run(root, ["contract", "new", "--title", "Document flow", "--type", "documentation"]) as { data: { id: string; path: string } }).data;

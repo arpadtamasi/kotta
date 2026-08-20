@@ -16,6 +16,7 @@ import { appendCliApprovalAudit, appendLifecycleEvent } from "../core/events.js"
 import { cliApprovalReceipt, stampReceipt, type ApprovalReceipt } from "../core/approval-receipt.js";
 import { readEnv } from "../core/env.js";
 import { assertDistinctReviewEvidence, prepareReviewEvidence, type ReviewEvidenceInput } from "../core/review-evidence.js";
+import { contractCoverage, validateContractCoverage, type CoverageEntry } from "../core/coverage.js";
 
 export function slugify(value: string): string {
   return value.toLowerCase().normalize("NFKD").replace(/\p{M}/gu, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
@@ -56,7 +57,7 @@ export function newContract(options: { title: string; type: string; profiles: st
   return { ok: true, command: "contract new", data: { id, path } };
 }
 
-const DEFINITION_FIELDS = new Set(["id", "title", "types", "profiles", "priority", "risk", "depends_on", "blocks", "spec"]);
+const DEFINITION_FIELDS = new Set(["id", "title", "types", "profiles", "priority", "risk", "depends_on", "blocks", "spec", "coverage"]);
 
 /** A title changes only through the explicit definition field; body headings are prose. */
 function definitionTitle(draft: ReturnType<typeof parseMarkdown>, current: unknown): string {
@@ -98,7 +99,7 @@ export function defineContract(id: string, definition: string, repositoryRoot?: 
   if (!draft.content.trim()) throw new Error("Contract definition body is required.");
 
   current.data.title = definitionTitle(draft, current.data.title);
-  for (const field of ["types", "profiles", "priority", "risk", "depends_on", "blocks", "spec"] as const) {
+  for (const field of ["types", "profiles", "priority", "risk", "depends_on", "blocks", "spec", "coverage"] as const) {
     if (draft.data[field] !== undefined) current.data[field] = draft.data[field];
   }
   for (const field of ["depends_on", "blocks"] as const) {
@@ -107,32 +108,45 @@ export function defineContract(id: string, definition: string, repositoryRoot?: 
     for (const reference of references) findContract(root, reference);
   }
   assertSpecReferences(root, id, current.data.spec);
+  const targetState = contract.state === "defined" || !readWorkspaceConfig(root).requireHumanSignApproval ? "defined" : "backlog";
+  current.data.status = targetState;
   current.data.updated_at = new Date().toISOString().slice(0, 10);
   const filename = entityFilename(id, slugify(String(current.data.title)));
-  const destination = join(processPath(root, contract.state), filename);
+  mkdirSync(processPath(root, targetState), { recursive: true });
+  const destination = join(processPath(root, targetState), filename);
   if (destination !== contract.path && existsSync(destination)) {
     throw new Error(`Contract ${id} cannot be retitled because ${destination} already exists.`);
   }
-  const candidate = `${contract.path}.define-${process.pid}.tmp`;
+  const candidate = `${destination}.define-${process.pid}.tmp`;
   writeFileSync(candidate, renderMarkdown(current.data, draft.content));
-  let published = false;
   try {
-    assertValid(contract.state === "backlog"
+    assertValid(targetState === "backlog"
       ? validateContractDefinitionFile(candidate)
-      : validateContractFile(candidate, "defined"));
-    renameSync(candidate, contract.path);
-    published = true;
-    if (destination !== contract.path) renameSync(contract.path, destination);
+      : validateContractFile(candidate, targetState));
+    const coverageErrors = validateContractCoverage(root, current.data, draft.content, candidate);
+    assertValid({ valid: coverageErrors.length === 0, errors: coverageErrors });
+    renameSync(candidate, destination);
+    if (destination !== contract.path) unlinkSync(contract.path);
   } catch (error) {
     if (existsSync(candidate)) unlinkSync(candidate);
-    if (published && destination !== contract.path && existsSync(contract.path)) writeFileSync(contract.path, original);
     throw error;
   }
-  appendLifecycleEvent(root, id, contract.state, contract.state === "defined"
+  appendLifecycleEvent(root, id, targetState, contract.state === "defined"
     ? "Contract definition amended before execution."
-    : "Contract definition updated while in backlog.");
+    : targetState === "defined"
+      ? "Contract definition validated for accepted-spec coverage; no separate sign gate required."
+      : "Contract definition validated and awaits the workspace's opt-in sign gate.");
   regenerateIndex(root);
-  return { ok: true, command: "contract define", data: { id, path: destination } };
+  return {
+    ok: true,
+    command: "contract define",
+    data: {
+      id,
+      path: destination,
+      state: targetState,
+      nextStep: targetState === "backlog" ? `kotta contract sign ${id}` : `kotta contract start ${id} --agent <agent>`,
+    },
+  };
 }
 
 function profileHeadings(profile: string): string[] {
@@ -159,20 +173,36 @@ export function validateContract(id: string, repositoryRoot?: string) {
       errors.push({ code: "SPEC_NOT_FOUND", message: `References specification node '${reference}', which does not exist in this workspace.`, path: contract.path });
     }
   }
+  const cancelled = contract.state === "done" && ["cancelled", "duplicate", "obsolete"].includes(String(entity.data.resolution));
+  const legacyOptIn = readWorkspaceConfig(root).requireHumanSignApproval && specReferences(entity.data).length === 0;
+  // Backlog capture and terminal retirement are not executable promises. Existing opt-in
+  // workspaces may also finish pre-coverage tasks; every newly defined task still goes through the
+  // coverage check in defineContract.
+  if (contract.state !== "backlog" && !cancelled && !legacyOptIn) {
+    errors.push(...validateContractCoverage(root, entity.data, entity.content, contract.path));
+  }
   return { ok: errors.length === 0, command: "contract validate", data: { id, state: contract.state }, errors };
 }
 
-export function signContract(id: string, approved: boolean, repositoryRoot?: string, options: { approvalRecorded?: boolean; locked?: boolean; commit?: boolean } = {}) {
+export function signContract(id: string, approved: boolean, repositoryRoot?: string, options: { approvalRecorded?: boolean; locked?: boolean; commit?: boolean; receipt?: ApprovalReceipt } = {}) {
   const requestedRoot = repositoryRoot ?? findRepositoryRoot();
   const sign = (root: string) => {
     const contract = findContract(root, id);
     if (contract.state !== "backlog") throw new Error(`Contract ${id} must be in backlog before it can be signed.`);
     if (!approved) throw new Error("Human sign-off is required. Re-run with --approve after reviewing intent and trade-offs.");
     const entity = parseMarkdown(readFileSync(contract.path, "utf8"));
+    if (!readWorkspaceConfig(root).requireHumanSignApproval) {
+      throw new Error(`The sign gate is retired in this workspace. Define ${id} with complete accepted-spec coverage; a valid definition becomes defined without a separate approval.`);
+    }
+    if (specReferences(entity.data).length) {
+      const coverageErrors = validateContractCoverage(root, entity.data, entity.content, contract.path);
+      assertValid({ valid: coverageErrors.length === 0, errors: coverageErrors });
+    }
     const dependencies = Array.isArray(entity.data.depends_on) ? entity.data.depends_on.map(String) : [];
     for (const dependency of dependencies) findContract(root, dependency);
     entity.data.status = "defined";
     entity.data.updated_at = new Date().toISOString().slice(0, 10);
+    stampReceipt(entity.data, options.receipt ?? cliApprovalReceipt("contract.sign"));
     mkdirSync(processPath(root, "defined"), { recursive: true });
     const destination = processPath(root, "defined", contract.filename);
     writeFileSync(destination, renderMarkdown(entity.data, entity.content));
@@ -240,6 +270,12 @@ export function startContract(
     if (existsSync(claimInControl)) throw new Error(`Contract ${id} already has a claim.`);
     const definedSnapshot = readFileSync(contract.path, "utf8");
     const entity = parseMarkdown(definedSnapshot);
+    const config = readWorkspaceConfig(root);
+    const legacyOptIn = config.requireHumanSignApproval && specReferences(entity.data).length === 0;
+    if (!legacyOptIn) {
+      const coverageErrors = validateContractCoverage(root, entity.data, entity.content, contract.path);
+      assertValid({ valid: coverageErrors.length === 0, errors: coverageErrors });
+    }
     const dependencies = Array.isArray(entity.data.depends_on) ? entity.data.depends_on.map(String) : [];
     const startRef = options.startRef ?? "HEAD";
     const startCommit = resolveCommit(root, startRef, "Start ref");
@@ -257,7 +293,6 @@ export function startContract(
     if (incomplete.length) throw new Error(`Unresolved dependencies: ${incomplete.join(", ")}. Complete them before starting ${id}.`);
     const title = String(entity.data.title);
     const type = Array.isArray(entity.data.types) ? String(entity.data.types[0]) : String(entity.data.type ?? "feature");
-    const config = readWorkspaceConfig(root);
     const controlPlane = resolveControlPlane(callerRoot);
 
     // One checkout on a branch of the environment's choosing means the branch was already named and
@@ -647,6 +682,7 @@ export interface BriefResult {
     missingDecisions: string[];
     spec: string[];
     missingSpec: string[];
+    coverage: CoverageEntry[];
     path: string | null;
     brief: string;
   };
@@ -699,6 +735,7 @@ export function briefContract(id: string, options: { out?: string; warnTokens?: 
   // Rule 8 makes the brief the executor's whole world, so a referenced node that stays outside it
   // governs nothing. Missing ones are named rather than dropped: silence would read as "none".
   const specIds = specReferences(entity.data);
+  const coverage = contractCoverage(entity.data, entity.content);
   const specNodes: { id: string; form: string; content: string }[] = [];
   const missingSpec: string[] = [];
   for (const specId of specIds) {
@@ -729,6 +766,10 @@ export function briefContract(id: string, options: { out?: string; warnTokens?: 
   const parts: { name: string; text: string }[] = [
     { name: "header", text: header },
     { name: `contract ${id}`, text: `## Contract\n\n${entity.content.trim()}` },
+    {
+      name: "coverage",
+      text: `## Acceptance coverage\n\n${coverage.map((entry) => `- ${entry.acceptance} → ${entry.spec.length ? entry.spec.join(", ") : "UNCOVERED"}`).join("\n") || "No acceptance conditions."}`,
+    },
   ];
   for (const node of specNodes) parts.push({ name: `spec ${node.id}`, text: `## Specification ${node.id} (${node.form})\n\n${node.content}` });
   if (missingSpec.length) parts.push({ name: "missing specification", text: `## Missing specification\n\nReferenced but not found under the workspace spec root: ${missingSpec.join(", ")}` });
@@ -755,7 +796,7 @@ export function briefContract(id: string, options: { out?: string; warnTokens?: 
   return {
     ok: true,
     command: "contract brief",
-    data: { id, state: contract.state, tokens, warnTokens, warning, largestSection, sections: sectionSizes, decisions: decisions.map((decision) => decision.id), missingDecisions, spec: specNodes.map((node) => node.id), missingSpec, path: outPath, brief },
+    data: { id, state: contract.state, tokens, warnTokens, warning, largestSection, sections: sectionSizes, decisions: decisions.map((decision) => decision.id), missingDecisions, spec: specNodes.map((node) => node.id), missingSpec, coverage, path: outPath, brief },
   };
 }
 

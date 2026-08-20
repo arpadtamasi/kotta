@@ -3,6 +3,7 @@ import { copyFileSync, existsSync, mkdtempSync, readFileSync, realpathSync, writ
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
 /**
  * T-036 — directory-as-state duplication (second root of F-008).
@@ -36,6 +37,7 @@ function repository(label: string, options: { detectRenames?: boolean } = {}): s
   // merge (or `merge.renames=false`) drops it, and then both copies survive. Both shapes are real.
   if (options.detectRenames === false) git(root, "config", "merge.renames", "false");
   run(root, ["init"]);
+  retainLegacySignGate(root);
   git(root, "add", "-A");
   git(root, "commit", "-m", "init kotta");
   return root;

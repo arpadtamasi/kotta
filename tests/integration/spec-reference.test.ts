@@ -93,7 +93,7 @@ const BODY = [
 function defineWith(spec: string[]): { id: string; result: ReturnType<typeof invoke> } {
   const id = String((run(["contract", "new", "--title", "Brief carries the specification", "--type", "feature"]).data as { id: string }).id);
   const definition = join(repository, "definition.md");
-  writeFileSync(definition, `---\nspec:\n${spec.map((entry) => `  - ${entry}`).join("\n")}\n---\n\n${BODY}`);
+  writeFileSync(definition, `---\nspec:\n${spec.map((entry) => `  - ${entry}`).join("\n")}\n${spec.length ? `coverage:\n  \"The brief contains the node text.\":\n    - ${spec[0]}\n` : ""}---\n\n${BODY}`);
   return { id, result: invoke(["contract", "define", id, "--from", definition]) };
 }
 
@@ -101,6 +101,8 @@ beforeEach(() => {
   repository = mkdtempSync(join(tmpdir(), "kotta-spec-reference-"));
   skillsHome = mkdtempSync(join(tmpdir(), "kotta-spec-reference-skills-"));
   execFileSync("git", ["init", "-b", "main"], { cwd: repository });
+  execFileSync("git", ["config", "user.name", "Kotta Test"], { cwd: repository });
+  execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: repository });
   run(["init"]);
   writeQuality();
   writeGoal();
@@ -117,10 +119,10 @@ describe("a contract names the specification it rests on", () => {
     expect(validated.errors ?? []).toEqual([]);
   });
 
-  test("the field may be left empty, and the whole lifecycle still runs (A1)", () => {
+  test("an empty spec cannot cover an executable acceptance condition", () => {
     const { id, result } = defineWith([]);
-    expect(result.status, result.stderr).toBe(0);
-    expect(report(["contract", "validate", id]).ok).toBe(true);
+    expect(result.status).not.toBe(0);
+    expect(result.stdout).toContain("ACCEPTANCE_NOT_COVERED");
     expect(run(["contract", "brief", id]).data.spec).toEqual([]);
   });
 

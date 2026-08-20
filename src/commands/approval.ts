@@ -113,9 +113,9 @@ function assertApplicable(root: string, entity: string, action: ApprovalAction):
 function apply(root: string, proposal: KottaEvent, receipt: ApprovalReceipt): unknown {
   const payload = proposal.payload ?? {};
   switch (proposal.action as ApprovalAction) {
-    // Signing is not a receipt-carrying gate (the acceptance already landed when the spec did),
-    // so it stays untouched; every other gated action stamps the chat receipt on its entity.
-    case "contract.sign": return signContract(proposal.entity, true, root, { approvalRecorded: true, locked: true, commit: false });
+    // Signing exists only as a workspace opt-in compatibility gate; when enabled it is still a
+    // real consequential transition and therefore carries the same durable receipt as other gates.
+    case "contract.sign": return signContract(proposal.entity, true, root, { approvalRecorded: true, locked: true, commit: false, receipt });
     case "observation.resolve": return resolveObservation(proposal.entity, String(payload.disposition), true, root, {
       approvalRecorded: true,
       locked: true,

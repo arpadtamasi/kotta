@@ -3,6 +3,7 @@ import { mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from 
 import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
 const cli = resolve("dist/cli/index.js");
 
@@ -42,6 +43,7 @@ function fixture(label: string): { repository: string; contracts: string[] } {
   git(repository, "config", "user.email", "test@example.com");
   writeFileSync(join(repository, "README.md"), "fixture\n");
   cliRun(repository, ["init", "--json"]);
+  retainLegacySignGate(repository);
   const contracts = ["Ship the exporter", "Retire the old importer"].map((title) => {
     const created = cliRun(repository, ["contract", "new", "--title", title, "--type", "feature", "--json"]);
     return (JSON.parse(created.stdout) as { data: { id: string } }).data.id;
