@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { beforeEach, describe, expect, test } from "vitest";
@@ -38,6 +38,7 @@ function invoke(args: string[]) {
 
 const GOAL_ID = "G-01m0c000000000000000000002";
 const QUALITY_ID = "QA-01m0c000000000000000000001";
+const EXAMPLE_ID = "EX-01m0c000000000000000000004";
 
 function writeQuality(): void {
   writeFileSync(join(repository, ".kotta/spec/quality-attributes/brief-latency-qa000001.md"), [
@@ -59,6 +60,23 @@ function writeGoal(extraFrontmatter: string[] = [], measuredBy = `[${QUALITY_ID}
     "## Context", "Nothing in Kotta read a specification node before.", "",
     "## Baseline and target", "Baseline zero readers; target every referenced node in the brief.", "",
   ].join("\n"));
+}
+
+function writeExample(subjects = `[${QUALITY_ID}]`): void {
+  writeFileSync(join(repository, ".kotta/spec/examples/brief-is-fast-ex000004.md"), [
+    "---", `id: ${EXAMPLE_ID}`, "form: example", "title: Brief production is fast", `subjects: ${subjects}`, "---", "",
+    "## Given", "A workspace with specification nodes.", "",
+    "## When", "The executing agent asks for a brief.", "",
+    "## Then", "The brief arrives under the accepted latency threshold.", "",
+  ].join("\n"));
+}
+
+function workspaceSnapshot(directory = join(repository, ".kotta"), relative = ""): Array<[string, string]> {
+  return readdirSync(directory, { withFileTypes: true }).sort((left, right) => left.name.localeCompare(right.name)).flatMap((entry) => {
+    const path = join(directory, entry.name);
+    const name = relative ? `${relative}/${entry.name}` : entry.name;
+    return entry.isDirectory() ? workspaceSnapshot(path, name) : [[name, readFileSync(path, "utf8")]];
+  });
 }
 
 const BODY = [
@@ -86,6 +104,7 @@ beforeEach(() => {
   run(["init"]);
   writeQuality();
   writeGoal();
+  writeExample();
 });
 
 describe("a contract names the specification it rests on", () => {
@@ -144,7 +163,18 @@ describe("the specification is measured against its own form", () => {
   test("a complete workspace validates and counts its nodes", () => {
     const validated = report(["validate"]);
     expect(validated.ok).toBe(true);
-    expect(validated.data.specNodes).toBe(2);
+    expect(validated.data.specNodes).toBe(3);
+  });
+
+  test("repeated validation is deterministic and writes no workspace bytes", () => {
+    const before = workspaceSnapshot();
+    const first = report(["validate"]);
+    const between = workspaceSnapshot();
+    const second = report(["validate"]);
+
+    expect(first).toEqual(second);
+    expect(between).toEqual(before);
+    expect(workspaceSnapshot()).toEqual(before);
   });
 
   test("a missing required frontmatter field is named with its file and form (A4)", () => {
@@ -172,11 +202,27 @@ describe("the specification is measured against its own form", () => {
     const issue = report(["validate"]).errors?.find((error) => error.code === "SPEC_NODE_MISSING_EDGE");
     expect(issue?.message).toContain("measurement");
     expect(issue?.message).toContain("measured_by");
+    expect(issue?.message).toContain("How will we know this goal was reached?");
+  });
+
+  test("an incoming edge below its minimum names the registered question", () => {
+    writeExample("[]");
+
+    const issues = report(["validate"]).errors ?? [];
+    const issue = issues.find((error) => error.code === "SPEC_NODE_MISSING_EDGE" && error.message.includes("verification"));
+    expect(issue?.message).toContain("brief-latency-qa000001.md");
+    expect(issue?.message).toContain("Who measures this quality, and where?");
   });
 
   test("an edge pointing at nothing, and one pointing at the wrong form, are told apart (A4)", () => {
-    writeGoal([], "[QA-01m0czzzzzzzzzzzzzzzzzzzzz]");
-    expect(report(["validate"]).errors?.map((error) => error.code)).toContain("SPEC_NODE_DANGLING_EDGE");
+    const missing = "QA-01m0czzzzzzzzzzzzzzzzzzzzz";
+    writeGoal([], `[${missing}]`);
+    const dangling = report(["validate"]).errors?.find((error) => error.code === "SPEC_NODE_DANGLING_EDGE");
+    expect(dangling?.message).toContain("spec-governs-g0000002.md");
+    expect(dangling?.message).toContain("measurement");
+    expect(dangling?.message).toContain("measured_by");
+    expect(dangling?.message).toContain(missing);
+    expect(dangling?.message).toContain("Add that node or correct/remove");
 
     writeGoal([], `[${GOAL_ID}]`);
     const wrong = report(["validate"]).errors?.find((error) => error.code === "SPEC_NODE_WRONG_TARGET");
@@ -201,6 +247,15 @@ describe("the specification is measured against its own form", () => {
     const errors = report(["validate"]).errors ?? [];
     expect(errors.map((error) => error.message).join("\n")).toContain("'owner'");
     expect(errors.map((error) => error.message).join("\n")).toContain("Mitigation");
+  });
+
+  test("a node id must match the prefix and shape declared by its form", () => {
+    writeFileSync(join(repository, ".kotta/spec/goals/spec-governs-g0000002.md"),
+      readFileSync(join(repository, ".kotta/spec/goals/spec-governs-g0000002.md"), "utf8").replace(GOAL_ID, "G-short"));
+
+    const issue = report(["validate"]).errors?.find((error) => error.code === "SPEC_NODE_INVALID_ID");
+    expect(issue?.message).toContain("G-short");
+    expect(issue?.message).toContain("G- followed by a 26-character lowercase Crockford id");
   });
 });
 

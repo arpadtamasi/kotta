@@ -21,6 +21,7 @@ export interface SpecFormEdge {
   source_forms: string[];
   target_forms: string[];
   minimum: number;
+  question: string;
 }
 
 export interface SpecForm {
@@ -101,6 +102,7 @@ export function readFormRegistry(root: string): { forms: SpecForm[]; issues: Val
         source_forms: strings(edge.source_forms),
         target_forms: targets,
         minimum: Number(edge.minimum ?? 0),
+        question: String(edge.question ?? "").trim(),
       });
     }
 
@@ -194,6 +196,21 @@ export function validateSpecWorkspace(root: string): ValidationIssue[] {
   for (const node of nodes) {
     const form = known.get(node.form);
     if (!form) continue;
+    const expectedId = new RegExp(`^${form.prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}-[0-9a-hjkmnp-tv-z]{26}$`);
+    if (!expectedId.test(node.id)) {
+      issues.push({
+        code: "SPEC_NODE_INVALID_ID",
+        message: `${basename(node.path)} (${form.id}) has id '${node.id}'; use ${form.prefix}- followed by a 26-character lowercase Crockford id.`,
+        path: node.path,
+      });
+    }
+    if (String(node.data.form ?? "").trim() !== form.id) {
+      issues.push({
+        code: "SPEC_NODE_FORM_MISMATCH",
+        message: `${basename(node.path)} is stored in the '${form.id}' directory but declares form '${String(node.data.form ?? "")}'. Set 'form: ${form.id}' or move it to the registered directory for its declared form.`,
+        path: node.path,
+      });
+    }
     for (const field of form.frontmatter) {
       const value = node.data[field];
       const empty = value === undefined || value === null || (typeof value === "string" && !value.trim()) || (Array.isArray(value) && !value.length);
@@ -215,20 +232,36 @@ export function validateSpecWorkspace(root: string): ValidationIssue[] {
     }
 
     for (const edge of form.edges) {
-      if (edge.direction !== "outgoing") continue;
-      const referenced = edge.fields.flatMap((field) => {
-        const value = node.data[field];
-        return Array.isArray(value) ? value.map(String) : value === undefined || value === null || value === "" ? [] : [String(value)];
-      });
-      if (referenced.length < edge.minimum) {
-        issues.push({ code: "SPEC_NODE_MISSING_EDGE", message: `${basename(node.path)} (${form.id}) answers edge '${edge.name}' ${referenced.length} time(s); its form requires at least ${edge.minimum} via ${edge.fields.join(", ")}.`, path: node.path });
+      if (edge.direction === "incoming") {
+        const incoming = nodes.filter((candidate) => edge.source_forms.includes(candidate.form)).flatMap((candidate) =>
+          edge.fields.flatMap((field) => {
+            const value = candidate.data[field];
+            const references = Array.isArray(value) ? value.map(String) : value === undefined || value === null || value === "" ? [] : [String(value)];
+            return references.filter((reference) => reference === node.id).map(() => ({ candidate, field }));
+          }));
+        if (incoming.length < edge.minimum) {
+          issues.push({
+            code: "SPEC_NODE_MISSING_EDGE",
+            message: `${basename(node.path)} (${form.id}) answers incoming edge '${edge.name}' ${incoming.length} time(s); its form requires at least ${edge.minimum}. ${edge.question ? `${edge.question} ` : ""}Add a reference from ${edge.source_forms.join(" or ")} via ${edge.fields.join(", ")}.`,
+            path: node.path,
+          });
+        }
         continue;
       }
-      for (const reference of referenced) {
+      const referenced = edge.fields.flatMap((field) => {
+        const value = node.data[field];
+        const references = Array.isArray(value) ? value.map(String) : value === undefined || value === null || value === "" ? [] : [String(value)];
+        return references.map((reference) => ({ field, reference }));
+      });
+      if (referenced.length < edge.minimum) {
+        issues.push({ code: "SPEC_NODE_MISSING_EDGE", message: `${basename(node.path)} (${form.id}) answers edge '${edge.name}' ${referenced.length} time(s); its form requires at least ${edge.minimum} via ${edge.fields.join(", ")}. ${edge.question ? `${edge.question} ` : ""}Add the missing reference.`, path: node.path });
+        continue;
+      }
+      for (const { field, reference } of referenced) {
         const target = ids.has(reference) ? nodes.find((candidate) => candidate.id === reference) : undefined;
-        if (!target) issues.push({ code: "SPEC_NODE_DANGLING_EDGE", message: `${basename(node.path)} (${form.id}) edge '${edge.name}' references '${reference}', which is not a specification node in this workspace.`, path: node.path });
+        if (!target) issues.push({ code: "SPEC_NODE_DANGLING_EDGE", message: `${basename(node.path)} (${form.id}) edge '${edge.name}' field '${field}' references '${reference}', which is not a specification node in this workspace. Add that node or correct/remove the '${field}' reference.`, path: node.path });
         else if (edge.target_forms.length && !edge.target_forms.includes(target.form)) {
-          issues.push({ code: "SPEC_NODE_WRONG_TARGET", message: `${basename(node.path)} (${form.id}) edge '${edge.name}' references '${reference}', which is a ${target.form}; the form allows ${edge.target_forms.join(", ")}.`, path: node.path });
+          issues.push({ code: "SPEC_NODE_WRONG_TARGET", message: `${basename(node.path)} (${form.id}) edge '${edge.name}' field '${field}' references '${reference}', which is a ${target.form}; point '${field}' at ${edge.target_forms.join(" or ")}.`, path: node.path });
         }
       }
     }
