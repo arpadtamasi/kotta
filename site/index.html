@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Kotta keeps AI-sized software work inside human-sized, repository-native tasks and batches." />
+    <meta name="description" content="Kotta turns human intent into repository-native tasks designed for AI to execute and humans to accept." />
     <meta name="theme-color" content="#f3f2f2" />
-    <title>Kotta — Repository-native control for human–AI teams</title>
+    <title>Kotta — Figure out what you want. Let AI execute it.</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" />
     <link rel="icon" href="../assets/brand/kotta-favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
@@ -27,192 +27,154 @@
             </g>
             <rect x="16" y="12" width="6" height="6" fill="#ec3013" />
           </svg>
-          <span class="wordmark-text">Kotta</span>
+          <span>Kotta</span>
         </a>
         <nav aria-label="Primary navigation">
-          <a href="#why">Why Kotta</a>
+          <a href="#why">Why</a>
           <a href="#how">How it works</a>
           <a href="#install">Install</a>
           <a class="nav-support" href="https://github.com/arpadtamasi/kotta/issues/new?template=bug.yml" target="_blank" rel="noreferrer noopener">Report a bug <span aria-hidden="true">↗</span></a>
-          <a href="https://github.com/arpadtamasi/kotta">GitHub <span aria-hidden="true">↗</span></a>
+          <a class="nav-github" href="https://github.com/arpadtamasi/kotta">GitHub <span aria-hidden="true">↗</span></a>
         </nav>
       </div>
     </header>
 
     <main id="content">
       <section class="hero" id="top" data-unit="hero" aria-labelledby="hero-title">
-        <div class="container hero-inner">
+        <div class="container hero-grid">
           <div class="hero-copy">
-            <p class="eyebrow">Repository-native control for human–AI development teams</p>
-            <h1 id="hero-title">Everything we learned about spelling out exactly what we want.</h1>
-            <p class="hero-support">Without the rigidity that kept us from doing it properly. Designed to be executed by AI. Your job is to figure out what you want.</p>
+            <h1 id="hero-title">
+              Everything we learned about spelling out exactly what we want.
+              <strong>Your job is to figure out what you want.</strong>
+            </h1>
+            <p class="hero-lede">Without the rigidity that kept us from doing it properly. Designed to be executed by AI.</p>
             <div class="hero-actions">
-              <a class="button button-primary" href="#install">Create your first task</a>
-              <a class="button button-secondary" href="#how">See the workflow</a>
+              <a class="button button-primary" href="#install">Install Kotta</a>
+              <a class="button button-secondary" href="https://github.com/arpadtamasi/kotta">View on GitHub <span aria-hidden="true">↗</span></a>
             </div>
+            <p class="hero-meta">Local-first · MIT licensed · plain files · no hosted account</p>
           </div>
-          <aside class="control-note" aria-label="Kotta control model">
-            <p class="control-label">Repository record / 001</p>
-            <dl class="record">
-              <div class="record-row">
-                <dt><span class="record-n">01</span><span class="record-k">Intent</span></dt>
-                <dd class="record-v">bounded scope</dd>
-                <dd class="record-note">Outcome, scope and verification written as a file in the repository.</dd>
+
+          <aside class="task-record" aria-label="A Kotta task moving from intent to human acceptance">
+            <div class="task-record-head">
+              <span>.kotta/process/review/T-042.md</span>
+              <span class="state">review</span>
+            </div>
+            <div class="task-title">
+              <span class="task-id">T-042</span>
+              <h2>Make the first viewport explain the product</h2>
+            </div>
+            <dl class="task-fields">
+              <div>
+                <dt>Intent</dt>
+                <dd>A visitor understands the offer before scrolling.</dd>
               </div>
-              <div class="record-row">
-                <dt><span class="record-n">02</span><span class="record-k">Execution</span></dt>
-                <dd class="record-v">claim + worktree</dd>
-                <dd class="record-note">One agent, one branch, one isolated checkout — no shared state.</dd>
+              <div>
+                <dt>Execution</dt>
+                <dd>One agent · one branch · one isolated worktree.</dd>
               </div>
-              <div class="record-row">
-                <dt><span class="record-n">03</span><span class="record-k">Completion</span></dt>
-                <dd class="record-v">evidence, reviewed</dd>
-                <dd class="record-note">Every acceptance condition answered by something reproducible.</dd>
+              <div>
+                <dt>Evidence</dt>
+                <dd>Desktop + mobile screenshots · Playwright · axe.</dd>
               </div>
             </dl>
-            <p class="control-status"><span class="status-dot" aria-hidden="true"></span> Human acceptance required</p>
+            <div class="human-gate">
+              <span class="gate-signal" aria-hidden="true"></span>
+              <span><b>Human decision required</b> The agent cannot accept its own work.</span>
+            </div>
           </aside>
         </div>
+        <div class="container install-ribbon" aria-label="Install Kotta">
+          <span>Start in any Git repository</span>
+          <code>npm install --global @arpadtamasi/kotta</code>
+          <a href="#install">Full setup ↓</a>
+        </div>
       </section>
 
-      <section class="problem section-rule" id="why" data-unit="problem" aria-labelledby="problem-title">
-        <div class="container">
-          <div class="section-heading">
-            <p class="section-index"><span class="idx-n">01</span><span>The problem changed</span></p>
-            <h2 id="problem-title">The agent is no longer the bottleneck. Human oversight is.</h2>
-          </div>
-          <div class="problem-grid">
-            <article class="problem-side problem-before">
-              <p class="panel-kicker">Chat-only execution</p>
-              <h3>The work grows. The record disappears.</h3>
-              <ul>
-                <li>Intent lives inside a scrolling conversation.</li>
-                <li>Scope changes while the agent is already moving.</li>
-                <li>“Done” is reported, not demonstrated.</li>
-              </ul>
-            </article>
-            <article class="problem-side problem-after">
-              <p class="panel-kicker">Kotta execution</p>
-              <h3>The work grows. Your control does not shrink.</h3>
-              <ul>
-                <li>Intent becomes a repository-native task.</li>
-                <li>Every agent gets a bounded claim and Git isolation.</li>
-                <li>Acceptance conditions map to concrete evidence.</li>
-              </ul>
-            </article>
+      <section class="problem" id="why" data-unit="problem" aria-labelledby="problem-title">
+        <div class="container problem-layout">
+          <h2 id="problem-title">AI can execute more work than you can continuously observe.</h2>
+          <div class="problem-copy">
+            <p class="problem-lede">The bottleneck moved. It is no longer producing code. It is keeping the agreement intact while agents move faster than the conversation around them.</p>
+            <div class="problem-points">
+              <div><b>Chat forgets the promise.</b><span>Intent dissolves into scrollback, follow-ups, and a different session tomorrow.</span></div>
+              <div><b>Agents report “done.”</b><span>The claim arrives before reproducible evidence and human acceptance.</span></div>
+              <div><b>Parallel work shares risk.</b><span>Branches, claims, dependencies, and decisions become coordination by memory.</span></div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section class="workflow section-rule" id="how" data-unit="workflow" aria-labelledby="workflow-title">
+      <section class="mechanism" id="how" data-unit="workflow" aria-labelledby="mechanism-title">
         <div class="container">
-          <div class="section-heading section-heading-wide">
-            <p class="section-index"><span class="idx-n">02</span><span>From plan to evidence</span></p>
-            <h2 id="workflow-title">Keep AI-sized output inside human-sized work batches.</h2>
-            <p>Each step narrows ambiguity and leaves a durable record for the next human decision.</p>
+          <div class="mechanism-heading">
+            <h2 id="mechanism-title">The agreement becomes executable.</h2>
+            <p>Kotta keeps the promise, the run, and the proof in the repository. Your agent gets a bounded task. You get the final decision.</p>
           </div>
-          <ol class="workflow-steps">
-            <li><span class="step-number">01</span><h3>Define</h3><p>Turn intent into an observable outcome, scope and verification task.</p></li>
-            <li><span class="step-number">02</span><h3>Batch</h3><p>Order related tasks by dependency, risk and safe parallelism.</p></li>
-            <li><span class="step-number">03</span><h3>Claim</h3><p>Give one agent one branch and one isolated worktree.</p></li>
-            <li><span class="step-number">04</span><h3>Review</h3><p>Map every acceptance condition to reproducible evidence.</p></li>
-            <li><span class="step-number">05</span><h3>Close</h3><p>Accept only integrated work, then release claims and cleanup safely.</p></li>
+          <ol class="mechanism-flow" aria-label="Kotta task lifecycle">
+            <li><span>01</span><h3>Define</h3><p>Write the outcome, scope, acceptance, and verification.</p><code>backlog → defined</code></li>
+            <li><span>02</span><h3>Execute</h3><p>Claim one task on one branch in one isolated worktree.</p><code>defined → active</code></li>
+            <li><span>03</span><h3>Prove</h3><p>Map each acceptance condition to concrete, reproducible evidence.</p><code>active → review</code></li>
+            <li><span>04</span><h3>Accept</h3><p>A human says yes. Kotta records who approved what and when.</p><code>review → done</code></li>
           </ol>
+          <div class="repository-line">
+            <code>.kotta/spec/</code><span>what must be true</span>
+            <i aria-hidden="true">→</i>
+            <code>.kotta/process/</code><span>what is happening</span>
+            <i aria-hidden="true">→</i>
+            <code>git history</code><span>what actually happened</span>
+          </div>
         </div>
       </section>
 
-      <section class="layers section-rule" data-unit="comparison" aria-labelledby="layers-title">
+      <section class="difference" data-unit="comparison" aria-labelledby="difference-title">
         <div class="container">
-          <div class="section-heading">
-            <p class="section-index"><span class="idx-n">03</span><span>Different layer, different job</span></p>
-            <h2 id="layers-title">Not another chat, tracker, or agent runtime.</h2>
-            <p>Kotta does not replace the tools around it. It supplies the missing control record between human intent and agent execution.</p>
+          <div class="difference-heading">
+            <h2 id="difference-title">Not another agent. The control layer around all of them.</h2>
+            <p>Keep the tools you already use. Kotta gives their work one durable agreement and one legal path to completion.</p>
           </div>
-          <div class="table-wrap">
+          <div class="comparison-wrap" tabindex="0" aria-label="Comparison of Kotta with adjacent tools; scroll horizontally to see every column">
             <table>
               <thead>
-                <tr><th scope="col">Layer</th><th scope="col">Keeps intent</th><th scope="col">Controls execution</th><th scope="col">Verifies completion</th></tr>
+                <tr><th scope="col">Layer</th><th scope="col">What it keeps</th><th scope="col">What it controls</th><th scope="col">What “done” means</th></tr>
               </thead>
               <tbody>
-                <tr><th scope="row">Agent chat</th><td data-label="Keeps intent">Conversation</td><td data-label="Controls execution">Kotta MCP actions + human gates</td><td data-label="Verifies completion">Reported by the agent</td></tr>
-                <tr><th scope="row">Jira / Linear</th><td data-label="Keeps intent">Human-readable issue</td><td data-label="Controls execution">Status tracking</td><td data-label="Verifies completion">Team convention</td></tr>
-                <tr><th scope="row">Agent orchestrator</th><td data-label="Keeps intent">Prompt or task input</td><td data-label="Controls execution">Agent runtime</td><td data-label="Verifies completion">Runtime-specific checks</td></tr>
-                <tr class="kotta-row"><th scope="row">Kotta</th><td data-label="Keeps intent">Repository-native task</td><td data-label="Controls execution">Claim plus Git isolation</td><td data-label="Verifies completion">Acceptance mapped to evidence</td></tr>
+                <tr><th scope="row">Agent chat</th><td data-label="Keeps">The conversation</td><td data-label="Controls">The current run</td><td data-label="Done">The agent says so</td></tr>
+                <tr><th scope="row">Issue tracker</th><td data-label="Keeps">The human-readable issue</td><td data-label="Controls">Status and ownership</td><td data-label="Done">Team convention</td></tr>
+                <tr><th scope="row">Agent runtime</th><td data-label="Keeps">Prompt and execution context</td><td data-label="Controls">Tools and model</td><td data-label="Done">Runtime-specific checks</td></tr>
+                <tr class="kotta-row"><th scope="row">Kotta</th><td data-label="Keeps">The accepted repository agreement</td><td data-label="Controls">Claims, Git isolation, gates</td><td data-label="Done">Evidence accepted by a human</td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <section class="quickstart section-rule" id="install" data-unit="quickstart" aria-labelledby="install-title">
-        <div class="container">
-          <div class="section-heading section-heading-wide">
-            <p class="section-index"><span class="idx-n">04</span><span>One-minute verified quickstart</span></p>
+      <section class="quickstart" id="install" data-unit="quickstart" aria-labelledby="install-title">
+        <div class="container quickstart-layout">
+          <div class="quickstart-copy">
             <h2 id="install-title">Install it. Define one real task.</h2>
-            <p>Verified with Node.js 20+, Git, Codex and <code>skills@1.5.20</code>. The public clean-machine canary completed in 60 seconds.</p>
+            <p>Kotta runs inside the repository you already have. Node.js 20+ and Git are the only runtime requirements.</p>
+            <ul>
+              <li>No service to deploy</li>
+              <li>No database to maintain</li>
+              <li>No account to create</li>
+              <li>No hidden state to trust</li>
+            </ul>
           </div>
-          <div class="quickstart-grid">
-            <div class="quickstart-col">
-              <div class="quickstart-step">
-                <span class="step-badge" aria-hidden="true">1</span>
-                <h3>Install and open Codex</h3>
-              </div>
-              <pre tabindex="0" aria-label="Kotta quickstart commands"><code>npm install --global @arpadtamasi/kotta@0.6.0
-kotta --version
+          <div class="terminal" aria-label="Kotta installation commands">
+            <div class="terminal-head"><span>terminal</span><span>verified setup</span></div>
+            <pre tabindex="0"><code><span class="comment"># Install the CLI</span>
+npm install --global @arpadtamasi/kotta@0.7.0
+
+<span class="comment"># Add Kotta's agent skills</span>
 npx skills@1.5.20 add arpadtamasi/kotta
 
-# Inside an existing Git repository in Codex:
+<span class="comment"># Inside an existing Git repository</span>
 /setup-kotta
-/define-task
-
-# Continue in chat; Kotta returns the id and approval here.</code></pre>
-              <div class="terminal-result" aria-label="Successful validation result">
-                <span>Kotta caller-chat tools connected.</span>
-                <span>Created task T-… · waiting for your approval.</span>
-              </div>
-            </div>
-            <div class="quickstart-col">
-              <div class="quickstart-step">
-                <span class="step-badge" aria-hidden="true">2</span>
-                <h3>Get a complete task</h3>
-              </div>
-              <p class="file-label">.kotta/process/backlog/T-001-first-controlled-change.md</p>
-              <pre class="task-example" tabindex="0" aria-label="Complete minimal Kotta task"><code>---
-id: T-001
-title: First controlled change
-status: backlog
-types: [feature]
-profiles: []
-priority: medium
-risk: low
-depends_on: []
-blocks: []
----
-# T-001 — First controlled change
-
-## Outcome
-The requested behavior is observable.
-
-## Scope
-Implement one bounded product change.
-
-## Non-goals
-No adjacent redesign.
-
-## Acceptance
-- The observable behavior passes.
-
-## Verification
-- Run the focused integration test.
-
-## Constraints
-Preserve existing lifecycle semantics.
-
-## Open decisions
-None.
-
-## Execution notes
-Ready for human review.</code></pre>
+/define-task</code></pre>
+            <div class="terminal-result">
+              <span>Created task T-…</span>
+              <strong>Waiting for your approval.</strong>
             </div>
           </div>
         </div>
@@ -220,23 +182,19 @@ Ready for human review.</code></pre>
     </main>
 
     <footer data-unit="trust">
-      <section class="poster" aria-labelledby="poster-title">
-        <div class="container">
-          <p class="poster-eyebrow">Kotta</p>
-          <h2 id="poster-title">Local files. Your repository. Human acceptance.</h2>
-          <ul class="trust-list" aria-label="Trust properties">
-            <li>MIT licensed</li>
-            <li>No hosted account</li>
-            <li>No database</li>
-            <li>No hidden state</li>
-          </ul>
-          <a class="button button-invert" href="https://github.com/arpadtamasi/kotta">View the repository <span aria-hidden="true">↗</span></a>
+      <section class="closing" aria-labelledby="closing-title">
+        <div class="container closing-layout">
+          <h2 id="closing-title">Everything stays where the work already is.</h2>
+          <div class="closing-action">
+            <p>Plain files. Git history. Human acceptance. Give the agent a task it can execute — and yourself a result you can actually accept.</p>
+            <a class="button button-light" href="https://github.com/arpadtamasi/kotta">Explore Kotta on GitHub <span aria-hidden="true">↗</span></a>
+          </div>
         </div>
       </section>
       <div class="footer-bar">
         <div class="container footer-bar-inner">
-          <span class="footer-mark" aria-hidden="true">A</span>
-          <span class="footer-note">MIT licensed · no hosted account · no database · no hidden state</span>
+          <a class="wordmark footer-wordmark" href="#top" aria-label="Back to top">Kotta</a>
+          <span>MIT licensed · local-first · repository-native</span>
           <a class="nav-support" href="https://github.com/arpadtamasi/kotta/issues/new?template=bug.yml" target="_blank" rel="noreferrer noopener">Report a bug <span aria-hidden="true">↗</span></a>
           <a href="https://github.com/arpadtamasi/kotta">github.com/arpadtamasi/kotta <span aria-hidden="true">↗</span></a>
         </div>
