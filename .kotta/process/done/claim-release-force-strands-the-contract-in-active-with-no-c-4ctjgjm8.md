@@ -3,7 +3,7 @@ id: T-01m0f27cwtzc2dbgv24ctjgjm8
 title: >-
   'claim release --force' strands the contract in active with no command able to
   act on it
-status: review
+status: done
 origin: observation
 types:
   - fix
@@ -25,6 +25,7 @@ execution_mode: inherited
 branch_origin: created
 start_ref: HEAD
 start_commit: 12faa64e9d1e251a8759956e6be8a5f03d2a1c4e
+resolution: completed
 ---
 ## Outcome
 

@@ -25,7 +25,6 @@ None.
 - a-contract-megnevezi-a-specifikaciot-amire-tamaszkodik-m9zs70ym
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
 - auto-completing-a-batch-ignores-its-child-batches-so-a-paren-h2fjxngc
-- claim-release-force-strands-the-contract-in-active-with-no-c-4ctjgjm8
 - contract-gate-treats-standalone-generated-documents-as-kotta-grgv0mtw
 
 ## Blocked
