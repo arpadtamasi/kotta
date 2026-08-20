@@ -115,7 +115,7 @@ button{font-family:inherit}
           <div style="display:flex;align-items:flex-end;gap:20px;padding:18px 22px 14px;border-bottom:2px solid rgba(32,30,29,.4)">
             <div style="flex:1;min-width:0">
               <h2 style="margin:0 0 2px;font-size:27px;letter-spacing:-.02em">Inbox</h2>
-              <div style="font-size:12.5px;opacity:.6">Observations awaiting human disposition — not tasks. Reject, or promote to a contract.</div>
+              <div style="font-size:12.5px;opacity:.6">Observations awaiting human disposition — not tasks. Reject, or promote to a task.</div>
             </div>
             <div style="display:flex;align-items:flex-end;gap:18px">
               <div style="text-align:left">
@@ -218,7 +218,7 @@ button{font-family:inherit}
           <div style="display:flex;align-items:flex-end;gap:20px;padding:18px 22px 14px;border-bottom:2px solid rgba(32,30,29,.4)">
             <div style="flex:1">
               <h2 style="margin:0 0 2px;font-size:27px;letter-spacing:-.02em">Shape</h2>
-              <div style="font-size:12.5px;opacity:.6">Turn items into executable contracts. Directory is the state — validation moves the file.</div>
+              <div style="font-size:12.5px;opacity:.6">Turn items into executable tasks. Directory is the state — validation moves the file.</div>
             </div>
             <div style="font-family:ui-monospace,Menlo,monospace;font-size:11px;opacity:.5">j / k to move · enter to open · v to validate</div>
           </div>
@@ -549,7 +549,7 @@ button{font-family:inherit}
                     <div style="background:#eae9e9;border-top:1px solid rgba(32,30,29,.3);padding:14px 22px 16px">
                       <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px">
                         <div>
-                          <div style="font-size:9px;letter-spacing:.13em;text-transform:uppercase;opacity:.5;margin-bottom:7px">acceptance contract</div>
+                          <div style="font-size:9px;letter-spacing:.13em;text-transform:uppercase;opacity:.5;margin-bottom:7px">acceptance task</div>
                           <sc-for list="{{ t.acceptance }}" as="a" hint-placeholder-count="3">
                             <div style="display:grid;grid-template-columns:16px 1fr;gap:8px;padding:4px 0;border-bottom:1px solid rgba(32,30,29,.16)">
                               <span style="font-family:ui-monospace,Menlo,monospace;font-size:12px; {{ a.markExtra }}">{{ a.mark }}</span>
@@ -809,7 +809,7 @@ const HUE={
 const AGENT_DOT={codex:'background:#ec3013;', claude:'background:#201e1d;', none:'background:transparent;border:1px solid rgba(32,30,29,.4);'};
 
 const TICKETS=[
-  {id:'T-001',t:'Define the shaping plan schema, canonical hashes, and preview contract',type:'feature',state:'backlog',pkg:'P-001',pri:1,risk:'med',dep:'—'},
+  {id:'T-001',t:'Define the shaping plan schema, canonical hashes, and preview task',type:'feature',state:'backlog',pkg:'P-001',pri:1,risk:'med',dep:'—'},
   {id:'T-002',t:'Introduce a shared mutation lock for every canonical Kotta writer',type:'refactor',state:'backlog',pkg:'P-001',pri:1,risk:'high',dep:'—'},
   {id:'T-003',t:'Implement transactional shape apply with journaled crash recovery',type:'feature',state:'backlog',pkg:'P-001',pri:2,risk:'high',dep:'T-001, T-002'},
   {id:'T-004',t:'Add multi-finding provenance and backward-compatible entity semantics',type:'feature',state:'backlog',pkg:'P-001',pri:2,risk:'med',dep:'T-001'},
@@ -818,7 +818,7 @@ const TICKETS=[
   {id:'T-007',t:'Validate the shaping model against the one&a finding portfolio',type:'discovery',state:'backlog',pkg:'P-001',pri:3,risk:'low',dep:'T-003'},
   {id:'T-014',t:'UI port collision returns raw EADDRINUSE without recovery guidance',type:'bug',state:'ready',pkg:'P-003',pri:2,risk:'low',dep:'—',drift:true},
   {id:'T-015',t:'Completed package leaves the coordinator checkout on its merged branch',type:'bug',state:'ready',pkg:'P-003',pri:1,risk:'med',dep:'T-012'},
-  {id:'T-012',t:'Make the UI workspace argument contract explicit',type:'bug',state:'active',pkg:'P-003',pri:1,risk:'low',dep:'—',claim:'codex',branch:'kotta/t-012-workspace-arg',wt:'.worktrees/t-012',act:'42s ago'},
+  {id:'T-012',t:'Make the UI workspace argument task explicit',type:'bug',state:'active',pkg:'P-003',pri:1,risk:'low',dep:'—',claim:'codex',branch:'kotta/t-012-workspace-arg',wt:'.worktrees/t-012',act:'42s ago'},
   {id:'T-013',t:'Add a discoverable bug-reporting path',type:'feature',state:'review',pkg:'P-003',pri:2,risk:'low',dep:'—',claim:'claude',branch:'kotta/t-013-bug-report',wt:'.worktrees/t-013',act:'6m ago'},
   {id:'T-016',t:'Findings inbox loses scroll position after disposition',type:'bug',state:'active',pkg:null,pri:3,risk:'low',dep:'—',claim:'codex',branch:'kotta/t-016-scroll',wt:'.worktrees/t-016',act:'2m ago'},
   {id:'T-017',t:'Persist chat threads under .kotta/threads',type:'feature',state:'blocked',pkg:null,pri:2,risk:'med',dep:'T-011',claim:'—',branch:'—',wt:'—',act:'1h ago',blocked:'waiting on the decision record from T-011 before choosing an on-disk thread format.'},
@@ -836,7 +836,7 @@ const PACKAGES=[
    goal:'A coding-agent lead can install Kotta from a clean machine, understand why it exists, and reach a first dispatch without reading the source.',
    members:['T-008','T-009'],done:2},
   {id:'P-003',title:'Trustworthy daily use and feedback intake',kind:'milestone',status:'active',mode:'dependency-aware',par:2,stop:true,
-   goal:'Kotta is dependable after onboarding: operators see truthful execution state, can record durable decisions, can start the UI from a truthful CLI contract, and can route product defects through GitHub Issues into finding triage.',
+   goal:'Kotta is dependable after onboarding: operators see truthful execution state, can record durable decisions, can start the UI from a truthful CLI task, and can route product defects through GitHub Issues into finding triage.',
    members:['T-010','T-011','T-012','T-013','T-014','T-015'],done:2}
 ];
 
@@ -857,7 +857,7 @@ const RESOLVED=[
 ];
 
 const ISSUES={
-  'T-002':[{field:'verification',text:'no verification block — an executable contract must state how the outcome is checked.'},
+  'T-002':[{field:'verification',text:'no verification block — an executable task must state how the outcome is checked.'},
            {field:'acceptance',text:'criterion 2 is not observable: "locking should feel safe".'}],
   'T-003':[{field:'depends_on',text:'T-001 is not ready; a dependency must be ready or done before this can be validated.'}]
 };
@@ -886,8 +886,8 @@ const THREADS=[
      {who:'operator',text:'Short session. What needs me?'},
      {who:'claude',text:'Two decisions, one risk.\n\n1. T-013 is in review with evidence — acceptance 3 of 4 met; the docs criterion is unmet, so "request changes" is defensible.\n2. T-014 sits in tickets/ready/ but .worktrees/t-014 holds finished work on kotta/t-014-port-collision. The files and git disagree; reconcile before launching P-003 further.\n\nP-001 has seven backlog tickets and no ready members, so nothing there is launchable yet.'}
    ]},
-  {id:'T-012',chip:'T-012',level:'ticket',title:'Make the UI workspace argument contract explicit',agent:'codex',dot:'codex',
-   context:'ticket contract + repo',placeholder:'Message codex about T-012…',contextNote:'Ticket context attached · contract, branch, worktree',
+  {id:'T-012',chip:'T-012',level:'ticket',title:'Make the UI workspace argument task explicit',agent:'codex',dot:'codex',
+   context:'ticket task + repo',placeholder:'Message codex about T-012…',contextNote:'Ticket context attached · task, branch, worktree',
    preview:'Reconciling option declaration with help snapshot…',
    starters:['Tighten acceptance','Split this','Fill verification'],
    messages:[
@@ -987,7 +987,7 @@ class Component extends DCLogic {
     const stageCounts={inbox:FINDINGS.length,shape:9,packages:3,run:4,done:4};
     const navMeta=[
       {id:'inbox',label:'Inbox',sub:'observations',step:'01'},
-      {id:'shape',label:'Shape',sub:'contracts',step:'02'},
+      {id:'shape',label:'Shape',sub:'tasks',step:'02'},
       {id:'packages',label:'Packages',sub:'batches',step:'03'},
       {id:'run',label:'Run',sub:'execution',step:'04'},
       {id:'done',label:'Done',sub:'archive',step:'—'}

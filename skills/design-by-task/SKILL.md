@@ -1,9 +1,9 @@
 ---
-name: design-by-contract
-description: This skill should be used when the user asks to "define an interface contract", "write preconditions and postconditions", "specify API obligations", "model failure guarantees", or clarify responsibilities across a system boundary.
+name: design-by-task
+description: This skill should be used when the user asks to "define an interface task", "write preconditions and postconditions", "specify API obligations", "model failure guarantees", or clarify responsibilities across a system boundary.
 ---
 
-# Design by contract
+# Design by task
 
 Specify a boundary by the obligations on its caller and provider. Persist the agreement as an
 `interface` node with preconditions, postconditions, invariants, and failures. Describe semantics in
@@ -26,7 +26,7 @@ on shared input, output, error, or compatibility obligations.
 
 Ask who owns each obligation, whether retries duplicate effects, what remains unchanged after
 failure, and which compatibility promise external consumers rely on. Draft from known behavior,
-label assumptions, then ask precise questions. Never ask the user to populate an empty contract
+label assumptions, then ask precise questions. Never ask the user to populate an empty task
 shell.
 
 Write the node under `.kotta/spec/interfaces/` with the registered identity and filename. Make the
@@ -35,7 +35,7 @@ reciprocal `used_by` list on the interface.
 
 ## When not to use
 
-Do not use design by contract for an internal helper with no meaningful boundary, for screen
+Do not use design by task for an internal helper with no meaningful boundary, for screen
 behavior better expressed as examples, or as a substitute for an API schema. Do not encode
 implementation choices as preconditions merely to simplify the provider.
 

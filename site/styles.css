@@ -254,7 +254,7 @@ main > section { border-bottom: 2px solid var(--divider); }
 }
 .terminal-result span::before { content: "\2713"; color: var(--accent-700); font-weight: 700; }
 .file-label { font-family: var(--mono); font-size: 11.5px; margin-bottom: 8px; color: var(--muted); }
-.contract-example {
+.task-example {
   max-height: 352px; overflow: auto;
   border: 2px solid var(--divider); background: var(--surface) !important;
   color: var(--ink) !important; padding: 14px 16px !important;

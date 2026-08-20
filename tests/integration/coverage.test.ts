@@ -60,46 +60,46 @@ function definition(root: string, id: string, covered = true): string {
 }
 
 function create(root: string): string {
-  return String(run(root, ["contract", "new", "--title", "Execute accepted promise", "--type", "feature"]).data.id);
+  return String(run(root, ["task", "new", "--title", "Execute accepted promise", "--type", "feature"]).data.id);
 }
 
 describe("accepted-spec coverage defines executable tasks", () => {
   test("covered define reaches defined without sign, starts, and puts the map in the brief", () => {
     const root = fixture();
     const id = create(root);
-    const result = run(root, ["contract", "define", id, "--from", definition(root, id)]);
+    const result = run(root, ["task", "define", id, "--from", definition(root, id)]);
 
     expect(result.data).toMatchObject({ id, state: "defined" });
-    const brief = run(root, ["contract", "brief", id]).data as { coverage: Array<{ acceptance: string; spec: string[] }>; brief: string };
+    const brief = run(root, ["task", "brief", id]).data as { coverage: Array<{ acceptance: string; spec: string[] }>; brief: string };
     expect(brief.coverage).toEqual([{ acceptance: CONDITION, spec: [SPEC_ID] }]);
     expect(brief.brief).toContain(`- ${CONDITION} → ${SPEC_ID}`);
-    expect(run(root, ["contract", "start", id, "--agent", "codex"]).data).toMatchObject({ id });
+    expect(run(root, ["task", "start", id, "--agent", "codex"]).data).toMatchObject({ id });
   });
 
   test("define refuses and names an uncovered acceptance condition without changing backlog state", () => {
     const root = fixture();
     const id = create(root);
-    const result = invoke(root, ["contract", "define", id, "--from", definition(root, id, false)]);
+    const result = invoke(root, ["task", "define", id, "--from", definition(root, id, false)]);
 
     expect(result.status).not.toBe(0);
     expect(result.stdout).toContain("ACCEPTANCE_NOT_COVERED");
     expect(result.stdout).toContain(CONDITION);
     expect(result.stdout).toContain("record an observation and amend the spec");
-    expect(run(root, ["contract", "show", id]).data.state).toBe("backlog");
+    expect(run(root, ["task", "show", id]).data.state).toBe("backlog");
   });
 
   test("an opt-in workspace keeps the sign gate and the approval leaves a receipt", () => {
     const root = fixture(true);
     const id = create(root);
-    const defined = run(root, ["contract", "define", id, "--from", definition(root, id)]);
+    const defined = run(root, ["task", "define", id, "--from", definition(root, id)]);
     expect(defined.data.state).toBe("backlog");
 
-    const refused = invoke(root, ["contract", "sign", id]);
+    const refused = invoke(root, ["task", "sign", id]);
     expect(refused.status).not.toBe(0);
     expect(refused.stdout).toContain("Human sign-off is required");
-    run(root, ["contract", "sign", id, "--approve"]);
-    const shown = run(root, ["contract", "show", id]).data as { state: string; frontmatter: Record<string, unknown> };
+    run(root, ["task", "sign", id, "--approve"]);
+    const shown = run(root, ["task", "show", id]).data as { state: string; frontmatter: Record<string, unknown> };
     expect(shown.state).toBe("defined");
-    expect(JSON.stringify(shown)).toContain("contract.sign");
+    expect(JSON.stringify(shown)).toContain("task.sign");
   });
 });

@@ -3,9 +3,9 @@ import { accessSync, constants, existsSync, readFileSync, writeFileSync } from "
 import { join } from "node:path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { findRepositoryRoot, processPath } from "../filesystem/workspace.js";
-import { findContract } from "../filesystem/entities.js";
+import { findTask } from "../filesystem/entities.js";
 import { assertClean, git } from "../git/git.js";
-import { briefContract, startContract } from "./contract.js";
+import { briefTask, startTask } from "./task.js";
 import { ENV_PREFIX, readEnv } from "../core/env.js";
 import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
 import { appendEvent } from "../core/events.js";
@@ -44,7 +44,7 @@ export function invocationWriteFailure(agent: string, args: string[]): string | 
   if (agent !== "claude") return null;
   const mode = args[args.indexOf("--permission-mode") + 1];
   if (!args.includes("--permission-mode") || !mode?.trim()) return null;
-  if (READ_ONLY_MODES.has(mode)) return `--permission-mode ${mode} forbids edits by design, so it cannot implement a contract.`;
+  if (READ_ONLY_MODES.has(mode)) return `--permission-mode ${mode} forbids edits by design, so it cannot implement a task.`;
   return null;
 }
 
@@ -145,7 +145,7 @@ export interface ExecutionContext {
   claimPath: string;
 }
 
-/** An execution context exists when a claim for the contract lives in its worktree. */
+/** An execution context exists when a claim for the task lives in its worktree. */
 export function locateExecutionContext(root: string, id: string): ExecutionContext | null {
   const controlRoot = controlPlaneRoot(root);
   const canonicalClaim = processPath(controlRoot, "claims", `${id}.yaml`);
@@ -160,7 +160,7 @@ export function locateExecutionContext(root: string, id: string): ExecutionConte
 }
 
 /**
- * The comparison point for "did this run do anything". The contract branch tip
+ * The comparison point for "did this run do anything". The task branch tip
  * plus the worktree's porcelain status, captured before the agent launches —
  * after the fact there is nothing left to compare against.
  */
@@ -199,11 +199,11 @@ export type ExecutionState = "implemented" | "no-change" | "agent-failed" | "can
 
 export interface ExecuteResult {
   ok: boolean;
-  command: "contract execute";
+  command: "task execute";
   data: {
     id: string;
     state: ExecutionState;
-    contractState: string;
+    taskState: string;
     agent: string;
     agentCommand: string;
     branch: string;
@@ -245,40 +245,40 @@ function promptFor(brief: string, inheritContext: string | null): string {
 }
 
 /**
- * Run one defined contract in a fresh agent context (D-009): start, brief, launch —
+ * Run one defined task in a fresh agent context (D-009): start, brief, launch —
  * one command, so the fresh-context model is the default path and not discipline.
  * The coordinator's context never reaches the agent: its only input is the brief.
  */
-export async function executeContract(id: string, options: ExecuteOptions, launch: AgentLauncher = spawnAgent): Promise<ExecuteResult> {
+export async function executeTask(id: string, options: ExecuteOptions, launch: AgentLauncher = spawnAgent): Promise<ExecuteResult> {
   const callerRoot = findRepositoryRoot();
   const root = controlPlaneRoot(callerRoot);
   if (options.inheritContext !== undefined && !options.inheritContext.trim()) {
-    throw new Error("--inherit-context requires a reason. Context carry-over is an explicit, logged exception (D-009); state why this contract needs it.");
+    throw new Error("--inherit-context requires a reason. Context carry-over is an explicit, logged exception (D-009); state why this task needs it.");
   }
   const inheritContext = options.inheritContext?.trim() ?? null;
   const existing = locateExecutionContext(callerRoot, id);
 
   if (options.resume) {
-    if (!existing) throw new Error(`Contract ${id} has no execution context to resume. Run 'kotta contract execute ${id} --agent <agent>' to create one.`);
+    if (!existing) throw new Error(`Task ${id} has no execution context to resume. Run 'kotta task execute ${id} --agent <agent>' to create one.`);
     const agent = options.agent?.trim() || existing.agent;
     if (!agent) throw new Error(`Claim for ${id} names no agent; pass --agent <agent> to resume.`);
-    const contract = findContract(root, id);
-    const legacyContract = contract.state === "defined" ? findContract(existing.worktree, id) : contract;
-    if (legacyContract.state !== "active") throw new Error(`Contract ${id} must be active to resume; it is ${legacyContract.state}.`);
+    const task = findTask(root, id);
+    const legacyTask = task.state === "defined" ? findTask(existing.worktree, id) : task;
+    if (legacyTask.state !== "active") throw new Error(`Task ${id} must be active to resume; it is ${legacyTask.state}.`);
     const { command, args } = resolveAgentCommand(agent, root);
     if (!agentCommandAvailable(command)) throw new Error(agentMissingMessage(command));
     const contextNote = `Execution context ${existing.worktree} is untouched.`;
     assertInvocationCanWrite(agent, command, args, contextNote);
-    const briefRoot = contract.state === "defined" ? existing.worktree : root;
+    const briefRoot = task.state === "defined" ? existing.worktree : root;
     return await runAgent({ id, root: briefRoot, controlRoot: root, agent, command, args, context: existing, inheritContext, resumed: true, launch });
   }
 
-  const contract = findContract(root, id);
+  const task = findTask(root, id);
   if (existing) {
-    throw new Error(`Contract ${id} already has an execution context (branch ${existing.branch}, worktree ${existing.worktree}). Execute refuses to start a second agent: retry inside it with '--resume', or release it with 'kotta claim release ${id} --force'.`);
+    throw new Error(`Task ${id} already has an execution context (branch ${existing.branch}, worktree ${existing.worktree}). Execute refuses to start a second agent: retry inside it with '--resume', or release it with 'kotta claim release ${id} --force'.`);
   }
-  if (contract.state !== "defined") throw new Error(`Contract ${id} must be defined before execute; it is ${contract.state}. Nothing was created.`);
-  if (existsSync(processPath(root, "claims", `${id}.yaml`))) throw new Error(`Contract ${id} already has a claim. Execute refuses to start a second agent.`);
+  if (task.state !== "defined") throw new Error(`Task ${id} must be defined before execute; it is ${task.state}. Nothing was created.`);
+  if (existsSync(processPath(root, "claims", `${id}.yaml`))) throw new Error(`Task ${id} already has a claim. Execute refuses to start a second agent.`);
   const agent = options.agent?.trim();
   if (!agent) throw new Error("--agent <agent> is required to create an execution context.");
   assertClean(root);
@@ -288,7 +288,7 @@ export async function executeContract(id: string, options: ExecuteOptions, launc
   if (!agentCommandAvailable(command)) throw new Error(agentMissingMessage(command));
   assertInvocationCanWrite(agent, command, args, "No execution context was created.");
 
-  const started = startContract(id, agent);
+  const started = startTask(id, agent);
   const worktree = String(started.data.worktree);
   const context: ExecutionContext = { worktree, branch: String(started.data.branch), agent, claimPath: processPath(root, "claims", `${id}.yaml`) };
   return await runAgent({ id, root, controlRoot: root, agent, command, args, context, inheritContext, resumed: false, launch });
@@ -315,7 +315,7 @@ async function runAgent(input: {
 
   let brief;
   try {
-    brief = briefContract(id, {}, root);
+    brief = briefTask(id, {}, root);
   } catch (error) {
     throw new Error(`Brief assembly failed for ${id}: ${errorMessage(error)}. ${contextNote}`);
   }
@@ -343,11 +343,11 @@ async function runAgent(input: {
   const state: ExecutionState = failure?.state ?? (after.changed ? "implemented" : "no-change");
   const noChangeReason = `Agent completed and changed nothing: ${context.worktree} still matches the pre-run baseline ${baseline.commit.slice(0, 12)}. This run produced no implementation.`;
   const reason = failure?.reason ?? (state === "no-change" ? noChangeReason : null);
-  const contractState = safeContractState(controlRoot, id);
+  const taskState = safeTaskState(controlRoot, id);
   const data: ExecuteResult["data"] = {
     id,
     state,
-    contractState,
+    taskState,
     agent,
     agentCommand: command,
     branch: context.branch,
@@ -398,7 +398,7 @@ async function runAgent(input: {
       if (replacedAgent) rewriteClaimAgent(context, agent);
       data.recordPath = appendEvent(canonicalRoot, {
         entity: id,
-        contract: id,
+        task: id,
         kind: "lifecycle",
         state: `execution-${state}`,
         summary: reason ?? `Executor ${agent} completed its implementation run.`,
@@ -411,19 +411,19 @@ async function runAgent(input: {
     // this error is about finishing, never about failing to start.
     return {
       ok: false,
-      command: "contract execute",
+      command: "task execute",
       data,
       errors: [{
         code: "EXECUTION_UNRECORDED",
-        message: `Execution of ${id} finished as ${state} but its record could not be written: ${errorMessage(error)}. The work exists on branch ${context.branch} in ${context.worktree} and is now unrecorded; nothing there was changed or reverted. Inspect it, then re-record by resuming with 'kotta contract execute ${id} --resume'.`,
+        message: `Execution of ${id} finished as ${state} but its record could not be written: ${errorMessage(error)}. The work exists on branch ${context.branch} in ${context.worktree} and is now unrecorded; nothing there was changed or reverted. Inspect it, then re-record by resuming with 'kotta task execute ${id} --resume'.`,
       }],
     };
   }
 
-  if (!failure) return { ok: true, command: "contract execute", data };
+  if (!failure) return { ok: true, command: "task execute", data };
   return {
     ok: false,
-    command: "contract execute",
+    command: "task execute",
     data,
     errors: [{ code: failure.state === "cancelled" ? "EXECUTION_CANCELLED" : "AGENT_FAILED", message: `${failure.reason} ${contextNote}` }],
   };
@@ -438,9 +438,9 @@ function rewriteClaimAgent(context: ExecutionContext, agent: string): void {
   writeFileSync(context.claimPath, stringifyYaml(claim));
 }
 
-function safeContractState(worktree: string, id: string): string {
+function safeTaskState(worktree: string, id: string): string {
   try {
-    return findContract(worktree, id).state;
+    return findTask(worktree, id).state;
   } catch {
     return "unknown";
   }
@@ -451,24 +451,24 @@ export function formatExecution(result: ExecuteResult): string {
   const duration = data.durationMs < 1000 ? `${data.durationMs}ms` : data.durationMs < 60_000 ? `${Math.round(data.durationMs / 1000)}s` : `${Math.floor(data.durationMs / 60_000)}m ${Math.round((data.durationMs % 60_000) / 1000)}s`;
   const tokens = data.tokenUsage ? `${data.tokenUsage.total_tokens.toLocaleString("en-US")} tokens` : "tokens not recorded";
   const lines = [
-    `kotta contract execute ${data.id}: ${data.state}`,
+    `kotta task execute ${data.id}: ${data.state}`,
     `  agent:    ${data.agent} (command: ${data.agentCommand})`,
     `  brief:    ~${data.briefTokens} tokens, ${data.briefSections} sections — the agent's only input`,
     `  run:      ${duration} · ${tokens}`,
     `  branch:   ${data.branch}`,
     `  worktree: ${data.worktree}`,
     `  context:  ${data.context === "fresh" ? "fresh (D-009 default)" : `INHERITED — ${String(data.inheritContext)}`}`,
-    `  contract:   ${data.contractState}${data.uncommittedChanges ? " (worktree has uncommitted changes)" : ""}`,
+    `  task:   ${data.taskState}${data.uncommittedChanges ? " (worktree has uncommitted changes)" : ""}`,
   ];
   if (data.briefWarning) lines.push(`  WARNING:  ${data.briefWarning}`);
   if (data.permissionWarning) lines.push(`  WARNING:  ${data.permissionWarning}`);
   if (data.state === "no-change") {
     lines.push(
       `  reason:   ${String(data.reason)}`,
-      `Nothing to review: the worktree is unchanged at ${data.baselineCommit.slice(0, 12)}. Read what the agent reported in ${data.recordPath ?? "this run's execution event"}, then retry with 'kotta contract execute ${data.id} --resume' or release with 'kotta claim release ${data.id} --force'.`,
+      `Nothing to review: the worktree is unchanged at ${data.baselineCommit.slice(0, 12)}. Read what the agent reported in ${data.recordPath ?? "this run's execution event"}, then retry with 'kotta task execute ${data.id} --resume' or release with 'kotta claim release ${data.id} --force'.`,
     );
-  } else if (result.ok) lines.push(`Next: verify the work, then 'kotta contract review ${data.id} --evidence "..."'. Review stays a separate gate.`);
+  } else if (result.ok) lines.push(`Next: verify the work, then 'kotta task review ${data.id} --evidence "..."'. Review stays a separate gate.`);
   else if (result.errors?.[0]?.code === "EXECUTION_UNRECORDED") lines.push(`  UNRECORDED: ${result.errors[0].message}`);
-  else lines.push(`  reason:   ${String(data.reason)}`, `The claim and worktree are preserved. Retry with 'kotta contract execute ${data.id} --resume' or release with 'kotta claim release ${data.id} --force'.`);
+  else lines.push(`  reason:   ${String(data.reason)}`, `The claim and worktree are preserved. Retry with 'kotta task execute ${data.id} --resume' or release with 'kotta claim release ${data.id} --force'.`);
   return lines.join("\n");
 }

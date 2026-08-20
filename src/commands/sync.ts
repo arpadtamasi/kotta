@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { readEnv } from "../core/env.js";
 import { findRepositoryRoot, hasWorkspace, syncWorkspaceForms } from "../filesystem/workspace.js";
 import { linkProjectAgents, pointerLine, syncWorkspaceAgents } from "./agents.js";
+import { LEGACY_TASK_SKILL_RENAMES } from "../compatibility/task-v3.js";
 
 /**
  * Kotta ships its skills inside the package, but nothing has ever installed them — so the
@@ -67,6 +68,7 @@ export interface SyncResult {
     updated: string[];
     unchanged: string[];
     skipped: string[];
+    removed: string[];
   };
 }
 
@@ -110,6 +112,7 @@ export function syncSkills(environment: NodeJS.ProcessEnv = process.env): SyncRe
   const updated: string[] = [];
   const unchanged: string[] = [];
   const skipped: string[] = [];
+  const removed: string[] = [];
 
   mkdirSync(target, { recursive: true });
   const owned = readManifest(target);
@@ -137,8 +140,18 @@ export function syncSkills(environment: NodeJS.ProcessEnv = process.env): SyncRe
     (occupied ? updated : created).push(name);
   }
 
+  // Remove only legacy task-vocabulary directories that Kotta's own manifest claims, and only
+  // after their renamed replacement is present. Unowned collisions remain somebody else's files.
+  for (const [legacy, current] of Object.entries(LEGACY_TASK_SKILL_RENAMES)) {
+    const oldPath = join(target, legacy);
+    if (!owned.has(legacy) || !owned.has(current) || !existsSync(join(target, current)) || !existsSync(oldPath)) continue;
+    rmSync(oldPath, { recursive: true, force: true });
+    owned.delete(legacy);
+    removed.push(legacy);
+  }
+
   writeManifest(target, owned);
-  return { ok: true, command: "sync", data: { target, created, updated, unchanged, skipped } };
+  return { ok: true, command: "sync", data: { target, created, updated, unchanged, skipped, removed } };
 }
 
 /**

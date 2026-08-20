@@ -31,8 +31,8 @@ function repository(label: string): string {
   return root;
 }
 
-/** A contract the way the workspace looked before D-003: a sequential id in a `<id>-slug.md` file. */
-function writeSequentialContract(root: string, id: string, slug: string, extra: Record<string, string> = {}): string {
+/** A task the way the workspace looked before D-003: a sequential id in a `<id>-slug.md` file. */
+function writeSequentialTask(root: string, id: string, slug: string, extra: Record<string, string> = {}): string {
   const frontmatter = [
     `id: ${id}`, `title: ${slug}`, "status: backlog", "origin: human", "types:", "  - feature",
     "profiles: []", "priority: medium", "risk: medium", "batch: null",
@@ -58,25 +58,25 @@ describe("coordination-free identity (D-003, narrowed by D-010)", () => {
 
     // Callers stay isolated, while all durable workflow state lands on the checked-out main.
     const minted = worktrees.map(({ label, path }) => {
-      const contract = run(path, ["contract", "new", "--title", `Slice ${label}`, "--type", "feature"]).data as { id: string; path: string };
+      const task = run(path, ["task", "new", "--title", `Slice ${label}`, "--type", "feature"]).data as { id: string; path: string };
       const observation = run(path, ["observation", "new", "--title", `Observation ${label}`, "--type", "bug", "--evidence", `${label} evidence`]).data as { id: string; path: string };
       const batch = run(path, ["batch", "new", "--title", `Batch ${label}`, "--goal", `Ship ${label}`]).data as { id: string };
-      run(path, ["batch", "add", batch.id, contract.id]);
+      run(path, ["batch", "add", batch.id, task.id]);
       expect(git(path, "status", "--porcelain")).toBe("");
       git(root, "add", "-A");
       git(root, "commit", "-m", `chore: capture ${label}`);
-      return { label, contract, observation, batch };
+      return { label, task, observation, batch };
     });
 
     for (const entry of minted) {
-      expect(entry.contract.id).toMatch(MINTED);
+      expect(entry.task.id).toMatch(MINTED);
       expect(entry.observation.id).toMatch(MINTED);
       expect(entry.batch.id).toMatch(MINTED);
       // The filename is slug + short id suffix, unique on disk even across branches.
-      expect(basename(entry.contract.path)).toBe(`slice-${entry.label}-${entry.contract.id.slice(-8)}.md`);
+      expect(basename(entry.task.path)).toBe(`slice-${entry.label}-${entry.task.id.slice(-8)}.md`);
     }
     const [alpha, beta] = minted;
-    expect(alpha.contract.id).not.toBe(beta.contract.id);
+    expect(alpha.task.id).not.toBe(beta.task.id);
     expect(alpha.observation.id).not.toBe(beta.observation.id);
     expect(alpha.batch.id).not.toBe(beta.batch.id);
 
@@ -94,22 +94,22 @@ describe("coordination-free identity (D-003, narrowed by D-010)", () => {
 
   test("sequential ids stay valid, resolvable and cross-referenced beside minted ones", () => {
     const root = repository("mixed");
-    const created = run(root, ["contract", "new", "--title", "Minted work", "--type", "feature"]).data as { id: string; path: string };
+    const created = run(root, ["task", "new", "--title", "Minted work", "--type", "feature"]).data as { id: string; path: string };
 
     // Legacy → minted and minted → legacy references, in one mixed workspace.
-    const legacyPath = writeSequentialContract(root, "T-001", "legacy-work", { blocks: `\n  - ${created.id}`, depends_on: "[]" });
+    const legacyPath = writeSequentialTask(root, "T-001", "legacy-work", { blocks: `\n  - ${created.id}`, depends_on: "[]" });
     writeFileSync(created.path, readFileSync(created.path, "utf8").replace("depends_on: []", "depends_on:\n  - T-001"));
 
     expect(run(root, ["validate"])).toMatchObject({ ok: true });
-    expect(run(root, ["contract", "validate", "T-001"])).toMatchObject({ ok: true, data: { id: "T-001", state: "backlog" } });
-    expect(run(root, ["contract", "validate", created.id])).toMatchObject({ ok: true, data: { id: created.id, state: "backlog" } });
+    expect(run(root, ["task", "validate", "T-001"])).toMatchObject({ ok: true, data: { id: "T-001", state: "backlog" } });
+    expect(run(root, ["task", "validate", created.id])).toMatchObject({ ok: true, data: { id: created.id, state: "backlog" } });
     expect(basename(legacyPath)).toBe("T-001-legacy-work.md");
 
-    const status = run(root, ["status"]).data as { allContracts: string[] };
-    expect(status.allContracts.sort()).toEqual([created.id, "T-001"].sort());
+    const status = run(root, ["status"]).data as { allTasks: string[] };
+    expect(status.allTasks.sort()).toEqual([created.id, "T-001"].sort());
 
-    // The legacy contract still moves through the workflow under its own id and filename.
-    expect(run(root, ["contract", "sign", "T-001", "--approve"])).toMatchObject({ ok: true });
+    // The legacy task still moves through the workflow under its own id and filename.
+    expect(run(root, ["task", "sign", "T-001", "--approve"])).toMatchObject({ ok: true });
     expect(readdirSync(join(root, ".kotta/process/defined"))).toEqual(["T-001-legacy-work.md"]);
   });
 
@@ -117,8 +117,8 @@ describe("coordination-free identity (D-003, narrowed by D-010)", () => {
     for (const [label, duplicate] of [["minted", null], ["sequential", "T-001"]] as const) {
       const root = repository(`duplicate-${label}`);
       const source = duplicate
-        ? writeSequentialContract(root, duplicate, "shared-identity")
-        : (run(root, ["contract", "new", "--title", "Shared identity", "--type", "feature"]).data as { path: string }).path;
+        ? writeSequentialTask(root, duplicate, "shared-identity")
+        : (run(root, ["task", "new", "--title", "Shared identity", "--type", "feature"]).data as { path: string }).path;
       // Two distinct entities claiming one id inside a single state directory. One entity left in two
       // state directories is a different failure with a deterministic resolution (T-036).
       const twin = duplicate ? `${duplicate}-second-entity.md` : `second-entity-${basename(source).split("-").pop()}`;

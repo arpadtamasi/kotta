@@ -6,7 +6,7 @@ description: Prepare and, after explicit approval, submit a defect report about 
 # Report a Kotta bug
 
 Report defects in **Kotta itself** — the `kotta` CLI, the bundled skills, the local board,
-or the public site. This never touches the user's own `.kotta` workspace: no contract, no
+or the public site. This never touches the user's own `.kotta` workspace: no task, no
 observation, no decision is created locally by this skill. The destination is always
 `arpadtamasi/kotta` on GitHub.
 
@@ -45,7 +45,7 @@ The report is public. Before showing it to anyone:
 
 - Replace absolute filesystem paths with repository-relative ones (`/Users/…/repo/src/x.ts` → `src/x.ts`).
 - Remove tokens, credentials, `.env` values, environment variable values, and Git remote URLs.
-- Remove repository contents, contract bodies, log files, and the agent conversation.
+- Remove repository contents, task bodies, log files, and the agent conversation.
 - Remove user, host, organization, and project identifiers unless the user names them.
 - Quote only the minimum output needed to recognize the defect, redacted.
 
@@ -137,4 +137,4 @@ kotta observation new --title "<issue title>" --type bug \
 
 The observation stays open until `kotta observation validate` and a human-approved
 `kotta observation resolve --disposition <disposition> --approve`. A GitHub Issue never creates a
-contract by itself.
+task by itself.

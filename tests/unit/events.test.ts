@@ -19,17 +19,17 @@ function repository(label: string): string {
   return root;
 }
 
-const CONTRACT = "T-01kz8tk2t53jbax6mrseka50v9";
+const TASK = "T-01kz8tk2t53jbax6mrseka50v9";
 
 describe("canonical events", () => {
   test("validates, orders and idempotently republishes visible messages", () => {
     const root = repository("order");
-    const first = appendEvent(root, { entity: CONTRACT, contract: CONTRACT, kind: "message", role: "human", text: "First", client_event_id: "client-1", created_at: "2026-08-05T10:00:00.000Z" });
-    const duplicate = appendEvent(root, { entity: CONTRACT, contract: CONTRACT, kind: "message", role: "human", text: "Ignored duplicate", client_event_id: "client-1" });
-    appendEvent(root, { entity: CONTRACT, contract: CONTRACT, kind: "message", role: "assistant", text: "Second", attempt_of: first.event.id, created_at: "2026-08-05T10:00:01.000Z" });
+    const first = appendEvent(root, { entity: TASK, task: TASK, kind: "message", role: "human", text: "First", client_event_id: "client-1", created_at: "2026-08-05T10:00:00.000Z" });
+    const duplicate = appendEvent(root, { entity: TASK, task: TASK, kind: "message", role: "human", text: "Ignored duplicate", client_event_id: "client-1" });
+    appendEvent(root, { entity: TASK, task: TASK, kind: "message", role: "assistant", text: "Second", attempt_of: first.event.id, created_at: "2026-08-05T10:00:01.000Z" });
 
     expect(duplicate).toMatchObject({ created: false, event: { id: first.event.id, text: "First" } });
-    expect(readEvents(root, CONTRACT).map((event) => event.text)).toEqual(["First", "Second"]);
+    expect(readEvents(root, TASK).map((event) => event.text)).toEqual(["First", "Second"]);
     expect(validateEvent(first.event)).toEqual([]);
   });
 

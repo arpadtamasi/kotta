@@ -10,12 +10,12 @@ None.
 
 - P-012-export-sprint
 
-## Defined contracts
+## Defined tasks
 
 - T-015-export-job-api
 - T-018-export-audit-event
 
-## Active contracts
+## Active tasks
 
 None.
 

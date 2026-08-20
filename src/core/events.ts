@@ -1,7 +1,8 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { ANY_ENTITY_ID_SOURCE, CONTRACT_ID, mintEventId } from "./identity.js";
+import { ANY_ENTITY_ID_SOURCE, TASK_ID, mintEventId } from "./identity.js";
 import { processPath } from "../filesystem/workspace.js";
+import { readTaskEvent } from "../compatibility/task-v3.js";
 
 export type EventKind = "message" | "turn-failed" | "lifecycle" | "approval";
 export type ApprovalPhase = "proposed" | "approved" | "rejected" | "cancelled" | "applied" | "failed";
@@ -9,7 +10,7 @@ export type ApprovalPhase = "proposed" | "approved" | "rejected" | "cancelled" |
 export interface KottaEvent {
   id: string;
   entity: string;
-  contract: string | null;
+  task: string | null;
   kind: EventKind;
   created_at: string;
   role?: "human" | "assistant";
@@ -35,7 +36,7 @@ export function validateEvent(event: KottaEvent): string[] {
   const errors: string[] = [];
   if (!EVENT_ID.test(event.id)) errors.push("event id must be E- plus a 26-character sortable id");
   if (!ENTITY_ID.test(event.entity)) errors.push("event entity must be a valid Kotta entity id");
-  if (event.contract !== null && !CONTRACT_ID.test(event.contract)) errors.push("event contract must be null or a valid contract id");
+  if (event.task !== null && !TASK_ID.test(event.task)) errors.push("event task must be null or a valid task id");
   if (!Number.isFinite(Date.parse(event.created_at))) errors.push("created_at must be an ISO timestamp");
   if (event.kind === "message") {
     if (!event.role || !["human", "assistant"].includes(event.role)) errors.push("message role must be human or assistant");
@@ -65,7 +66,7 @@ export function readEvents(root: string, entity?: string): KottaEvent[] {
   return entities.flatMap((id) => {
     const directory = eventDirectory(root, id);
     if (!existsSync(directory)) return [];
-    return readdirSync(directory).filter((name) => name.endsWith(".json")).sort().map((name) => JSON.parse(readFileSync(join(directory, name), "utf8")) as KottaEvent);
+    return readdirSync(directory).filter((name) => name.endsWith(".json")).sort().map((name) => readTaskEvent(JSON.parse(readFileSync(join(directory, name), "utf8")) as Record<string, unknown>) as unknown as KottaEvent);
   }).sort((left, right) => left.created_at.localeCompare(right.created_at) || left.id.localeCompare(right.id));
 }
 
@@ -101,16 +102,16 @@ export function mintApprovalId(): string {
   return mintEventId();
 }
 
-export function appendLifecycleEvent(root: string, entity: string, state: string, summary: string, contract: string | null = CONTRACT_ID.test(entity) ? entity : null) {
-  return appendEvent(root, { entity, contract, kind: "lifecycle", state, summary });
+export function appendLifecycleEvent(root: string, entity: string, state: string, summary: string, task: string | null = TASK_ID.test(entity) ? entity : null) {
+  return appendEvent(root, { entity, task, kind: "lifecycle", state, summary });
 }
 
 /** CLI fallback audit: the explicit --approve interaction is visible but does not pretend to be chat identity. */
-export function appendCliApprovalAudit(root: string, entity: string, action: string, payload: Record<string, unknown> = {}, contract: string | null = CONTRACT_ID.test(entity) ? entity : null) {
+export function appendCliApprovalAudit(root: string, entity: string, action: string, payload: Record<string, unknown> = {}, task: string | null = TASK_ID.test(entity) ? entity : null) {
   const approvalId = mintEventId();
   const scopedPayload = { ...payload, surface: "cli" };
-  appendEvent(root, { id: approvalId, entity, contract, kind: "approval", approval_id: approvalId, phase: "proposed", action, payload: scopedPayload, source_message: null });
-  const human = appendEvent(root, { entity, contract, kind: "message", role: "human", text: `Approved in CLI: ${action}` }).event;
-  appendEvent(root, { entity, contract, kind: "approval", approval_id: approvalId, phase: "approved", action, payload: scopedPayload, source_message: human.id });
-  return appendEvent(root, { entity, contract, kind: "approval", approval_id: approvalId, phase: "applied", action, payload: scopedPayload, source_message: human.id }).event;
+  appendEvent(root, { id: approvalId, entity, task, kind: "approval", approval_id: approvalId, phase: "proposed", action, payload: scopedPayload, source_message: null });
+  const human = appendEvent(root, { entity, task, kind: "message", role: "human", text: `Approved in CLI: ${action}` }).event;
+  appendEvent(root, { entity, task, kind: "approval", approval_id: approvalId, phase: "approved", action, payload: scopedPayload, source_message: human.id });
+  return appendEvent(root, { entity, task, kind: "approval", approval_id: approvalId, phase: "applied", action, payload: scopedPayload, source_message: human.id }).event;
 }

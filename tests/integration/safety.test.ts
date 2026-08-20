@@ -29,12 +29,12 @@ function completeTemplate(root: string, path: string): void {
 }
 
 describe("mutation safety", () => {
-  test("unknown profiles cannot move a contract out of backlog", () => {
+  test("unknown profiles cannot move a task out of backlog", () => {
     const root = repository();
-    const created = (run(root, ["contract", "new", "--title", "Unsafe contract", "--type", "feature", "--profile", "invented"]) as { data: { id: string; path: string } }).data;
+    const created = (run(root, ["task", "new", "--title", "Unsafe task", "--type", "feature", "--profile", "invented"]) as { data: { id: string; path: string } }).data;
     const backlog = created.path;
     completeTemplate(root, backlog);
-    const result = invoke(root, ["contract", "sign", created.id, "--approve"]);
+    const result = invoke(root, ["task", "sign", created.id, "--approve"]);
     expect(result.status).toBe(1);
     expect(JSON.parse(result.stdout)).toMatchObject({ ok: false });
     expect(existsSync(backlog)).toBe(true);
@@ -43,14 +43,14 @@ describe("mutation safety", () => {
 
   test("dirty repositories and duplicate starts are rejected without reusing a worktree", () => {
     const root = repository();
-    const created = (run(root, ["contract", "new", "--title", "Safe start", "--type", "feature"]) as { data: { id: string; path: string } }).data;
+    const created = (run(root, ["task", "new", "--title", "Safe start", "--type", "feature"]) as { data: { id: string; path: string } }).data;
     completeTemplate(root, created.path);
-    run(root, ["contract", "sign", created.id, "--approve"]);
+    run(root, ["task", "sign", created.id, "--approve"]);
     writeFileSync(join(root, "dirty.txt"), "pending\n");
-    expect(invoke(root, ["contract", "start", created.id, "--agent", "codex"]).status).toBe(1);
+    expect(invoke(root, ["task", "start", created.id, "--agent", "codex"]).status).toBe(1);
     expect(existsSync(join(root, ".worktrees", created.id))).toBe(false);
     unlinkSync(join(root, "dirty.txt"));
-    run(root, ["contract", "start", created.id, "--agent", "codex"]);
-    expect(invoke(root, ["contract", "start", created.id, "--agent", "other"]).status).toBe(1);
+    run(root, ["task", "start", created.id, "--agent", "codex"]);
+    expect(invoke(root, ["task", "start", created.id, "--agent", "other"]).status).toBe(1);
   });
 });

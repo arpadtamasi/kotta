@@ -24,19 +24,19 @@ const snapshot = (root: string) => ({
   remotes: git(root, "for-each-ref", "--format=%(refname) %(objectname)", "refs/remotes"),
 });
 
-function definedContract(root: string, title: string) {
-  const created = run(root, ["contract", "new", "--title", title, "--type", "feature"]);
+function definedTask(root: string, title: string) {
+  const created = run(root, ["task", "new", "--title", title, "--type", "feature"]);
   const { id, path } = created.data as { id: string; path: string };
   writeFileSync(path, readFileSync(path, "utf8")
     .replace("Describe the observable outcome.", `${title} works.`)
     .replace("- Define an observable condition.", `- ${title} is observable.`)
     .replace("- Explain how acceptance will be checked.", "- Run integration tests."));
-  run(root, ["contract", "sign", id, "--approve"]);
+  run(root, ["task", "sign", id, "--approve"]);
   return { id, filename: basename(path) };
 }
 
 /** An initialized repository whose `main` tracks a bare remote, with one defined batch. */
-function workspaceWithBatch(label: string, options: { contracts?: number } = {}) {
+function workspaceWithBatch(label: string, options: { tasks?: number } = {}) {
   const remote = mkdtempSync(join(tmpdir(), `kotta-coord-remote-${label}-`));
   execFileSync("git", ["init", "--bare", "-b", "main"], { cwd: remote });
   const root = mkdtempSync(join(tmpdir(), `kotta-coord-${label}-`));
@@ -48,8 +48,8 @@ function workspaceWithBatch(label: string, options: { contracts?: number } = {})
   git(root, "commit", "-m", "initial");
   run(root, ["init"]);
   retainLegacySignGate(root);
-  const contracts = Array.from({ length: options.contracts ?? 1 }, (_unused, index) => definedContract(root, `Deliver slice ${index + 1}`));
-  const ids = contracts.map((contract) => contract.id);
+  const tasks = Array.from({ length: options.tasks ?? 1 }, (_unused, index) => definedTask(root, `Deliver slice ${index + 1}`));
+  const ids = tasks.map((task) => task.id);
   const batchId = (run(root, ["batch", "new", "--title", `Coordinated ${label}`, "--goal", "Ship the slice"]).data as { id: string }).id;
   for (const id of ids) run(root, ["batch", "add", batchId, id]);
   run(root, ["batch", "sign", batchId, "--approve"]);
@@ -57,7 +57,7 @@ function workspaceWithBatch(label: string, options: { contracts?: number } = {})
   git(root, "commit", "-m", "define batch");
   git(root, "remote", "add", "origin", remote);
   git(root, "push", "-u", "origin", "main");
-  return { root, remote, ids, contracts, batchId };
+  return { root, remote, ids, tasks, batchId };
 }
 
 function findBatchFile(root: string, batchId: string): string {
@@ -80,9 +80,9 @@ function completeBatch(root: string, batchId: string, ids: string[]) {
     writeFileSync(join(worktree, `${id}.md`), `# ${id}\n`);
     git(worktree, "add", ".");
     git(worktree, "commit", "-m", `feat: ${id}`);
-    run(worktree, ["contract", "review", id, "--evidence", "verified", "--deviations", "None."]);
+    run(worktree, ["task", "review", id, "--evidence", "verified", "--deviations", "None."]);
     git(coordinator, "merge", "--no-ff", git(worktree, "branch", "--show-current"), "-m", `merge ${id}`);
-    run(root, ["contract", "close", id, "--approve"]);
+    run(root, ["task", "close", id, "--approve"]);
   }
 }
 
@@ -243,11 +243,11 @@ describe("batch finalize", () => {
     expect(run(root, ["batch", "status", batchId]).data.coordinator).toMatchObject({ state: "blocked-dirty" });
   });
 
-  test("refuses while a claim or a contract worktree is still linked", () => {
-    const { root, ids, batchId } = workspaceWithBatch("inuse", { contracts: 2 });
-    // Parallelism 2 starts both contracts; only the first is carried to done.
+  test("refuses while a claim or a task worktree is still linked", () => {
+    const { root, ids, batchId } = workspaceWithBatch("inuse", { tasks: 2 });
+    // Parallelism 2 starts both tasks; only the first is carried to done.
     completeBatch(root, batchId, [ids[0]]);
-    // Force the batch into done while the second contract is still claimed and checked out.
+    // Force the batch into done while the second task is still claimed and checked out.
     const active = findBatchFile(root, batchId);
     writeFileSync(active, readFileSync(active, "utf8").replace("status: active", "status: done"));
     const doneDirectory = join(root, ".kotta/process/batches/done");
@@ -262,7 +262,7 @@ describe("batch finalize", () => {
     expect(refusal.status).toBe(1);
     const output = refusal.stdout + refusal.stderr;
     expect(output).toContain("Active claims remain");
-    expect(output).toContain("Contract worktrees are still linked");
+    expect(output).toContain("Task worktrees are still linked");
     expect(snapshot(root)).toEqual(before);
     expect(existsSync(join(root, ".worktrees", ids[1]))).toBe(true);
   });
@@ -404,14 +404,14 @@ describe("legacy batches without coordinator metadata", () => {
 });
 
 describe("cleanup never touches unrelated resources", () => {
-  test("the batch file, contract files and remote refs survive every refusal", () => {
-    const { root, contracts, batchId } = workspaceWithBatch("integrity");
-    completeBatch(root, batchId, contracts.map((contract) => contract.id));
+  test("the batch file, task files and remote refs survive every refusal", () => {
+    const { root, tasks, batchId } = workspaceWithBatch("integrity");
+    completeBatch(root, batchId, tasks.map((task) => task.id));
     const batchBefore = readFileSync(findBatchFile(root, batchId), "utf8");
     const remoteBefore = git(root, "ls-remote", "origin");
     attempt(root, ["batch", "finalize", batchId]);
     expect(readFileSync(findBatchFile(root, batchId), "utf8")).toBe(batchBefore);
     expect(git(root, "ls-remote", "origin")).toBe(remoteBefore);
-    for (const contract of contracts) expect(existsSync(join(root, ".kotta/process/done", contract.filename))).toBe(true);
+    for (const task of tasks) expect(existsSync(join(root, ".kotta/process/done", task.filename))).toBe(true);
   });
 });

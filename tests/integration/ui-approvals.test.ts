@@ -49,9 +49,9 @@ describe("read-only Kotta board API", () => {
       "/api/chat",
       "/api/approval/propose",
       "/api/approval/decide",
-      "/api/contract/sign",
+      "/api/task/sign",
       "/api/batch",
-      "/api/batch/contracts",
+      "/api/batch/tasks",
       "/api/observation",
       "/api/observation/resolve",
     ]) {

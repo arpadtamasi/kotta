@@ -2,19 +2,19 @@
 // import this file — it exists so each board test can state only what it is about.
 import type { Workspace } from "../../ui/src/App";
 
-type Contract = Workspace["contracts"][number];
+type Task = Workspace["tasks"][number];
 type Batch = Workspace["batches"][number];
 type Observation = Workspace["observations"][number];
 type Decision = NonNullable<Workspace["decisions"]>[number];
 
-export function contract(id: string, title: string, over: Partial<Contract> = {}): Contract {
+export function task(id: string, title: string, over: Partial<Task> = {}): Task {
   return {
     id, title, status: "backlog", types: ["feature"], profiles: [], priority: "medium", risk: "low",
     batch: null, depends_on: [], blocks: [], sections: {}, created_at: "2026-07-20", updated_at: "2026-07-30", ...over,
   };
 }
 export function batch(id: string, title: string, over: Partial<Batch> = {}): Batch {
-  return { id, title, status: "backlog", kind: "batch", contracts: [], sections: { goal: "One module." }, created_at: "2026-07-10", updated_at: "2026-07-20", ...over };
+  return { id, title, status: "backlog", kind: "batch", tasks: [], sections: { goal: "One module." }, created_at: "2026-07-10", updated_at: "2026-07-20", ...over };
 }
 export function observation(id: string, title: string, over: Partial<Observation> = {}): Observation {
   return {
@@ -29,6 +29,6 @@ export function decision(id: string, title: string, over: Partial<Decision> = {}
 export function workspace(over: Partial<Workspace> = {}): Workspace {
   return {
     project: "kotta", workspace: "/repo/.kotta", migration: null,
-    contracts: [], batches: [], observations: [], decisions: [], diagnostics: [], ...over,
+    tasks: [], batches: [], observations: [], decisions: [], diagnostics: [], ...over,
   };
 }

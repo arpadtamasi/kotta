@@ -2,13 +2,13 @@
 
 Kotta is a repository-native operating system for human–AI development teams.
 
-It provides executable contracts, type-specific requirements, coordinated work batches, and strict Git isolation for coding agents—all stored as plain files in your repository.
+It provides executable tasks, type-specific requirements, coordinated work batches, and strict Git isolation for coding agents—all stored as plain files in your repository.
 
 > Humans own intent. Agents investigate and execute. Git isolates the work. The repository keeps the shared truth.
 
 [See why Kotta exists and follow the visual onboarding guide.](https://arpadtamasi.github.io/kotta/)
 
-## Install and create your first contract
+## Install and create your first task
 
 Prerequisites: Node.js 20 or newer, Git, and a coding-agent host that reads skills from
 `~/.claude/skills`. The guided slash-command path is verified with Codex; other hosts may expose
@@ -63,7 +63,7 @@ the MCP tools are discovered:
 kotta integrate codex
 ```
 
-After that, create, define, validate, start and review contracts by asking in the calling chat.
+After that, create, define, validate, start and review tasks by asking in the calling chat.
 Kotta returns identifiers as structured tool results. A covered definition becomes executable
 without re-asking the agreement already accepted in the spec; close and change-request decisions
 remain scoped host-chat prompts. Workspaces that explicitly retain the compatibility sign gate get
@@ -73,16 +73,16 @@ Then open an existing Git repository in the supported host and run:
 
 ```text
 /setup-kotta
-/define-contract
+/define-task
 ```
 
 `/setup-kotta` invokes the canonical `kotta init` operation and creates the local
-`.kotta/` workspace and connects the caller-chat tools. `/define-contract` guides you through an
-executable work contract. The calling agent checks the generated contract and workspace through
+`.kotta/` workspace and connects the caller-chat tools. `/define-task` guides you through an
+executable work task. The calling agent checks the generated task and workspace through
 Kotta's structured tools; the equivalent terminal commands remain available for recovery:
 
 ```bash
-kotta contract validate <contract-id>
+kotta task validate <task-id>
 kotta validate
 kotta status
 kotta gap
@@ -99,8 +99,8 @@ minutes; the release canary records the measured result.
 
 If `kotta` is not found, inspect `npm prefix --global`, ensure its `bin` directory is on
 `PATH`, and reopen the terminal. If validation fails, read the reported missing section or
-profile requirement, update the contract through `/define-contract`, and rerun both validation
-commands. The CLI never treats a validation failure as a defined contract.
+profile requirement, update the task through `/define-task`, and rerun both validation
+commands. The CLI never treats a validation failure as a defined task.
 
 ## Workspace layout and ownership
 
@@ -122,9 +122,9 @@ A form's `directory` is relative to `spec/`: `directory: goals` means
 `.kotta/spec/goals/`. Projects may add forms and edit specification nodes without changing
 TypeScript. Lifecycle mutations under `process/` still go through the CLI or MCP services.
 
-A contract is required when work executes a human-accepted product or deliverable commitment with
+A task is required when work executes a human-accepted product or deliverable commitment with
 checkable acceptance conditions. Shaping, exploration, and specification can happen without a
-contract until the specification itself becomes the accepted deliverable or the work crosses into
+task until the specification itself becomes the accepted deliverable or the work crosses into
 execution.
 
 ## Renamed from A-Team
@@ -183,7 +183,7 @@ symlink; the warning is not a state to live in.
 
 ## Migrating the vocabulary
 
-The entities are **observation**, **contract** and **batch**, and the state between backlog and
+The entities are **observation**, **task** and **batch**, and the state between backlog and
 active is **defined** (D-01kz240dn155hb97h6px6n2p85). Workspaces written before that carry the older
 words — `findings/`, `ready/`, `packages/`, a `package:` field, a batch `kind` — and no command
 except one reads them:
@@ -203,11 +203,21 @@ What moves:
 | `ready/`, `findings/`, `packages/` | `process/defined/`, `process/observations/`, `process/batches/` |
 | `.kotta/index.md` | `.kotta/process/index.md` |
 | `status: ready` | `status: defined` |
-| a contract's `package:`, `source_finding:` | `batch:`, `source_observation:` |
-| a batch's `tickets:`, `kind:` | `contracts:`, removed |
-| an observation's `finding_type:`, `ticket:` | `observation_type:`, `contract:` |
-| a claim's `ticket:` | `contract:` |
+| a task's `package:`, `source_finding:` | `batch:`, `source_observation:` |
+| a batch's `tickets:`, `kind:` | `tasks:`, removed |
+| an observation's `finding_type:`, `ticket:` | `observation_type:`, `task:` |
+| a claim's `ticket:` | `task:` |
 | `config.yaml` `packages:`, version 1 or 2 | `batches:`, `version: 3` |
+| a batch's `contracts:` and task-oriented authority fields | `tasks:` and task-oriented authority fields |
+| an observation's or claim's `contract:`; an event's `contract:` / `contract.*` action | `task:` / `task.*` |
+| `workflow.allow_agent_defined_contracts`, config version 3 | `workflow.allow_agent_defined_tasks`, version 4 |
+
+Version 4 is the work-unit vocabulary migration. New automation uses `kotta task …` and the
+`task_*` MCP tools. For one compatibility version, the old CLI group and read-only MCP list/show
+aliases still resolve and a version-3 workspace is readable; each emits a deprecation warning that
+names `kotta migrate`. New writes, generated rules, installed skills, schemas and board data use
+`task` only. `kotta sync` also removes legacy task-skill directories only when its ownership
+manifest proves Kotta installed them and their renamed replacement is present.
 
 **Identifiers never move.** No id, no filename and no reference *value* changes — this is vocabulary,
 not identity (D-010). The command compares the id set before and after and refuses to lose one.
@@ -225,36 +235,36 @@ board carries the same notice until the gap closes.
 
 ## How it works
 
-The repository filesystem is the source of truth. Contracts move through a deliberately small lifecycle:
+The repository filesystem is the source of truth. Tasks move through a deliberately small lifecycle:
 
 ```text
 backlog → defined → active → review → done
 ```
 
-- Contracts define an observable outcome, bounded scope, acceptance conditions, and verification.
+- Tasks define an observable outcome, bounded scope, acceptance conditions, and verification.
 - Every acceptance condition explicitly maps to a referenced accepted spec node. A valid covered
   definition moves from backlog to defined; there is no separate sign gate by default. Set
   `workflow.require_human_sign_approval: true` only to retain that compatibility gate.
-- Work that should not continue leaves through `kotta contract cancel <id> --resolution <resolution>
+- Work that should not continue leaves through `kotta task cancel <id> --resolution <resolution>
   --reason "…" --approve`, from any state before `done`. `close` is for work that was finished and
   merged; `cancel` is for work whose purpose is gone — superseded by a decision, duplicated by
-  another contract, or abandoned. `duplicate` and `obsolete` also require `--superseded-by <id>`
-  naming the contract or decision that took its place, so the record says what killed the work and
+  another task, or abandoned. `duplicate` and `obsolete` also require `--superseded-by <id>`
+  naming the task or decision that took its place, so the record says what killed the work and
   not only that it ended. Cancelling releases the claim and removes the execution worktree; the
   branch is preserved, because a cancelled branch was never merged.
 - Profiles add work-specific requirements for bugs, UI, performance, workflows, metrics, refactors, and discovery.
 - Batches coordinate sprints, milestones, batches, or missions with sequential, parallel, or dependency-aware execution.
-- A batch may also group other batches, so a large product has a level above the contract. That
+- A batch may also group other batches, so a large product has a level above the task. That
   nesting is grouping only: a child batch has no coordinator branch and no execution of its own, and
   `kotta batch start` runs a leaf, never a parent. Reading a parent — `kotta batch status <id>` —
-  reports every contract in its subtree in dependency order, which is what lets you ask an agent in
-  chat to carry out a whole parent. Every contract in it still passes its own human gates.
+  reports every task in its subtree in dependency order, which is what lets you ask an agent in
+  chat to carry out a whole parent. Every task in it still passes its own human gates.
 - Observations capture possible bugs and technical debt without silently expanding active work.
-- Claims connect each active contract to one agent, one feature branch, and one isolated implementation worktree.
+- Claims connect each active task to one agent, one feature branch, and one isolated implementation worktree.
 
 Live lifecycle state, claims, decisions, visible chat and approval events stay on the configured base
 branch (`main` by default). Feature worktrees contain implementation code without a competing active,
-review or done copy. Contract execution lifecycle, claim, execution-outcome, discovered-work and
+review or done copy. Task execution lifecycle, claim, execution-outcome, discovered-work and
 chat/approval writers are serialized by a repository-wide mutation lock. The configured base branch
 must remain checked out in one linked worktree; commands invoked from another worktree route these
 mutations there and refuse rather than writing live state into a feature branch when it is missing.
@@ -262,7 +272,7 @@ mutations there and refuse rather than writing live state into a feature branch 
 That requirement applies to repositories with several worktrees. Where there is exactly one checkout,
 it is the control plane on whatever branch it holds — a hosted agent session gets one checkout on a
 branch of its host's choosing, and a solo developer may never make a second worktree. In that shape,
-if the branch is not a protected one, `contract start` adopts it rather than creating a second branch
+if the branch is not a protected one, `task start` adopts it rather than creating a second branch
 and worktree, and records on the claim that it created neither; `close` and `cancel` then leave that
 branch and checkout exactly where they found them. On a protected branch there is nothing to adopt,
 so Kotta names and creates as usual, which is what keeps execution off it. The name comes from
@@ -277,7 +287,7 @@ idempotently. The CLI remains the human-operated recovery and terminal-first fal
 
 The caller can persist exact visible human and assistant messages through the MCP conversation tool;
 Kotta never stores hidden reasoning, raw tool output or transient streaming deltas. Restarting
-`kotta ui` reconstructs the same read-only contract timeline from `.kotta/process/events/`; [the event
+`kotta ui` reconstructs the same read-only task timeline from `.kotta/process/events/`; [the event
 schema](schemas/event.schema.json) defines the stored format.
 
 Open the local filesystem-backed board from an initialized repository:
@@ -311,41 +321,41 @@ checkout on the base branch. The batch records the coordinator branch, worktree,
 base commit. Starting again reuses the recorded coordinator worktree; a missing worktree or an
 unrelated control checkout is refused rather than guessed.
 
-Every contract dispatched by `batch start` branches from the coordinator's current commit, not the
+Every task dispatched by `batch start` branches from the coordinator's current commit, not the
 control checkout's `HEAD`. The command prints the symbolic start ref and exact resolved commit for
 each new worktree, and the same baseline is retained in the claim and lifecycle history.
 
 Dependency-aware execution has a technical handoff rule distinct from acceptance. A dependency is
 ready for another member of the same batch when it is `done`, or when it is in `review` and Git proves
 its feature branch is an ancestor of the coordinator commit. Review alone never unlocks a wave, and
-`contract start` outside `batch start` still requires every dependency to be `done`. Dispatching the
+`task start` outside `batch start` still requires every dependency to be `done`. Dispatching the
 next wave does not close or approve its predecessor: `review → done` remains the separate human gate.
 
-Completing the last contract does **not** delete the coordinator branch — its final commit is what
+Completing the last task does **not** delete the coordinator branch — its final commit is what
 gets integrated. `kotta batch status <id>` reports where the batch stands: `active`,
 `done-unintegrated`, `cleanup-pending`, `blocked-*`, or `cleaned`.
 
-Completing the last member contract also completes the batch itself, whether or not the batch was
-ever started — a batch whose contracts ran one by one through `kotta contract execute` is finished by
-the last `contract close` or `contract cancel`, not left in `backlog`. `kotta batch close <id> --approve`
-is the explicit path for a batch whose contracts reached `done` some other way: it moves the batch to
-`batches/done` from any state, refuses while a member contract is not `done` and names it, never touches
-a contract, and is a no-op on an already finished batch.
+Completing the last member task also completes the batch itself, whether or not the batch was
+ever started — a batch whose tasks ran one by one through `kotta task execute` is finished by
+the last `task close` or `task cancel`, not left in `backlog`. `kotta batch close <id> --approve`
+is the explicit path for a batch whose tasks reached `done` some other way: it moves the batch to
+`batches/done` from any state, refuses while a member task is not `done` and names it, never touches
+a task, and is a no-op on an already finished batch.
 
 Once the branch is merged, `kotta batch finalize <id>` performs the cleanup, and only what it
 can prove is safe: it verifies by Git ancestry that the coordinator head is contained in the base
 branch or its remote-tracking ref, fast-forwards the control checkout when needed, removes the clean
 coordinator worktree, and deletes the merged local branch with `git branch -d`. A dirty worktree, an
-active claim, a linked contract worktree, a branch held by another worktree, or a diverged base each
+active claim, a linked task worktree, a branch held by another worktree, or a diverged base each
 stop it with an explanation and change nothing. It never forces, resets, rebases, or deletes a remote
 branch, and re-running it after success is a no-op.
 
 ## Core safety rules
 
 - A backlog item is not executable until it is valid, explicitly covered by accepted spec, and defined.
-- An observation is not automatically a contract.
+- An observation is not automatically a task.
 - Agents do not invent missing product intent or accepted trade-offs.
-- Every active contract has at most one claim and one feature branch.
+- Every active task has at most one claim and one feature branch.
 - Parallel execution uses separate Git worktrees.
 - Execution never edits a protected branch.
 - Review requires acceptance-to-evidence mapping.
@@ -356,13 +366,13 @@ branch, and re-running it after success is a no-op.
 
 - `explore-workspace` — answer cross-workspace questions about themes, related work, overlaps, decisions, and backlog structure without changing PM state.
 - `setup-kotta` — initialize a project workspace.
-- `define-contract` — investigate and formalize work.
+- `define-task` — investigate and formalize work.
 - `validate-observation` — verify and disposition discovered work.
-- `start-contract` — safely claim and isolate a defined contract.
-- `execute-contract` — implement one bounded contract.
-- `execute-batch` — coordinate a batch of contracts.
+- `start-task` — safely claim and isolate a defined task.
+- `execute-task` — implement one bounded task.
+- `execute-batch` — coordinate a batch of tasks.
 - `submit-review` — submit implementation with evidence.
-- `close-contract` — verify completion and safely release resources.
+- `close-task` — verify completion and safely release resources.
 - `report-kotta-bug` — prepare and, after explicit approval, submit a Kotta defect report as a GitHub Issue.
 - `consolidate-model` — find where one concept lives under several names across code, docs and wire, and propose consolidations in chat. Creates nothing.
 
@@ -370,7 +380,7 @@ branch, and re-running it after success is a no-op.
 
 Defects in Kotta itself go to
 [the issue form in `arpadtamasi/kotta`](https://github.com/arpadtamasi/kotta/issues/new?template=bug.yml).
-The same destination and the same report contract serve every entry point:
+The same destination and the same report task serve every entry point:
 
 - **Public site** — the `Report a bug` link in the header and footer of the onboarding site.
 - **Local board** — the `Report a bug` link in the rail footer of `kotta ui`. The board sends
@@ -396,7 +406,7 @@ kotta observation new --title "<issue title>" --type bug \
 
 The observation stays open until `kotta observation validate` and a human-approved
 `kotta observation resolve --disposition <disposition> --approve`. A GitHub Issue never creates a
-contract by itself.
+task by itself.
 
 ## CLI overview
 
@@ -407,19 +417,19 @@ kotta migrate
 kotta validate
 kotta status
 
-kotta contract new --title "Add filtered export" --type feature --profile ui workflow
-kotta contract define T-014 --from /tmp/T-014-definition.md
-kotta contract validate T-014
-kotta contract start T-014 --agent codex
-kotta contract start T-014 --agent codex --caller
-kotta contract brief T-014 --out /tmp/T-014-brief.md
-kotta contract execute T-014 --agent claude
-kotta contract execute T-014 --resume
-kotta contract review T-014 \
+kotta task new --title "Add filtered export" --type feature --profile ui workflow
+kotta task define T-014 --from /tmp/T-014-definition.md
+kotta task validate T-014
+kotta task start T-014 --agent codex
+kotta task start T-014 --agent codex --caller
+kotta task brief T-014 --out /tmp/T-014-brief.md
+kotta task execute T-014 --agent claude
+kotta task execute T-014 --resume
+kotta task review T-014 \
   --evidence "Filtered export is produced=tests/export.test.ts passes" \
   --evidence "Export respects active filters=tests/export-filter.test.ts passes" \
   --pull-request PR-123
-kotta contract close T-014 --approve
+kotta task close T-014 --approve
 
 kotta batch validate P-012
 kotta batch sign P-012 --approve
@@ -429,23 +439,23 @@ kotta batch close P-012 --approve
 
 kotta observation new --title "Divergent permission checks" --type inconsistency --evidence "src/a.ts and src/b.ts differ"
 kotta observation validate F-032
-kotta observation resolve F-032 --disposition create-contract --approve
+kotta observation resolve F-032 --disposition create-task --approve
 
 kotta decision create --from /tmp/cutover-decision.md --approve
 
 kotta claim list
 kotta claim release T-014 --force
 
-kotta contract list --state review
+kotta task list --state review
 kotta observation list --state new
 kotta decision list
 kotta batch list
 
-kotta contract show T-rf5d4tfp
+kotta task show T-rf5d4tfp
 kotta observation show F-01kz9d5nqwdwb7r2c0jdzchspa
 ```
 
-`show` answers the other half — one entity as it is stored, its state, its set facts and its body — and is deliberately not `contract brief`: the brief assembles the execution package for an agent about to implement, and exists for contracts alone. **The id the CLI prints is the id the CLI accepts:** the short form shown in every listing resolves on every command that takes an id, and an ambiguous short form is refused naming the full ids it matched rather than guessing between them.
+`show` answers the other half — one entity as it is stored, its state, its set facts and its body — and is deliberately not `task brief`: the brief assembles the execution package for an agent about to implement, and exists for tasks alone. **The id the CLI prints is the id the CLI accepts:** the short form shown in every listing resolves on every command that takes an id, and an ambiguous short form is refused naming the full ids it matched rather than guessing between them.
 
 `gap` reads only committed bytes from the configured base branch. For every accepted spec node it
 looks for an explicit node-id trace in code, tests, or command definitions, then reports the reverse
@@ -459,30 +469,30 @@ is `gap_report`.
 
 Every command supports `--json`. Mutations validate before writing and report both the violated rule and corrective action when rejected.
 
-Before a contract can be defined, its `Open decisions` section must say that no decision remains.
+Before a task can be defined, its `Open decisions` section must say that no decision remains.
 Kotta accepts `None`, `None.`, `N/A`, `N/A.`, `No open decisions` and `No open decisions.`
-case-insensitively; real unresolved choices still keep the contract in backlog. Every acceptance
+case-insensitively; real unresolved choices still keep the task in backlog. Every acceptance
 bullet must also name a referenced spec id or have an exact-text entry in frontmatter `coverage`.
 If no accepted node covers it, create an observation and amend the spec first. The legacy
-`contract sign` step exists only when `workflow.require_human_sign_approval: true`; it leaves an
+`task sign` step exists only when `workflow.require_human_sign_approval: true`; it leaves an
 approval receipt.
 
-**Small contexts by default.** Each contract executes in a fresh agent context whose intent input is `kotta contract brief <id>` — the contract body, its referenced decisions, its profiles and its claim, nothing else. The brief is deterministic and reports an approximate token count; above a threshold (`--warn-tokens`, default 12000) it warns that the contract is probably too large or under-referenced. This is a quality gauge, not a thrift trick: if a contract cannot be executed from its brief plus the code in the worktree, the contract is incomplete — record the gap instead of widening the context.
+**Small contexts by default.** Each task executes in a fresh agent context whose intent input is `kotta task brief <id>` — the task body, its referenced decisions, its profiles and its claim, nothing else. The brief is deterministic and reports an approximate token count; above a threshold (`--warn-tokens`, default 12000) it warns that the task is probably too large or under-referenced. This is a quality gauge, not a thrift trick: if a task cannot be executed from its brief plus the code in the worktree, the task is incomplete — record the gap instead of widening the context.
 
-**`contract execute` is the command that makes that the default (D-009).** `kotta contract execute <id> --agent <agent>` does the start, assembles the brief and launches the agent with the brief as its only input — the caller's context never reaches it. It refuses before creating anything when the contract is not defined, a claim or execution context already exists, the repository is dirty, or the agent command is missing, so a missing binary can never leave a half-built worktree. The output — human and `--json` — names the brief's token count, the agent, the branch and the worktree; record the token count per contract in the run log.
+**`task execute` is the command that makes that the default (D-009).** `kotta task execute <id> --agent <agent>` does the start, assembles the brief and launches the agent with the brief as its only input — the caller's context never reaches it. It refuses before creating anything when the task is not defined, a claim or execution context already exists, the repository is dirty, or the agent command is missing, so a missing binary can never leave a half-built worktree. The output — human and `--json` — names the brief's token count, the agent, the branch and the worktree; record the token count per task in the run log.
 
-When continuity matters more than isolation, `kotta contract start <id> --agent <agent> --caller`
+When continuity matters more than isolation, `kotta task start <id> --agent <agent> --caller`
 creates the same branch, claim and worktree but labels the run `inherited`. The current caller then
 continues inside the returned worktree. This is explicit and opt-in; fresh brief-only execution stays
 the default, and persisted chat is never injected wholesale into a fresh executor.
 
-A non-zero exit or an empty result is `agent-failed`: the claim and worktree are kept for inspection and the contract does not move to review. An interrupt terminates the agent, keeps the claim and worktree, and names what to decide by hand. Retry with `kotta contract execute <id> --resume`, which reuses the existing execution context (and is also how a context created by `contract start` gets its agent) — a second plain `execute` always refuses rather than starting a second agent. Context carry-over is an explicit, logged exception: `--inherit-context "<reason>"` requires a reason, appends it to the prompt as a declared deviation and reports it in the output.
+A non-zero exit or an empty result is `agent-failed`: the claim and worktree are kept for inspection and the task does not move to review. An interrupt terminates the agent, keeps the claim and worktree, and names what to decide by hand. Retry with `kotta task execute <id> --resume`, which reuses the existing execution context (and is also how a context created by `task start` gets its agent) — a second plain `execute` always refuses rather than starting a second agent. Context carry-over is an explicit, logged exception: `--inherit-context "<reason>"` requires a reason, appends it to the prompt as a declared deviation and reports it in the output.
 
-**The record is derived from the run, not from the agent.** `execute` captures the worktree's baseline — the contract branch tip and its porcelain status — before it launches, and compares afterwards. An agent that exits 0 and talks about work it never did is recorded as `no-change`, not `implemented`; commits and uncommitted changes both count as `implemented`. Each run appends one execution event carrying the resolved state, the agent, the baseline and resulting commit, whether uncommitted changes remain, the exit code, and the agent's own printed output — stored as reported, never promoted into the state decision. A resume appends a new record instead of rewriting the previous one, updates the claim when it names a different agent, and unrelated dirt in the control worktree can no longer discard a completed run's record.
+**The record is derived from the run, not from the agent.** `execute` captures the worktree's baseline — the task branch tip and its porcelain status — before it launches, and compares afterwards. An agent that exits 0 and talks about work it never did is recorded as `no-change`, not `implemented`; commits and uncommitted changes both count as `implemented`. Each run appends one execution event carrying the resolved state, the agent, the baseline and resulting commit, whether uncommitted changes remain, the exit code, and the agent's own printed output — stored as reported, never promoted into the state decision. A resume appends a new record instead of rewriting the previous one, updates the claim when it names a different agent, and unrelated dirt in the control worktree can no longer discard a completed run's record.
 
 The agent binary is resolved from `--agent` (`claude`, `codex`, or any command on `PATH`); `KOTTA_AGENT_COMMAND` overrides the executable, which is how the test suite drives a deterministic script double instead of a real agent. Review, merge and close stay separate human gates — `execute` never enters them.
 
-**What a launched agent may do is the operator's decision, not Kotta's.** `agents.permission_mode` in `.kotta/config.yaml` is passed to the agent as `--permission-mode`; with nothing set — the shipped default — Kotta passes no flag at all and the agent's own project settings decide, so a launched run never receives authority the caller had not already granted. That default is safe rather than convenient: `claude -p` asks before it writes and a headless run has nobody to answer, so an unconfigured run may complete having changed nothing. `execute` says so at launch, and the baseline comparison then records it as `no-change` rather than as an implementation. Setting a mode that permits writes — `acceptEdits`, or `bypassPermissions` for a fully autonomous run — is a deliberate act, made once, visible in the workspace config and revocable there. A mode that forbids edits by definition (`plan`) is refused at launch naming the cause, because a planning run cannot implement a contract.
+**What a launched agent may do is the operator's decision, not Kotta's.** `agents.permission_mode` in `.kotta/config.yaml` is passed to the agent as `--permission-mode`; with nothing set — the shipped default — Kotta passes no flag at all and the agent's own project settings decide, so a launched run never receives authority the caller had not already granted. That default is safe rather than convenient: `claude -p` asks before it writes and a headless run has nobody to answer, so an unconfigured run may complete having changed nothing. `execute` says so at launch, and the baseline comparison then records it as `no-change` rather than as an implementation. Setting a mode that permits writes — `acceptEdits`, or `bypassPermissions` for a fully autonomous run — is a deliberate act, made once, visible in the workspace config and revocable there. A mode that forbids edits by definition (`plan`) is refused at launch naming the cause, because a planning run cannot implement a task.
 
 A decision draft contains `title` frontmatter and non-empty `Decision`, `Context`, and
 `Consequences` sections. `decision create` requires explicit human approval, assigns the

@@ -44,30 +44,30 @@ function expectReceipt(path: string, basisAction: string): void {
   expect(stamp.approval_basis, `${path} approval_basis`).toContain(basisAction);
 }
 
-function newContract(repository: string, title: string): { id: string; path: string } {
-  return (run(repository, ["contract", "new", "--title", title, "--type", "feature"]) as { data: { id: string; path: string } }).data;
+function newTask(repository: string, title: string): { id: string; path: string } {
+  return (run(repository, ["task", "new", "--title", title, "--type", "feature"]) as { data: { id: string; path: string } }).data;
 }
 
-function definedContract(repository: string, title: string): { id: string; path: string } {
-  const contract = newContract(repository, title);
-  writeFileSync(contract.path, readFileSync(contract.path, "utf8")
+function definedTask(repository: string, title: string): { id: string; path: string } {
+  const task = newTask(repository, title);
+  writeFileSync(task.path, readFileSync(task.path, "utf8")
     .replace("Describe the observable outcome.", "The outcome is observable.")
     .replace("- Define an observable condition.", "- The condition is observable.")
     .replace("- Explain how acceptance will be checked.", "- The condition is checked by reading it."));
-  run(repository, ["contract", "sign", contract.id, "--approve"]);
-  return contract;
+  run(repository, ["task", "sign", task.id, "--approve"]);
+  return task;
 }
 
-/** A contract taken all the way to review, its branch merged into the control branch, ready to close. */
-function reviewedContract(repository: string, title: string): { id: string; filename: string; branch: string } {
-  const contract = definedContract(repository, title);
-  const branch = (run(repository, ["contract", "start", contract.id, "--agent", "codex"]) as { data: { branch: string } }).data.branch;
-  const worktree = join(repository, ".worktrees", contract.id);
-  writeFileSync(join(worktree, `${contract.id}.md`), `# ${contract.id}\n`);
+/** A task taken all the way to review, its branch merged into the control branch, ready to close. */
+function reviewedTask(repository: string, title: string): { id: string; filename: string; branch: string } {
+  const task = definedTask(repository, title);
+  const branch = (run(repository, ["task", "start", task.id, "--agent", "codex"]) as { data: { branch: string } }).data.branch;
+  const worktree = join(repository, ".worktrees", task.id);
+  writeFileSync(join(worktree, `${task.id}.md`), `# ${task.id}\n`);
   git(worktree, "add", ".");
-  git(worktree, "commit", "-m", `feat: ${contract.id}`);
-  run(worktree, ["contract", "review", contract.id, "--evidence", "Implemented and verified", "--deviations", "None."]);
-  return { id: contract.id, filename: basename(contract.path), branch };
+  git(worktree, "commit", "-m", `feat: ${task.id}`);
+  run(worktree, ["task", "review", task.id, "--evidence", "Implemented and verified", "--deviations", "None."]);
+  return { id: task.id, filename: basename(task.path), branch };
 }
 
 function fixture(prefix: string): string {
@@ -90,42 +90,42 @@ function donePath(repository: string, filename: string): string {
 }
 
 describe("every approval leaves a receipt", () => {
-  test("closing a reviewed contract stamps the receipt, shows it, and validates green", () => {
+  test("closing a reviewed task stamps the receipt, shows it, and validates green", () => {
     const repository = fixture("kotta-receipt-close-");
-    const { id, filename, branch } = reviewedContract(repository, "Add filtered export");
+    const { id, filename, branch } = reviewedTask(repository, "Add filtered export");
     git(repository, "merge", "--no-ff", branch, "-m", `merge ${id}`);
 
-    run(repository, ["contract", "close", id, "--approve"]);
+    run(repository, ["task", "close", id, "--approve"]);
     const path = donePath(repository, filename);
-    expectReceipt(path, "contract.close");
+    expectReceipt(path, "task.close");
     // The receipt is visible in show output, on the human-readable surface.
-    const shown = text(repository, ["contract", "show", id]);
+    const shown = text(repository, ["task", "show", id]);
     expect(shown).toContain("approved_by");
     expect(shown).toContain("approval_basis");
     // It survives a round-trip: validation of the freshly-closed record stays green.
-    expect(run(repository, ["contract", "validate", id])).toMatchObject({ ok: true, data: { state: "done" } });
+    expect(run(repository, ["task", "validate", id])).toMatchObject({ ok: true, data: { state: "done" } });
     expect(run(repository, ["validate"])).toMatchObject({ ok: true });
   });
 
-  test("cancelling a contract stamps the receipt onto the retired record", () => {
+  test("cancelling a task stamps the receipt onto the retired record", () => {
     const repository = fixture("kotta-receipt-cancel-");
-    const contract = newContract(repository, "Abandoned work");
+    const task = newTask(repository, "Abandoned work");
     git(repository, "add", ".");
-    git(repository, "commit", "-m", "capture contract");
+    git(repository, "commit", "-m", "capture task");
 
-    run(repository, ["contract", "cancel", contract.id, "--resolution", "cancelled", "--reason", "No longer wanted", "--approve"]);
-    expectReceipt(donePath(repository, basename(contract.path)), "contract.cancel");
+    run(repository, ["task", "cancel", task.id, "--resolution", "cancelled", "--reason", "No longer wanted", "--approve"]);
+    expectReceipt(donePath(repository, basename(task.path)), "task.cancel");
     expect(run(repository, ["validate"])).toMatchObject({ ok: true });
   });
 
-  test("reopening a submitted contract for changes stamps the request-changes receipt", () => {
+  test("reopening a submitted task for changes stamps the request-changes receipt", () => {
     const repository = fixture("kotta-receipt-reopen-");
-    const { id, filename } = reviewedContract(repository, "Needs another pass");
+    const { id, filename } = reviewedTask(repository, "Needs another pass");
 
-    run(repository, ["contract", "reopen", id, "--approve"]);
+    run(repository, ["task", "reopen", id, "--approve"]);
     const active = join(repository, ".kotta/process/active", filename);
     expect(existsSync(active)).toBe(true);
-    expectReceipt(active, "contract.request-changes");
+    expectReceipt(active, "task.request-changes");
     expect(run(repository, ["validate"])).toMatchObject({ ok: true });
   });
 
@@ -155,12 +155,12 @@ describe("every approval leaves a receipt", () => {
 
   test("closing a batch stamps the receipt onto the batch record", () => {
     const repository = fixture("kotta-receipt-batch-");
-    const contract = reviewedContract(repository, "Only slice");
-    git(repository, "merge", "--no-ff", contract.branch, "-m", `merge ${contract.id}`);
-    run(repository, ["contract", "close", contract.id, "--approve"]);
+    const task = reviewedTask(repository, "Only slice");
+    git(repository, "merge", "--no-ff", task.branch, "-m", `merge ${task.id}`);
+    run(repository, ["task", "close", task.id, "--approve"]);
 
     const batch = run(repository, ["batch", "new", "--title", "One slice", "--goal", "Ship the slice"]) as { data: { id: string; path: string } };
-    run(repository, ["batch", "add", batch.data.id, contract.id]);
+    run(repository, ["batch", "add", batch.data.id, task.id]);
     git(repository, "add", ".");
     git(repository, "commit", "-m", "define batch");
 
@@ -171,32 +171,32 @@ describe("every approval leaves a receipt", () => {
 
   test("a gated mutation without approval is still refused, naming the rule, and writes no receipt", () => {
     const repository = fixture("kotta-receipt-refusal-");
-    const contract = newContract(repository, "Needs approval");
+    const task = newTask(repository, "Needs approval");
     git(repository, "add", ".");
-    git(repository, "commit", "-m", "capture contract");
+    git(repository, "commit", "-m", "capture task");
 
-    const refused = fail(repository, ["contract", "cancel", contract.id, "--resolution", "cancelled", "--reason", "No longer wanted"]);
+    const refused = fail(repository, ["task", "cancel", task.id, "--resolution", "cancelled", "--reason", "No longer wanted"]);
     expect(refused.status).not.toBe(0);
     expect(refused.stdout).toContain("Human cancel approval is required");
-    expect(receipt(contract.path).approved_by).toBeUndefined();
+    expect(receipt(task.path).approved_by).toBeUndefined();
   });
 
   test("an entity approved before receipts existed keeps validating: absence is legal history", () => {
     const repository = fixture("kotta-receipt-legacy-");
-    const contract = newContract(repository, "Retired before receipts");
+    const task = newTask(repository, "Retired before receipts");
     git(repository, "add", ".");
-    git(repository, "commit", "-m", "capture contract");
-    run(repository, ["contract", "cancel", contract.id, "--resolution", "cancelled", "--reason", "Abandoned", "--approve"]);
-    const path = donePath(repository, basename(contract.path));
+    git(repository, "commit", "-m", "capture task");
+    run(repository, ["task", "cancel", task.id, "--resolution", "cancelled", "--reason", "Abandoned", "--approve"]);
+    const path = donePath(repository, basename(task.path));
 
     // Strip the whole receipt: a historical record simply lacks the three fields.
     const stripped = readFileSync(path, "utf8").split(/\r?\n/).filter((line) => !/^(approved_by|approved_at|approval_basis):/.test(line)).join("\n");
     writeFileSync(path, stripped);
-    expect(run(repository, ["contract", "validate", contract.id])).toMatchObject({ ok: true, data: { state: "done" } });
+    expect(run(repository, ["task", "validate", task.id])).toMatchObject({ ok: true, data: { state: "done" } });
 
     // But a half-written receipt — some fields, not all — is a real inconsistency.
     writeFileSync(path, stripped.replace("status: done", "status: done\napproved_by: someone"));
-    const report = fail(repository, ["contract", "validate", contract.id]);
+    const report = fail(repository, ["task", "validate", task.id]);
     expect(report.status).not.toBe(0);
     expect(report.stdout).toContain("INCOMPLETE_APPROVAL_RECEIPT");
   });

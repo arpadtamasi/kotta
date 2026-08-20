@@ -14,10 +14,10 @@ const normalized = (value: string): string => value.trim().replace(/\s+/g, " ");
 
 /**
  * The legacy surface supplied one blob. Named mappings use the exact check text as their key; the
- * contract already owns those names, so no second identifier vocabulary is introduced.
+ * task already owns those names, so no second identifier vocabulary is introduced.
  */
 export function prepareReviewEvidence(checks: string[], input: ReviewEvidenceInput): PreparedReviewEvidence {
-  const names = checks.length ? checks : ["Contract acceptance criteria"];
+  const names = checks.length ? checks : ["Task acceptance criteria"];
   if (typeof input === "string") {
     const evidence = input.trim();
     if (!evidence) throw new Error("Review evidence is required.");

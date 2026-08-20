@@ -25,7 +25,7 @@ const MINTED_BODY = "[0-9a-hjkmnp-tv-z]{26}";
 const MINTED = new RegExp(`^[TFPD]-${MINTED_BODY}$`);
 
 /** Sequential forms that predate D-003 and stay valid forever (D-010). */
-const LEGACY_CONTRACT = "T-\\d{3,}|O-\\d+(?:\\.\\d+)?";
+const LEGACY_TASK = "T-\\d{3,}|O-\\d+(?:\\.\\d+)?";
 const LEGACY_OBSERVATION = "F-\\d{3,}|O-\\d+";
 const LEGACY_BATCH = "P-\\d{3,}";
 const LEGACY_DECISION = "D-\\d{3,}";
@@ -34,7 +34,7 @@ function accepts(legacy: string, prefix: EntityPrefix): RegExp {
   return new RegExp(`^(?:${legacy}|${prefix}-${MINTED_BODY})$`);
 }
 
-export const CONTRACT_ID = accepts(LEGACY_CONTRACT, "T");
+export const TASK_ID = accepts(LEGACY_TASK, "T");
 export const OBSERVATION_ID = accepts(LEGACY_OBSERVATION, "F");
 export const BATCH_ID = accepts(LEGACY_BATCH, "P");
 export const DECISION_ID = accepts(LEGACY_DECISION, "D");

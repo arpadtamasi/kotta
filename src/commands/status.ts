@@ -18,5 +18,5 @@ export function statusCommand(repositoryRoot?: string) {
   // directory did you read?" must be visible without guessing (D-007).
   // The skills are reported here because nothing else would say it: an agent told to prefer them
   // cannot notice that they were never installed, and an out-of-date copy fails silently.
-  return { ok: true, command: "status", data: { workspace: workspacePath(root), definedContracts: byDirectory("defined"), activeContracts: byDirectory("active"), reviewContracts: byDirectory("review"), newObservations: byDirectory("observations/new"), allContracts: listIds(root, "contract"), skills: skillDrift(), rules: agentsDrift(root), controlPlane: { mode: controlPlane.mode, branch: controlPlane.branch, root: controlPlane.root } } };
+  return { ok: true, command: "status", data: { workspace: workspacePath(root), definedTasks: byDirectory("defined"), activeTasks: byDirectory("active"), reviewTasks: byDirectory("review"), newObservations: byDirectory("observations/new"), allTasks: listIds(root, "task"), skills: skillDrift(), rules: agentsDrift(root), controlPlane: { mode: controlPlane.mode, branch: controlPlane.branch, root: controlPlane.root } } };
 }

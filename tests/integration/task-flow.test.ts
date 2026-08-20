@@ -19,20 +19,20 @@ function git(repository: string, ...args: string[]): void {
   execFileSync("git", args, { cwd: repository });
 }
 
-describe("contract execution vertical slice", () => {
-  test("human contract creation output includes the stable id and canonical path", () => {
+describe("task execution vertical slice", () => {
+  test("human task creation output includes the stable id and canonical path", () => {
     const repository = mkdtempSync(join(tmpdir(), "kotta-new-output-"));
     git(repository, "init", "-b", "main");
     writeFileSync(join(repository, "README.md"), "fixture\n");
     run(repository, ["init"]);
     retainLegacySignGate(repository);
-    const created = spawnSync("node", [cli, "contract", "new", "--title", "Visible id", "--type", "feature"], { cwd: repository, encoding: "utf8" });
+    const created = spawnSync("node", [cli, "task", "new", "--title", "Visible id", "--type", "feature"], { cwd: repository, encoding: "utf8" });
     expect(created.status).toBe(0);
-    expect(created.stdout).toMatch(/^Created contract T-[0-9a-hjkmnp-tv-z]{26} at .+\.md\.\n$/);
-    expect(created.stdout).not.toBe("kotta contract new completed.\n");
+    expect(created.stdout).toMatch(/^Created task T-[0-9a-hjkmnp-tv-z]{26} at .+\.md\.\n$/);
+    expect(created.stdout).not.toBe("kotta task new completed.\n");
   });
 
-  test("defines a complete backlog contract through the canonical CLI", () => {
+  test("defines a complete backlog task through the canonical CLI", () => {
     const repository = mkdtempSync(join(tmpdir(), "kotta-define-"));
     git(repository, "init", "-b", "main");
     git(repository, "config", "user.name", "Kotta Test");
@@ -44,8 +44,8 @@ describe("contract execution vertical slice", () => {
       "---", `id: ${FLOW_SPEC_ID}`, "form: glossary-term", "title: Clean install", "---", "",
       "## Definition", "A clean install succeeds.", "", "## Usage", "Release verification.", "", "## Non-examples", "An existing installation.", "",
     ].join("\n"));
-    const first = run(repository, ["contract", "new", "--title", "Release CLI", "--type", "feature", "--profile", "workflow"]) as { data: { id: string; path: string } };
-    const second = run(repository, ["contract", "new", "--title", "Publish site", "--type", "feature"]) as { data: { id: string } };
+    const first = run(repository, ["task", "new", "--title", "Release CLI", "--type", "feature", "--profile", "workflow"]) as { data: { id: string; path: string } };
+    const second = run(repository, ["task", "new", "--title", "Publish site", "--type", "feature"]) as { data: { id: string } };
     const definition = join(repository, "definition.md");
     writeFileSync(definition, `---
 id: ${first.data.id}
@@ -132,17 +132,17 @@ None.
 None.
 `);
 
-    expect(run(repository, ["contract", "define", first.data.id, "--from", definition])).toMatchObject({ ok: true, command: "contract define", data: { id: first.data.id } });
-    const contract = first.data.path;
-    expect(basename(contract)).toBe(`release-cli-${first.data.id.slice(-8)}.md`);
-    expect(readFileSync(contract, "utf8")).toContain("priority: high");
-    expect(readFileSync(contract, "utf8")).toContain(`blocks:\n  - ${second.data.id}`);
-    expect(run(repository, ["contract", "sign", first.data.id, "--approve"])).toMatchObject({ ok: true, command: "contract sign" });
+    expect(run(repository, ["task", "define", first.data.id, "--from", definition])).toMatchObject({ ok: true, command: "task define", data: { id: first.data.id } });
+    const task = first.data.path;
+    expect(basename(task)).toBe(`release-cli-${first.data.id.slice(-8)}.md`);
+    expect(readFileSync(task, "utf8")).toContain("priority: high");
+    expect(readFileSync(task, "utf8")).toContain(`blocks:\n  - ${second.data.id}`);
+    expect(run(repository, ["task", "sign", first.data.id, "--approve"])).toMatchObject({ ok: true, command: "task sign" });
     expect(execFileSync("git", ["status", "--porcelain", "--", ".kotta"], { cwd: repository, encoding: "utf8" })).toBe("");
     expect(execFileSync("git", ["log", "-1", "--format=%s"], { cwd: repository, encoding: "utf8" }).trim()).toBe(`chore(kotta): sign ${first.data.id}`);
   });
 
-  test("amends a defined contract in place, including its title, filename and history", () => {
+  test("amends a defined task in place, including its title, filename and history", () => {
     const repository = mkdtempSync(join(tmpdir(), "kotta-redefine-"));
     git(repository, "init", "-b", "main");
     git(repository, "config", "user.name", "Kotta Test");
@@ -154,8 +154,8 @@ None.
       "---", `id: ${FLOW_SPEC_ID}`, "form: glossary-term", "title: Corrected task", "---", "",
       "## Definition", "The title and body are corrected in place.", "", "## Usage", "Pre-execution amendment.", "", "## Non-examples", "Changing active work.", "",
     ].join("\n"));
-    const created = run(repository, ["contract", "new", "--title", "Shpi the exporter", "--type", "feature"]) as { data: { id: string; path: string } };
-    run(repository, ["contract", "sign", created.data.id, "--approve"]);
+    const created = run(repository, ["task", "new", "--title", "Shpi the exporter", "--type", "feature"]) as { data: { id: string; path: string } };
+    run(repository, ["task", "sign", created.data.id, "--approve"]);
 
     const oldPath = join(repository, ".kotta/process/defined", basename(created.data.path));
     writeFileSync(oldPath, readFileSync(oldPath, "utf8").replace(/updated_at: .+/, "updated_at: 2020-01-01"));
@@ -204,7 +204,7 @@ None.
 None.
 `);
 
-    const amended = run(repository, ["contract", "define", created.data.id, "--from", definition]) as { data: { path: string } };
+    const amended = run(repository, ["task", "define", created.data.id, "--from", definition]) as { data: { path: string } };
     const newPath = amended.data.path;
     expect(basename(newPath)).toBe(`ship-the-exporter-${created.data.id.slice(-8)}.md`);
     expect(existsSync(oldPath)).toBe(false);
@@ -217,7 +217,7 @@ None.
 
     const after = readEvents(repository, created.data.id);
     expect(after.slice(0, history.length).map((event) => event.id)).toEqual(history);
-    expect(after.at(-1)).toMatchObject({ state: "defined", summary: "Contract definition amended before execution." });
+    expect(after.at(-1)).toMatchObject({ state: "defined", summary: "Task definition amended before execution." });
   });
 
   test.each(["active", "review", "done"])("refuses to redefine a task in %s", (state) => {
@@ -228,8 +228,8 @@ None.
     writeFileSync(join(repository, "README.md"), "fixture\n");
     run(repository, ["init"]);
     retainLegacySignGate(repository);
-    const created = run(repository, ["contract", "new", "--title", `Immutable ${state}`, "--type", "feature"]) as { data: { id: string; path: string } };
-    run(repository, ["contract", "sign", created.data.id, "--approve"]);
+    const created = run(repository, ["task", "new", "--title", `Immutable ${state}`, "--type", "feature"]) as { data: { id: string; path: string } };
+    run(repository, ["task", "sign", created.data.id, "--approve"]);
     const defined = join(repository, ".kotta/process/defined", basename(created.data.path));
     const targetDirectory = join(repository, ".kotta/process", state);
     const target = join(targetDirectory, basename(created.data.path));
@@ -239,40 +239,40 @@ None.
     const definition = join(repository, "refused-definition.md");
     writeFileSync(definition, `# ${created.data.id} — Changed too late\n\n## Outcome\n\nMust not be applied.\n`);
 
-    const result = spawnSync("node", [cli, "contract", "define", created.data.id, "--from", definition, "--json"], { cwd: repository, encoding: "utf8" });
+    const result = spawnSync("node", [cli, "task", "define", created.data.id, "--from", definition, "--json"], { cwd: repository, encoding: "utf8" });
     expect(result.status).not.toBe(0);
     expect(result.stdout).toContain(`can only be defined before execution, while it is in backlog or defined; it is ${state}`);
     expect(readFileSync(target, "utf8")).toBe(snapshot);
   });
 
-  test("rejects unsupported definition metadata without changing the contract", () => {
+  test("rejects unsupported definition metadata without changing the task", () => {
     const repository = mkdtempSync(join(tmpdir(), "kotta-define-reject-"));
     git(repository, "init", "-b", "main");
     writeFileSync(join(repository, "README.md"), "fixture\n");
     run(repository, ["init"]);
     retainLegacySignGate(repository);
-    const created = run(repository, ["contract", "new", "--title", "Safe definition", "--type", "feature"]) as { data: { id: string; path: string } };
-    const contract = created.data.path;
-    const before = readFileSync(contract, "utf8");
+    const created = run(repository, ["task", "new", "--title", "Safe definition", "--type", "feature"]) as { data: { id: string; path: string } };
+    const task = created.data.path;
+    const before = readFileSync(task, "utf8");
     const definition = join(repository, "invalid-definition.md");
     writeFileSync(definition, `---\nid: ${created.data.id}\nstatus: defined\n---\n## Outcome\n\nUnsafe.\n`);
-    const result = spawnSync("node", [cli, "contract", "define", created.data.id, "--from", definition, "--json"], { cwd: repository, encoding: "utf8" });
+    const result = spawnSync("node", [cli, "task", "define", created.data.id, "--from", definition, "--json"], { cwd: repository, encoding: "utf8" });
     expect(result.status).not.toBe(0);
     expect(result.stdout).toContain("Unsupported definition fields: status");
-    expect(readFileSync(contract, "utf8")).toBe(before);
+    expect(readFileSync(task, "utf8")).toBe(before);
   });
 
-  test("define reports the resolved path for a missing --from file and leaves the contract in backlog", () => {
+  test("define reports the resolved path for a missing --from file and leaves the task in backlog", () => {
     const repository = mkdtempSync(join(tmpdir(), "kotta-define-missing-"));
     git(repository, "init", "-b", "main");
     writeFileSync(join(repository, "README.md"), "fixture\n");
     run(repository, ["init"]);
     retainLegacySignGate(repository);
-    const created = run(repository, ["contract", "new", "--title", "Missing source", "--type", "feature"]) as { data: { id: string; path: string } };
+    const created = run(repository, ["task", "new", "--title", "Missing source", "--type", "feature"]) as { data: { id: string; path: string } };
     const missing = join(repository, "no-such-definition.md");
-    const result = spawnSync("node", [cli, "contract", "define", created.data.id, "--from", missing, "--json"], { cwd: repository, encoding: "utf8" });
+    const result = spawnSync("node", [cli, "task", "define", created.data.id, "--from", missing, "--json"], { cwd: repository, encoding: "utf8" });
     expect(result.status).not.toBe(0);
-    expect(result.stdout).toContain(`Contract definition was not found: ${resolve(missing)}`);
+    expect(result.stdout).toContain(`Task definition was not found: ${resolve(missing)}`);
     expect(existsSync(created.data.path)).toBe(true);
     expect(readFileSync(created.data.path, "utf8")).toContain("status: backlog");
   });
@@ -285,16 +285,16 @@ None.
     writeFileSync(join(repository, "README.md"), "fixture\n");
     run(repository, ["init"]);
     retainLegacySignGate(repository);
-    const created = run(repository, ["contract", "new", "--title", "Flexible approval", "--type", "feature"]) as { data: { id: string; path: string } };
+    const created = run(repository, ["task", "new", "--title", "Flexible approval", "--type", "feature"]) as { data: { id: string; path: string } };
     writeFileSync(created.data.path, readFileSync(created.data.path, "utf8")
       .replace("Describe the observable outcome.", "Approval is not punctuation-sensitive.")
-      .replace("- Define an observable condition.", "- The valid contract is signed.")
+      .replace("- Define an observable condition.", "- The valid task is signed.")
       .replace("- Explain how acceptance will be checked.", "- Run this test.")
       .replace("## Open decisions\n\nNone.", "## Open decisions\n\nNone"));
-    expect(run(repository, ["contract", "sign", created.data.id, "--approve"])).toMatchObject({ ok: true, data: { id: created.data.id } });
+    expect(run(repository, ["task", "sign", created.data.id, "--approve"])).toMatchObject({ ok: true, data: { id: created.data.id } });
   });
 
-  test("moves a valid profiled contract to defined and starts it in an isolated worktree", () => {
+  test("moves a valid profiled task to defined and starts it in an isolated worktree", () => {
     const repository = mkdtempSync(join(tmpdir(), "kotta-flow-"));
     git(repository, "init", "-b", "main");
     git(repository, "config", "user.name", "Kotta Test");
@@ -307,29 +307,29 @@ None.
     retainLegacySignGate(repository);
     git(repository, "add", ".gitattributes", ".gitignore");
     git(repository, "commit", "-m", "initialize Kotta metadata");
-    const created = run(repository, ["contract", "new", "--title", "Ship export", "--type", "feature", "--profile", "workflow"]) as { data: { id: string; path: string } };
+    const created = run(repository, ["task", "new", "--title", "Ship export", "--type", "feature", "--profile", "workflow"]) as { data: { id: string; path: string } };
     const id = created.data.id;
-    expect(created).toMatchObject({ ok: true, command: "contract new" });
+    expect(created).toMatchObject({ ok: true, command: "task new" });
     expect(id).toMatch(/^T-[0-9a-hjkmnp-tv-z]{26}$/);
 
-    const contract = created.data.path;
-    writeFileSync(contract, readFileSync(contract, "utf8").replace(
+    const task = created.data.path;
+    writeFileSync(task, readFileSync(task, "utf8").replace(
       "Describe the observable outcome.",
       "Users can export filtered courses.\n\n## Actors\n\nCourse administrator.\n\n## Initial state\n\nA filtered course list is visible.\n\n## States\n\nReady and exported.\n\n## Transitions\n\nReady to exported.\n\n## Triggers\n\nExport action.\n\n## Permissions\n\nCourse export permission.\n\n## Error paths\n\nAn actionable error is shown.\n\n## Cancellation path\n\nCancellation leaves the list unchanged.\n\n## Retry and duplicate-action behaviour\n\nRetry is safe and duplicate actions are ignored.\n\n## Audit and notification expectations\n\nThe export is audited; no notification is sent.",
     ).replace("- Define an observable condition.", "- A filtered export file is produced.")
       .replace("- Explain how acceptance will be checked.", "- Run the export integration test."));
 
     rmSync(join(repository, ".kotta/process/defined"), { recursive: true });
-    expect(run(repository, ["contract", "sign", id, "--approve"])).toMatchObject({ ok: true, command: "contract sign" });
-    expect(existsSync(join(repository, ".kotta/process/defined", basename(contract)))).toBe(true);
+    expect(run(repository, ["task", "sign", id, "--approve"])).toMatchObject({ ok: true, command: "task sign" });
+    expect(existsSync(join(repository, ".kotta/process/defined", basename(task)))).toBe(true);
 
-    const started = run(repository, ["contract", "start", id, "--agent", "codex"]);
-    expect(started).toMatchObject({ ok: true, command: "contract start", data: { branch: `feat/${id}-ship-export` } });
+    const started = run(repository, ["task", "start", id, "--agent", "codex"]);
+    expect(started).toMatchObject({ ok: true, command: "task start", data: { branch: `feat/${id}-ship-export` } });
     const worktree = join(repository, ".worktrees", id);
-    expect(existsSync(join(repository, ".kotta/process/active", basename(contract)))).toBe(true);
-    expect(existsSync(join(worktree, ".kotta/process/active", basename(contract)))).toBe(false);
+    expect(existsSync(join(repository, ".kotta/process/active", basename(task)))).toBe(true);
+    expect(existsSync(join(worktree, ".kotta/process/active", basename(task)))).toBe(false);
     expect(readFileSync(join(repository, ".kotta/process/claims", `${id}.yaml`), "utf8")).toContain("agent: codex");
-    expect(run(worktree, ["status"])).toMatchObject({ ok: true, data: { activeContracts: [id] } });
-    expect(run(repository, ["claim", "list"])).toMatchObject({ ok: true, data: { claims: [{ contract: id, agent: "codex" }] } });
+    expect(run(worktree, ["status"])).toMatchObject({ ok: true, data: { activeTasks: [id] } });
+    expect(run(repository, ["claim", "list"])).toMatchObject({ ok: true, data: { claims: [{ task: id, agent: "codex" }] } });
   });
 });

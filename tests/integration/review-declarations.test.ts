@@ -23,27 +23,27 @@ const setup = () => {
   run(root, ["init"]);
   retainLegacySignGate(root);
   git(root, "add", ".gitattributes", ".gitignore"); git(root, "commit", "-m", "initialize Kotta metadata");
-  const created = (run(root, ["contract", "new", "--title", "Document flow", "--type", "documentation"]) as { data: { id: string; path: string } }).data;
+  const created = (run(root, ["task", "new", "--title", "Document flow", "--type", "documentation"]) as { data: { id: string; path: string } }).data;
   const id = created.id;
   const path = created.path;
   writeFileSync(path, readFileSync(path, "utf8").replace("Describe the observable outcome.", "The flow is documented.").replace("- Define an observable condition.", "- Documentation describes the flow.").replace("- Explain how acceptance will be checked.", "- Read the rendered documentation."));
-  run(root, ["contract", "sign", id, "--approve"]);
-  run(root, ["contract", "start", id, "--agent", "codex"]);
+  run(root, ["task", "sign", id, "--approve"]);
+  run(root, ["task", "start", id, "--agent", "codex"]);
   const worktree = join(root, ".worktrees", id);
   writeFileSync(join(worktree, "flow.md"), "# Flow\n");
   git(worktree, "add", "."); git(worktree, "commit", "-m", "docs: document flow");
   return { root, worktree, id, filename: basename(path) };
 };
 
-const reviewedContract = (root: string, filename: string) => readFileSync(join(root, ".kotta/process/review", filename), "utf8");
+const reviewedTask = (root: string, filename: string) => readFileSync(join(root, ".kotta/process/review", filename), "utf8");
 const reviewEvidenceBlock = (content: string) => content.slice(content.indexOf("## Review evidence"));
 
 describe("review declarations", () => {
   test("writes caller-declared deviations, observations, and concerns verbatim", () => {
     const { root, worktree, id, filename } = setup();
-    run(worktree, ["contract", "review", id, "--evidence", "flow.md inspected", "--deviations", "Skipped the diagram; contract allowed text only.", "--observations-created", "F-101", "--known-concerns", "Rendering untested on Windows."]);
-    const content = reviewEvidenceBlock(reviewedContract(root, filename));
-    expect(content).toContain("### Deviations\n\nSkipped the diagram; contract allowed text only.\n");
+    run(worktree, ["task", "review", id, "--evidence", "flow.md inspected", "--deviations", "Skipped the diagram; task allowed text only.", "--observations-created", "F-101", "--known-concerns", "Rendering untested on Windows."]);
+    const content = reviewEvidenceBlock(reviewedTask(root, filename));
+    expect(content).toContain("### Deviations\n\nSkipped the diagram; task allowed text only.\n");
     expect(content).toContain("### Observations created\n\nF-101\n");
     expect(content).toContain("### Known concerns\n\nRendering untested on Windows.\n");
     expect(content).not.toContain("Not declared.");
@@ -51,8 +51,8 @@ describe("review declarations", () => {
 
   test("records 'Not declared.' — never 'None.' — when the caller stays silent", () => {
     const { root, worktree, id, filename } = setup();
-    run(worktree, ["contract", "review", id, "--evidence", "flow.md inspected"]);
-    const content = reviewEvidenceBlock(reviewedContract(root, filename));
+    run(worktree, ["task", "review", id, "--evidence", "flow.md inspected"]);
+    const content = reviewEvidenceBlock(reviewedTask(root, filename));
     expect(content).toContain("### Deviations\n\nNot declared.\n");
     expect(content).toContain("### Observations created\n\nNot declared.\n");
     expect(content).toContain("### Known concerns\n\nNot declared.\n");
@@ -61,8 +61,8 @@ describe("review declarations", () => {
 
   test("writes 'None.' only when explicitly declared", () => {
     const { root, worktree, id, filename } = setup();
-    run(worktree, ["contract", "review", id, "--evidence", "flow.md inspected", "--deviations", "None."]);
-    const content = reviewEvidenceBlock(reviewedContract(root, filename));
+    run(worktree, ["task", "review", id, "--evidence", "flow.md inspected", "--deviations", "None."]);
+    const content = reviewEvidenceBlock(reviewedTask(root, filename));
     expect(content).toContain("### Deviations\n\nNone.\n");
     expect(content).toContain("### Observations created\n\nNot declared.\n");
   });

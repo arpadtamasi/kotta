@@ -62,7 +62,7 @@ const occupy = (port: number) => new Promise<Server | null>((done) => {
 });
 
 describe("kotta ui port selection through the CLI", () => {
-  test("documents the fallback contract in help", () => {
+  test("documents the fallback task in help", () => {
     const help = execFileSync("node", [cli, "ui", "--help"], { encoding: "utf8" }).replace(/\s+/g, " ");
     expect(help).toContain("omitted starts at 4311 and advances to the next free port");
     expect(help).not.toContain("--port <port> Local port (default:");
