@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq31gx2wpe2jzaebskv4c0
 title: kotta validate reads the spec graph
-status: backlog
+status: defined
 origin: human
 types:
   - feature
