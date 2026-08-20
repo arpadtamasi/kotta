@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq323xrdk0ytawtfpam55r
 title: 'A task is revisable until execution: define amends backlog and defined'
-status: backlog
+status: defined
 origin: human
 types:
   - feature

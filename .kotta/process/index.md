@@ -12,6 +12,7 @@ None.
 
 ## Defined contracts
 
+- a-task-is-revisable-until-execution-define-amends-backlog-an-tfpam55r
 - an-observation-can-amend-the-spec-the-amend-spec-disposition-43bwk94f
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
 - every-approval-leaves-a-receipt-approved-by-approved-at-appr-6vs5h0w6
