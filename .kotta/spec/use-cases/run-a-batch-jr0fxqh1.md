@@ -10,11 +10,11 @@ goal:
 
 ## Intent
 
-Coordinate related contracts as one dependency-aware run without weakening any per-contract gate.
+Coordinate related tasks as one dependency-aware run without weakening any per-task gate.
 
 ## Preconditions
 
-A validated, signed leaf batch of defined contracts; the control checkout on the base branch.
+A validated, signed leaf batch of defined tasks; the control checkout on the base branch.
 
 ## Main success scenario
 
@@ -22,4 +22,4 @@ Batch start creates the coordinator branch coord/<id> in its own worktree, recor
 
 ## Alternatives
 
-A dependency in review releases the next wave only when Git proves its branch is already in the coordinator. A parent batch never starts: its status reports every contract underneath in dependency order, and the calling-chat agent works that flattened list, leaf by leaf. Stop-on-failure halts wave release. A dirty worktree, active claim, held branch, or diverged base stops finalize with an explanation and changes nothing.
+A dependency in review releases the next wave only when Git proves its branch is already in the coordinator. A parent batch never starts: its status reports every task underneath in dependency order, and the calling-chat agent works that flattened list, leaf by leaf. Stop-on-failure halts wave release. A dirty worktree, active claim, held branch, or diverged base stops finalize with an explanation and changes nothing.

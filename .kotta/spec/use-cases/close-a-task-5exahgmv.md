@@ -1,7 +1,7 @@
 ---
 id: UC-01m0f0wn89vwta48p95exahgmv
 form: use-case
-title: "Close a finished contract"
+title: "Close a finished task"
 actor:
   - A-01m0f0wn89ewnpex9n4tq0s0rg
 goal:
@@ -18,7 +18,7 @@ Accepted review, the feature branch integrated into the base branch, acceptance 
 
 ## Main success scenario
 
-The operator says yes to closing, named by title. Close verifies the gate conditions, marks the contract done with resolution completed, releases the claim, removes the execution worktree, and deletes the merged feature branch - safe to delete precisely because the merge is proven. Only cancel preserves a branch, because a cancelled branch was never merged.
+The operator says yes to closing, named by title. Close verifies the gate conditions, marks the task done with resolution completed, releases the claim, removes the execution worktree, and deletes the merged feature branch - safe to delete precisely because the merge is proven. Only cancel preserves a branch, because a cancelled branch was never merged.
 
 ## Alternatives
 

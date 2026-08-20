@@ -6,11 +6,11 @@ title: "Brief"
 
 ## Definition
 
-The deterministic execution package of one contract: its body, the decisions it references, its profiles, and its claim - with an approximate token count.
+The deterministic execution package of one task: its body, the decisions it references, its profiles, and its claim - with an approximate token count.
 
 ## Usage
 
-The fresh executor works from the brief plus the code in the worktree, and from nothing else. An overweight brief is a contract-quality signal, not a runtime inconvenience.
+The fresh executor works from the brief plus the code in the worktree, and from nothing else. An overweight brief is a task-quality signal, not a runtime inconvenience.
 
 ## Non-examples
 

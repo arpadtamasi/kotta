@@ -18,8 +18,8 @@ Something noticed during execution, review, or use: a possible bug, debt, risk, 
 
 ## Main success scenario
 
-The agent records the observation with its title, type, and concrete evidence, and continues its contract inside the approved scope. The observation enters the new queue for later triage.
+The agent records the observation with its title, type, and concrete evidence, and continues its task inside the approved scope. The observation enters the new queue for later triage.
 
 ## Alternatives
 
-The discovery blocks the contract itself: the agent stops and reports the gap rather than improvising scope. External reports (a GitHub issue, user feedback) enter the same way - captured as evidence, never as scheduled work.
+The discovery blocks the task itself: the agent stops and reports the gap rather than improvising scope. External reports (a GitHub issue, user feedback) enter the same way - captured as evidence, never as scheduled work.

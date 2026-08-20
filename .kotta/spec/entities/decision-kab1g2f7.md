@@ -21,4 +21,4 @@ id, title, date; body sections Decision, Context, Consequences.
 
 ## Invariants
 
-Created only with explicit human approval. Never overwritten - a change of mind is a new decision that names what it supersedes. Referenced decisions travel into contract briefs.
+Created only with explicit human approval. Never overwritten - a change of mind is a new decision that names what it supersedes. Referenced decisions travel into task briefs.

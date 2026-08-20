@@ -10,7 +10,7 @@ goal:
 
 ## Intent
 
-Capture knowledge about the software as specification nodes in registered forms - grounding future decisions and contracts - without the contract lifecycle.
+Capture knowledge about the software as specification nodes in registered forms - carrying the agreement future tasks execute - without the task lifecycle.
 
 ## Preconditions
 
@@ -18,8 +18,8 @@ A workspace with the form registry installed. A conversation exploring goals, ac
 
 ## Main success scenario
 
-A workshop recognizes the forms present in the conversation, drafts nodes under the spec namespace with minted ids and frontmatter edges, and reports what remains dangling. Traceability asks exactly the registered question for each unanswered required edge; explicitly accepted gaps stay silent with their reason.
+A workshop recognizes the forms present in the conversation, drafts nodes under the spec namespace with minted ids and frontmatter edges, and reports what remains dangling. Traceability asks exactly the registered question for each unanswered required edge; explicitly accepted gaps stay silent with their reason. Landing the shaped nodes on the base branch, on a human yes, is the acceptance of the changed agreement.
 
 ## Alternatives
 
-Shaping that turns into product or deliverable execution stops at that boundary and enters the contract lifecycle - the spec written so far legitimately remains. A specification requested as the accepted deliverable itself is contract-gated like any other promise. References point one way only: a spec node has no field that could name a contract.
+Shaping that turns into product or deliverable execution stops at that boundary and enters the task lifecycle - the spec written so far legitimately remains. References point one way only: a spec node has no field that could name a task.

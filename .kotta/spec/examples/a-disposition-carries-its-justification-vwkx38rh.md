@@ -8,7 +8,7 @@ subjects:
 
 ## Given
 
-A validated observation - investigated, deduplicated, with a proposed disposition of create-contract and its reasoning.
+A validated observation - investigated, deduplicated, with a proposed disposition of create-task and its reasoning.
 
 ## When
 
@@ -16,4 +16,4 @@ The operator says yes, and the agent applies resolve with the disposition and ap
 
 ## Then
 
-The observation is resolved with the justification recorded; the follow-up work enters the backlog through the define gate rather than appearing as an already-defined contract.
+The observation is resolved with the justification recorded; the follow-up work enters the backlog through the define gate rather than appearing as an already-defined task.

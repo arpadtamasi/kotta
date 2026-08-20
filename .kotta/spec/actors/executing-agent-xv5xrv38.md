@@ -6,11 +6,11 @@ title: "Executing agent"
 
 ## Role
 
-A coding agent launched into one claimed contract, in an isolated branch and worktree, with the brief as its only input.
+A coding agent launched into one claimed task, in an isolated branch and worktree, with the brief as its only input.
 
 ## Goals
 
-Complete the contract - implement, verify acceptance conditions, and produce evidence - inside the approved scope.
+Complete the task - implement, verify acceptance conditions, and produce evidence - inside the approved scope.
 
 ## Responsibilities
 

@@ -16,4 +16,4 @@ new (captured with evidence, undispositioned) - resolved (dispositioned, with ju
 
 ## Transitions
 
-new -> resolved: validate (investigation, deduplication) followed by a human-approved resolve carrying one disposition: create-contract, attach-to-existing-contract, investigate, accept-risk, reject, or merge-duplicate (gate). Nothing moves an observation into work by itself; create-contract feeds the contract lifecycle at backlog.
+new -> resolved: validate (investigation, deduplication) followed by a human-approved resolve carrying one disposition: amend-spec, create-task, attach-to-existing-task, investigate, accept-risk, reject, or merge-duplicate (gate, receipt recorded). Nothing moves an observation into work by itself. amend-spec changes the accepted agreement - the amended spec lands on the base branch and the landed delta yields the tasks; create-task feeds the task lifecycle at backlog.

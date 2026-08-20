@@ -9,7 +9,7 @@ subjects:
 
 ## Given
 
-A signed contract with no claim, in a clean repository with the control checkout on the base branch.
+A signed task with no claim, in a clean repository with the control checkout on the base branch.
 
 ## When
 
@@ -17,4 +17,4 @@ The operator's agent runs execute with the chosen agent.
 
 ## Then
 
-Exactly one claim, one feature branch, and one worktree exist for the contract; the brief's token count, the agent, the branch, and the worktree are reported; the launched agent receives the brief as its only input. A second plain execute is refused while the claim exists - resume is the way back in.
+Exactly one claim, one feature branch, and one worktree exist for the task; the brief's token count, the agent, the branch, and the worktree are reported; the launched agent receives the brief as its only input. A second plain execute is refused while the claim exists - resume is the way back in.

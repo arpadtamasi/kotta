@@ -1,7 +1,7 @@
 ---
 id: IF-01m0f0wn89efd2ss83c4csk7qx
 form: interface
-title: "The agent launch contract"
+title: "The agent launch task"
 ---
 
 ## Purpose
@@ -10,7 +10,7 @@ The boundary between execute and the coding agent it launches: what the agent re
 
 ## Preconditions
 
-A defined, signed contract; a clean repository; the agent command resolved from the agent argument or the environment override (which is how tests drive a deterministic double).
+A defined, signed task; a clean repository; the agent command resolved from the agent argument or the environment override (which is how tests drive a deterministic double).
 
 ## Postconditions
 

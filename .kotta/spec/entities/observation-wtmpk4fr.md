@@ -18,7 +18,7 @@ F- plus ULID (pre-rule sequential F- ids remain). Filename: slug plus short id s
 
 ## Attributes
 
-status (new/resolved), origin (human/agent), observation_type (bug, technical-debt, risk, improvement, inconsistency, duplication, security, performance, other), confidence, severity, discovered_during, disposition, related_contract, duplicate_of.
+status (new/resolved), origin (human/agent), observation_type (bug, technical-debt, risk, improvement, inconsistency, duplication, security, performance, other), confidence, severity, discovered_during, disposition, related_task, duplicate_of.
 
 ## Invariants
 

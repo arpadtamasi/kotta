@@ -12,7 +12,7 @@ A human safely directs concurrent agent work larger than they can continuously w
 
 ## Context
 
-The product's success definition. Everything else - contracts, claims, gates, isolation, evidence - exists to make delegation safe rather than fast.
+The product's success definition. Everything else - tasks, claims, gates, isolation, evidence - exists to make delegation safe rather than fast.
 
 ## Baseline and target
 

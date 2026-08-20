@@ -8,7 +8,7 @@ subjects:
 
 ## Given
 
-A launched agent that exits 0 and prints a confident summary of work, while the contract branch tip and porcelain status are unchanged since the captured baseline.
+A launched agent that exits 0 and prints a confident summary of work, while the task branch tip and porcelain status are unchanged since the captured baseline.
 
 ## When
 

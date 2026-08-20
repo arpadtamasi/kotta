@@ -16,4 +16,4 @@ The board is stopped and started again.
 
 ## Then
 
-The same read-only contract timeline is reconstructed from the stored events - nothing lived only in a process's memory, and what the operator sees is derived from the repository alone.
+The same read-only task timeline is reconstructed from the stored events - nothing lived only in a process's memory, and what the operator sees is derived from the repository alone.

@@ -6,7 +6,7 @@ title: "The read-only board"
 
 ## Purpose
 
-A local web projection of canonical state and history - contracts, observations, batches, runs, and per-contract timelines - for the human's eyes.
+A local web projection of canonical state and history - tasks, observations, batches, runs, and per-task timelines - for the human's eyes.
 
 ## Preconditions
 

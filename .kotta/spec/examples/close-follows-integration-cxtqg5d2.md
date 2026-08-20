@@ -8,7 +8,7 @@ subjects:
 
 ## Given
 
-A reviewed contract whose feature branch is merged into the base branch, with acceptance verified.
+A reviewed task whose feature branch is merged into the base branch, with acceptance verified.
 
 ## When
 
@@ -16,4 +16,4 @@ The operator says yes to closing it, and the agent applies close with approval.
 
 ## Then
 
-The contract is done with resolution completed; the claim is released, the worktree removed, and the merged branch deleted. The same close attempted before the merge is refused naming the integration requirement.
+The task is done with resolution completed; the claim is released, the worktree removed, and the merged branch deleted. The same close attempted before the merge is refused naming the integration requirement.

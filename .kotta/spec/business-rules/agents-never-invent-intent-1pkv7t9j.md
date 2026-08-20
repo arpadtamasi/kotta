@@ -10,7 +10,7 @@ Product intent and accepted trade-offs come from the human. An agent that hits a
 
 ## Rationale
 
-The contract corpus is the asset, and it is only trustworthy if every judgement in it was actually made by the party with authority to make it.
+The task corpus is the asset, and it is only trustworthy if every judgement in it was actually made by the party with authority to make it.
 
 ## Scope
 

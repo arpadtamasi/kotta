@@ -10,7 +10,7 @@ A new user with Node.js 20+, Git, and a supported agent host already installed.
 
 ## Stimulus
 
-Following the documented path from package install through workspace init to the first defined contract.
+Following the documented path from package install through workspace init to the first defined task.
 
 ## Environment
 

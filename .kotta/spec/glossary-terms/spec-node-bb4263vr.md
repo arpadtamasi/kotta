@@ -10,8 +10,8 @@ One Markdown file in a registered form under .kotta/spec/ - a goal, actor, use c
 
 ## Usage
 
-Project-owned and directly editable; shaped in workshops, checked by traceability against the form registry. Contracts may reference spec nodes; a spec node never references a contract.
+Project-owned and directly editable; shaped in workshops, checked by traceability against the form registry. Tasks may reference spec nodes; a spec node never references a task.
 
 ## Non-examples
 
-Lifecycle state (contracts, claims, events - service-owned). A contract. A free-form design document outside the registry.
+Lifecycle state (tasks, claims, events - service-owned). A task. A free-form design document outside the registry.

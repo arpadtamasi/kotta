@@ -6,7 +6,7 @@ title: "The workspace file format"
 
 ## Purpose
 
-The durable on-disk contract everything else derives from: entities as Markdown with YAML frontmatter, claims and config as YAML, events as schema-validated JSON, under the spec and process namespaces of .kotta/.
+The durable on-disk task everything else derives from: entities as Markdown with YAML frontmatter, claims and config as YAML, events as schema-validated JSON, under the spec and process namespaces of .kotta/.
 
 ## Preconditions
 
@@ -14,7 +14,7 @@ A Git repository; the layout created by init or brought current by migrate.
 
 ## Postconditions
 
-One entity, one file; lifecycle state expressed as directory plus status field, kept consistent. Published schemas define contracts, observations, batches, claims, events, and config.
+One entity, one file; lifecycle state expressed as directory plus status field, kept consistent. Published schemas define tasks, observations, batches, claims, events, and config.
 
 ## Invariants
 

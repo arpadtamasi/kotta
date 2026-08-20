@@ -8,7 +8,7 @@ subjects:
 
 ## Given
 
-A control checkout standing on the configured base branch, and a signed contract to execute.
+A control checkout standing on the configured base branch, and a signed task to execute.
 
 ## When
 

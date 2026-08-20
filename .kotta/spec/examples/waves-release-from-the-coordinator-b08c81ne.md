@@ -8,7 +8,7 @@ subjects:
 
 ## Given
 
-A dependency-aware batch where contract B depends on contract A, started on its coordinator branch.
+A dependency-aware batch where task B depends on task A, started on its coordinator branch.
 
 ## When
 

@@ -16,4 +16,4 @@ Agents plausibly narrate work they did not do. The record must be stronger than 
 
 ## Baseline and target
 
-Baseline: "the agent reported success". Target: every completed contract has verifiable evidence per acceptance condition, and a run that changed nothing is recorded as no-change regardless of its exit code or story.
+Baseline: "the agent reported success". Target: every completed task has verifiable evidence per acceptance condition, and a run that changed nothing is recorded as no-change regardless of its exit code or story.

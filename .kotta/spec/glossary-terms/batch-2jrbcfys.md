@@ -6,11 +6,11 @@ title: "Batch"
 
 ## Definition
 
-A cause-based group of contracts (or of other batches) that should be solved together - a module, a cleanup, a rename.
+A cause-based group of tasks (or of other batches) that should be solved together - a module, a cleanup, a rename.
 
 ## Usage
 
-Use to coordinate related contracts with sequential, parallel, or dependency-aware execution on a coordinator branch. A parent batch groups; only leaf batches execute.
+Use to coordinate related tasks with sequential, parallel, or dependency-aware execution on a coordinator branch. A parent batch groups; only leaf batches execute.
 
 ## Non-examples
 

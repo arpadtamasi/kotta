@@ -8,7 +8,7 @@ subjects:
 
 ## Given
 
-A contract definition blocked by a real trade-off only the operator can make.
+A task definition blocked by a real trade-off only the operator can make.
 
 ## When
 
@@ -16,4 +16,4 @@ The agent asks in conversation; the answer is durable; the agent records it as a
 
 ## Then
 
-The decision exists under its own permanent id, the contract references it, Open decisions can truthfully say none remain, and the brief carries the decision to whichever agent executes.
+The decision exists under its own permanent id, the task references it, Open decisions can truthfully say none remain, and the brief carries the decision to whichever agent executes.

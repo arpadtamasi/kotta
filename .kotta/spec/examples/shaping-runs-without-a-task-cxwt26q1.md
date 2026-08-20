@@ -1,7 +1,7 @@
 ---
 id: EX-01m0f0wn8aawmce6hgcxwt26q1
 form: example
-title: "Shaping runs without a contract"
+title: "Shaping runs without a task"
 subjects:
   - UC-01m0f0wn89ny7vx515ke3ksnra
 ---
@@ -16,4 +16,4 @@ A workshop drafts the corresponding specification nodes under the spec namespace
 
 ## Then
 
-The nodes exist with no contract, claim, branch, or worktree involved; the only questions asked are the registered ones for genuinely unanswered required edges. The moment the conversation asks for a product change, the agent stops at that boundary and enters the contract lifecycle - the spec written so far stays.
+The nodes exist with no task, claim, branch, or worktree involved; the only questions asked are the registered ones for genuinely unanswered required edges. The moment the conversation asks for a product change, the agent stops at that boundary and enters the task lifecycle - the spec written so far stays.

@@ -9,11 +9,11 @@ used_by:
 
 ## Meaning
 
-The append-only account of one execution run of a contract: what was launched, against which baseline, and what the repository shows it did.
+The append-only account of one execution run of a task: what was launched, against which baseline, and what the repository shows it did.
 
 ## Identity
 
-One event per run appended to the contract's event stream; a resume appends a new record instead of rewriting the previous one.
+One event per run appended to the task's event stream; a resume appends a new record instead of rewriting the previous one.
 
 ## Attributes
 

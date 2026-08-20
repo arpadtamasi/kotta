@@ -6,7 +6,7 @@ title: "The kotta CLI"
 
 ## Purpose
 
-The complete, scriptable operation surface and the human-operated recovery path: init, migrate, validate, status, the contract/observation/batch/decision/claim command families, sync, integrate, mcp, and ui. Every command supports JSON output.
+The complete, scriptable operation surface and the human-operated recovery path: init, migrate, validate, status, the task/observation/batch/decision/claim command families, sync, integrate, mcp, and ui. Every command supports JSON output.
 
 ## Preconditions
 
@@ -18,7 +18,7 @@ Mutations are validated before writing and committed to canonical state. Every e
 
 ## Invariants
 
-The id the CLI prints is the id the CLI accepts - short forms resolve on every command. Reads write nothing. A validation failure never produces a defined contract. The pre-rename binary name remains an alias of the same entrypoint.
+The id the CLI prints is the id the CLI accepts - short forms resolve on every command. Reads write nothing. A validation failure never produces a defined task. The pre-rename binary name remains an alias of the same entrypoint.
 
 ## Failures
 

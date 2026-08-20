@@ -18,7 +18,7 @@ The executing agent holds the claim; the execution worktree is clean (everything
 
 ## Main success scenario
 
-The agent maps each acceptance condition to concrete, reproducible evidence - test output, artifacts, measurements - names any deviations, records the pull request reference, and submits. The contract moves to review.
+The agent maps each acceptance condition to concrete, reproducible evidence - test output, artifacts, measurements - names any deviations, records the pull request reference, and submits. The task moves to review.
 
 ## Alternatives
 

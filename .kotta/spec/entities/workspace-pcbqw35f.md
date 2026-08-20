@@ -19,7 +19,7 @@ One per repository, discovered by name (.kotta/ first, the pre-rename directory 
 
 ## Attributes
 
-Bootstrap files (AGENTS.md, README.md, config.yaml, generation metadata); spec/ - the project-owned specification layer with the form registry and node directories; process/ - the service-owned lifecycle layer with contracts by state, observations, batches, profiles, claims, events, decisions, and the generated index.
+Bootstrap files (AGENTS.md, README.md, config.yaml, generation metadata); spec/ - the project-owned specification layer with the form registry and node directories; process/ - the service-owned lifecycle layer with tasks by state, observations, batches, profiles, claims, events, decisions, and the generated index.
 
 ## Invariants
 

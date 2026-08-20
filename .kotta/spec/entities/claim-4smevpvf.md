@@ -9,16 +9,16 @@ used_by:
 
 ## Meaning
 
-The live link between an active contract and its execution: who runs it, on which branch, in which worktree, and whether Kotta created that isolation or adopted the environment's.
+The live link between an active task and its execution: who runs it, on which branch, in which worktree, and whether Kotta created that isolation or adopted the environment's.
 
 ## Identity
 
-One YAML file per active contract under the process namespace, keyed by the contract id.
+One YAML file per active task under the process namespace, keyed by the task id.
 
 ## Attributes
 
-contract, agent, branch, worktree, execution_mode (fresh/inherited), origin (created/adopted), start ref and start commit, started_at, session id.
+task, agent, branch, worktree, execution_mode (fresh/inherited), origin (created/adopted), start ref and start commit, started_at, session id.
 
 ## Invariants
 
-At most one claim per contract. The claim's branch is never a protected branch. Review, close, and cancel read the claim - so it must record the truth about what was created versus adopted, because only created resources may be cleaned up.
+At most one claim per task. The claim's branch is never a protected branch. Review, close, and cancel read the claim - so it must record the truth about what was created versus adopted, because only created resources may be cleaned up.

@@ -6,7 +6,7 @@ title: "Batch nesting is grouping only"
 
 ## Rule
 
-A parent batch is a name its children roll up into: it has no coordinator branch, no execution block, no merge target, and batch start never runs it. A batch has at most one parent, cycles are forbidden, and contracts belong to leaf batches only.
+A parent batch is a name its children roll up into: it has no coordinator branch, no execution block, no merge target, and batch start never runs it. A batch has at most one parent, cycles are forbidden, and tasks belong to leaf batches only.
 
 ## Rationale
 
@@ -14,4 +14,4 @@ Carrying out "the whole big thing" is a conversational request over a readable t
 
 ## Scope
 
-Batch structure and every reader: parent status flattens the subtree into dependency order so an agent can work it contract by contract, each through its own gates.
+Batch structure and every reader: parent status flattens the subtree into dependency order so an agent can work it task by task, each through its own gates.

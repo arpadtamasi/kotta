@@ -8,7 +8,7 @@ subjects:
 
 ## Given
 
-An implemented contract with three acceptance conditions and a green full check set.
+An implemented task with three acceptance conditions and a green full check set.
 
 ## When
 
@@ -16,4 +16,4 @@ The executing agent submits for review with the verification evidence and the pu
 
 ## Then
 
-The contract moves to review carrying a Review evidence table over its acceptance conditions and profile checks, the verification account, and the declared deviations, observations, and known concerns - each reading "Not declared." when nothing was stated. An unclean execution worktree is refused.
+The task moves to review carrying a Review evidence table over its acceptance conditions and profile checks, the verification account, and the declared deviations, observations, and known concerns - each reading "Not declared." when nothing was stated. An unclean execution worktree is refused.

@@ -8,7 +8,7 @@ subjects:
 
 ## Given
 
-An active contract made objectless by a newer decision that chose a different approach.
+An active task made objectless by a newer decision that chose a different approach.
 
 ## When
 
@@ -16,4 +16,4 @@ The operator says yes to cancelling it, and the agent applies cancel with resolu
 
 ## Then
 
-The contract is terminal with the record saying what replaced it, not only that it ended; the claim is released, the worktree removed, and the never-merged branch kept.
+The task is terminal with the record saying what replaced it, not only that it ended; the claim is released, the worktree removed, and the never-merged branch kept.

@@ -14,4 +14,4 @@ Anything noticed outside the current scope becomes an observation instead of a s
 
 ## Non-examples
 
-Scheduled work. A contract. A to-do list item that is acted on without a disposition.
+Scheduled work. A task. A to-do list item that is acted on without a disposition.

@@ -8,7 +8,7 @@ subjects:
 
 ## Given
 
-A contract whose assembled brief is far above the default 12,000-token threshold.
+A task whose assembled brief is far above the default 12,000-token threshold.
 
 ## When
 
@@ -16,4 +16,4 @@ The brief is assembled.
 
 ## Then
 
-The deterministic content is produced with its approximate token count and a warning that the contract is probably too large or under-referenced - a prompt to split or reference, never to widen the executor's context.
+The deterministic content is produced with its approximate token count and a warning that the task is probably too large or under-referenced - a prompt to split or reference, never to widen the executor's context.

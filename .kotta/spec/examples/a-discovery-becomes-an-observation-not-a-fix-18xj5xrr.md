@@ -9,12 +9,12 @@ subjects:
 
 ## Given
 
-An executing agent, mid-contract, noticing divergent permission checks in two files outside its scope.
+An executing agent, mid-task, noticing divergent permission checks in two files outside its scope.
 
 ## When
 
-The agent records an observation with the evidence and continues its contract in scope.
+The agent records an observation with the evidence and continues its task in scope.
 
 ## Then
 
-The observation waits in new; the contract's diff contains no out-of-scope change; nothing is scheduled until a human disposition.
+The observation waits in new; the task's diff contains no out-of-scope change; nothing is scheduled until a human disposition.

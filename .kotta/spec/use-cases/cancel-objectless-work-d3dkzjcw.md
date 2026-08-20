@@ -14,12 +14,12 @@ Retire work whose purpose is gone - superseded, duplicated, or abandoned - so th
 
 ## Preconditions
 
-A contract in any state before done whose purpose no longer holds (often because a decision made it objectless).
+A task in any state before done whose purpose no longer holds (often because a decision made it objectless).
 
 ## Main success scenario
 
-The operator says yes to cancelling, named by title. Cancel records the resolution and the reason - duplicate and obsolete also name the contract or decision that took the work's place - releases the claim, and removes the execution worktree. The branch is never deleted, because a cancelled branch was never merged.
+The operator says yes to cancelling, named by title. Cancel records the resolution and the reason - duplicate and obsolete also name the task or decision that took the work's place - releases the claim, and removes the execution worktree. The branch is never deleted, because a cancelled branch was never merged.
 
 ## Alternatives
 
-Closing objectless work as completed is a false record and is not done; neither is leaving it sitting in active. Cancel is the only exit for a contract a decision made objectless. A terminal contract returns through reopen, never through a second cancel; an unclean worktree refuses the cancellation; contracts that depended on the retired one are reported, never cascaded.
+Closing objectless work as completed is a false record and is not done; neither is leaving it sitting in active. Cancel is the only exit for a task a decision made objectless. A terminal task returns through reopen, never through a second cancel; an unclean worktree refuses the cancellation; tasks that depended on the retired one are reported, never cascaded.

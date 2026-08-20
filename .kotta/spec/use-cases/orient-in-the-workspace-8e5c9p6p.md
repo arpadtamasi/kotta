@@ -22,7 +22,7 @@ An initialized workspace; for the board, state committed to the base ref.
 
 ## Main success scenario
 
-Status reports defined, active, and review contracts, new observations, the discovered workspace path, the control-plane mode, and skill and agent-rules drift, so a stale install is visible. Validate confirms workspace consistency. List and show answer what exists and what one entity says, for every entity kind, with short ids that resolve everywhere. The board projects the same state and the event timeline read-only for the human.
+Status reports defined, active, and review tasks, new observations, the discovered workspace path, the control-plane mode, and skill and agent-rules drift, so a stale install is visible. Validate confirms workspace consistency. List and show answer what exists and what one entity says, for every entity kind, with short ids that resolve everywhere. The board projects the same state and the event timeline read-only for the human.
 
 ## Alternatives
 

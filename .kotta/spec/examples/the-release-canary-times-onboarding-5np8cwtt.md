@@ -12,7 +12,7 @@ A release candidate and a fresh environment with Node, Git, and the supported ho
 
 ## When
 
-The canary walks the documented path: install the package, sync the skills, init a repository, define the first contract.
+The canary walks the documented path: install the package, sync the skills, init a repository, define the first task.
 
 ## Then
 

@@ -9,7 +9,7 @@ used_by:
 
 ## Meaning
 
-A cause-based group of contracts - and possibly of child batches - coordinated as one run with an execution mode and bounded parallelism.
+A cause-based group of tasks - and possibly of child batches - coordinated as one run with an execution mode and bounded parallelism.
 
 ## Identity
 
@@ -17,8 +17,8 @@ P- plus ULID (pre-rule sequential P- ids remain). Filename: slug plus short id s
 
 ## Attributes
 
-status (backlog/defined/active/done), contracts, child batches, execution (mode: sequential/parallel/dependency-aware, parallelism, stop_on_failure), coordinator (branch, worktree, base branch and commit).
+status (backlog/defined/active/done), tasks, child batches, execution (mode: sequential/parallel/dependency-aware, parallelism, stop_on_failure), coordinator (branch, worktree, base branch and commit).
 
 ## Invariants
 
-A contract belongs to at most one batch, and that batch is a leaf. A batch has at most one parent and no cycles. A parent has no coordinator branch and no execution of its own. Completing the last member completes the batch.
+A task belongs to at most one batch, and that batch is a leaf. A batch has at most one parent and no cycles. A parent has no coordinator branch and no execution of its own. Completing the last member completes the batch.

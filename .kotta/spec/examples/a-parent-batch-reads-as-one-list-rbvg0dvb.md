@@ -16,4 +16,4 @@ Its status is read, and a start of the parent is attempted.
 
 ## Then
 
-Status reports every contract in the subtree in dependency order - the list an agent works leaf by leaf - while start refuses the parent: no coordinator branch, no execution of its own, every member contract still passing its own gates.
+Status reports every task in the subtree in dependency order - the list an agent works leaf by leaf - while start refuses the parent: no coordinator branch, no execution of its own, every member task still passing its own gates.

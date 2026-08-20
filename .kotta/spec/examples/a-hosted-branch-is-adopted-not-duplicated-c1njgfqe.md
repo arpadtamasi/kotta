@@ -12,7 +12,7 @@ A hosted agent session with a single checkout on a harness-named, non-protected 
 
 ## When
 
-Execution starts for a contract.
+Execution starts for a task.
 
 ## Then
 

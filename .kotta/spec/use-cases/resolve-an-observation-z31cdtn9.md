@@ -18,7 +18,7 @@ A validated observation: investigated, deduplicated, and with enough decision co
 
 ## Main success scenario
 
-The operator says yes to the proposed disposition, named by title. Resolve records the disposition with its justification and moves the observation to resolved. A create-contract disposition feeds the define path; it never mints a defined contract directly.
+The operator says yes to the proposed disposition, named by title. Resolve records the disposition with its justification and the approval receipt, and moves the observation to resolved. An amend-spec disposition changes the agreement: the amended spec nodes land on the base branch, and the landed delta yields the tasks. A create-task disposition feeds the define path; it never mints a defined task directly.
 
 ## Alternatives
 

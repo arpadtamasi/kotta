@@ -14,4 +14,4 @@ Turn conversation into validated lifecycle actions without making the human rela
 
 ## Responsibilities
 
-Orient from canonical state. Define and validate contracts. Put every gate to the human in plain language, by title. Coordinate batches without carrying implementation in its own context. Run specification workshops.
+Orient from canonical state. Define and validate tasks. Put every gate to the human in plain language, by title. Coordinate batches without carrying implementation in its own context. Run specification workshops.
