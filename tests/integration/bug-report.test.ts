@@ -87,8 +87,8 @@ describe("visual entry points", () => {
       expect(link).toContain("Report a bug");
       expect(link).toContain('rel="noreferrer noopener"');
     }
-    // Narrow widths hide the section links, never the reporting one.
-    expect(read("site/styles.css")).toContain(".site-header nav a:not(.nav-support) { display: none; }");
+    // Narrow widths hide ordinary navigation, then explicitly restore the reporting action.
+    expect(read("site/styles.css")).toMatch(/@media \(max-width: 680px\)[\s\S]*?nav a\s*{[^}]*display: none;[^}]*}[\s\S]*?\.site-header nav \.nav-support\s*{[^}]*display: block;/);
   });
 
   test("the local board links to the same issue form with an unambiguous accessible name", () => {
