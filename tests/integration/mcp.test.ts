@@ -253,6 +253,27 @@ describe("Kotta caller-chat MCP", () => {
     ]);
   });
 
+  test("amends an already-defined task through the MCP define tool", async () => {
+    const root = fixture();
+    const connected = await connect(root);
+    const id = await createAndDefine(connected.client, root);
+    await connected.client.callTool({ name: "approval_request", arguments: { entity: id, action: "contract.sign", payload: {} } });
+    expect(findContract(root, id).state).toBe("defined");
+
+    const amendedDefinition = definition(id)
+      .replace(`id: ${id}`, `id: ${id}\ntitle: Revised caller chat task`)
+      .replaceAll("Caller chat contract", "Revised caller chat task");
+    const amended = await connected.client.callTool({ name: "contract_define", arguments: { id, definition: amendedDefinition } });
+
+    expect(amended.isError).not.toBe(true);
+    const location = findContract(root, id);
+    expect(location.state).toBe("defined");
+    expect(location.filename).toBe(`revised-caller-chat-task-${id.slice(-8)}.md`);
+    expect(readFileSync(location.path, "utf8")).toContain("title: Revised caller chat task");
+    expect(readEvents(root, id).at(-1)).toMatchObject({ state: "defined", summary: "Contract definition amended before execution." });
+    expect(execFileSync("git", ["status", "--porcelain", "--", ".kotta"], { cwd: root, encoding: "utf8" })).toBe("");
+  });
+
   test("retires a signed contract from the caller chat, with the reason and the supersession in the prompt", async () => {
     const root = fixture();
     const connected = await connect(root);

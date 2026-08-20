@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { readEvents } from "../../src/core/events.js";
 
 const cli = resolve("dist/cli/index.js");
 
@@ -128,6 +129,100 @@ None.
     expect(run(repository, ["contract", "sign", first.data.id, "--approve"])).toMatchObject({ ok: true, command: "contract sign" });
     expect(execFileSync("git", ["status", "--porcelain", "--", ".kotta"], { cwd: repository, encoding: "utf8" })).toBe("");
     expect(execFileSync("git", ["log", "-1", "--format=%s"], { cwd: repository, encoding: "utf8" }).trim()).toBe(`chore(kotta): sign ${first.data.id}`);
+  });
+
+  test("amends a defined contract in place, including its title, filename and history", () => {
+    const repository = mkdtempSync(join(tmpdir(), "kotta-redefine-"));
+    git(repository, "init", "-b", "main");
+    git(repository, "config", "user.name", "Kotta Test");
+    git(repository, "config", "user.email", "test@example.com");
+    writeFileSync(join(repository, "README.md"), "fixture\n");
+    run(repository, ["init"]);
+    const created = run(repository, ["contract", "new", "--title", "Shpi the exporter", "--type", "feature"]) as { data: { id: string; path: string } };
+    run(repository, ["contract", "sign", created.data.id, "--approve"]);
+
+    const oldPath = join(repository, ".kotta/process/defined", basename(created.data.path));
+    writeFileSync(oldPath, readFileSync(oldPath, "utf8").replace(/updated_at: .+/, "updated_at: 2020-01-01"));
+    const history = readEvents(repository, created.data.id).map((event) => event.id);
+    const definition = join(repository, "amended-definition.md");
+    writeFileSync(definition, `---
+id: ${created.data.id}
+title: Ship the exporter
+priority: high
+---
+# ${created.data.id} — Ship the exporter
+
+## Outcome
+
+The corrected exporter is ready to ship.
+
+## Scope
+
+Correct the task before execution.
+
+## Non-goals
+
+No execution starts.
+
+## Acceptance
+
+- The title and body are corrected in place.
+
+## Verification
+
+- Exercise the define command against a defined task.
+
+## Constraints
+
+The identifier and prior history stay unchanged.
+
+## Open decisions
+
+None.
+
+## Execution notes
+
+None.
+`);
+
+    const amended = run(repository, ["contract", "define", created.data.id, "--from", definition]) as { data: { path: string } };
+    const newPath = amended.data.path;
+    expect(basename(newPath)).toBe(`ship-the-exporter-${created.data.id.slice(-8)}.md`);
+    expect(existsSync(oldPath)).toBe(false);
+    expect(readFileSync(newPath, "utf8")).toContain(`id: ${created.data.id}`);
+    expect(readFileSync(newPath, "utf8")).toContain("title: Ship the exporter");
+    expect(readFileSync(newPath, "utf8")).toContain("status: defined");
+    expect(readFileSync(newPath, "utf8")).toContain("priority: high");
+    expect(readFileSync(newPath, "utf8")).toContain(`updated_at: '${new Date().toISOString().slice(0, 10)}'`);
+    expect(readFileSync(newPath, "utf8")).toContain("The corrected exporter is ready to ship.");
+
+    const after = readEvents(repository, created.data.id);
+    expect(after.slice(0, history.length).map((event) => event.id)).toEqual(history);
+    expect(after.at(-1)).toMatchObject({ state: "defined", summary: "Contract definition amended before execution." });
+  });
+
+  test.each(["active", "review", "done"])("refuses to redefine a task in %s", (state) => {
+    const repository = mkdtempSync(join(tmpdir(), `kotta-redefine-${state}-`));
+    git(repository, "init", "-b", "main");
+    git(repository, "config", "user.name", "Kotta Test");
+    git(repository, "config", "user.email", "test@example.com");
+    writeFileSync(join(repository, "README.md"), "fixture\n");
+    run(repository, ["init"]);
+    const created = run(repository, ["contract", "new", "--title", `Immutable ${state}`, "--type", "feature"]) as { data: { id: string; path: string } };
+    run(repository, ["contract", "sign", created.data.id, "--approve"]);
+    const defined = join(repository, ".kotta/process/defined", basename(created.data.path));
+    const targetDirectory = join(repository, ".kotta/process", state);
+    const target = join(targetDirectory, basename(created.data.path));
+    const snapshot = readFileSync(defined, "utf8").replace("status: defined", `status: ${state}`);
+    writeFileSync(target, snapshot);
+    rmSync(defined);
+    const definition = join(repository, "refused-definition.md");
+    writeFileSync(definition, `# ${created.data.id} — Changed too late\n\n## Outcome\n\nMust not be applied.\n`);
+
+    const result = spawnSync("node", [cli, "contract", "define", created.data.id, "--from", definition, "--json"], { cwd: repository, encoding: "utf8" });
+    expect(result.status).not.toBe(0);
+    expect(result.stdout).toContain(`can only be defined before execution, while it is in backlog or defined; it is ${state}`);
+    expect(readFileSync(target, "utf8")).toBe(snapshot);
   });
 
   test("rejects unsupported definition metadata without changing the contract", () => {
