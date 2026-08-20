@@ -16,14 +16,13 @@ None.
 - define-validates-coverage-the-sign-gate-retires-for-covered--bkgg3d1k
 - kotta-validate-reads-the-spec-graph-ebskv4c0
 - one-operation-registry-derives-both-the-cli-and-the-mcp-surf-06fw8n0g
-- review-evidence-must-answer-its-own-check-duplicate-blobs-ar-tv3d65m7
 - the-agent-rules-reach-the-calling-chat-as-a-generated-file-n-atnxppcm
 - the-gap-report-what-the-spec-promises-and-the-system-lacks-xhxpb5jf
 - the-product-speaks-task-contract-task-on-every-surface-with--6hdkdv3k
 
 ## Active contracts
 
-None.
+- review-evidence-must-answer-its-own-check-duplicate-blobs-ar-tv3d65m7
 
 ## Review
 

@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq318dpmktbc2jtv3d65m7
 title: 'Review evidence must answer its own check: duplicate blobs are refused'
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -14,10 +14,18 @@ blocks: []
 spec:
   - BR-01m0fp2hdkj0ba2vzsyq0jtdce
   - EX-01m0fp2hdk68mttdbh50m98s4f
-branch: null
+branch: >-
+  feat/T-01m0fq318dpmktbc2jtv3d65m7-review-evidence-must-answer-its-own-check-duplicate-blobs-ar
 pull_request: null
 created_at: '2026-08-20'
 updated_at: '2026-08-20'
+assigned_agent: codex
+worktree: .worktrees/T-01m0fq318dpmktbc2jtv3d65m7
+execution_mode: fresh
+branch_origin: created
+start_ref: coord/P-01m0fq77101axprvcjwrq3bs61
+start_commit: f9efa3912433498c4a8f01cb6750cf73bdf81f7e
+dependency_integration_target: coord/P-01m0fq77101axprvcjwrq3bs61
 ---
 ## Outcome
 
