@@ -1,7 +1,7 @@
 ---
 id: T-01m0ggf64xdh1644m2k8ahwf4p
 title: The public page makes Kotta obvious before the scroll
-status: active
+status: review
 origin: human
 types:
   - feature
@@ -75,3 +75,29 @@ None.
 ## Execution notes
 
 The user explicitly rejected the supplied LinkedIn screenshot as a visual reference. Amplify the existing Kotta system rather than replacing its visual world.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| At 1440×900, the first viewport states Kotta's offer, exposes an install or GitHub action, and demonstrates the path from intent through execution to evidence-backed human acceptance. | site/tests/site.spec.ts:45 asserts the h1, Install Kotta, View on GitHub, task record, and Human decision required are visible and end within y=900; npm run test:site passed; desktop-full.png visually confirms the complete first viewport. |
+| The page uses Graft's direct marketing logic inside Kotta's existing visual language, with concrete product mechanics and no unsupported commercial, customer, or benchmark claims. | site/index.html renders direct offer/action/mechanism copy and a truthful synthetic T-042 task record; site/styles.css uses Kotta's Archivo, archive paper, repository ink, signal red, square geometry, and visible rules; source and finish review found no unsupported commercial, customer, or benchmark claims. |
+| The shipped page remains responsive, keyboard-usable, readable without JavaScript, free of horizontal overflow, and free of serious or critical axe violations at desktop and mobile widths. | npm run test:site passed 6/6 at 1440×900 and 375×812, including scroll-width, target/link, keyboard focus, reduced motion, JavaScript-disabled readability, and axe serious/critical checks; desktop-full.png and mobile-full.png were visually inspected and confirmed. |
+
+### Verification performed
+
+At 1440×900, the first viewport states Kotta's offer, exposes an install or GitHub action, and demonstrates the path from intent through execution to evidence-backed human acceptance.: site/tests/site.spec.ts:45 asserts the h1, Install Kotta, View on GitHub, task record, and Human decision required are visible and end within y=900; npm run test:site passed; desktop-full.png visually confirms the complete first viewport.
+The page uses Graft's direct marketing logic inside Kotta's existing visual language, with concrete product mechanics and no unsupported commercial, customer, or benchmark claims.: site/index.html renders direct offer/action/mechanism copy and a truthful synthetic T-042 task record; site/styles.css uses Kotta's Archivo, archive paper, repository ink, signal red, square geometry, and visible rules; source and finish review found no unsupported commercial, customer, or benchmark claims.
+The shipped page remains responsive, keyboard-usable, readable without JavaScript, free of horizontal overflow, and free of serious or critical axe violations at desktop and mobile widths.: npm run test:site passed 6/6 at 1440×900 and 375×812, including scroll-width, target/link, keyboard focus, reduced motion, JavaScript-disabled readability, and axe serious/critical checks; desktop-full.png and mobile-full.png were visually inspected and confirmed.
+
+### Deviations
+
+None.
+
+### Observations created
+
+None.
+
+### Known concerns
+
+The Impeccable detector reports advisory-only public-site typography scale differences from the compact Console v2 ramp; the expanded fluid scale is intentional for this marketing surface and remains within the craft and accessibility limits.

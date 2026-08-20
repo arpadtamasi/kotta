@@ -18,12 +18,13 @@ None.
 
 ## Active tasks
 
-- the-public-page-makes-kotta-obvious-before-the-scroll-k8ahwf4p
+None.
 
 ## Review
 
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
 - contract-gate-treats-standalone-generated-documents-as-kotta-grgv0mtw
+- the-public-page-makes-kotta-obvious-before-the-scroll-k8ahwf4p
 
 ## Blocked
 
