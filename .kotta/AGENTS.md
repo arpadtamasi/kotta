@@ -11,7 +11,7 @@ The rules below are enforced by the `kotta` CLI and by the Kotta MCP server. The
 package do not share a name, so the package cannot be guessed from the command:
 
 ```bash
-npm install --global @arpadtamasi/kotta@0.6.0   # or: npx -y -p @arpadtamasi/kotta@0.6.0 kotta status
+npm install --global @arpadtamasi/kotta@0.6.1   # or: npx -y -p @arpadtamasi/kotta@0.6.1 kotta status
 ```
 
 If you can install neither — a hosted environment with no network or no npm — you still do not
