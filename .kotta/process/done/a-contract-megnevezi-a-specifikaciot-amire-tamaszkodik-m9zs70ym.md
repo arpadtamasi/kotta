@@ -1,7 +1,7 @@
 ---
 id: T-01m0bvztry5z4j3k72m9zs70ym
 title: 'A contract megnevezi a specifikációt, amire támaszkodik'
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -15,13 +15,14 @@ branch: >-
   feat/T-01m0bvztry5z4j3k72m9zs70ym-a-contract-megnevezi-a-specifikaciot-amire-tamaszkodik
 pull_request: null
 created_at: '2026-08-19'
-updated_at: '2026-08-19'
+updated_at: '2026-08-20'
 assigned_agent: claude
 worktree: .worktrees/T-01m0bvztry5z4j3k72m9zs70ym
 execution_mode: inherited
 branch_origin: created
 start_ref: HEAD
 start_commit: 0e72305e9486d7c7a2db5f0a7fc7411d5eedad22
+resolution: completed
 ---
 ## Outcome
 
