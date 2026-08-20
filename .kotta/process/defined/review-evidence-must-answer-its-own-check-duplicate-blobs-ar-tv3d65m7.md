@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq318dpmktbc2jtv3d65m7
 title: 'Review evidence must answer its own check: duplicate blobs are refused'
-status: backlog
+status: defined
 origin: human
 types:
   - feature

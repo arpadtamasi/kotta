@@ -16,6 +16,7 @@ None.
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
 - every-approval-leaves-a-receipt-approved-by-approved-at-appr-6vs5h0w6
 - one-operation-registry-derives-both-the-cli-and-the-mcp-surf-06fw8n0g
+- review-evidence-must-answer-its-own-check-duplicate-blobs-ar-tv3d65m7
 - the-agent-rules-reach-the-calling-chat-as-a-generated-file-n-atnxppcm
 
 ## Active contracts
