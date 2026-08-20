@@ -4,7 +4,7 @@
 
 ## Defined batches
 
-None.
+- a-kotta-a-megallapodas-a-spec-first-modell-landolasa-a-futo--wrq3bs61
 
 ## Active batches
 

@@ -1,7 +1,7 @@
 ---
 id: P-01m0fq77101axprvcjwrq3bs61
 title: 'A kotta a megállapodás: a spec-first modell landolása a futó rendszerben'
-status: backlog
+status: defined
 contracts:
   - T-01m0fq306xed253zf243bwk94f
   - T-01m0fq30n1ntmbvamm6vs5h0w6
