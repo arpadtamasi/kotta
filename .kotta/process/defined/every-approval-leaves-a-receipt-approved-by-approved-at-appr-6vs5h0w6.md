@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq30n1ntmbvamm6vs5h0w6
 title: 'Every approval leaves a receipt: approved_by, approved_at, approval_basis'
-status: backlog
+status: defined
 origin: human
 types:
   - feature
