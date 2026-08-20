@@ -27,7 +27,7 @@ coordinator:
   base_branch: main
   base_commit: 167d13306d61dd7fa52bc4fb24e49abae96da9d2
   worktree: .worktrees/batches/P-01m0fq77101axprvcjwrq3bs61
-  cleaned_at: null
+  cleaned_at: '2026-08-20'
 ---
 # P-01m0fq77101axprvcjwrq3bs61 — A kotta a megállapodás: a spec-first modell landolása a futó rendszerben
 
