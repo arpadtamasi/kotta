@@ -21,13 +21,14 @@ None.
 
 ## Active contracts
 
-- gray-matter-memoizes-frontmatter-so-every-writer-mutates-a-s-0xnynhsv
+None.
 
 ## Review
 
 - a-contract-megnevezi-a-specifikaciot-amire-tamaszkodik-m9zs70ym
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
 - contract-gate-treats-standalone-generated-documents-as-kotta-grgv0mtw
+- gray-matter-memoizes-frontmatter-so-every-writer-mutates-a-s-0xnynhsv
 
 ## Blocked
 
