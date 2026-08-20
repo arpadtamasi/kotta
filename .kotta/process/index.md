@@ -24,11 +24,11 @@ None.
 
 ## Active contracts
 
-- a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
 - contract-gate-treats-standalone-generated-documents-as-kotta-grgv0mtw
 
 ## Review
 
+- a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
 - an-observation-can-amend-the-spec-the-amend-spec-disposition-43bwk94f
 - every-approval-leaves-a-receipt-approved-by-approved-at-appr-6vs5h0w6
 
