@@ -15,6 +15,7 @@ import { readWorkspaceConfig } from "../core/config.js";
 import { appendCliApprovalAudit, appendLifecycleEvent } from "../core/events.js";
 import { cliApprovalReceipt, stampReceipt, type ApprovalReceipt } from "../core/approval-receipt.js";
 import { readEnv } from "../core/env.js";
+import { assertDistinctReviewEvidence, prepareReviewEvidence, type ReviewEvidenceInput } from "../core/review-evidence.js";
 
 export function slugify(value: string): string {
   return value.toLowerCase().normalize("NFKD").replace(/\p{M}/gu, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
@@ -361,7 +362,7 @@ export interface ReviewDeclarations {
 
 const NOT_DECLARED = "Not declared.";
 
-export function reviewContract(id: string, evidence: string, pullRequest?: string, declarations: ReviewDeclarations = {}, repositoryRoot?: string) {
+export function reviewContract(id: string, evidence: ReviewEvidenceInput, pullRequest?: string, declarations: ReviewDeclarations = {}, repositoryRoot?: string) {
   const callerRoot = repositoryRoot ?? findRepositoryRoot();
   return withControlPlaneMutation(callerRoot, (root) => {
   const canonical = findContract(root, id);
@@ -395,10 +396,12 @@ export function reviewContract(id: string, evidence: string, pullRequest?: strin
     return (definition.done_checks ?? []).map((check) => `${profile}: ${String(check)}`);
   });
   const checks = [...acceptance, ...profileChecks];
-  const safeEvidence = evidence.replaceAll("|", "\\|").replaceAll("\n", " ");
-  const evidenceRows = (checks.length ? checks : ["Contract acceptance criteria"]).map((check) => `| ${check.replaceAll("|", "\\|")} | ${safeEvidence} |`).join("\n");
+  const preparedEvidence = prepareReviewEvidence(checks, evidence);
+  assertDistinctReviewEvidence(preparedEvidence.entries);
+  const evidenceRows = preparedEvidence.entries.map(({ check, evidence: answer }) =>
+    `| ${check.replaceAll("|", "\\|")} | ${answer.replaceAll("|", "\\|").replaceAll("\n", " ")} |`).join("\n");
   const declared = (value: string | undefined) => (value !== undefined && value.trim() ? value.trim() : NOT_DECLARED);
-  const reviewEvidence = `\n\n## Review evidence\n\n| Acceptance condition | Evidence |\n|---|---|\n${evidenceRows}\n\n### Verification performed\n\n${evidence}\n\n### Deviations\n\n${declared(declarations.deviations)}\n\n### Observations created\n\n${declared(declarations.observationsCreated)}\n\n### Known concerns\n\n${declared(declarations.knownConcerns)}\n`;
+  const reviewEvidence = `\n\n## Review evidence\n\n| Acceptance condition | Evidence |\n|---|---|\n${evidenceRows}\n\n### Verification performed\n\n${preparedEvidence.verification}\n\n### Deviations\n\n${declared(declarations.deviations)}\n\n### Observations created\n\n${declared(declarations.observationsCreated)}\n\n### Known concerns\n\n${declared(declarations.knownConcerns)}\n`;
   const destinationDirectory = processPath(root, "review");
   mkdirSync(destinationDirectory, { recursive: true });
   const destination = join(destinationDirectory, contract.filename);

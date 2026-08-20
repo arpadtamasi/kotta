@@ -317,13 +317,13 @@ contract
   });
 contract
   .command("review <id>")
-  .requiredOption("--evidence <evidence>")
+  .requiredOption("--evidence <evidence>", "Evidence text, or repeat '<exact check>=<evidence>' for a named mapping", (value: string, previous: string[]) => [...previous, value], [])
   .option("--pull-request <identifier>")
   .option("--deviations <text>", "Declared deviations from the contract; omitted means 'Not declared.'")
   .option("--observations-created <text>", "Observations created during execution; omitted means 'Not declared.'")
   .option("--known-concerns <text>", "Known concerns left open; omitted means 'Not declared.'")
   .option("--json")
-  .action((id: string, options: { evidence: string; pullRequest?: string; deviations?: string; observationsCreated?: string; knownConcerns?: string; json?: boolean }) => print(reviewContract(id, options.evidence, options.pullRequest, { deviations: options.deviations, observationsCreated: options.observationsCreated, knownConcerns: options.knownConcerns }), Boolean(options.json)));
+  .action((id: string, options: { evidence: string[]; pullRequest?: string; deviations?: string; observationsCreated?: string; knownConcerns?: string; json?: boolean }) => print(reviewContract(id, options.evidence, options.pullRequest, { deviations: options.deviations, observationsCreated: options.observationsCreated, knownConcerns: options.knownConcerns }), Boolean(options.json)));
 contract
   .command("close <id>")
   .option("--approve")

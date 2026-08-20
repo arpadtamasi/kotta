@@ -51,7 +51,7 @@ backlog → defined → active → review → done
 | Formalize | `kotta contract define <id> --from <file>` then `kotta contract validate <id>` | agent |
 | Approve for execution | `kotta contract sign <id> --approve`, after the human said yes in chat | **human decides** (rule 5) |
 | Execute | `kotta contract execute <id> --agent <agent>` | agent, in its own claim + branch + worktree |
-| Submit | `kotta contract review <id> --evidence "…" --pull-request <ref>` | agent |
+| Submit | `kotta contract review <id> --evidence "<exact check>=<evidence>" --pull-request <ref>` (repeat evidence per check) | agent |
 | Close | `kotta contract close <id> --approve`, after the human said yes in chat | **human decides** (rule 5) |
 | Retire | `kotta contract cancel <id> --resolution <resolution> --reason "…" [--superseded-by <id>] --approve`, after the human said yes in chat | **human decides** (rule 5) |
 
