@@ -15,12 +15,12 @@ None.
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
 - one-operation-registry-derives-both-the-cli-and-the-mcp-surf-06fw8n0g
 - the-agent-rules-reach-the-calling-chat-as-a-generated-file-n-atnxppcm
-- the-gap-report-what-the-spec-promises-and-the-system-lacks-xhxpb5jf
 - the-product-speaks-task-contract-task-on-every-surface-with--6hdkdv3k
 
 ## Active contracts
 
 - define-validates-coverage-the-sign-gate-retires-for-covered--bkgg3d1k
+- the-gap-report-what-the-spec-promises-and-the-system-lacks-xhxpb5jf
 
 ## Review
 

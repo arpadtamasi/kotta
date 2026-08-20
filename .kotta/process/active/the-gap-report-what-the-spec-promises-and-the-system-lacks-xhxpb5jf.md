@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq31tbjb4xpdybxhxpb5jf
 title: 'The gap report: what the spec promises and the system lacks'
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -16,10 +16,18 @@ spec:
   - UC-01m0fpqfxjvet99wbz0v1ag64q
   - EX-01m0fpqfysk1bwdr53jdk7rtk6
   - QA-01m0f0wn89nx49z82gh2ssx6j1
-branch: null
+branch: >-
+  feat/T-01m0fq31tbjb4xpdybxhxpb5jf-the-gap-report-what-the-spec-promises-and-the-system-lacks
 pull_request: null
 created_at: '2026-08-20'
 updated_at: '2026-08-20'
+assigned_agent: codex
+worktree: .worktrees/T-01m0fq31tbjb4xpdybxhxpb5jf
+execution_mode: fresh
+branch_origin: created
+start_ref: coord/P-01m0fq77101axprvcjwrq3bs61
+start_commit: ef86ca51af1888a3a2a83596adb773ea12d9f00b
+dependency_integration_target: coord/P-01m0fq77101axprvcjwrq3bs61
 ---
 ## Outcome
 
