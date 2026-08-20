@@ -3,8 +3,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { approvalDescription, decideApproval, failApproval, proposeApproval, type ApprovalAction, type ApprovalDecision } from "./approval.js";
-import { recordContractMessage } from "./conversation.js";
-import { briefContract, defineContract, newContract, reviewContract, startContract, validateContract } from "./contract.js";
+import { recordTaskMessage } from "./conversation.js";
+import { briefTask, defineTask, newTask, reviewTask, startTask, validateTask } from "./task.js";
 import { newObservation } from "./observation.js";
 import { statusCommand } from "./status.js";
 import { listCommand } from "./list.js";
@@ -14,6 +14,7 @@ import { readEvents } from "../core/events.js";
 import { assertCurrentWorkspaceShape, findRepositoryRoot } from "../filesystem/workspace.js";
 import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
 import { gapReport } from "./gap.js";
+import { LEGACY_TASK_COMMAND, legacyTaskMigrationMessage, warnLegacyTaskVocabulary } from "../compatibility/task-v3.js";
 
 type ToolPayload = Record<string, unknown>;
 
@@ -43,24 +44,24 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     { name: "kotta", version: "0.5.0" },
     {
       instructions: [
-        "Kotta is the canonical contract control plane for this repository.",
+        "Kotta is the canonical task control plane for this repository.",
         "Use these structured tools instead of asking the human to copy ids or run lifecycle commands.",
-        "Caller execution uses contract_start_caller; fresh context remains available through the CLI for automation.",
+        "Caller execution uses task_start_caller; fresh context remains available through the CLI for automation.",
         "For close, cancel, request-changes, observation disposition, batch close, or a workspace-configured compatibility sign gate, call approval_request: it elicits the exact human decision in the host chat and records the receipt before applying.",
-        "The Kotta board is read-only. Record only visible user/assistant contract messages; never hidden reasoning or raw tool output.",
+        "The Kotta board is read-only. Record only visible user/assistant task messages; never hidden reasoning or raw tool output.",
       ].join(" "),
     },
   );
 
   server.registerTool("workspace_status", {
     title: "Read Kotta workspace status",
-    description: "Read canonical contract and observation state before deciding what Kotta action is needed.",
+    description: "Read canonical task and observation state before deciding what Kotta action is needed.",
     inputSchema: {},
     annotations: readOnly,
   }, async () => {
     try {
       const result = statusCommand(root);
-      return toolResult(result as unknown as ToolPayload, `Kotta has ${result.data.activeContracts.length} active, ${result.data.definedContracts.length} defined, and ${result.data.reviewContracts.length} review contracts.`);
+      return toolResult(result as unknown as ToolPayload, `Kotta has ${result.data.activeTasks.length} active, ${result.data.definedTasks.length} defined, and ${result.data.reviewTasks.length} review tasks.`);
     } catch (error) { return toolError(error); }
   });
 
@@ -78,38 +79,64 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
 
   // Orientation is the question chat asks most, and the answer must not be
   // "read .kotta/ yourself" — the one thing the workspace rule forbids.
-  for (const entity of ["contract", "observation", "decision", "batch"] as const) {
+  for (const entity of ["task", "observation", "decision", "batch"] as const) {
     const states = entityStates(entity);
-    server.registerTool(`${entity}_list`, {
+    const inputSchema: Record<string, z.ZodTypeAny> = {};
+    if (entity !== "decision") inputSchema.state = z.array(z.enum(states as [string, ...string[]])).optional();
+    const definition = {
       title: `List Kotta ${entity === "batch" ? "batches" : `${entity}s`}`,
       description: `List every ${entity} in the workspace with its id, state and title. Read-only; use it to orient before choosing an action, instead of reading the workspace directories.`,
-      inputSchema: entity === "decision" ? {} : { state: z.array(z.enum(states as [string, ...string[]])).optional() },
+      inputSchema,
       annotations: readOnly,
-    }, async (input: { state?: string[] }) => {
+    };
+    const handler = async (input: { state?: string[] }) => {
       try {
         const result = listCommand(entity, { state: input?.state }, root);
         return toolResult(result as unknown as ToolPayload, `${result.data.count} ${entity === "batch" && result.data.count !== 1 ? "batches" : `${entity}${result.data.count === 1 ? "" : "s"}`}.`);
       } catch (error) { return toolError(error); }
+    };
+    server.registerTool(`${entity}_list`, definition, handler);
+    if (entity === "task") server.registerTool(`${LEGACY_TASK_COMMAND}_list`, {
+      ...definition,
+      title: "List Kotta tasks (deprecated alias)",
+      description: `${definition.description} Deprecated compatibility alias; use task_list and migrate the workspace.`,
+    }, async (input: { state?: string[] }) => {
+      warnLegacyTaskVocabulary("the legacy MCP list alias");
+      const result = await handler(input);
+      if (!("isError" in result)) result.structuredContent = { ...result.structuredContent, deprecation: legacyTaskMigrationMessage("This MCP alias") };
+      return result;
     });
   }
 
-  for (const entity of ["contract", "observation", "decision", "batch"] as const) {
-    server.registerTool(`${entity}_show`, {
+  for (const entity of ["task", "observation", "decision", "batch"] as const) {
+    const definition = {
       title: `Show one Kotta ${entity}`,
-      description: `Read one ${entity} as it is stored: its state, its set facts and its body. Accepts the short id the listings print. Read-only, and not the execution brief — use contract_brief when an agent is about to implement.`,
+      description: `Read one ${entity} as it is stored: its state, its set facts and its body. Accepts the short id the listings print. Read-only, and not the execution brief — use task_brief when an agent is about to implement.`,
       inputSchema: { id: z.string().min(1) },
       annotations: readOnly,
-    }, async ({ id }) => {
+    };
+    const handler = async ({ id }: { id: string }) => {
       try {
         const result = showCommand(entity, id, root);
         return toolResult(result as unknown as ToolPayload, `${result.data.title || result.data.id} is ${result.data.state}.`);
       } catch (error) { return toolError(error); }
+    };
+    server.registerTool(`${entity}_show`, definition, handler);
+    if (entity === "task") server.registerTool(`${LEGACY_TASK_COMMAND}_show`, {
+      ...definition,
+      title: "Show one Kotta task (deprecated alias)",
+      description: `${definition.description} Deprecated compatibility alias; use task_show and migrate the workspace.`,
+    }, async ({ id }: { id: string }) => {
+      warnLegacyTaskVocabulary("the legacy MCP show alias");
+      const result = await handler({ id });
+      if (!("isError" in result)) result.structuredContent = { ...result.structuredContent, deprecation: legacyTaskMigrationMessage("This MCP alias") };
+      return result;
     });
   }
 
-  server.registerTool("contract_create", {
-    title: "Create a Kotta contract",
-    description: "Create a backlog contract from explicit user intent and return its stable id and canonical path. Never ask the user to relay the id.",
+  server.registerTool("task_create", {
+    title: "Create a Kotta task",
+    description: "Create a backlog task from explicit user intent and return its stable id and canonical path. Never ask the user to relay the id.",
     inputSchema: {
       title: z.string().min(1),
       type: z.string().min(1),
@@ -119,7 +146,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
   }, async ({ title, type, profiles }) => {
     try {
       const result = withControlPlaneMutation(root, (controlRoot) => {
-        const created = newContract({ title, type, profiles }, controlRoot);
+        const created = newTask({ title, type, profiles }, controlRoot);
         commitControlState(controlRoot, `chore(kotta): capture ${created.data.id}`);
         return created;
       }, { requireClean: false });
@@ -127,8 +154,8 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     } catch (error) { return toolError(error); }
   });
 
-  server.registerTool("contract_define", {
-    title: "Define a Kotta contract",
+  server.registerTool("task_define", {
+    title: "Define a Kotta task",
     description: "Apply a complete Markdown definition before execution. Every acceptance condition must explicitly map to a referenced accepted spec node; valid coverage moves the task to defined unless the workspace retains the compatibility sign gate.",
     inputSchema: {
       id: z.string().min(1),
@@ -138,7 +165,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
   }, async ({ id, definition }) => {
     try {
       const result = withControlPlaneMutation(root, (controlRoot) => {
-        const defined = defineContract(id, definition, controlRoot);
+        const defined = defineTask(id, definition, controlRoot);
         commitControlState(controlRoot, `chore(kotta): define ${id}`);
         return defined;
       }, { requireClean: false });
@@ -146,45 +173,45 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     } catch (error) { return toolError(error); }
   });
 
-  server.registerTool("contract_validate", {
-    title: "Validate a Kotta contract",
-    description: "Validate one contract definition and return structured rule violations without changing state.",
+  server.registerTool("task_validate", {
+    title: "Validate a Kotta task",
+    description: "Validate one task definition and return structured rule violations without changing state.",
     inputSchema: { id: z.string().min(1) },
     annotations: readOnly,
   }, async ({ id }) => {
     try {
-      const result = validateContract(id, root);
+      const result = validateTask(id, root);
       return toolResult(result as unknown as ToolPayload, result.ok ? `${id} is valid.` : `${id} is invalid: ${result.errors.map((item) => item.message).join("; ")}`);
     } catch (error) { return toolError(error); }
   });
 
-  server.registerTool("contract_brief", {
+  server.registerTool("task_brief", {
     title: "Read a Kotta execution brief",
-    description: "Read the deterministic, bounded execution brief for one contract without including unrelated chat or workspace history.",
+    description: "Read the deterministic, bounded execution brief for one task without including unrelated chat or workspace history.",
     inputSchema: { id: z.string().min(1) },
     annotations: readOnly,
   }, async ({ id }) => {
     try {
-      const result = briefContract(id, {}, root);
+      const result = briefTask(id, {}, root);
       return toolResult(result as unknown as ToolPayload, result.data.brief);
     } catch (error) { return toolError(error); }
   });
 
-  server.registerTool("contract_start_caller", {
-    title: "Start contract for the calling agent",
-    description: "Claim a defined contract and return its isolated feature branch and worktree to the current caller, preserving inherited chat context explicitly.",
+  server.registerTool("task_start_caller", {
+    title: "Start task for the calling agent",
+    description: "Claim a defined task and return its isolated feature branch and worktree to the current caller, preserving inherited chat context explicitly.",
     inputSchema: { id: z.string().min(1), agent: z.string().min(1).default("codex") },
     annotations: localWrite,
   }, async ({ id, agent }) => {
     try {
-      const result = startContract(id, agent, "inherited", root);
+      const result = startTask(id, agent, "inherited", root);
       return toolResult(result as unknown as ToolPayload, `Started ${id} for caller execution in ${result.data.worktree} on ${result.data.branch}.`);
     } catch (error) { return toolError(error); }
   });
 
-  server.registerTool("contract_submit_review", {
-    title: "Submit contract for review",
-    description: "Submit an active contract with acceptance evidence after implementation and verification are complete.",
+  server.registerTool("task_submit_review", {
+    title: "Submit task for review",
+    description: "Submit an active task with acceptance evidence after implementation and verification are complete.",
     inputSchema: {
       id: z.string().min(1),
       evidence: z.union([z.string().min(1), z.record(z.string(), z.string().min(1))]),
@@ -196,14 +223,14 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     annotations: localWrite,
   }, async ({ id, evidence, pullRequest, deviations, observationsCreated, knownConcerns }) => {
     try {
-      const result = reviewContract(id, evidence, pullRequest, { deviations, observationsCreated, knownConcerns }, root);
+      const result = reviewTask(id, evidence, pullRequest, { deviations, observationsCreated, knownConcerns }, root);
       return toolResult(result as unknown as ToolPayload, `Submitted ${id} for review${pullRequest ? ` in ${pullRequest}` : ""}.`);
     } catch (error) { return toolError(error); }
   });
 
   server.registerTool("observation_create", {
     title: "Capture a Kotta observation",
-    description: "Capture evidence-backed out-of-scope work without silently widening the active contract.",
+    description: "Capture evidence-backed out-of-scope work without silently widening the active task.",
     inputSchema: {
       title: z.string().min(1),
       type: z.string().min(1),
@@ -224,21 +251,21 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     } catch (error) { return toolError(error); }
   });
 
-  server.registerTool("contract_message_record", {
-    title: "Record visible contract conversation",
-    description: "Persist an exact user-visible human or assistant contract message on the canonical control branch. Never store hidden reasoning or raw tool output.",
+  server.registerTool("task_message_record", {
+    title: "Record visible task conversation",
+    description: "Persist an exact user-visible human or assistant task message on the canonical control branch. Never store hidden reasoning or raw tool output.",
     inputSchema: {
-      contract: z.string().min(1),
+      task: z.string().min(1),
       role: z.enum(["human", "assistant"]),
       text: z.string().min(1),
       clientEventId: z.string().optional(),
       threadId: z.string().optional(),
     },
     annotations: localWrite,
-  }, async ({ contract, role, text, clientEventId, threadId }) => {
+  }, async ({ task, role, text, clientEventId, threadId }) => {
     try {
-      const result = recordContractMessage({ contract, role, text, clientEventId, threadId }, root);
-      return toolResult(result as unknown as ToolPayload, `${result.data.created ? "Recorded" : "Already recorded"} ${role} message for ${contract}.`);
+      const result = recordTaskMessage({ task, role, text, clientEventId, threadId }, root);
+      return toolResult(result as unknown as ToolPayload, `${result.data.created ? "Recorded" : "Already recorded"} ${role} message for ${task}.`);
     } catch (error) { return toolError(error); }
   });
 
@@ -247,7 +274,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     description: "Present one exact pending Kotta transition in the current host chat. Apply it only after the human explicitly approves the elicitation; rejection and cancellation are durable.",
     inputSchema: {
       entity: z.string().min(1),
-      action: z.enum(["contract.sign", "observation.resolve", "contract.close", "contract.cancel", "contract.request-changes", "batch.close"]),
+      action: z.enum(["task.sign", "observation.resolve", "task.close", "task.cancel", "task.request-changes", "batch.close"]),
       payload: z.record(z.string(), z.unknown()).default({}),
       clientRequestId: z.string().optional(),
     },

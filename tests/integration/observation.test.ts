@@ -52,10 +52,10 @@ describe("a standalone observation", () => {
       execFileSync("git", ["commit", "-m", message], { cwd: root });
     };
     commitFixture("fixture: initialised workspace");
-    const contract = run(root, ["contract", "new", "--title", "Something to retire", "--type", "fix"]) as { data: { id: string } };
-    // 'contract new' does not commit either, so commit it here: this test is about what
+    const task = run(root, ["task", "new", "--title", "Something to retire", "--type", "fix"]) as { data: { id: string } };
+    // 'task new' does not commit either, so commit it here: this test is about what
     // 'observation new' leaves behind, not about what precedes it.
-    commitFixture("fixture: contract new");
+    commitFixture("fixture: task new");
     const status = () => execFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" });
     expect(status()).toBe("");
 
@@ -66,9 +66,9 @@ describe("a standalone observation", () => {
     expect(execFileSync("git", ["show", "--name-only", "--format=", "HEAD"], { cwd: root, encoding: "utf8" }).trim().split("\n").sort())
       .toEqual([".kotta/process/index.md", `.kotta/process/observations/new/${basename(created.data.path)}`].sort());
 
-    // 'contract cancel' refuses a dirty control plane, and it is one of the two commands the
+    // 'task cancel' refuses a dirty control plane, and it is one of the two commands the
     // report saw fail immediately after a successful 'observation new'.
-    expect(run(root, ["contract", "cancel", contract.data.id, "--resolution", "cancelled", "--reason", "the fixture no longer needs it", "--approve"])).toMatchObject({ ok: true });
+    expect(run(root, ["task", "cancel", task.data.id, "--resolution", "cancelled", "--reason", "the fixture no longer needs it", "--approve"])).toMatchObject({ ok: true });
   });
 });
 
@@ -86,13 +86,13 @@ describe("observation disposition", () => {
     expect(observationId).toMatch(/^F-[0-9a-hjkmnp-tv-z]{26}$/);
     expect(basename(created.data.path)).toBe(`divergent-permission-checks-${observationId.slice(-8)}.md`);
     expect(run(root, ["observation", "validate", observationId])).toMatchObject({ ok: true });
-    const resolved = run(root, ["observation", "resolve", observationId, "--disposition", "create-contract", "--approve"]) as { ok: boolean; data: { contractId: string } };
+    const resolved = run(root, ["observation", "resolve", observationId, "--disposition", "create-task", "--approve"]) as { ok: boolean; data: { taskId: string } };
     expect(resolved.ok).toBe(true);
-    const contractId = resolved.data.contractId;
-    expect(contractId).toMatch(/^T-[0-9a-hjkmnp-tv-z]{26}$/);
+    const taskId = resolved.data.taskId;
+    expect(taskId).toMatch(/^T-[0-9a-hjkmnp-tv-z]{26}$/);
     expect(existsSync(join(root, ".kotta/process/observations/resolved", basename(created.data.path)))).toBe(true);
-    const contract = join(root, ".kotta/process/backlog", `divergent-permission-checks-${contractId.slice(-8)}.md`);
-    expect(readFileSync(contract, "utf8")).toContain(`source_observation: ${observationId}`);
+    const task = join(root, ".kotta/process/backlog", `divergent-permission-checks-${taskId.slice(-8)}.md`);
+    expect(readFileSync(task, "utf8")).toContain(`source_observation: ${observationId}`);
     expect(execFileSync("git", ["status", "--porcelain", "--", ".kotta"], { cwd: root, encoding: "utf8" })).toBe("");
     expect(execFileSync("git", ["log", "-1", "--format=%s"], { cwd: root, encoding: "utf8" }).trim()).toBe(`chore(kotta): resolve ${observationId}`);
   });
@@ -110,11 +110,11 @@ describe("the amend-spec disposition", () => {
     const specId = writeGlossaryNode(root);
     const observationId = capture(root);
 
-    const resolved = run(root, ["observation", "resolve", observationId, "--disposition", "amend-spec", "--spec", specId, "--approve"]) as { ok: boolean; data: { disposition: string; spec: string[]; contractId?: string } };
+    const resolved = run(root, ["observation", "resolve", observationId, "--disposition", "amend-spec", "--spec", specId, "--approve"]) as { ok: boolean; data: { disposition: string; spec: string[]; taskId?: string } };
     expect(resolved.ok).toBe(true);
     expect(resolved.data.disposition).toBe("amend-spec");
     expect(resolved.data.spec).toEqual([specId]);
-    expect(resolved.data.contractId).toBeUndefined();
+    expect(resolved.data.taskId).toBeUndefined();
 
     const record = matter(readFileSync(join(root, ".kotta/process/observations/resolved", `the-lifecycle-glossary-is-silent-on-amend-spec-${observationId.slice(-8)}.md`), "utf8")).data;
     expect(record.status).toBe("resolved");

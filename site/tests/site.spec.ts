@@ -6,7 +6,7 @@ const viewports = [
   { name: "desktop", width: 1440, height: 900 },
 ] as const;
 
-test("renders the approved content contract in order", async ({ page }) => {
+test("renders the approved content task in order", async ({ page }) => {
   const requests: string[] = [];
   const failedResponses: string[] = [];
   const responseTypes = new Map<string, string>();
@@ -21,10 +21,11 @@ test("renders the approved content contract in order", async ({ page }) => {
 
   await expect(page.locator("[data-unit]")).toHaveCount(6);
   expect(await page.locator("[data-unit]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-unit")))).toEqual(["hero", "problem", "workflow", "comparison", "quickstart", "trust"]);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("AI can finish work too large for you to see.");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Everything we learned about spelling out exactly what we want.");
+  await expect(page.getByText("Without the rigidity that kept us from doing it properly. Designed to be executed by AI. Your job is to figure out what you want.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "The agent is no longer the bottleneck. Human oversight is." })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Keep AI-sized output inside human-sized work batches." })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Create your first contract" })).toHaveAttribute("href", "#install");
+  await expect(page.getByRole("link", { name: "Create your first task" })).toHaveAttribute("href", "#install");
   await expect(page.getByRole("link", { name: "See the workflow" })).toHaveAttribute("href", "#how");
   await expect(page.locator("tbody tr")).toHaveCount(4);
   await expect(page.locator("tbody th")).toHaveText(["Agent chat", "Jira / Linear", "Agent orchestrator", "Kotta"]);
@@ -86,6 +87,6 @@ test("remains readable without JavaScript", async ({ browser }) => {
   const page = await context.newPage();
   await page.goto("http://127.0.0.1:4174/kotta/");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Create your first contract" })).toHaveAttribute("href", "#install");
+  await expect(page.getByRole("link", { name: "Create your first task" })).toHaveAttribute("href", "#install");
   await context.close();
 });

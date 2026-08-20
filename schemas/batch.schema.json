@@ -7,7 +7,7 @@
     "id",
     "title",
     "status",
-    "contracts",
+    "tasks",
     "execution",
     "authority",
     "created_at",
@@ -30,7 +30,7 @@
         "done"
       ]
     },
-    "contracts": {
+    "tasks": {
       "type": "array",
       "minItems": 0,
       "uniqueItems": true,
@@ -97,18 +97,18 @@
       "type": "object",
       "required": [
         "create_observations",
-        "create_subcontracts",
-        "reorder_independent_contracts",
+        "create_subtasks",
+        "reorder_independent_tasks",
         "change_scope"
       ],
       "properties": {
         "create_observations": {
           "type": "boolean"
         },
-        "create_subcontracts": {
+        "create_subtasks": {
           "type": "boolean"
         },
-        "reorder_independent_contracts": {
+        "reorder_independent_tasks": {
           "type": "boolean"
         },
         "change_scope": {

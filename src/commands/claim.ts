@@ -2,12 +2,13 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFile
 import { isAbsolute, join, resolve } from "node:path";
 import { parse } from "yaml";
 import { findRepositoryRoot, processPath, regenerateIndex } from "../filesystem/workspace.js";
-import { findContract } from "../filesystem/entities.js";
+import { findTask } from "../filesystem/entities.js";
 import { parseMarkdown, renderMarkdown } from "../core/markdown.js";
 import { appendLifecycleEvent } from "../core/events.js";
 import { git } from "../git/git.js";
 import { validateClaim } from "../core/claim.js";
 import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
+import { readTaskVocabulary } from "../compatibility/task-v3.js";
 
 interface LocatedClaim { path: string; worktree: string; data: Record<string, unknown> }
 
@@ -19,7 +20,7 @@ function claims(root: string): LocatedClaim[] {
   return allWorktrees(root).flatMap((worktree) => {
     const directory = processPath(worktree, "claims");
     if (!existsSync(directory)) return [];
-    return readdirSync(directory).filter((name) => name.endsWith(".yaml")).map((name) => ({ path: join(directory, name), worktree, data: parse(readFileSync(join(directory, name), "utf8")) as Record<string, unknown> }));
+    return readdirSync(directory).filter((name) => name.endsWith(".yaml")).map((name) => ({ path: join(directory, name), worktree, data: readTaskVocabulary(parse(readFileSync(join(directory, name), "utf8")) as Record<string, unknown>) }));
   });
 }
 
@@ -31,25 +32,25 @@ export function listClaims() {
 }
 
 /**
- * `contract start` moves a contract from defined to active and writes the claim. Release is its
- * documented inverse, so deleting the claim without returning the contract left it active with no
+ * `task start` moves a task from defined to active and writes the claim. Release is its
+ * documented inverse, so deleting the claim without returning the task left it active with no
  * claim, which no command accepts. The branch and the worktree stay on the record because release
  * preserves them on disk, and start reuses them by name.
  */
-function returnContractToDefined(root: string, id: string): void {
-  const contract = findContract(root, id);
-  if (contract.state !== "active") return;
-  const entity = parseMarkdown(readFileSync(contract.path, "utf8"));
+function returnTaskToDefined(root: string, id: string): void {
+  const task = findTask(root, id);
+  if (task.state !== "active") return;
+  const entity = parseMarkdown(readFileSync(task.path, "utf8"));
   entity.data.status = "defined";
   delete entity.data.assigned_agent;
   delete entity.data.execution_mode;
   entity.data.updated_at = new Date().toISOString().slice(0, 10);
   const directory = processPath(root, "defined");
   mkdirSync(directory, { recursive: true });
-  writeFileSync(join(directory, contract.filename), renderMarkdown(entity.data, entity.content));
-  unlinkSync(contract.path);
+  writeFileSync(join(directory, task.filename), renderMarkdown(entity.data, entity.content));
+  unlinkSync(task.path);
   regenerateIndex(root);
-  appendLifecycleEvent(root, id, "defined", "Claim released; the contract returned to defined with its branch and worktree preserved.");
+  appendLifecycleEvent(root, id, "defined", "Claim released; the task returned to defined with its branch and worktree preserved.");
 }
 
 export function releaseClaim(id: string, force: boolean) {
@@ -66,7 +67,7 @@ export function releaseClaim(id: string, force: boolean) {
     if (!existsSync(executionWorktree)) throw new Error(`Execution worktree ${executionWorktree} is missing; restore or inspect it before releasing the claim.`);
     if (git(executionWorktree, ["status", "--porcelain"])) throw new Error(`Execution worktree ${executionWorktree} has uncommitted changes; the claim was not released.`);
     unlinkSync(path);
-    returnContractToDefined(controlRoot, id);
+    returnTaskToDefined(controlRoot, id);
     commitControlState(controlRoot, `chore(kotta): release claim ${id}`);
     return { ok: true, command: "claim release", data: { id, worktree: executionWorktree, warning: "The branch and worktree were preserved for manual recovery." } };
   });

@@ -43,7 +43,7 @@ function differingFields(kept: Record<string, unknown>, dropped: Record<string, 
 
 export function dedupeEntity(kind: EntityKind, id: string, approved: boolean, repositoryRoot?: string): DedupeResult {
   const root = repositoryRoot ?? findRepositoryRoot();
-  const label = kind === "contract" ? "Contract" : "Batch";
+  const label = kind === "task" ? "Task" : "Batch";
   const copies = entityCopies(root, kind, id);
   if (!copies.length) throw new Error(`${label} ${id} was not found.`);
   if (copies.length === 1) throw new Error(`${label} ${id} occupies a single state directory (${copies[0].state}); there is nothing to resolve.`);

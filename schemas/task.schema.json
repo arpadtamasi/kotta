@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/arpadtamasi/kotta/schemas/contract.schema.json",
-  "title": "Kotta contract frontmatter",
+  "$id": "https://github.com/arpadtamasi/kotta/schemas/task.schema.json",
+  "title": "Kotta task frontmatter",
   "type": "object",
   "required": ["id", "title", "status", "origin", "types", "profiles", "priority", "risk", "depends_on", "blocks", "created_at", "updated_at"],
   "properties": {
@@ -34,8 +34,8 @@
       }
     },
     "batch": { "oneOf": [{ "type": "null" }, { "type": "string", "pattern": "^(P-[0-9]{3,}|P-[0-9a-hjkmnp-tv-z]{26})$" }] },
-    "depends_on": { "$ref": "#/$defs/contractIds" },
-    "blocks": { "$ref": "#/$defs/contractIds" },
+    "depends_on": { "$ref": "#/$defs/taskIds" },
+    "blocks": { "$ref": "#/$defs/taskIds" },
     "branch": { "oneOf": [{ "type": "null" }, { "type": "string", "minLength": 1 }] },
     "pull_request": { "oneOf": [{ "type": "null" }, { "type": ["string", "integer"], "minLength": 1 }] },
     "assigned_agent": { "type": "string", "minLength": 1 },
@@ -70,7 +70,7 @@
     "approval_basis": ["approved_by", "approved_at"]
   },
   "$defs": {
-    "contractIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^(T-[0-9]{3,}|O-[0-9]+(?:\\.[0-9]+)?|T-[0-9a-hjkmnp-tv-z]{26})$" } },
+    "taskIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^(T-[0-9]{3,}|O-[0-9]+(?:\\.[0-9]+)?|T-[0-9a-hjkmnp-tv-z]{26})$" } },
     "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
     "approvedBy": { "type": "string", "minLength": 1 },
     "approvedAt": { "type": "string", "format": "date-time" },

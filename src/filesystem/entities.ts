@@ -1,13 +1,13 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { parseMarkdown } from "../core/markdown.js";
-import { CONTRACT_ID, displayId, filenameMatchesId } from "../core/identity.js";
+import { TASK_ID, displayId, filenameMatchesId } from "../core/identity.js";
 import { processPath } from "./workspace.js";
 
-export const CONTRACT_STATES = ["backlog", "defined", "active", "review", "done"] as const;
+export const TASK_STATES = ["backlog", "defined", "active", "review", "done"] as const;
 export const BATCH_STATES = ["backlog", "defined", "active", "done"] as const;
 
-export type EntityKind = "contract" | "batch";
+export type EntityKind = "task" | "batch";
 
 export interface EntityCopy {
   state: string;
@@ -17,8 +17,8 @@ export interface EntityCopy {
 
 /** State directories of an entity kind, in lifecycle order — the later entry is the further-advanced state. */
 export function stateDirectories(kind: EntityKind): Array<{ state: string; directory: string }> {
-  return kind === "contract"
-    ? CONTRACT_STATES.map((state) => ({ state, directory: state }))
+  return kind === "task"
+    ? TASK_STATES.map((state) => ({ state, directory: state }))
     : BATCH_STATES.map((state) => ({ state, directory: `batches/${state}` }));
 }
 
@@ -39,15 +39,15 @@ export function entityCopies(root: string, kind: EntityKind, id: string): Entity
   return copies;
 }
 
-export interface ContractLocation {
+export interface TaskLocation {
   path: string;
   state: string;
   filename: string;
 }
 
-export interface EffectiveContract<T> {
+export interface EffectiveTask<T> {
   value: T;
-  location: ContractLocation;
+  location: TaskLocation;
   worktree?: string;
   fallback?: { worktree: string; reason: string };
 }
@@ -68,26 +68,26 @@ export function idFromEntityFile(path: string, filename: string): string | null 
   return idFromFilename(filename);
 }
 
-export function findContract(root: string, id: string): ContractLocation {
-  for (const state of CONTRACT_STATES) {
+export function findTask(root: string, id: string): TaskLocation {
+  for (const state of TASK_STATES) {
     const directory = processPath(root, state);
     if (!existsSync(directory)) continue;
     const filename = readdirSync(directory).find((name) => name.endsWith(".md") && filenameMatchesId(name, id));
     if (filename) return { path: join(directory, filename), state, filename };
   }
-  throw new Error(`Contract ${id} was not found.`);
+  throw new Error(`Task ${id} was not found.`);
 }
 
-export function resolveEffectiveContract<T>(root: string, id: string, read: (contract: ContractLocation) => T): EffectiveContract<T> {
-  if (!CONTRACT_ID.test(id)) throw new Error(`Invalid contract id: ${id}`);
-  const coordinator = findContract(root, id);
+export function resolveEffectiveTask<T>(root: string, id: string, read: (task: TaskLocation) => T): EffectiveTask<T> {
+  if (!TASK_ID.test(id)) throw new Error(`Invalid task id: ${id}`);
+  const coordinator = findTask(root, id);
   // Current-shape workspaces keep live lifecycle state on the control plane. Only a defined
   // coordinator plus an active worktree is the legacy pre-control-plane execution shape.
   if (coordinator.state !== "defined") return { value: read(coordinator), location: coordinator };
   const worktree = join(root, ".worktrees", id);
   if (existsSync(worktree)) {
     try {
-      const location = findContract(worktree, id);
+      const location = findTask(worktree, id);
       if (location.state === "active") return { value: read(location), location, worktree };
       return { value: read(coordinator), location: coordinator };
     } catch (error) {
@@ -104,7 +104,7 @@ export function resolveEffectiveContract<T>(root: string, id: string, read: (con
 export const OBSERVATION_STATES = ["new", "resolved"] as const;
 
 /** Every listable entity. Decisions are stored flat: recorded is the only state they have. */
-export type ListableEntity = "contract" | "observation" | "batch" | "decision";
+export type ListableEntity = "task" | "observation" | "batch" | "decision";
 
 /**
  * Where an entity kind keeps its files, paired with the state each directory means.
@@ -113,7 +113,7 @@ export type ListableEntity = "contract" | "observation" | "batch" | "decision";
  */
 export function entityStateDirectories(entity: ListableEntity): Array<{ state: string; directory: string }> {
   switch (entity) {
-    case "contract": return CONTRACT_STATES.map((state) => ({ state, directory: state }));
+    case "task": return TASK_STATES.map((state) => ({ state, directory: state }));
     case "batch": return BATCH_STATES.map((state) => ({ state, directory: `batches/${state}` }));
     case "observation": return OBSERVATION_STATES.map((state) => ({ state, directory: `observations/${state}` }));
     case "decision": return [{ state: "recorded", directory: "decisions" }];
@@ -125,7 +125,7 @@ export function entityStates(entity: ListableEntity): string[] {
   return entityStateDirectories(entity).map(({ state }) => state);
 }
 
-export function listIds(root: string, entity: "contract" | "observation" | "batch"): string[] {
+export function listIds(root: string, entity: "task" | "observation" | "batch"): string[] {
   return listEntities(root, entity).map(({ id }) => id);
 }
 

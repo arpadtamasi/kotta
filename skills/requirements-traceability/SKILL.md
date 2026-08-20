@@ -29,7 +29,7 @@ permission to edit dependants.
 `kotta validate` reads the form registry and measures every node against it: required frontmatter
 fields, required body headings, duplicate ids, outgoing edges below their `minimum`, references that
 resolve to nothing, references that resolve to the wrong form, a malformed or contradictory form
-file, and any node or form that names a contract. Run it first and treat its findings as given.
+file, and any node or form that names a task. Run it first and treat its findings as given.
 
 Do not repeat those checks by reading the YAML yourself. They are enforced now, which means a
 workspace that passes `kotta validate` has no structural errors left for this report to find, and a

@@ -5,18 +5,18 @@
 // is named by its title, with the short id only as a marker beside it (D-003, D-01kz1yqm…).
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { BatchesView, ContractsView, DecisionsView, ObservationsView, daysSince, readBoard } from "../../ui/src/App";
-import { decision, observation, batch, contract, workspace } from "./fixtures";
+import { BatchesView, TasksView, DecisionsView, ObservationsView, daysSince, readBoard } from "../../ui/src/App";
+import { decision, observation, batch, task, workspace } from "./fixtures";
 
 afterEach(cleanup);
 
 const data = workspace({
-  contracts: [
-    contract("T-01kz1xrxw4aheeqv1ca0bv0fcq", "A board átállítása a Kotta Console v2 tervre", { status: "defined", source_observation: "F-010" }),
-    contract("T-012", "Make the UI workspace argument explicit", { status: "active", batch: "P-003", assigned_agent: "codex", claim: { contract: "T-012", agent: "codex", branch: "feat/T-012", worktree: ".worktrees/T-012", started_at: "2026-08-04T10:00:00Z" } }),
-    contract("T-029", "Reading the board makes no per-file git call", { status: "done", batch: "P-003" }),
+  tasks: [
+    task("T-01kz1xrxw4aheeqv1ca0bv0fcq", "A board átállítása a Kotta Console v2 tervre", { status: "defined", source_observation: "F-010" }),
+    task("T-012", "Make the UI workspace argument explicit", { status: "active", batch: "P-003", assigned_agent: "codex", claim: { task: "T-012", agent: "codex", branch: "feat/T-012", worktree: ".worktrees/T-012", started_at: "2026-08-04T10:00:00Z" } }),
+    task("T-029", "Reading the board makes no per-file git call", { status: "done", batch: "P-003" }),
   ],
-  batches: [batch("P-003", "Trustworthy daily use", { status: "active", contracts: ["T-012", "T-029"], sections: { goal: "One module: truthful execution state." } })],
+  batches: [batch("P-003", "Trustworthy daily use", { status: "active", tasks: ["T-012", "T-029"], sections: { goal: "One module: truthful execution state." } })],
   observations: [
     observation("F-010", "The local UI is visually overcrowded", { created_at: "2026-06-01", discovered_during: "T-012" }),
     observation("F-002", "The board hides worktree state", { status: "resolved", became: "T-029" }),
@@ -62,26 +62,26 @@ describe("Observations", () => {
   });
 });
 
-describe("Contracts", () => {
-  const contracts = (filter: "all" | "defined" = "all", query = "") =>
-    render(<ContractsView board={readBoard(data)} filter={filter} sort="created-desc" onFilter={() => {}} onSort={() => {}} query={query} onQuery={() => {}} onOpen={() => {}} />);
+describe("Tasks", () => {
+  const tasks = (filter: "all" | "defined" = "all", query = "") =>
+    render(<TasksView board={readBoard(data)} filter={filter} sort="created-desc" onFilter={() => {}} onSort={() => {}} query={query} onQuery={() => {}} onOpen={() => {}} />);
 
   it("keeps state filters while foregrounding age and execution", () => {
-    contracts();
+    tasks();
     expect(screen.getByText("State, age and execution at scan speed.")).toBeDefined();
     const states = ["all", "backlog", "defined", "active", "review", "done"];
     for (const state of states) expect(screen.getByRole("button", { name: new RegExp(`^${state}`) })).toBeDefined();
   });
 
-  it("names a contract by its title and shows age plus current execution", () => {
-    contracts();
+  it("names a task by its title and shows age plus current execution", () => {
+    tasks();
     const row = screen.getByRole("button", { name: /Make the UI workspace argument explicit/ });
     expect(row.textContent).toContain("created");
     expect(row.textContent).toContain("running");
   });
 
   it("shows a minted id as its short tail only — never the whole ULID", () => {
-    contracts();
+    tasks();
     const minted = screen.getByRole("button", { name: /A board átállítása a Kotta Console v2 tervre/ });
     expect(minted.textContent).toContain("T-a0bv0fcq");
     expect(minted.textContent).not.toContain("T-01kz1xrxw4aheeqv1ca0bv0fcq");
@@ -91,32 +91,32 @@ describe("Contracts", () => {
 
   it("filters by state and by search", () => {
     cleanup();
-    contracts("defined");
+    tasks("defined");
     expect(screen.getByText("A board átállítása a Kotta Console v2 tervre")).toBeDefined();
     expect(screen.queryByText("Reading the board makes no per-file git call")).toBeNull();
     cleanup();
-    contracts("all", "per-file");
+    tasks("all", "per-file");
     expect(screen.getByText("Reading the board makes no per-file git call")).toBeDefined();
     expect(screen.queryByText("Make the UI workspace argument explicit")).toBeNull();
   });
 
   it("marks malformed future age as unavailable instead of negative", () => {
-    const future = readBoard(workspace({ contracts: [contract("T-099", "Future timestamp", { created_at: "2999-01-01", updated_at: "2999-01-02" })] }));
-    render(<ContractsView board={future} filter="all" sort="created-desc" onFilter={() => {}} onSort={() => {}} query="" onQuery={() => {}} onOpen={() => {}} />);
+    const future = readBoard(workspace({ tasks: [task("T-099", "Future timestamp", { created_at: "2999-01-01", updated_at: "2999-01-02" })] }));
+    render(<TasksView board={future} filter="all" sort="created-desc" onFilter={() => {}} onSort={() => {}} query="" onQuery={() => {}} onOpen={() => {}} />);
     const row = screen.getByRole("button", { name: /Future timestamp/ });
     expect(row.textContent).toContain("Unavailable");
     expect(daysSince("2999-01-01", Date.parse("2026-08-14"))).toBeNull();
   });
 
-  it("sorts contracts by canonical priority and by creation date", () => {
-    const sortable = readBoard(workspace({ contracts: [
-      contract("T-100", "Older low priority", { priority: "low", created_at: "2026-06-01" }),
-      contract("T-101", "Newer high priority", { priority: "high", created_at: "2026-08-01" }),
+  it("sorts tasks by canonical priority and by creation date", () => {
+    const sortable = readBoard(workspace({ tasks: [
+      task("T-100", "Older low priority", { priority: "low", created_at: "2026-06-01" }),
+      task("T-101", "Newer high priority", { priority: "high", created_at: "2026-08-01" }),
     ] }));
-    const priority = render(<ContractsView board={sortable} filter="all" sort="priority-desc" onFilter={() => {}} onSort={() => {}} query="" onQuery={() => {}} onOpen={() => {}} />);
+    const priority = render(<TasksView board={sortable} filter="all" sort="priority-desc" onFilter={() => {}} onSort={() => {}} query="" onQuery={() => {}} onOpen={() => {}} />);
     expect([...priority.container.querySelectorAll(".ctr__title")].map((node) => node.textContent)).toEqual(["Newer high priorityT-101", "Older low priorityT-100"]);
     cleanup();
-    const created = render(<ContractsView board={sortable} filter="all" sort="created-asc" onFilter={() => {}} onSort={() => {}} query="" onQuery={() => {}} onOpen={() => {}} />);
+    const created = render(<TasksView board={sortable} filter="all" sort="created-asc" onFilter={() => {}} onSort={() => {}} query="" onQuery={() => {}} onOpen={() => {}} />);
     expect([...created.container.querySelectorAll(".ctr__title")].map((node) => node.textContent)).toEqual(["Older low priorityT-100", "Newer high priorityT-101"]);
   });
 });
@@ -137,15 +137,15 @@ describe("Batches", () => {
   });
 
   it("lists child batches as first-class rows and filters their own canonical state", () => {
-    const nestedContracts = [
-      contract("T-100", "Child foundation", { status: "done", batch: "P-101" }),
-      contract("T-101", "Child delivery", { status: "active", batch: "P-101", depends_on: ["T-100"] }),
+    const nestedTasks = [
+      task("T-100", "Child foundation", { status: "done", batch: "P-101" }),
+      task("T-101", "Child delivery", { status: "active", batch: "P-101", depends_on: ["T-100"] }),
     ];
     const nested = readBoard(workspace({
-      contracts: nestedContracts,
+      tasks: nestedTasks,
       batches: [
-        batch("P-100", "Parent programme", { status: "defined", contracts: [], batches: ["P-101"], created_at: "2026-06-01" }),
-        batch("P-101", "Nested delivery batch", { status: "active", contracts: nestedContracts.map((item) => item.id), created_at: "2026-07-01" }),
+        batch("P-100", "Parent programme", { status: "defined", tasks: [], batches: ["P-101"], created_at: "2026-06-01" }),
+        batch("P-101", "Nested delivery batch", { status: "active", tasks: nestedTasks.map((item) => item.id), created_at: "2026-07-01" }),
         batch("P-200", "Standalone done batch", { status: "done", created_at: "2026-08-01" }),
       ],
     }));

@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { basename, join } from "node:path";
 import { parse } from "yaml";
-import { CONTRACT_ID } from "../core/identity.js";
+import { TASK_ID } from "../core/identity.js";
 import { parseMarkdown, sections } from "../core/markdown.js";
 import type { ValidationIssue } from "../core/validation.js";
 import { specPath, validateSpecDirectory } from "../filesystem/workspace.js";
@@ -89,10 +89,10 @@ export function readFormRegistry(root: string): { forms: SpecForm[]; issues: Val
         continue;
       }
       // The direction rule is structural, not a convention to remember: a form that could name a
-      // contract as an edge target would give the specification a way to point at execution.
+      // task as an edge target would give the specification a way to point at execution.
       const targets = strings(edge.target_forms);
-      if (targets.some((target) => target === "contract")) {
-        issues.push({ code: "SPEC_REFERENCES_CONTRACT", message: `Form '${id}' edge '${String(edge.name ?? "")}' targets 'contract'. Specification never references contracts; contracts reference specification.`, path });
+      if (targets.some((target) => target === "task")) {
+        issues.push({ code: "SPEC_REFERENCES_TASK", message: `Form '${id}' edge '${String(edge.name ?? "")}' targets 'task'. Specification never references tasks; tasks reference specification.`, path });
         continue;
       }
       edges.push({
@@ -223,11 +223,11 @@ export function validateSpecWorkspace(root: string): ValidationIssue[] {
       if (text === undefined || !text.trim()) issues.push({ code: "SPEC_NODE_MISSING_SECTION", message: `${basename(node.path)} (${form.id}) is missing or leaves empty the required section '${heading}'.`, path: node.path });
     }
 
-    // A node naming a contract is the direction rule broken in data rather than in schema; it is
+    // A node naming a task is the direction rule broken in data rather than in schema; it is
     // refused wherever it appears, under any field name.
     for (const { field, value } of frontmatterValues(node.data)) {
-      if (CONTRACT_ID.test(value)) {
-        issues.push({ code: "SPEC_REFERENCES_CONTRACT", message: `${basename(node.path)} names contract '${value}' in field '${field}'. Specification never references contracts; contracts reference specification.`, path: node.path });
+      if (TASK_ID.test(value)) {
+        issues.push({ code: "SPEC_REFERENCES_TASK", message: `${basename(node.path)} names task '${value}' in field '${field}'. Specification never references tasks; tasks reference specification.`, path: node.path });
       }
     }
 

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Kotta keeps AI-sized software work inside human-sized, repository-native contracts and batches." />
+    <meta name="description" content="Kotta keeps AI-sized software work inside human-sized, repository-native tasks and batches." />
     <meta name="theme-color" content="#f3f2f2" />
     <title>Kotta — Repository-native control for human–AI teams</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -44,10 +44,10 @@
         <div class="container hero-inner">
           <div class="hero-copy">
             <p class="eyebrow">Repository-native control for human–AI development teams</p>
-            <h1 id="hero-title">AI can finish work <br />too large for you to see.</h1>
-            <p class="hero-support">Kotta breaks AI-sized work into human-sized executable contracts and batches, then keeps each agent isolated, reviewable and tied to evidence.</p>
+            <h1 id="hero-title">Everything we learned about spelling out exactly what we want.</h1>
+            <p class="hero-support">Without the rigidity that kept us from doing it properly. Designed to be executed by AI. Your job is to figure out what you want.</p>
             <div class="hero-actions">
-              <a class="button button-primary" href="#install">Create your first contract</a>
+              <a class="button button-primary" href="#install">Create your first task</a>
               <a class="button button-secondary" href="#how">See the workflow</a>
             </div>
           </div>
@@ -95,7 +95,7 @@
               <p class="panel-kicker">Kotta execution</p>
               <h3>The work grows. Your control does not shrink.</h3>
               <ul>
-                <li>Intent becomes a repository-native contract.</li>
+                <li>Intent becomes a repository-native task.</li>
                 <li>Every agent gets a bounded claim and Git isolation.</li>
                 <li>Acceptance conditions map to concrete evidence.</li>
               </ul>
@@ -112,8 +112,8 @@
             <p>Each step narrows ambiguity and leaves a durable record for the next human decision.</p>
           </div>
           <ol class="workflow-steps">
-            <li><span class="step-number">01</span><h3>Define</h3><p>Turn intent into an observable outcome, scope and verification contract.</p></li>
-            <li><span class="step-number">02</span><h3>Batch</h3><p>Order related contracts by dependency, risk and safe parallelism.</p></li>
+            <li><span class="step-number">01</span><h3>Define</h3><p>Turn intent into an observable outcome, scope and verification task.</p></li>
+            <li><span class="step-number">02</span><h3>Batch</h3><p>Order related tasks by dependency, risk and safe parallelism.</p></li>
             <li><span class="step-number">03</span><h3>Claim</h3><p>Give one agent one branch and one isolated worktree.</p></li>
             <li><span class="step-number">04</span><h3>Review</h3><p>Map every acceptance condition to reproducible evidence.</p></li>
             <li><span class="step-number">05</span><h3>Close</h3><p>Accept only integrated work, then release claims and cleanup safely.</p></li>
@@ -137,7 +137,7 @@
                 <tr><th scope="row">Agent chat</th><td data-label="Keeps intent">Conversation</td><td data-label="Controls execution">Kotta MCP actions + human gates</td><td data-label="Verifies completion">Reported by the agent</td></tr>
                 <tr><th scope="row">Jira / Linear</th><td data-label="Keeps intent">Human-readable issue</td><td data-label="Controls execution">Status tracking</td><td data-label="Verifies completion">Team convention</td></tr>
                 <tr><th scope="row">Agent orchestrator</th><td data-label="Keeps intent">Prompt or task input</td><td data-label="Controls execution">Agent runtime</td><td data-label="Verifies completion">Runtime-specific checks</td></tr>
-                <tr class="kotta-row"><th scope="row">Kotta</th><td data-label="Keeps intent">Repository-native contract</td><td data-label="Controls execution">Claim plus Git isolation</td><td data-label="Verifies completion">Acceptance mapped to evidence</td></tr>
+                <tr class="kotta-row"><th scope="row">Kotta</th><td data-label="Keeps intent">Repository-native task</td><td data-label="Controls execution">Claim plus Git isolation</td><td data-label="Verifies completion">Acceptance mapped to evidence</td></tr>
               </tbody>
             </table>
           </div>
@@ -148,7 +148,7 @@
         <div class="container">
           <div class="section-heading section-heading-wide">
             <p class="section-index"><span class="idx-n">04</span><span>One-minute verified quickstart</span></p>
-            <h2 id="install-title">Install it. Define one real contract.</h2>
+            <h2 id="install-title">Install it. Define one real task.</h2>
             <p>Verified with Node.js 20+, Git, Codex and <code>skills@1.5.20</code>. The public clean-machine canary completed in 60 seconds.</p>
           </div>
           <div class="quickstart-grid">
@@ -163,21 +163,21 @@ npx skills@1.5.20 add arpadtamasi/kotta
 
 # Inside an existing Git repository in Codex:
 /setup-kotta
-/define-contract
+/define-task
 
 # Continue in chat; Kotta returns the id and approval here.</code></pre>
               <div class="terminal-result" aria-label="Successful validation result">
                 <span>Kotta caller-chat tools connected.</span>
-                <span>Created contract T-… · waiting for your approval.</span>
+                <span>Created task T-… · waiting for your approval.</span>
               </div>
             </div>
             <div class="quickstart-col">
               <div class="quickstart-step">
                 <span class="step-badge" aria-hidden="true">2</span>
-                <h3>Get a complete contract</h3>
+                <h3>Get a complete task</h3>
               </div>
               <p class="file-label">.kotta/process/backlog/T-001-first-controlled-change.md</p>
-              <pre class="contract-example" tabindex="0" aria-label="Complete minimal Kotta contract"><code>---
+              <pre class="task-example" tabindex="0" aria-label="Complete minimal Kotta task"><code>---
 id: T-001
 title: First controlled change
 status: backlog

@@ -15,7 +15,7 @@ const shippedWorkshopSkills: Record<string, string[]> = {
   "event-storming": ["entity", "state-machine"],
   "ubiquitous-language": ["glossary-term"],
   "quality-scenarios": ["quality-attribute"],
-  "design-by-contract": ["interface"],
+  "design-by-task": ["interface"],
 };
 
 let repository: string;

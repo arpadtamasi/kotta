@@ -5,7 +5,7 @@ import { OBSERVATION_DISPOSITIONS } from "../../src/commands/observation.js";
 
 /**
  * The published schema is documentation; the runtime enum is enforcement. F-01m0f4fd8r3eapgd38f5c4wer9
- * (and the earlier attach-existing / attach-to-existing-contract slip) is what happens when the two
+ * (and the earlier attach-existing / attach-to-existing-task slip) is what happens when the two
  * drift unwatched: this test fails the moment they disagree, so the drift cannot recur silently.
  */
 const schema = JSON.parse(readFileSync(resolve("schemas/observation.schema.json"), "utf8")) as {

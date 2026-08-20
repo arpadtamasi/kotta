@@ -6,12 +6,13 @@ import { fileURLToPath } from "node:url";
 import matter from "gray-matter";
 import { parse } from "yaml";
 import { sections } from "../core/markdown.js";
-import { findContract, idFromFilename } from "../filesystem/entities.js";
+import { findTask, idFromFilename } from "../filesystem/entities.js";
 import { ENV_PREFIX, readEnv } from "../core/env.js";
 import { PROCESS_DIRECTORY, WORKSPACE_DIRECTORIES, WORKSPACE_SCHEMA_VERSION, flatWorkspaceEntries, hasWorkspace, legacyStateDirectories, workspaceDirectoryName, workspaceSchemaVersion } from "../filesystem/workspace.js";
 import type { KottaEvent } from "../core/events.js";
+import { PREVIOUS_WORKSPACE_SCHEMA_VERSION, legacyTaskMigrationMessage, readTaskEvent, readTaskVocabulary, warnLegacyTaskVocabulary } from "../compatibility/task-v3.js";
 
-const CONTRACT_STATES = ["backlog", "defined", "active", "review", "done"];
+const TASK_STATES = ["backlog", "defined", "active", "review", "done"];
 const BATCH_STATES = ["backlog", "defined", "active", "done"];
 
 function git(root: string, args: string[]): { ok: boolean; out: string } {
@@ -119,7 +120,10 @@ export function readWorkspace(workspaceOption: string) {
   const { workspace, projectRoot, directory: workspaceDirectory } = resolveWorkspaceLocation(workspaceOption);
   if (!existsSync(join(workspace, "config.yaml"))) throw new Error(`No Kotta workspace found at ${workspace}.`);
   const config = parse(readFileSync(join(workspace, "config.yaml"), "utf8")) as { version?: unknown; project?: { name?: string }; git?: { base_branch?: string } };
-  const processDirectory = Number(config.version) === WORKSPACE_SCHEMA_VERSION ? PROCESS_DIRECTORY : "__legacy_workspace_schema__";
+  const schemaVersion = Number(config.version);
+  const readableTaskVocabulary = schemaVersion === WORKSPACE_SCHEMA_VERSION || schemaVersion === PREVIOUS_WORKSPACE_SCHEMA_VERSION;
+  if (schemaVersion === PREVIOUS_WORKSPACE_SCHEMA_VERSION) warnLegacyTaskVocabulary(projectRoot);
+  const processDirectory = readableTaskVocabulary ? PROCESS_DIRECTORY : "__legacy_workspace_schema__";
   const base = config.git?.base_branch ?? "main";
   // Read from the base ref only when this workspace IS a git repo root with that ref; otherwise (non-git
   // fixtures, example dirs, a nested/uncommitted workspace) fall back to reading the working tree directly.
@@ -136,12 +140,12 @@ export function readWorkspace(workspaceOption: string) {
   // words, so an already-imported workspace stays readable. Nothing else in the code says them.
   const migrationPath = join(workspace, "migration.json");
   const migration = existsSync(migrationPath) ? JSON.parse(readFileSync(migrationPath, "utf8")) as { project?: string; tickets?: Array<{ id: string; [key: string]: unknown }> } : null;
-  const migrationById = new Map((migration?.tickets ?? []).map((contract) => [contract.id, contract]));
+  const migrationById = new Map((migration?.tickets ?? []).map((task) => [task.id, task]));
 
   // Derive the baseline entity set from the configured base ref (git plumbing, no checkout), so it does
   // not change when another process checks out a different branch in the primary working tree. When the
   // primary dir IS on the base branch, union its uncommitted workspace additions so freshly-created intake
-  // shows immediately. Active worktrees are overlaid per contract below. (T-016 / D-001)
+  // shows immediately. Active worktrees are overlaid per task below. (T-016 / D-001)
   const readMd = (repoPath: string, fromRef: boolean): string =>
     (fromRef ? (refFiles?.get(repoPath) ?? readFileFromRef(projectRoot, base, repoPath)) : readFileSync(join(projectRoot, repoPath), "utf8")) ?? "";
   const listRefMd = (subpath: string): string[] => refFiles
@@ -167,34 +171,34 @@ export function readWorkspace(workspaceOption: string) {
   };
   const parseEntity = (entry: { state: string; repoPath: string; fromRef: boolean }): Record<string, unknown> => {
     const parsed = matter(readMd(entry.repoPath, entry.fromRef));
-    return { ...parsed.data, status: entry.state, filename: basename(entry.repoPath), sections: sectionObject(parsed.content) };
+    return { ...readTaskVocabulary(parsed.data as Record<string, unknown>), status: entry.state, filename: basename(entry.repoPath), sections: sectionObject(parsed.content) };
   };
 
-  const diagnostics: Array<{ entity: "contract"; id: string; worktree: string; message: string }> = [];
+  const diagnostics: Array<{ entity: "task"; id: string; worktree: string; message: string }> = [];
 
-  // Contracts: the base control plane is canonical. A defined base plus an active worktree is the
+  // Tasks: the base control plane is canonical. A defined base plus an active worktree is the
   // legacy pre-control-plane shape and remains readable until its next lifecycle mutation adopts it.
   // Identity comes from the frontmatter: a minted entity's filename carries only its short id suffix.
-  const contractBase = new Map<string, Record<string, unknown>>();
-  for (const entry of gather(CONTRACT_STATES, (state) => `${processDirectory}/${state}`)) {
+  const taskBase = new Map<string, Record<string, unknown>>();
+  for (const entry of gather(TASK_STATES, (state) => `${processDirectory}/${state}`)) {
     const parsed = parseEntity(entry);
     const id = String(parsed.id ?? idFromFilename(basename(entry.repoPath)) ?? "");
-    if (id && !contractBase.has(id)) contractBase.set(id, parsed);
+    if (id && !taskBase.has(id)) taskBase.set(id, parsed);
   }
-  const contracts = [...contractBase].map(([id, baseline]) => {
+  const tasks = [...taskBase].map(([id, baseline]) => {
     const worktree = join(projectRoot, ".worktrees", id);
     if (existsSync(worktree)) {
       try {
-        const location = findContract(worktree, id);
+        const location = findTask(worktree, id);
         const parsed = matter(readFileSync(location.path, "utf8"));
-        if (String(parsed.data.id) !== id) throw new Error(`Contract metadata id '${String(parsed.data.id)}' does not match ${id}.`);
+        if (String(parsed.data.id) !== id) throw new Error(`Task metadata id '${String(parsed.data.id)}' does not match ${id}.`);
         if (String(baseline.status) === "defined" && location.state === "active") {
-          diagnostics.push({ entity: "contract", id, worktree, message: "Legacy execution state is still stored in the feature worktree; the next lifecycle mutation will adopt it into the control plane." });
-          return { ...parsed.data, status: location.state, filename: location.filename, sections: sectionObject(parsed.content), migration: migrationById.get(id) ?? null, worktree };
+          diagnostics.push({ entity: "task", id, worktree, message: "Legacy execution state is still stored in the feature worktree; the next lifecycle mutation will adopt it into the control plane." });
+          return { ...readTaskVocabulary(parsed.data as Record<string, unknown>), status: location.state, filename: location.filename, sections: sectionObject(parsed.content), migration: migrationById.get(id) ?? null, worktree };
         }
         return { ...baseline, migration: migrationById.get(id) ?? null, worktree };
       } catch (error) {
-        diagnostics.push({ entity: "contract", id, worktree: worktree, message: error instanceof Error ? error.message : String(error) });
+        diagnostics.push({ entity: "task", id, worktree: worktree, message: error instanceof Error ? error.message : String(error) });
       }
     }
     return { ...baseline, migration: migrationById.get(id) ?? null };
@@ -227,7 +231,7 @@ export function readWorkspace(workspaceOption: string) {
             : [];
         });
       })();
-  const events = eventPaths.map((path) => JSON.parse((useBase ? (refFiles?.get(path) ?? readFileFromRef(projectRoot, base, path)) : readFileSync(join(projectRoot, path), "utf8")) ?? "{}") as KottaEvent)
+  const events = eventPaths.map((path) => readTaskEvent(JSON.parse((useBase ? (refFiles?.get(path) ?? readFileFromRef(projectRoot, base, path)) : readFileSync(join(projectRoot, path), "utf8")) ?? "{}") as Record<string, unknown>) as unknown as KottaEvent)
     .sort((left, right) => left.created_at.localeCompare(right.created_at) || left.id.localeCompare(right.id));
   const claimPrefix = `${workspaceDirectory}/${processDirectory}/claims/`;
   const claimPaths = useBase
@@ -236,20 +240,20 @@ export function readWorkspace(workspaceOption: string) {
         const directory = join(workspace, processDirectory, "claims");
         return existsSync(directory) ? readdirSync(directory).filter((name) => name.endsWith(".yaml")).map((name) => `${workspaceDirectory}/${processDirectory}/claims/${name}`) : [];
       })();
-  const claims = claimPaths.map((path) => parse((useBase ? (refFiles?.get(path) ?? readFileFromRef(projectRoot, base, path)) : readFileSync(join(projectRoot, path), "utf8")) ?? "{}") as Record<string, unknown>);
-  const claimByContract = new Map(claims.map((claim) => [String(claim.contract ?? ""), claim]));
-  const contractsWithClaims = contracts.map((contract) => ({ ...contract, claim: claimByContract.get(String((contract as Record<string, unknown>).id ?? "")) ?? null }));
-  const notices = readNotices(projectRoot, workspace, useBase, base, contracts.length + batches.length + observations.length);
-  return { workspace, project: migration?.project ?? config.project?.name ?? "Kotta workspace", migration, contracts: contractsWithClaims, batches, observations, decisions, events, claims, diagnostics, notices, generatedAt: new Date().toISOString() };
+  const claims = claimPaths.map((path) => readTaskVocabulary(parse((useBase ? (refFiles?.get(path) ?? readFileFromRef(projectRoot, base, path)) : readFileSync(join(projectRoot, path), "utf8")) ?? "{}") as Record<string, unknown>));
+  const claimByTask = new Map(claims.map((claim) => [String(claim.task ?? ""), claim]));
+  const tasksWithClaims = tasks.map((task) => ({ ...task, claim: claimByTask.get(String((task as Record<string, unknown>).id ?? "")) ?? null }));
+  const notices = readNotices(projectRoot, workspace, useBase, base, tasks.length + batches.length + observations.length);
+  return { workspace, project: migration?.project ?? config.project?.name ?? "Kotta workspace", migration, tasks: tasksWithClaims, batches, observations, decisions, events, claims, diagnostics, notices, generatedAt: new Date().toISOString() };
 }
 
 /** Entity files sitting in the working tree, under either vocabulary — the counterweight to the ref read. */
 function workingTreeEntityCount(workspace: string): number {
   const directories = [
-    ...CONTRACT_STATES.map((state) => `${PROCESS_DIRECTORY}/${state}`),
+    ...TASK_STATES.map((state) => `${PROCESS_DIRECTORY}/${state}`),
     ...BATCH_STATES.map((state) => `${PROCESS_DIRECTORY}/batches/${state}`),
     `${PROCESS_DIRECTORY}/observations/new`, `${PROCESS_DIRECTORY}/observations/resolved`,
-    ...CONTRACT_STATES, "ready",
+    ...TASK_STATES, "ready",
     "observations/new", "observations/resolved", "findings/new", "findings/resolved",
     ...["backlog", "ready", "defined", "active", "done"].flatMap((state) => [`batches/${state}`, `packages/${state}`]),
   ];
@@ -272,10 +276,12 @@ export function readNotices(projectRoot: string, workspace: string, useBase: boo
   const legacy = legacyStateDirectories(projectRoot);
   const flat = flatWorkspaceEntries(projectRoot);
   const version = workspaceSchemaVersion(projectRoot);
-  const obsolete = [...new Set([...legacy, ...flat, ...(version === WORKSPACE_SCHEMA_VERSION ? [] : [`config schema ${Number.isFinite(version) ? version : "unreadable"}`])])];
+  const readableVersion = version === WORKSPACE_SCHEMA_VERSION || version === PREVIOUS_WORKSPACE_SCHEMA_VERSION;
+  const obsolete = [...new Set([...legacy, ...flat, ...(readableVersion ? [] : [`config schema ${Number.isFinite(version) ? version : "unreadable"}`])])];
   if (obsolete.length) {
     notices.push(`This workspace still uses the legacy flat shape (${obsolete.map((name) => name.startsWith("config schema ") ? name : `${name}${name.includes(".") ? "" : "/"}`).join(", ")}). The board does not read it. Run 'kotta migrate --dry-run', then 'kotta migrate'.`);
   }
+  if (!obsolete.length && version === PREVIOUS_WORKSPACE_SCHEMA_VERSION) notices.push(legacyTaskMigrationMessage("This workspace"));
   // Only when the shape is current: an old-shape workspace reads as empty for the reason above, and
   // saying "the ref has no entities" about it would be wrong — the ref has them, under the old names.
   if (!obsolete.length && useBase && fromRef === 0) {
@@ -418,7 +424,7 @@ export async function uiCommand(options: { workspace: string; port?: number; hos
         sourceFile = sourceFile.replace(/^source:/, "").replace(/^\/+/, "");
         if (!sourceFile) throw new Error(`No historical source is recorded for ${requestedId || "this reference"}.`);
         let target = resolve(projectRoot, sourceFile);
-        if (!existsSync(target) && sourceFile.startsWith("contracts/")) target = resolve(projectRoot, "scrum", sourceFile);
+        if (!existsSync(target) && sourceFile.startsWith("tasks/")) target = resolve(projectRoot, "scrum", sourceFile);
         const projectRelative = relative(projectRoot, target);
         if (!projectRelative || projectRelative.startsWith("..") || projectRelative.includes("\0") || extname(target) !== ".md") throw new Error("Only Markdown sources inside the project can be opened.");
         if (!existsSync(target) || !statSync(target).isFile()) throw new Error(`Source file not found: ${sourceFile}`);

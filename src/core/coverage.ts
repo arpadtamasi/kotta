@@ -24,7 +24,7 @@ export function acceptanceConditions(content: string): string[] {
  * or frontmatter maps the condition's exact text to referenced ids. Nothing is inferred from prose
  * similarity. The exact-text key keeps the relation stable, reviewable, and unambiguous.
  */
-export function contractCoverage(data: Record<string, unknown>, content: string): CoverageEntry[] {
+export function taskCoverage(data: Record<string, unknown>, content: string): CoverageEntry[] {
   const referenced = strings(data.spec);
   const raw = data.coverage && typeof data.coverage === "object" && !Array.isArray(data.coverage)
     ? data.coverage as Record<string, unknown>
@@ -38,7 +38,7 @@ export function contractCoverage(data: Record<string, unknown>, content: string)
   }));
 }
 
-export function validateContractCoverage(root: string, data: Record<string, unknown>, content: string, path?: string): ValidationIssue[] {
+export function validateTaskCoverage(root: string, data: Record<string, unknown>, content: string, path?: string): ValidationIssue[] {
   const errors: ValidationIssue[] = [];
   const acceptance = acceptanceConditions(content);
   const referenced = strings(data.spec);
@@ -63,7 +63,7 @@ export function validateContractCoverage(root: string, data: Record<string, unkn
     }
   }
 
-  for (const entry of contractCoverage(data, content)) {
+  for (const entry of taskCoverage(data, content)) {
     if (!entry.spec.length) {
       errors.push({
         code: "ACCEPTANCE_NOT_COVERED",

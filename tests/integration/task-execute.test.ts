@@ -11,7 +11,7 @@ const EXECUTE_SPEC_ID = "GT-01m0c0000000000000000000xe";
 /**
  * Deterministic stand-in for a real agent binary. It records exactly what the
  * command handed it — argv, cwd and the prompt on stdin — so the tests can prove
- * the fresh-context contract without ever spawning `claude` or `codex`.
+ * the fresh-context task without ever spawning `claude` or `codex`.
  */
 const DOUBLE = `#!/usr/bin/env node
 import { execFileSync } from "node:child_process";
@@ -88,7 +88,7 @@ function fixture(label: string, options: { defined?: boolean } = {}): Fixture {
     "---", `id: ${EXECUTE_SPEC_ID}`, "form: glossary-term", "title: Export file", "---", "",
     "## Definition", "Exporter produces a file.", "", "## Usage", "Execution fixture.", "", "## Non-examples", "An empty run.", "",
   ].join("\n"));
-  const id = (expectOk(cliRun(repository, ["contract", "new", "--title", "Ship the exporter", "--type", "feature", "--json"])) as { data: { id: string } }).data.id;
+  const id = (expectOk(cliRun(repository, ["task", "new", "--title", "Ship the exporter", "--type", "feature", "--json"])) as { data: { id: string } }).data.id;
   const definition = join(repository, "definition.md");
   writeFileSync(definition, `---
 spec: [${EXECUTE_SPEC_ID}]
@@ -129,8 +129,8 @@ None.
 
 None.
 `);
-  expectOk(cliRun(repository, ["contract", "define", id, "--from", definition, "--json"]));
-  if (options.defined !== false) expectOk(cliRun(repository, ["contract", "sign", id, "--approve", "--json"]));
+  expectOk(cliRun(repository, ["task", "define", id, "--from", definition, "--json"]));
+  if (options.defined !== false) expectOk(cliRun(repository, ["task", "sign", id, "--approve", "--json"]));
   git(repository, "add", "-A");
   git(repository, "commit", "-m", "fixture");
 
@@ -178,16 +178,16 @@ function executionEvents(repository: string, id: string): ExecutionEvent[] {
     .filter((event) => event.state?.startsWith("execution-"));
 }
 
-describe("contract execute (T-035 / D-009)", () => {
-  test("runs a defined contract in a fresh agent context and returns implemented work", () => {
+describe("task execute (T-035 / D-009)", () => {
+  test("runs a defined task in a fresh agent context and returns implemented work", () => {
     const context = fixture("happy");
     const { repository, id } = context;
-    const result = cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "commit"));
+    const result = cliRun(repository, ["task", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "commit"));
     const data = (expectOk(result) as { ok: boolean; data: Record<string, unknown> }).data;
     const worktree = join(repository, ".worktrees", id);
 
-    expect(json(result)).toMatchObject({ ok: true, command: "contract execute" });
-    expect(data).toMatchObject({ id, state: "implemented", contractState: "active", agent: "claude", agentCommand: context.double, branch: `feat/${id}-ship-the-exporter`, context: "fresh", inheritContext: null, exitCode: 0, uncommittedChanges: false });
+    expect(json(result)).toMatchObject({ ok: true, command: "task execute" });
+    expect(data).toMatchObject({ id, state: "implemented", taskState: "active", agent: "claude", agentCommand: context.double, branch: `feat/${id}-ship-the-exporter`, context: "fresh", inheritContext: null, exitCode: 0, uncommittedChanges: false });
     expect(String(data.worktree)).toContain(join(".worktrees", id));
     expect(Number(data.briefTokens)).toBeGreaterThan(0);
     expect(Number(data.briefSections)).toBeGreaterThan(1);
@@ -197,11 +197,11 @@ describe("contract execute (T-035 / D-009)", () => {
     expect(readFileSync(join(worktree, "agent-output.txt"), "utf8")).toContain("implemented by the double");
     expect(git(worktree, "log", "--oneline", "-1")).toContain("feat: double implementation");
     expect(git(worktree, "status", "--porcelain")).toBe("");
-    expect(expectOk(cliRun(worktree, ["status", "--json"]))).toMatchObject({ data: { activeContracts: [id] } });
+    expect(expectOk(cliRun(worktree, ["status", "--json"]))).toMatchObject({ data: { activeTasks: [id] } });
 
     // Acceptance 2: the agent's input is the brief and nothing else.
     const recorded = JSON.parse(readFileSync(context.record, "utf8")) as { argv: string[]; cwd: string; stdin: string };
-    const brief = (expectOk(cliRun(worktree, ["contract", "brief", id, "--json"])) as { data: { brief: string; tokens: number } }).data;
+    const brief = (expectOk(cliRun(worktree, ["task", "brief", id, "--json"])) as { data: { brief: string; tokens: number } }).data;
     expect(recorded.stdin).toBe(brief.brief);
     // Kotta adds no permission flag of its own: an unconfigured workspace grants
     // nothing the caller had not already granted through the agent's settings.
@@ -231,7 +231,7 @@ describe("contract execute (T-035 / D-009)", () => {
   test("records normalized token usage from supported structured agent output", () => {
     const context = fixture("structured-usage");
     const { repository, id } = context;
-    const parsed = expectOk(cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "structured"))) as { data: Record<string, unknown> };
+    const parsed = expectOk(cliRun(repository, ["task", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "structured"))) as { data: Record<string, unknown> };
 
     expect(parsed.data.tokenUsage).toEqual({ input_tokens: 100, output_tokens: 25, total_tokens: 125, cached_input_tokens: 20 });
     const event = executionEvents(repository, id)[0];
@@ -242,7 +242,7 @@ describe("contract execute (T-035 / D-009)", () => {
   test("an agent that changes nothing is no-change, not implemented", () => {
     const context = fixture("no-change");
     const { repository, id } = context;
-    const result = cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "no-change"));
+    const result = cliRun(repository, ["task", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "no-change"));
     const parsed = expectOk(result) as { ok: boolean; data: Record<string, unknown> };
     const worktree = join(repository, ".worktrees", id);
 
@@ -256,9 +256,9 @@ describe("contract execute (T-035 / D-009)", () => {
     expect(events[0].payload.agent_report.output).toContain("decided nothing was needed");
 
     // The human output says so plainly and names what to check.
-    const human = cliRun(repository, ["contract", "execute", id, "--resume"], agentEnvironment(context, "no-change"));
+    const human = cliRun(repository, ["task", "execute", id, "--resume"], agentEnvironment(context, "no-change"));
     expect(human.status).toBe(0);
-    expect(human.stdout).toContain(`kotta contract execute ${id}: no-change`);
+    expect(human.stdout).toContain(`kotta task execute ${id}: no-change`);
     expect(human.stdout).toContain("Nothing to review");
     expect(human.stdout).toContain(join(".kotta/process/events", id));
     expect(human.stdout).toContain("Read what the agent reported in ");
@@ -270,7 +270,7 @@ describe("contract execute (T-035 / D-009)", () => {
   test("work left uncommitted in the worktree is implemented, not an empty run", () => {
     const context = fixture("uncommitted");
     const { repository, id } = context;
-    const data = (expectOk(cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "uncommitted"))) as { data: Record<string, unknown> }).data;
+    const data = (expectOk(cliRun(repository, ["task", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "uncommitted"))) as { data: Record<string, unknown> }).data;
     const worktree = join(repository, ".worktrees", id);
 
     expect(data).toMatchObject({ state: "implemented", uncommittedChanges: true });
@@ -282,13 +282,13 @@ describe("contract execute (T-035 / D-009)", () => {
   test("a run that completes while the control worktree is dirty still writes its record", () => {
     const context = fixture("dirty-control");
     const { repository, id } = context;
-    expectOk(cliRun(repository, ["contract", "start", id, "--agent", "claude", "--json"]));
+    expectOk(cliRun(repository, ["task", "start", id, "--agent", "claude", "--json"]));
     // The 2026-08-07 failure: an unrelated untracked file made assertClean destroy the record.
     const unrelated = join(repository, "unrelated-scratch.txt");
     writeFileSync(unrelated, "not Kotta's business\n");
     const before = git(repository, "rev-parse", "HEAD");
 
-    const data = (expectOk(cliRun(repository, ["contract", "execute", id, "--resume", "--json"], agentEnvironment(context, "commit"))) as { data: Record<string, unknown> }).data;
+    const data = (expectOk(cliRun(repository, ["task", "execute", id, "--resume", "--json"], agentEnvironment(context, "commit"))) as { data: Record<string, unknown> }).data;
     expect(data).toMatchObject({ state: "implemented" });
 
     expect(executionEvents(repository, id).map((event) => event.state)).toEqual(["execution-implemented"]);
@@ -300,7 +300,7 @@ describe("contract execute (T-035 / D-009)", () => {
   test("a record write that fails for a real reason names the run at risk, not a failed start", () => {
     const context = fixture("unrecorded");
     const { repository, id } = context;
-    expectOk(cliRun(repository, ["contract", "start", id, "--agent", "claude", "--json"]));
+    expectOk(cliRun(repository, ["task", "start", id, "--agent", "claude", "--json"]));
     const worktree = join(repository, ".worktrees", id);
     const before = git(worktree, "rev-parse", "HEAD");
 
@@ -309,7 +309,7 @@ describe("contract execute (T-035 / D-009)", () => {
     mkdirSync(lock, { recursive: true });
     writeFileSync(join(lock, "owner.json"), JSON.stringify({ pid: process.pid }));
 
-    const result = cliRun(repository, ["contract", "execute", id, "--resume", "--json"], agentEnvironment(context, "commit"));
+    const result = cliRun(repository, ["task", "execute", id, "--resume", "--json"], agentEnvironment(context, "commit"));
     expect(result.status).not.toBe(0);
     const parsed = json(result) as { ok: boolean; data: Record<string, unknown>; errors: { code: string; message: string }[] };
     expect(parsed).toMatchObject({ ok: false, data: { state: "implemented", recordPath: null }, errors: [{ code: "EXECUTION_UNRECORDED" }] });
@@ -336,7 +336,7 @@ describe("contract execute (T-035 / D-009)", () => {
     git(repository, "add", "-A");
     git(repository, "commit", "-m", "chore: permit writes for launched agents");
 
-    const result = cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "commit"));
+    const result = cliRun(repository, ["task", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "commit"));
     const data = (expectOk(result) as { data: Record<string, unknown> }).data;
     expect(data.permissionWarning).toBeNull();
     const recorded = JSON.parse(readFileSync(context.record, "utf8")) as { argv: string[] };
@@ -351,7 +351,7 @@ describe("contract execute (T-035 / D-009)", () => {
     git(repository, "add", "-A");
     git(repository, "commit", "-m", "chore: planning mode");
 
-    const result = cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "commit"));
+    const result = cliRun(repository, ["task", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "commit"));
     expect(result.status).not.toBe(0);
     expect(result.stdout + result.stderr).toContain("forbids edits");
     // Nothing was created: the refusal happens before the context exists.
@@ -362,16 +362,16 @@ describe("contract execute (T-035 / D-009)", () => {
   test("a resume that names another agent leaves the claim naming the agent that ran", () => {
     const context = fixture("resume-agent");
     const { repository, id } = context;
-    expectOk(cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "no-change")));
+    expectOk(cliRun(repository, ["task", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "no-change")));
     expect(readFileSync(claimPath(repository, id), "utf8")).toContain("agent: claude");
 
-    const switched = (expectOk(cliRun(repository, ["contract", "execute", id, "--resume", "--agent", "codex", "--json"], agentEnvironment(context, "commit"))) as { data: Record<string, unknown> }).data;
+    const switched = (expectOk(cliRun(repository, ["task", "execute", id, "--resume", "--agent", "codex", "--json"], agentEnvironment(context, "commit"))) as { data: Record<string, unknown> }).data;
     expect(switched).toMatchObject({ state: "implemented", resumed: true, agent: "codex" });
     expect(readFileSync(claimPath(repository, id), "utf8")).toContain("agent: codex");
     expect(executionEvents(repository, id).at(-1)?.payload).toMatchObject({ agent: "codex", claim_agent_replaced: "claude" });
 
     // A later bare resume relaunches the agent that actually ran.
-    const bare = (expectOk(cliRun(repository, ["contract", "execute", id, "--resume", "--json"], agentEnvironment(context, "no-change"))) as { data: Record<string, unknown> }).data;
+    const bare = (expectOk(cliRun(repository, ["task", "execute", id, "--resume", "--json"], agentEnvironment(context, "no-change"))) as { data: Record<string, unknown> }).data;
     expect(bare).toMatchObject({ agent: "codex", state: "no-change" });
     expect((JSON.parse(readFileSync(context.record, "utf8")) as { argv: string[] }).argv).toEqual(["exec", "--json", "-"]);
     expect(readFileSync(claimPath(repository, id), "utf8")).toContain("agent: codex");
@@ -381,9 +381,9 @@ describe("contract execute (T-035 / D-009)", () => {
   test("human output names the brief size, the agent, the branch and the worktree", () => {
     const context = fixture("output");
     const { repository, id } = context;
-    const result = cliRun(repository, ["contract", "execute", id, "--agent", "codex"], agentEnvironment(context, "commit"));
+    const result = cliRun(repository, ["task", "execute", id, "--agent", "codex"], agentEnvironment(context, "commit"));
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain(`kotta contract execute ${id}: implemented`);
+    expect(result.stdout).toContain(`kotta task execute ${id}: implemented`);
     expect(result.stdout).toMatch(/brief:\s+~\d+ tokens/);
     expect(result.stdout).toContain(`agent:    codex (command: ${context.double})`);
     expect(result.stdout).toContain(`branch:   feat/${id}-ship-the-exporter`);
@@ -396,9 +396,9 @@ describe("contract execute (T-035 / D-009)", () => {
   test("a non-zero agent exit is agent-failed and preserves the execution context", () => {
     const context = fixture("failing");
     const { repository, id } = context;
-    const result = cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "fail"));
+    const result = cliRun(repository, ["task", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "fail"));
     expect(result.status).not.toBe(0);
-    expect(json(result)).toMatchObject({ ok: false, data: { state: "agent-failed", exitCode: 3, contractState: "active" }, errors: [{ code: "AGENT_FAILED" }] });
+    expect(json(result)).toMatchObject({ ok: false, data: { state: "agent-failed", exitCode: 3, taskState: "active" }, errors: [{ code: "AGENT_FAILED" }] });
     expect(existsSync(claimPath(repository, id))).toBe(true);
     expect(existsSync(join(repository, ".worktrees", id))).toBe(true);
     expect(existsSync(join(repository, ".worktrees", id, ".kotta/process/review"))).toBe(false);
@@ -407,7 +407,7 @@ describe("contract execute (T-035 / D-009)", () => {
   test("an empty agent result is agent-failed", () => {
     const context = fixture("empty");
     const { repository, id } = context;
-    const result = cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "empty"));
+    const result = cliRun(repository, ["task", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "empty"));
     expect(result.status).not.toBe(0);
     expect(json(result)).toMatchObject({ ok: false, data: { state: "agent-failed", exitCode: 0 } });
     expect(String((json(result) as { data: { reason: string } }).data.reason)).toContain("no output");
@@ -417,36 +417,36 @@ describe("contract execute (T-035 / D-009)", () => {
   test("retry after a failure reuses the existing execution context instead of creating a second one", () => {
     const context = fixture("retry");
     const { repository, id } = context;
-    expect(cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "fail")).status).not.toBe(0);
+    expect(cliRun(repository, ["task", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "fail")).status).not.toBe(0);
 
-    const duplicate = cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "commit"));
+    const duplicate = cliRun(repository, ["task", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "commit"));
     expect(duplicate.status).not.toBe(0);
     expect(duplicate.stdout).toContain("refuses to start a second agent");
     expect(existsSync(join(context.record))).toBe(true);
     expect((JSON.parse(readFileSync(context.record, "utf8")) as { stdin: string }).stdin.length).toBeGreaterThan(0);
 
-    const resumed = cliRun(repository, ["contract", "execute", id, "--resume", "--json"], agentEnvironment(context, "commit"));
+    const resumed = cliRun(repository, ["task", "execute", id, "--resume", "--json"], agentEnvironment(context, "commit"));
     const data = (expectOk(resumed) as { data: Record<string, unknown> }).data;
     expect(data).toMatchObject({ state: "implemented", resumed: true, agent: "claude" });
     expect(git(repository, "worktree", "list").split("\n").filter((line) => line.includes(id)).length).toBe(1);
   });
 
-  test("a second execute on a claimed contract refuses and starts no second agent", () => {
+  test("a second execute on a claimed task refuses and starts no second agent", () => {
     const context = fixture("duplicate");
     const { repository, id } = context;
-    expectOk(cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "commit")));
+    expectOk(cliRun(repository, ["task", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "commit")));
     const firstRecord = readFileSync(context.record, "utf8");
 
-    const second = cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "commit"));
+    const second = cliRun(repository, ["task", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "commit"));
     expect(second.status).not.toBe(0);
     expect(json(second)).toMatchObject({ ok: false, errors: [{ code: "COMMAND_FAILED" }] });
     expect(second.stdout).toContain("already has an execution context");
     expect(readFileSync(context.record, "utf8")).toBe(firstRecord);
   });
 
-  test("refuses a non-defined contract, a dirty repository and a missing agent command without mutating anything", () => {
+  test("refuses a non-defined task, a dirty repository and a missing agent command without mutating anything", () => {
     const backlog = fixture("backlog", { defined: false });
-    const notReady = cliRun(backlog.repository, ["contract", "execute", backlog.id, "--agent", "claude", "--json"], agentEnvironment(backlog, "commit"));
+    const notReady = cliRun(backlog.repository, ["task", "execute", backlog.id, "--agent", "claude", "--json"], agentEnvironment(backlog, "commit"));
     expect(notReady.status).not.toBe(0);
     expect(notReady.stdout).toContain("must be defined before execute");
     expect(existsSync(join(backlog.repository, ".worktrees", backlog.id))).toBe(false);
@@ -454,14 +454,14 @@ describe("contract execute (T-035 / D-009)", () => {
 
     const dirty = fixture("dirty");
     writeFileSync(join(dirty.repository, "scratch.txt"), "uncommitted\n");
-    const dirtyResult = cliRun(dirty.repository, ["contract", "execute", dirty.id, "--agent", "claude", "--json"], agentEnvironment(dirty, "commit"));
+    const dirtyResult = cliRun(dirty.repository, ["task", "execute", dirty.id, "--agent", "claude", "--json"], agentEnvironment(dirty, "commit"));
     expect(dirtyResult.status).not.toBe(0);
     expect(dirtyResult.stdout).toContain("Repository is dirty");
     expect(existsSync(join(dirty.repository, ".worktrees", dirty.id))).toBe(false);
     expect(existsSync(dirty.record)).toBe(false);
 
     const missing = fixture("missing-agent");
-    const missingResult = cliRun(missing.repository, ["contract", "execute", missing.id, "--agent", "claude", "--json"], { ...agentEnvironment(missing, "commit"), KOTTA_AGENT_COMMAND: join(missing.repository, "no-such-agent") });
+    const missingResult = cliRun(missing.repository, ["task", "execute", missing.id, "--agent", "claude", "--json"], { ...agentEnvironment(missing, "commit"), KOTTA_AGENT_COMMAND: join(missing.repository, "no-such-agent") });
     expect(missingResult.status).not.toBe(0);
     expect(missingResult.stdout).toContain("Agent command not found");
     expect(missingResult.stdout).toContain("No execution context was created");
@@ -469,7 +469,7 @@ describe("contract execute (T-035 / D-009)", () => {
     expect(git(missing.repository, "branch", "--list")).toBe("* main");
     expect(git(missing.repository, "status", "--porcelain")).toBe("");
 
-    const unknownAgent = cliRun(missing.repository, ["contract", "execute", missing.id, "--agent", "no-such-agent-t035", "--json"], { DOUBLE_RECORD: missing.record });
+    const unknownAgent = cliRun(missing.repository, ["task", "execute", missing.id, "--agent", "no-such-agent-t035", "--json"], { DOUBLE_RECORD: missing.record });
     expect(unknownAgent.status).not.toBe(0);
     expect(unknownAgent.stdout).toContain("Agent command not found");
     expect(existsSync(join(missing.repository, ".worktrees", missing.id))).toBe(false);
@@ -478,17 +478,17 @@ describe("contract execute (T-035 / D-009)", () => {
   test("--inherit-context demands a reason and logs it when granted", () => {
     const context = fixture("inherit");
     const { repository, id } = context;
-    const withoutReason = cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--inherit-context", "", "--json"], agentEnvironment(context, "commit"));
+    const withoutReason = cliRun(repository, ["task", "execute", id, "--agent", "claude", "--inherit-context", "", "--json"], agentEnvironment(context, "commit"));
     expect(withoutReason.status).not.toBe(0);
     expect(withoutReason.stdout).toContain("--inherit-context requires a reason");
     expect(existsSync(join(repository, ".worktrees", id))).toBe(false);
 
-    const missingValue = cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--inherit-context"], agentEnvironment(context, "commit"));
+    const missingValue = cliRun(repository, ["task", "execute", id, "--agent", "claude", "--inherit-context"], agentEnvironment(context, "commit"));
     expect(missingValue.status).not.toBe(0);
     expect(missingValue.stderr).toContain("--inherit-context");
 
     const reason = "F-032 hotfix shares the coordinator's incident context";
-    const granted = cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--inherit-context", reason], agentEnvironment(context, "commit"));
+    const granted = cliRun(repository, ["task", "execute", id, "--agent", "claude", "--inherit-context", reason], agentEnvironment(context, "commit"));
     expect(granted.status).toBe(0);
     expect(granted.stdout).toContain(`INHERITED — ${reason}`);
     const recorded = JSON.parse(readFileSync(context.record, "utf8")) as { stdin: string };
@@ -496,23 +496,23 @@ describe("contract execute (T-035 / D-009)", () => {
     expect(recorded.stdin).toContain(`Reason: ${reason}`);
   });
 
-  test("contract start names execute as the next step", () => {
+  test("task start names execute as the next step", () => {
     const context = fixture("start");
     const { repository, id } = context;
-    const human = cliRun(repository, ["contract", "start", id, "--agent", "claude"]);
+    const human = cliRun(repository, ["task", "start", id, "--agent", "claude"]);
     expect(human.status).toBe(0);
-    expect(human.stdout).toContain(`kotta contract execute ${id} --resume`);
+    expect(human.stdout).toContain(`kotta task execute ${id} --resume`);
     expect(human.stdout).toContain("fresh agent context");
-    const state = expectOk(cliRun(repository, ["claim", "list", "--json"])) as { data: { claims: { contract: string }[] } };
-    expect(state.data.claims.map((claim) => claim.contract)).toEqual([id]);
+    const state = expectOk(cliRun(repository, ["claim", "list", "--json"])) as { data: { claims: { task: string }[] } };
+    expect(state.data.claims.map((claim) => claim.task)).toEqual([id]);
 
-    const resumed = expectOk(cliRun(repository, ["contract", "execute", id, "--resume", "--json"], agentEnvironment(context, "commit"))) as { data: Record<string, unknown> };
+    const resumed = expectOk(cliRun(repository, ["task", "execute", id, "--resume", "--json"], agentEnvironment(context, "commit"))) as { data: Record<string, unknown> };
     expect(resumed.data).toMatchObject({ state: "implemented", resumed: true, agent: "claude" });
   });
 
-  test("contract start can explicitly hand execution to the caller", () => {
+  test("task start can explicitly hand execution to the caller", () => {
     const context = fixture("caller");
-    const result = cliRun(context.repository, ["contract", "start", context.id, "--agent", "codex", "--caller", "--json"]);
+    const result = cliRun(context.repository, ["task", "start", context.id, "--agent", "codex", "--caller", "--json"]);
     const data = (expectOk(result) as { data: Record<string, unknown> }).data;
     expect(data).toMatchObject({ executionMode: "inherited" });
     expect(String(data.callerStep)).toContain("inherited-context mode");
@@ -521,7 +521,7 @@ describe("contract execute (T-035 / D-009)", () => {
 
   test("claim recovery checks the recorded execution worktree and commits canonical state", () => {
     const context = fixture("release-claim");
-    const started = (expectOk(cliRun(context.repository, ["contract", "start", context.id, "--agent", "codex", "--caller", "--json"])) as { data: { worktree: string } }).data;
+    const started = (expectOk(cliRun(context.repository, ["task", "start", context.id, "--agent", "codex", "--caller", "--json"])) as { data: { worktree: string } }).data;
     const executionWorktree = resolve(context.repository, started.worktree);
     const dirty = join(executionWorktree, "unfinished.txt");
     writeFileSync(dirty, "not committed\n");
@@ -537,20 +537,20 @@ describe("contract execute (T-035 / D-009)", () => {
     expect(git(context.repository, "status", "--porcelain")).toBe("");
   });
 
-  test("releasing a claim returns the contract to defined, so start and execute accept it again (F-01kzhnkbpdfc2v4bste7bbdr58)", () => {
+  test("releasing a claim returns the task to defined, so start and execute accept it again (F-01kzhnkbpdfc2v4bste7bbdr58)", () => {
     const context = fixture("release-restart");
     const { repository, id } = context;
-    const started = (expectOk(cliRun(repository, ["contract", "start", id, "--agent", "codex", "--caller", "--json"])) as { data: { worktree: string; branch: string } }).data;
+    const started = (expectOk(cliRun(repository, ["task", "start", id, "--agent", "codex", "--caller", "--json"])) as { data: { worktree: string; branch: string } }).data;
     const executionWorktree = resolve(repository, started.worktree);
 
     expectOk(cliRun(executionWorktree, ["claim", "release", id, "--force", "--json"]));
 
     // Acceptance 1: defined again, with no claim left behind.
-    expect(expectOk(cliRun(repository, ["contract", "validate", id, "--json"]))).toMatchObject({ data: { state: "defined" } });
+    expect(expectOk(cliRun(repository, ["task", "validate", id, "--json"]))).toMatchObject({ data: { state: "defined" } });
     expect(existsSync(claimPath(repository, id))).toBe(false);
 
     // Acceptance 3: the claim deletion and the return to defined are one commit, and the control
-    // plane is left clean — no intermediate commit shows an active contract with no claim.
+    // plane is left clean — no intermediate commit shows an active task with no claim.
     const released = git(repository, "show", "--name-only", "--format=", "HEAD").trim().split("\n");
     expect(released).toContain(`.kotta/process/claims/${id}.yaml`);
     expect(released.some((path) => path.startsWith(".kotta/process/defined/"))).toBe(true);
@@ -559,32 +559,32 @@ describe("contract execute (T-035 / D-009)", () => {
     // Acceptance 4: release preserved the branch and the worktree, and start reuses that pair
     // instead of refusing with "Branch already exists".
     expect(git(repository, "branch", "--list", started.branch).trim()).not.toBe("");
-    const restarted = (expectOk(cliRun(repository, ["contract", "start", id, "--agent", "codex", "--json"])) as { data: Record<string, unknown> }).data;
+    const restarted = (expectOk(cliRun(repository, ["task", "start", id, "--agent", "codex", "--json"])) as { data: Record<string, unknown> }).data;
     expect(restarted).toMatchObject({ branch: started.branch, worktree: started.worktree });
     expect(existsSync(claimPath(repository, id))).toBe(true);
 
-    // Acceptance 2: execute accepts a released contract too, and reaches the agent.
+    // Acceptance 2: execute accepts a released task too, and reaches the agent.
     expectOk(cliRun(executionWorktree, ["claim", "release", id, "--force", "--json"]));
-    const executed = (expectOk(cliRun(repository, ["contract", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "commit"))) as { data: Record<string, unknown> }).data;
-    expect(executed).toMatchObject({ state: "implemented", contractState: "active", branch: started.branch });
+    const executed = (expectOk(cliRun(repository, ["task", "execute", id, "--agent", "claude", "--json"], agentEnvironment(context, "commit"))) as { data: Record<string, unknown> }).data;
+    expect(executed).toMatchObject({ state: "implemented", taskState: "active", branch: started.branch });
   });
 
   test.each(["after-worktree", "after-active", "after-claim"])("start rolls back cleanly when it fails %s", (boundary) => {
     const context = fixture(`rollback-${boundary}`);
-    const result = cliRun(context.repository, ["contract", "start", context.id, "--agent", "codex", "--json"], { KOTTA_TEST_FAIL_START_AT: boundary });
+    const result = cliRun(context.repository, ["task", "start", context.id, "--agent", "codex", "--json"], { KOTTA_TEST_FAIL_START_AT: boundary });
     expect(result.status).not.toBe(0);
     expect(result.stdout).toContain("Injected start failure");
     expect(existsSync(join(context.repository, ".worktrees", context.id))).toBe(false);
     expect(existsSync(claimPath(context.repository, context.id))).toBe(false);
     expect(git(context.repository, "branch", "--list", `feat/${context.id}-ship-the-exporter`)).toBe("");
-    expect(expectOk(cliRun(context.repository, ["contract", "validate", context.id, "--json"]))).toMatchObject({ data: { state: "defined" } });
+    expect(expectOk(cliRun(context.repository, ["task", "validate", context.id, "--json"]))).toMatchObject({ data: { state: "defined" } });
     expect(git(context.repository, "status", "--porcelain")).toBe("");
   });
 
   test("an interrupt leaves the claim and worktree in place and names the manual decision", async () => {
     const context = fixture("cancel");
     const { repository, id } = context;
-    const child = spawn("node", [cli, "contract", "execute", id, "--agent", "claude", "--json"], { cwd: repository, env: { ...process.env, ...agentEnvironment(context, "hang") } });
+    const child = spawn("node", [cli, "task", "execute", id, "--agent", "claude", "--json"], { cwd: repository, env: { ...process.env, ...agentEnvironment(context, "hang") } });
     let stdout = "";
     child.stdout.setEncoding("utf8");
     child.stdout.on("data", (chunk: string) => { stdout += chunk; });

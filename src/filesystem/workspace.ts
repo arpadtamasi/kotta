@@ -2,6 +2,7 @@ import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSy
 import { basename, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse, stringify } from "yaml";
+import { PREVIOUS_WORKSPACE_SCHEMA_VERSION, warnLegacyTaskVocabulary } from "../compatibility/task-v3.js";
 
 export const PROCESS_DIRECTORIES = [
   "backlog",
@@ -21,7 +22,7 @@ export const PROCESS_DIRECTORIES = [
   "events",
 ] as const;
 
-export const WORKSPACE_SCHEMA_VERSION = 3;
+export const WORKSPACE_SCHEMA_VERSION = 4;
 export const SPEC_DIRECTORY = "spec";
 export const PROCESS_DIRECTORY = "process";
 
@@ -178,6 +179,10 @@ export function assertCurrentWorkspaceShape(root: string): void {
   const flat = flatWorkspaceEntries(root);
   const version = workspaceSchemaVersion(root);
   if (!legacy.length && !flat.length && version === WORKSPACE_SCHEMA_VERSION) return;
+  if (!legacy.length && !flat.length && version === PREVIOUS_WORKSPACE_SCHEMA_VERSION) {
+    warnLegacyTaskVocabulary(root);
+    return;
+  }
   const directory = workspaceDirectoryName(root);
   const entries = [...new Set([...legacy, ...flat])].map((name) => `${directory}/${name}${name.includes(".") ? "" : "/"}`);
   if (version !== WORKSPACE_SCHEMA_VERSION) entries.push(`${directory}/config.yaml (schema version ${Number.isFinite(version) ? version : "unreadable"}; expected ${WORKSPACE_SCHEMA_VERSION})`);
@@ -227,7 +232,7 @@ export function initializeWorkspace(options: InitOptions = {}): { root: string; 
       require_human_sign_approval: false,
       require_human_done_approval: true,
       allow_agent_observations: true,
-      allow_agent_defined_contracts: false,
+      allow_agent_defined_tasks: false,
     },
     // null means Kotta passes no permission flag and the agent's own project
     // settings decide. Widening this is the operator's deliberate act.
@@ -352,9 +357,9 @@ export function renderEmptyIndex(): string {
 
 ## Active batches
 
-## Defined contracts
+## Defined tasks
 
-## Active contracts
+## Active tasks
 
 ## Review
 
@@ -376,8 +381,8 @@ export function regenerateIndex(root: string): void {
   writeFileSync(join(process, "index.md"), `# Kotta Status\n\n> Generated file. Do not edit manually.\n\n${[
     section("Defined batches", entries("batches/defined")),
     section("Active batches", entries("batches/active")),
-    section("Defined contracts", entries("defined")),
-    section("Active contracts", entries("active")),
+    section("Defined tasks", entries("defined")),
+    section("Active tasks", entries("active")),
     section("Review", entries("review")),
     section("Blocked", []),
     section("New observations", entries("observations/new")),

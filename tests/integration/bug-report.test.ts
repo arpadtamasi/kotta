@@ -109,11 +109,11 @@ describe("visual entry points", () => {
   });
 });
 
-describe("report-kotta-bug skill contract", () => {
+describe("report-kotta-bug skill task", () => {
   const skill = read("skills/report-kotta-bug/SKILL.md");
   const frontmatter = parse(skill.split("---")[1]) as { name?: string; description?: string };
 
-  test("is discoverable with the same frontmatter contract as the other published skills", () => {
+  test("is discoverable with the same frontmatter task as the other published skills", () => {
     expect(frontmatter.name).toBe("report-kotta-bug");
     expect(frontmatter.description).toMatch(/bug|defect/i);
     // Published through the packed `skills/` allowlist, like every other bundled skill.
@@ -136,7 +136,7 @@ describe("report-kotta-bug skill contract", () => {
     expect(skill).toContain("gh issue list --repo arpadtamasi/kotta");
     expect(skill).toMatch(/absolute filesystem paths/i);
     expect(skill).toMatch(/tokens, credentials, `\.env` values, environment variable values, and Git remote URLs/);
-    expect(skill).toMatch(/repository contents, contract bodies, log files, and the agent conversation/);
+    expect(skill).toMatch(/repository contents, task bodies, log files, and the agent conversation/);
     expect(skill).toMatch(/before any external write/i);
     expect(skill).toContain("gh issue create --repo arpadtamasi/kotta");
     expect(skill).toMatch(/rejects or cancels: create no\nissue, send nothing/);
@@ -153,20 +153,20 @@ describe("report-kotta-bug skill contract", () => {
     expect(fallback).toMatch(/do not retry silently/i);
   });
 
-  test("documents maintainer capture as a observation rather than a contract", () => {
+  test("documents maintainer capture as a observation rather than a task", () => {
     const triage = skill.split("## 8. For Kotta maintainers only")[1] ?? "";
     expect(triage).toContain("kotta observation new --title");
     expect(triage).toContain("--type bug");
-    expect(triage).toMatch(/A GitHub Issue never creates a\ncontract by itself/);
+    expect(triage).toMatch(/A GitHub Issue never creates a\ntask by itself/);
     // The user's own workspace is never mutated by reporting.
-    expect(skill).toMatch(/no contract, no\nobservation, no decision is created locally/);
+    expect(skill).toMatch(/no task, no\nobservation, no decision is created locally/);
   });
 });
 
 describe("documentation", () => {
   const readme = read("README.md");
 
-  test("points installed and public users at the same reporting contract", () => {
+  test("points installed and public users at the same reporting task", () => {
     expect(readme).toContain("## Report a bug");
     expect(readme).toContain(ISSUE_FORM_URL);
     expect(readme).toContain("`report-kotta-bug`");
@@ -177,7 +177,7 @@ describe("documentation", () => {
 });
 
 describe("maintainer triage of a submitted issue", () => {
-  test("captures the issue URL as a observation and creates no contract", () => {
+  test("captures the issue URL as a observation and creates no task", () => {
     const root = mkdtempSync(join(tmpdir(), "kotta-bug-report-"));
     execFileSync("git", ["init", "-b", "main"], { cwd: root });
     execFileSync("git", ["config", "user.name", "Test User"], { cwd: root });
@@ -188,9 +188,9 @@ describe("maintainer triage of a submitted issue", () => {
     const issueUrl = "https://github.com/arpadtamasi/kotta/issues/1234";
     const created = run(root, [
       "observation", "new",
-      "--title", "kotta contract brief fails without profiles",
+      "--title", "kotta task brief fails without profiles",
       "--type", "bug",
-      "--evidence", `${issueUrl} — reported: \`kotta contract brief T-001\` exits 1 on a contract with no profiles. Reported version 0.2.2.`,
+      "--evidence", `${issueUrl} — reported: \`kotta task brief T-001\` exits 1 on a task with no profiles. Reported version 0.2.2.`,
     ]) as { ok: boolean; data: { id: string; path: string } };
     expect(created.ok).toBe(true);
     const observationId = created.data.id;
@@ -209,15 +209,15 @@ describe("maintainer triage of a submitted issue", () => {
     }
 
     // Only an explicitly approved disposition may schedule work.
-    const unapproved = spawnSync("node", [cli, "observation", "resolve", observationId, "--disposition", "create-contract", "--json"], { cwd: root, encoding: "utf8" });
+    const unapproved = spawnSync("node", [cli, "observation", "resolve", observationId, "--disposition", "create-task", "--json"], { cwd: root, encoding: "utf8" });
     expect(unapproved.status).not.toBe(0);
     expect(`${unapproved.stdout}${unapproved.stderr}`).toMatch(/approval/i);
     expect(readdirSync(join(root, ".kotta/process/backlog")).filter((name) => name.endsWith(".md"))).toEqual([]);
 
-    const resolved = run(root, ["observation", "resolve", observationId, "--disposition", "create-contract", "--approve"]) as { ok: boolean; data: { contractId: string } };
+    const resolved = run(root, ["observation", "resolve", observationId, "--disposition", "create-task", "--approve"]) as { ok: boolean; data: { taskId: string } };
     expect(resolved.ok).toBe(true);
-    const contractFile = readdirSync(join(root, ".kotta/process/backlog")).filter((name) => name.endsWith(".md"));
-    expect(contractFile).toEqual([`kotta-contract-brief-fails-without-profiles-${resolved.data.contractId.slice(-8)}.md`]);
-    expect(readFileSync(join(root, ".kotta/process/backlog", contractFile[0]), "utf8")).toContain(`source_observation: ${observationId}`);
+    const taskFile = readdirSync(join(root, ".kotta/process/backlog")).filter((name) => name.endsWith(".md"));
+    expect(taskFile).toEqual([`kotta-task-brief-fails-without-profiles-${resolved.data.taskId.slice(-8)}.md`]);
+    expect(readFileSync(join(root, ".kotta/process/backlog", taskFile[0]), "utf8")).toContain(`source_observation: ${observationId}`);
   });
 });

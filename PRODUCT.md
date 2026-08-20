@@ -14,13 +14,13 @@ Coding agents are a secondary audience. They consume the same repository record 
 
 ## Product Purpose
 
-Kotta is a repository-native operating system for human–AI development teams. It turns intent into executable contracts, coordinates related work in batches, isolates agent execution with Git, and keeps completion tied to reproducible evidence and human acceptance.
+Kotta is a repository-native operating system for human–AI development teams. It turns intent into executable tasks, coordinates related work in batches, isolates agent execution with Git, and keeps completion tied to reproducible evidence and human acceptance.
 
 Success means a human can safely direct work larger than they can continuously observe without losing control of scope, execution state, provenance, or acceptance.
 
 ## Positioning
 
-Kotta provides the control layer between human intent and agent execution. Its durable plain-file contracts, validated lifecycle gates, claims, Git-isolated worktrees, evidence mapping, and explicit human approvals bind the workflow to the repository itself.
+Kotta provides the control layer between human intent and agent execution. Its durable plain-file tasks, validated lifecycle gates, claims, Git-isolated worktrees, evidence mapping, and explicit human approvals bind the workflow to the repository itself.
 
 It complements rather than replaces agent chats, issue trackers, and agent runtimes: those systems may communicate, organize, or execute work, while Kotta keeps the canonical agreement and verifies the legal transitions around it.
 
@@ -30,7 +30,7 @@ Kotta runs inside an existing Git repository. Humans interact through a calling 
 
 The working rhythm is short and frequent: inspect what needs human attention, see what agents are doing, dispatch ready work, leave execution running, then return to review evidence and decide. The repository remains the shared record across chat sessions, agents, branches, worktrees, and restarts.
 
-The core lifecycle is `backlog → defined → active → review → done`. Observations capture possible work without automatically becoming contracts; contracts define executable outcomes and verification; batches coordinate dependency-aware execution; claims connect active work to one agent, branch, and worktree.
+The core lifecycle is `backlog → defined → active → review → done`. Observations capture possible work without automatically becoming tasks; tasks define executable outcomes and verification; batches coordinate dependency-aware execution; claims connect active work to one agent, branch, and worktree.
 
 ## Capabilities and Constraints
 
