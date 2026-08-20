@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { basename } from "node:path";
 import { DECISION_ID } from "./identity.js";
 import { parseMarkdown, renderMarkdown, sections } from "./markdown.js";
+import { RECEIPT_FIELDS, receiptErrors, type ApprovalReceipt } from "./approval-receipt.js";
 
 export interface DecisionDraft {
   id: string;
@@ -10,6 +11,8 @@ export interface DecisionDraft {
   decision: string;
   context: string;
   consequences: string;
+  /** The approval receipt stamped by `decision create`; absent on records that predate receipts. */
+  receipt?: ApprovalReceipt;
 }
 
 export interface DecisionValidationIssue {
@@ -19,7 +22,10 @@ export interface DecisionValidationIssue {
 }
 
 const DECISION_DATE = /^\d{4}-\d{2}-\d{2}$/;
+/** Fields a human may author in a decision source: the receipt is stamped by the command, never here. */
 const DECISION_FIELDS = new Set(["id", "title", "date"]);
+/** Fields a stored decision record may carry: the source fields plus the approval receipt. */
+const DECISION_STORED_FIELDS = new Set([...DECISION_FIELDS, ...RECEIPT_FIELDS]);
 const DECISION_SECTIONS = ["Decision", "Context", "Consequences"] as const;
 
 function isValidDate(value: string): boolean {
@@ -67,8 +73,14 @@ export function validateDecision(draft: DecisionDraft, path?: string): DecisionV
 }
 
 export function renderDecision(draft: DecisionDraft): string {
+  const data: Record<string, unknown> = { id: draft.id, title: draft.title, date: draft.date };
+  if (draft.receipt) {
+    data.approved_by = draft.receipt.approved_by;
+    data.approved_at = draft.receipt.approved_at;
+    data.approval_basis = draft.receipt.approval_basis;
+  }
   return renderMarkdown(
-    { id: draft.id, title: draft.title, date: draft.date },
+    data,
     `# ${draft.id} — ${draft.title}\n\n## Decision\n\n${draft.decision}\n\n## Context\n\n${draft.context}\n\n## Consequences\n\n${draft.consequences}\n`,
   );
 }
@@ -86,8 +98,9 @@ export function validateDecisionFile(path: string): DecisionValidationIssue[] {
       consequences: body.get("consequences")?.trim() ?? "",
     };
     const errors = validateDecision(draft, path);
-    const unknown = Object.keys(entity.data).filter((field) => !DECISION_FIELDS.has(field));
+    const unknown = Object.keys(entity.data).filter((field) => !DECISION_STORED_FIELDS.has(field));
     if (unknown.length) errors.push({ code: "UNKNOWN_DECISION_FIELD", message: `Unsupported decision fields: ${unknown.join(", ")}.`, path });
+    errors.push(...receiptErrors(entity.data).map((issue) => ({ ...issue, path })));
     if (basename(path) !== `${draft.id}.md`) {
       errors.push({ code: "DECISION_FILENAME_MISMATCH", message: `Decision filename must be ${draft.id}.md.`, path });
     }

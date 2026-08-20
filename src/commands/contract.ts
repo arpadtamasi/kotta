@@ -13,6 +13,7 @@ import { commitControlState, controlPlaneRoot, resolveControlPlane, withControlP
 import { findSpecNode, readSpecNodeText } from "../spec/registry.js";
 import { readWorkspaceConfig } from "../core/config.js";
 import { appendCliApprovalAudit, appendLifecycleEvent } from "../core/events.js";
+import { cliApprovalReceipt, stampReceipt, type ApprovalReceipt } from "../core/approval-receipt.js";
 import { readEnv } from "../core/env.js";
 
 export function slugify(value: string): string {
@@ -398,7 +399,7 @@ export function reviewContract(id: string, evidence: string, pullRequest?: strin
   });
 }
 
-export function closeContract(id: string, approved: boolean, repositoryRoot?: string, options: { locked?: boolean; commit?: boolean; approvalRecorded?: boolean } = {}) {
+export function closeContract(id: string, approved: boolean, repositoryRoot?: string, options: { locked?: boolean; commit?: boolean; approvalRecorded?: boolean; receipt?: ApprovalReceipt } = {}) {
   const callerRoot = repositoryRoot ?? findRepositoryRoot();
   const close = (root: string) => {
   const contract = findContract(root, id);
@@ -418,6 +419,7 @@ export function closeContract(id: string, approved: boolean, repositoryRoot?: st
   entity.data.status = "done";
   entity.data.resolution = "completed";
   entity.data.updated_at = new Date().toISOString().slice(0, 10);
+  stampReceipt(entity.data, options.receipt ?? cliApprovalReceipt("contract.close"));
   const doneDirectory = processPath(root, "done");
   mkdirSync(doneDirectory, { recursive: true });
   const destination = join(doneDirectory, contract.filename);
@@ -494,7 +496,7 @@ export function cancelContract(
   reason: string,
   approved: boolean,
   repositoryRoot?: string,
-  options: { supersededBy?: string; locked?: boolean; commit?: boolean; approvalRecorded?: boolean } = {},
+  options: { supersededBy?: string; locked?: boolean; commit?: boolean; approvalRecorded?: boolean; receipt?: ApprovalReceipt } = {},
 ) {
   const callerRoot = repositoryRoot ?? findRepositoryRoot();
   const cancel = (root: string) => {
@@ -525,6 +527,7 @@ export function cancelContract(
   entity.data.cancellation_reason = stated;
   if (superseding) entity.data.superseded_by = superseding;
   entity.data.updated_at = new Date().toISOString().slice(0, 10);
+  stampReceipt(entity.data, options.receipt ?? cliApprovalReceipt("contract.cancel"));
   const doneDirectory = processPath(root, "done");
   mkdirSync(doneDirectory, { recursive: true });
   const destination = join(doneDirectory, contract.filename);
@@ -561,7 +564,7 @@ export function cancelContract(
   return options.locked ? cancel(callerRoot) : withControlPlaneMutation(callerRoot, cancel);
 }
 
-export function reopenContract(id: string, approved: boolean, repositoryRoot?: string, options: { locked?: boolean; commit?: boolean; approvalRecorded?: boolean } = {}) {
+export function reopenContract(id: string, approved: boolean, repositoryRoot?: string, options: { locked?: boolean; commit?: boolean; approvalRecorded?: boolean; receipt?: ApprovalReceipt } = {}) {
   const requestedRoot = repositoryRoot ?? findRepositoryRoot();
   const reopen = (root: string) => {
   const contract = findContract(root, id);
@@ -579,6 +582,7 @@ export function reopenContract(id: string, approved: boolean, repositoryRoot?: s
   }
   entity.data.pull_request = null;
   entity.data.updated_at = new Date().toISOString().slice(0, 10);
+  stampReceipt(entity.data, options.receipt ?? cliApprovalReceipt(changesRequested ? "contract.request-changes" : "contract.reopen"));
   const directory = processPath(root, changesRequested ? "active" : "backlog");
   mkdirSync(directory, { recursive: true });
   const destination = join(directory, contract.filename);

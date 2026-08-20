@@ -5,6 +5,7 @@ import { findBatch } from "../filesystem/batches.js";
 import { cancelContract, closeContract, reopenContract, signContract } from "./contract.js";
 import { findObservation, resolveObservation } from "./observation.js";
 import { appendEvent, approvalHistory, mintApprovalId, readEvents, type KottaEvent } from "../core/events.js";
+import { chatApprovalReceipt, type ApprovalReceipt } from "../core/approval-receipt.js";
 import { CONTRACT_ID, OBSERVATION_ID, BATCH_ID } from "../core/identity.js";
 import { findContract } from "../filesystem/entities.js";
 import { findRepositoryRoot } from "../filesystem/workspace.js";
@@ -97,20 +98,23 @@ function assertApplicable(root: string, entity: string, action: ApprovalAction):
   if (batch.state === "done" || open.length) throw new Error(`${entity} is not ready to close${open.length ? `; open contracts: ${open.join(", ")}` : ""}.`);
 }
 
-function apply(root: string, proposal: KottaEvent): unknown {
+function apply(root: string, proposal: KottaEvent, receipt: ApprovalReceipt): unknown {
   const payload = proposal.payload ?? {};
   switch (proposal.action as ApprovalAction) {
+    // Signing is not a receipt-carrying gate (the acceptance already landed when the spec did),
+    // so it stays untouched; every other gated action stamps the chat receipt on its entity.
     case "contract.sign": return signContract(proposal.entity, true, root, { approvalRecorded: true, locked: true, commit: false });
-    case "observation.resolve": return resolveObservation(proposal.entity, String(payload.disposition), true, root, { approvalRecorded: true, locked: true, commit: false });
-    case "contract.close": return closeContract(proposal.entity, true, root, { locked: true, commit: false, approvalRecorded: true });
+    case "observation.resolve": return resolveObservation(proposal.entity, String(payload.disposition), true, root, { approvalRecorded: true, locked: true, commit: false, receipt });
+    case "contract.close": return closeContract(proposal.entity, true, root, { locked: true, commit: false, approvalRecorded: true, receipt });
     case "contract.cancel": return cancelContract(proposal.entity, String(payload.resolution), String(payload.reason), true, root, {
       supersededBy: typeof payload.supersededBy === "string" ? payload.supersededBy : undefined,
       locked: true,
       commit: false,
       approvalRecorded: true,
+      receipt,
     });
-    case "contract.request-changes": return reopenContract(proposal.entity, true, root, { locked: true, commit: false, approvalRecorded: true });
-    case "batch.close": return closeBatch(proposal.entity, true, root, { skipClean: true, commit: false, approvalRecorded: true });
+    case "contract.request-changes": return reopenContract(proposal.entity, true, root, { locked: true, commit: false, approvalRecorded: true, receipt });
+    case "batch.close": return closeBatch(proposal.entity, true, root, { skipClean: true, commit: false, approvalRecorded: true, receipt });
   }
 }
 
@@ -227,7 +231,8 @@ export function decideApproval(options: {
     }
 
     try {
-      const appliedResult = apply(root, proposal);
+      const receipt = chatApprovalReceipt(String(proposal.action), human.id);
+      const appliedResult = apply(root, proposal, receipt);
       const applied = appendEvent(root, {
         entity: proposal.entity,
         contract: proposal.contract,

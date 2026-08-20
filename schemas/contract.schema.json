@@ -34,6 +34,9 @@
     "blocked": { "type": "boolean" },
     "blocked_reason": { "type": "string", "minLength": 1 },
     "resolution": { "enum": ["completed", "cancelled", "duplicate", "obsolete"] },
+    "approved_by": { "$ref": "#/$defs/approvedBy" },
+    "approved_at": { "$ref": "#/$defs/approvedAt" },
+    "approval_basis": { "$ref": "#/$defs/approvalBasis" },
     "created_at": { "$ref": "#/$defs/date" },
     "updated_at": { "$ref": "#/$defs/date" }
   },
@@ -51,9 +54,17 @@
       "then": { "required": ["resolution"] }
     }
   ],
+  "dependentRequired": {
+    "approved_by": ["approved_at", "approval_basis"],
+    "approved_at": ["approved_by", "approval_basis"],
+    "approval_basis": ["approved_by", "approved_at"]
+  },
   "$defs": {
     "contractIds": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^(T-[0-9]{3,}|O-[0-9]+(?:\\.[0-9]+)?|T-[0-9a-hjkmnp-tv-z]{26})$" } },
-    "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+    "date": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+    "approvedBy": { "type": "string", "minLength": 1 },
+    "approvedAt": { "type": "string", "format": "date-time" },
+    "approvalBasis": { "type": "string", "minLength": 1 }
   },
   "additionalProperties": false
 }

@@ -221,6 +221,14 @@ describe("Kotta caller-chat MCP", () => {
     // The human is shown what ends and why, not only which command runs.
     expect(JSON.stringify(connected.prompt())).toContain("The work is objectless");
     expect(findContract(root, id).state).toBe("done");
+    // The chat-surface approval leaves a receipt on the retired contract, its basis linking the
+    // visible human message that carried the yes.
+    const retiredFile = readFileSync(findContract(root, id).path, "utf8");
+    // The cancel's own visible yes is the last human message; its id is what the basis links.
+    const cancelYes = readEvents(root, id).filter((event) => event.kind === "message" && event.role === "human").at(-1);
+    expect(retiredFile).toContain("approved_by: caller-chat");
+    expect(retiredFile).toMatch(/approved_at: /);
+    expect(retiredFile).toContain(`caller-chat yes (${cancelYes?.id}): contract.cancel`);
     // The refused proposal above never reached the event log; only sign and cancel did.
     const phases = readEvents(root, id).filter((event) => event.kind === "approval").map((event) => event.phase);
     expect(phases).toEqual(["proposed", "approved", "applied", "proposed", "approved", "applied"]);

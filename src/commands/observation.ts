@@ -7,6 +7,7 @@ import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
 import { newContract } from "./contract.js";
 import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
 import { appendCliApprovalAudit, appendLifecycleEvent } from "../core/events.js";
+import { cliApprovalReceipt, receiptErrors, stampReceipt, type ApprovalReceipt } from "../core/approval-receipt.js";
 
 function slugify(value: string): string {
   return value.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
@@ -65,6 +66,7 @@ export function validateObservation(id: string, repositoryRoot?: string) {
   const body = sections(entity.content);
   const required = ["Observation", "Evidence", "Impact hypothesis", "Confidence", "Suggested disposition"];
   const errors = required.filter((heading) => !body.get(heading.toLowerCase())?.trim()).map((heading) => ({ code: "MISSING_SECTION", message: `Missing or empty section: ${heading}.` }));
+  errors.push(...receiptErrors(entity.data));
   const title = String(entity.data.title ?? "").trim().toLowerCase();
   const duplicates: string[] = [];
   for (const state of ["new", "resolved"]) {
@@ -86,7 +88,7 @@ export function validateObservation(id: string, repositoryRoot?: string) {
   return { ok: errors.length === 0, command: "observation validate", data: { id, state: observation.state, duplicates }, errors };
 }
 
-export function resolveObservation(id: string, disposition: string, approved: boolean, repositoryRoot?: string, options: { approvalRecorded?: boolean; locked?: boolean; commit?: boolean } = {}) {
+export function resolveObservation(id: string, disposition: string, approved: boolean, repositoryRoot?: string, options: { approvalRecorded?: boolean; locked?: boolean; commit?: boolean; receipt?: ApprovalReceipt } = {}) {
   const allowed = ["create-contract", "attach-existing", "investigate", "accept-risk", "reject", "merge-duplicate"];
   if (!allowed.includes(disposition)) throw new Error(`Unknown disposition '${disposition}'.`);
   if (!approved) throw new Error("Human approval is required to resolve a observation.");
@@ -110,6 +112,7 @@ export function resolveObservation(id: string, disposition: string, approved: bo
     entity.data.status = "resolved";
     entity.data.disposition = disposition;
     entity.data.resolved_at = new Date().toISOString();
+    stampReceipt(entity.data, options.receipt ?? cliApprovalReceipt("observation.resolve"));
     if (contractId) entity.data.contract = contractId;
     const directory = processPath(root, "observations/resolved");
     mkdirSync(directory, { recursive: true });

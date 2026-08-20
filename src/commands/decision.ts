@@ -1,6 +1,7 @@
 import { existsSync, linkSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { decisionDraftFromSource, renderDecision, validateDecision, validateDecisionFile } from "../core/decision.js";
+import { cliApprovalReceipt } from "../core/approval-receipt.js";
 import { mintId } from "../core/identity.js";
 import { WORKSPACE_DIRECTORY_LABEL, findRepositoryRoot, processPath, workspacePath } from "../filesystem/workspace.js";
 import { readEnv } from "../core/env.js";
@@ -22,9 +23,11 @@ export function createDecision(options: CreateDecisionOptions, repositoryRoot?: 
   const sourcePath = resolve(options.from);
   if (!existsSync(sourcePath)) throw new Error(`Decision source was not found: ${sourcePath}`);
   const id = options.id ?? mintId("D");
-  const draft = decisionDraftFromSource(readFileSync(sourcePath, "utf8"), id, new Date().toISOString().slice(0, 10));
-  const errors = validateDecision(draft);
+  const parsed = decisionDraftFromSource(readFileSync(sourcePath, "utf8"), id, new Date().toISOString().slice(0, 10));
+  const errors = validateDecision(parsed);
   if (errors.length) throw new Error(errors.map((error) => error.message).join("\n"));
+  // Creating a decision is a human gate; the record it lands carries the receipt for that approval.
+  const draft = { ...parsed, receipt: cliApprovalReceipt("decision.create") };
 
   // Git does not carry empty directories into a linked worktree, so `<workspace>/decisions`
   // can be absent there even though the workspace exists.
