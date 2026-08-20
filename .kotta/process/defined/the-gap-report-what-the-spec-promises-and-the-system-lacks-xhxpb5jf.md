@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq31tbjb4xpdybxhxpb5jf
 title: 'The gap report: what the spec promises and the system lacks'
-status: backlog
+status: defined
 origin: human
 types:
   - feature
