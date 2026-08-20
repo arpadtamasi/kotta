@@ -1,0 +1,14 @@
+{
+  "id": "E-01m0gkkmysqrh8pnek46736egy",
+  "entity": "T-01m0gk4c7gb0ycb4ae1ne9x0qr",
+  "task": "T-01m0gk4c7gb0ycb4ae1ne9x0qr",
+  "kind": "approval",
+  "approval_id": "E-01m0gkkmysqrh8pnek46736egy",
+  "phase": "proposed",
+  "action": "task.sign",
+  "payload": {
+    "surface": "cli"
+  },
+  "source_message": null,
+  "created_at": "2026-08-20T22:10:33.049Z"
+}

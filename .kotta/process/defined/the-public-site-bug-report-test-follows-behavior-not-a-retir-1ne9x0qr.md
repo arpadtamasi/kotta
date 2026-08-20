@@ -1,7 +1,7 @@
 ---
 id: T-01m0gk4c7gb0ycb4ae1ne9x0qr
 title: 'The public-site bug-report test follows behavior, not a retired selector'
-status: backlog
+status: defined
 origin: human
 types:
   - bug
@@ -22,6 +22,9 @@ coverage:
   'The public-site bug-report regression test verifies the currently shipped keyboard-reachable behavior instead of requiring a retired CSS selector, and the relevant integration and site suites pass.':
     - QA-01m0f0wn89pg0x4zymz08mh15w
     - EX-01m0ggd2q6n0vr7ks0skeh1264
+approved_by: cli
+approved_at: '2026-08-20T22:10:33.046Z'
+approval_basis: 'CLI --approve: task.sign'
 ---
 ## Outcome
 
