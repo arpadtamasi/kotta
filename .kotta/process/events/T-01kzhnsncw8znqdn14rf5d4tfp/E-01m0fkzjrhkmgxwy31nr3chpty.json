@@ -1,0 +1,14 @@
+{
+  "entity": "T-01kzhnsncw8znqdn14rf5d4tfp",
+  "contract": "T-01kzhnsncw8znqdn14rf5d4tfp",
+  "kind": "approval",
+  "approval_id": "E-01m0fkzjrgdqfc2nvcery4j856",
+  "phase": "applied",
+  "action": "contract.request-changes",
+  "payload": {
+    "surface": "cli"
+  },
+  "source_message": "E-01m0fkzjrhry7jh7npd2srqp89",
+  "id": "E-01m0fkzjrhkmgxwy31nr3chpty",
+  "created_at": "2026-08-20T12:57:49.585Z"
+}

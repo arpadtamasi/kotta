@@ -18,11 +18,10 @@ None.
 
 ## Active contracts
 
-None.
+- a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
 
 ## Review
 
-- a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
 - contract-gate-treats-standalone-generated-documents-as-kotta-grgv0mtw
 
 ## Blocked
