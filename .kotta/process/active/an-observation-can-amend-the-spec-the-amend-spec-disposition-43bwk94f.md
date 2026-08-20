@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq306xed253zf243bwk94f
 title: 'An observation can amend the spec: the amend-spec disposition'
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -16,10 +16,18 @@ spec:
   - GT-01m0f0wn89ep8038fwn1nf1kkc
   - BR-01m0f0wn898xd4tr7j7t9bsjy7
   - UC-01m0f0wn89fpwvdh3gz31cdtn9
-branch: null
+branch: >-
+  feat/T-01m0fq306xed253zf243bwk94f-an-observation-can-amend-the-spec-the-amend-spec-disposition
 pull_request: null
 created_at: '2026-08-20'
 updated_at: '2026-08-20'
+assigned_agent: claude
+worktree: .worktrees/T-01m0fq306xed253zf243bwk94f
+execution_mode: fresh
+branch_origin: created
+start_ref: coord/P-01m0fq77101axprvcjwrq3bs61
+start_commit: 167d13306d61dd7fa52bc4fb24e49abae96da9d2
+dependency_integration_target: coord/P-01m0fq77101axprvcjwrq3bs61
 ---
 ## Outcome
 
