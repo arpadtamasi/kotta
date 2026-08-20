@@ -3,7 +3,7 @@ id: T-01m0fq2zthr89c1qyx6hdkdv3k
 title: >-
   The product speaks task: contract → task on every surface, with read
   compatibility
-status: defined
+status: active
 origin: human
 types:
   - workflow
@@ -24,7 +24,8 @@ spec:
   - GT-01m0f0wn89w5k8sk1rgegc9rxm
   - E-01m0f0wn898ayyrvy613zjx3ye
   - SM-01m0f0wn89gjy6dbk1j6fjpv6j
-branch: null
+branch: >-
+  feat/T-01m0fq2zthr89c1qyx6hdkdv3k-the-product-speaks-task-contract-task-on-every-surface-with-
 pull_request: null
 created_at: '2026-08-20'
 updated_at: '2026-08-20'
@@ -37,6 +38,13 @@ coverage:
   kotta sync regenerates AGENTS.md and skills in the new vocabulary; the migration note reaches the CHANGELOG and the site.:
     - GT-01m0f0wn89w5k8sk1rgegc9rxm
     - SM-01m0f0wn89gjy6dbk1j6fjpv6j
+assigned_agent: codex
+worktree: .worktrees/T-01m0fq2zthr89c1qyx6hdkdv3k
+execution_mode: fresh
+branch_origin: created
+start_ref: coord/P-01m0fq77101axprvcjwrq3bs61
+start_commit: 9027fe170d9f2a54cfacf416c527b45c3925f294
+dependency_integration_target: coord/P-01m0fq77101axprvcjwrq3bs61
 ---
 ## Outcome
 

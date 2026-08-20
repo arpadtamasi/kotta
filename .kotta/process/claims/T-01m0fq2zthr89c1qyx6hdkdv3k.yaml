@@ -1,0 +1,10 @@
+contract: T-01m0fq2zthr89c1qyx6hdkdv3k
+agent: codex
+branch: feat/T-01m0fq2zthr89c1qyx6hdkdv3k-the-product-speaks-task-contract-task-on-every-surface-with-
+worktree: .worktrees/T-01m0fq2zthr89c1qyx6hdkdv3k
+execution_mode: fresh
+origin: created
+start_ref: coord/P-01m0fq77101axprvcjwrq3bs61
+start_commit: 9027fe170d9f2a54cfacf416c527b45c3925f294
+dependency_integration_target: coord/P-01m0fq77101axprvcjwrq3bs61
+started_at: 2026-08-20T19:52:39.808Z
