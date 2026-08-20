@@ -35,7 +35,8 @@ type Batch = {
 };
 type Observation = {
   id: string; title: string; status: "new" | "resolved"; observation_type: string; severity: string; confidence: string;
-  discovered_during?: string | null; created_at?: string | null; resolution?: string; became?: string | null; sections: Record<string, string>;
+  discovered_during?: string | null; created_at?: string | null; resolution?: string; became?: string | null;
+  disposition?: string; spec?: string[]; sections: Record<string, string>;
 };
 type Decision = { id: string; title: string; date: string | null; sections: Record<string, string> };
 type Diagnostic = { entity: string; id: string; worktree: string; message: string };
@@ -703,6 +704,8 @@ export function ObservationsView({ board, filter, sort, onFilter, onSort, onOpen
           {observation.discovered_during && <span className="obs__during">seen during {titleOf(observation.discovered_during) ?? displayId(observation.discovered_during)}</span>}
           <span className={`obs__age ${age !== null && age > 30 ? "is-hot" : ""}`}>{observation.created_at ? `created ${relativeTime(observation.created_at)}` : "created date unavailable"}</span>
           {observation.became && <span className="obs__became">→ {titleOf(observation.became) ?? displayId(observation.became)}</span>}
+          {observation.disposition === "amend-spec" && (observation.spec?.length ?? 0) > 0 &&
+            <span className="obs__became">→ amended spec · {observation.spec!.map(displayId).join(", ")}</span>}
         </span>
       </EntityButton>;
     })}
@@ -908,12 +911,23 @@ export function DerivationPanel({ id, board, onOpen }: { id: string; board: Boar
           </div>
         </>;
   } else if (observation) {
+    const amended = observation.disposition === "amend-spec" ? observation.spec ?? [] : [];
     const became = observation.became;
-    goes = !became
-      ? <p className="deriv__none">No contract was written from this yet.</p>
-      : board.contractById.has(became)
-        ? <LinkRow link={{ id: became, title: titleOf(became), note: "became this contract" }} onOpen={onOpen} />
-        : <Dangling field="became" id={became} />;
+    goes = amended.length
+      // amend-spec is the constructive exit into the specification: the noticing changed the
+      // agreement, so what it goes with is the specification nodes the amendment touched. Spec nodes
+      // are not board entities, so they are named rather than linked.
+      ? <div className="deriv__spec">
+          <p className="deriv__spec-lead">Amended the specification — the agreement changed here:</p>
+          <ul className="deriv__spec-nodes">
+            {amended.map((node) => <li key={node} className="deriv__spec-node"><code>{displayId(node)}</code></li>)}
+          </ul>
+        </div>
+      : !became
+        ? <p className="deriv__none">No contract was written from this yet.</p>
+        : board.contractById.has(became)
+          ? <LinkRow link={{ id: became, title: titleOf(became), note: "became this contract" }} onOpen={onOpen} />
+          : <Dangling field="became" id={became} />;
   } else if (batch) {
     const nested = batch.batches ?? [];
     const memberIds = board.subtreeContracts(batch);
@@ -1013,7 +1027,7 @@ function EntityTimeline({ id, workspace }: {
           return <article key={item.id} id={`approval-${item.approval_id}`} tabIndex={-1} className={`approval approval--${phase}`}>
             <div className="approval__kind">Approval · {phase}</div>
             <b>{approvalLabel(item.action, item.payload)}</b>
-            <code>{item.action} {item.entity}{item.action === "observation.resolve" ? ` --disposition ${String(item.payload?.disposition)}` : ""}</code>
+            <code>{item.action} {item.entity}{item.action === "observation.resolve" ? ` --disposition ${String(item.payload?.disposition)}${Array.isArray(item.payload?.spec) && item.payload.spec.length ? ` --spec ${(item.payload.spec as unknown[]).map(String).join(",")}` : ""}` : ""}</code>
             {outcome?.error && <span role="alert">{outcome.error}</span>}
             {phase === "proposed" && <span>Waiting in the calling chat.</span>}
           </article>;

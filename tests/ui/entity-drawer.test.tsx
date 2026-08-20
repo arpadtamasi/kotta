@@ -94,6 +94,18 @@ describe("Entity drawer — derivation", () => {
     expect(within(derivation).getByText("Make the UI workspace argument explicit")).toBeDefined();
   });
 
+  it("shows the specification nodes an amend-spec observation touched, instead of a contract", () => {
+    const data = workspace({ observations: [observation("F-050", "The lifecycle glossary is silent on amend-spec", {
+      status: "resolved", disposition: "amend-spec", spec: ["SM-01m0f0wn892ntx934by9gwednb", "GT-01m0f0wn89ep8038fwn1nf1kkc"],
+    })] });
+    openDrawer("F-050", data);
+    const derivation = screen.getByRole("region", { name: "Derivation" });
+    expect(within(derivation).getByText(/Amended the specification/)).toBeDefined();
+    expect(within(derivation).getByText("SM-01m0f0wn892ntx934by9gwednb")).toBeDefined();
+    expect(within(derivation).getByText("GT-01m0f0wn89ep8038fwn1nf1kkc")).toBeDefined();
+    expect(within(derivation).queryByText(/No contract was written/)).toBeNull();
+  });
+
   it("lists the members of a batch as its goes-with", () => {
     openDrawer("P-003");
     const derivation = screen.getByRole("region", { name: "Derivation" });

@@ -3,7 +3,7 @@ import matter from "gray-matter";
 import { closeBatch } from "./batch.js";
 import { findBatch } from "../filesystem/batches.js";
 import { cancelContract, closeContract, reopenContract, signContract } from "./contract.js";
-import { findObservation, resolveObservation } from "./observation.js";
+import { OBSERVATION_DISPOSITIONS as DISPOSITION_VALUES, findObservation, resolveObservation } from "./observation.js";
 import { appendEvent, approvalHistory, mintApprovalId, readEvents, type KottaEvent } from "../core/events.js";
 import { CONTRACT_ID, OBSERVATION_ID, BATCH_ID } from "../core/identity.js";
 import { findContract } from "../filesystem/entities.js";
@@ -23,7 +23,7 @@ export type ApprovalAction = typeof APPROVAL_ACTIONS[number];
 export type ApprovalDecision = "approved" | "rejected" | "cancelled";
 
 const ACTIONS = new Set<string>(APPROVAL_ACTIONS);
-const OBSERVATION_DISPOSITIONS = new Set(["create-contract", "attach-existing", "investigate", "accept-risk", "reject", "merge-duplicate"]);
+const OBSERVATION_DISPOSITIONS = new Set<string>(DISPOSITION_VALUES);
 const CANCEL_RESOLUTIONS = new Set(["duplicate", "obsolete", "cancelled"]);
 const SUPERSEDING_RESOLUTIONS = new Set(["duplicate", "obsolete"]);
 /** Cancelling is the one gated action whose whole point is the payload: what ends, why, and what replaced it. */
@@ -47,7 +47,16 @@ function validatePayload(action: ApprovalAction, payload: Record<string, unknown
   if (action === "observation.resolve") {
     const disposition = typeof payload.disposition === "string" ? payload.disposition : "";
     if (!OBSERVATION_DISPOSITIONS.has(disposition)) throw new Error("observation.resolve requires one explicit valid disposition.");
-    if (Object.keys(payload).some((key) => key !== "disposition")) throw new Error("observation.resolve accepts only the scoped disposition payload.");
+    if (Object.keys(payload).some((key) => key !== "disposition" && key !== "spec")) throw new Error("observation.resolve accepts only the scoped disposition and spec payload.");
+    // amend-spec is the one disposition that carries references: it must name at least one amended
+    // specification node, and no other disposition may.
+    if (disposition === "amend-spec") {
+      if (!Array.isArray(payload.spec) || !payload.spec.length || payload.spec.some((entry) => typeof entry !== "string" || !entry.trim())) {
+        throw new Error("observation.resolve with disposition amend-spec requires spec naming at least one amended specification node.");
+      }
+    } else if (payload.spec !== undefined) {
+      throw new Error("observation.resolve accepts spec only with the amend-spec disposition.");
+    }
     return;
   }
   if (Object.keys(payload).length) throw new Error(`${action} does not accept an approval payload.`);
@@ -64,7 +73,10 @@ function relatedContract(root: string, entity: string, action: ApprovalAction): 
 }
 
 export function approvalDescription(action: ApprovalAction, entity: string, payload: Record<string, unknown> = {}): string {
-  if (action === "observation.resolve") return `${action} ${entity} --disposition ${String(payload.disposition)}`;
+  if (action === "observation.resolve") {
+    const spec = Array.isArray(payload.spec) && payload.spec.length ? ` --spec ${payload.spec.map(String).join(",")}` : "";
+    return `${action} ${entity} --disposition ${String(payload.disposition)}${spec}`;
+  }
   if (action === "contract.cancel") {
     const superseded = typeof payload.supersededBy === "string" && payload.supersededBy.trim() ? ` --superseded-by ${payload.supersededBy.trim()}` : "";
     return `${action} ${entity} --resolution ${String(payload.resolution)}${superseded} --reason "${String(payload.reason)}"`;
@@ -101,7 +113,7 @@ function apply(root: string, proposal: KottaEvent): unknown {
   const payload = proposal.payload ?? {};
   switch (proposal.action as ApprovalAction) {
     case "contract.sign": return signContract(proposal.entity, true, root, { approvalRecorded: true, locked: true, commit: false });
-    case "observation.resolve": return resolveObservation(proposal.entity, String(payload.disposition), true, root, { approvalRecorded: true, locked: true, commit: false });
+    case "observation.resolve": return resolveObservation(proposal.entity, String(payload.disposition), true, root, { approvalRecorded: true, locked: true, commit: false, spec: Array.isArray(payload.spec) ? payload.spec.map(String) : undefined });
     case "contract.close": return closeContract(proposal.entity, true, root, { locked: true, commit: false, approvalRecorded: true });
     case "contract.cancel": return cancelContract(proposal.entity, String(payload.resolution), String(payload.reason), true, root, {
       supersededBy: typeof payload.supersededBy === "string" ? payload.supersededBy : undefined,

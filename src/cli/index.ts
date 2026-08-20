@@ -394,9 +394,10 @@ observation
 observation
   .command("resolve <id>")
   .requiredOption("--disposition <disposition>")
+  .option("--spec <spec...>", "Specification nodes the amendment touched (amend-spec only)")
   .option("--approve")
   .option("--json")
-  .action((id: string, options: { disposition: string; approve?: boolean; json?: boolean }) => print(resolveObservation(id, options.disposition, Boolean(options.approve)), Boolean(options.json)));
+  .action((id: string, options: { disposition: string; spec?: string[]; approve?: boolean; json?: boolean }) => print(resolveObservation(id, options.disposition, Boolean(options.approve), undefined, { spec: options.spec }), Boolean(options.json)));
 
 const decision = program.command("decision").description("Record durable human decisions");
 decision

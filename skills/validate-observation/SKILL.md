@@ -10,13 +10,19 @@ Treat a observation as evidence awaiting disposition, not as a contract. Use the
 1. Read the observation and inspect the cited files, tests, logs, or reproduction.
 2. Search new and resolved observations, contracts, and decisions for outcome-equivalent duplicates or related work.
 3. State the concrete observation separately from predicted impact. Calibrate confidence and severity to the available evidence.
-4. Recommend the smallest suitable disposition: create contract, attach to existing contract, investigate, accept risk, reject, or merge duplicate.
+4. Recommend the smallest suitable disposition: amend the specification, create contract, attach to
+   existing contract, investigate, accept risk, reject, or merge duplicate. `amend-spec` is the
+   primary constructive exit when the noticing changes the accepted agreement: the amended spec nodes
+   are shaped by hand and land on the base branch, the resolution names them (`--spec <node…>`), and
+   the tasks follow from the landed delta rather than from resolve itself.
 5. Run `kotta observation validate <observation-id>` and present its result.
 6. Obtain the required human decision before creating scheduled work or accepting a trade-off.
    Record an explicitly approved durable trade-off with `kotta decision create --from <draft.md> --approve`; never hand-edit `.kotta/process/decisions/`.
 7. For the chat surface's available create-contract and reject dispositions, prepare the exact
    action there and let the human approve it. For another supported disposition, or as recovery,
    give the human the CLI fallback: `kotta observation resolve <observation-id> --disposition
-   <disposition> --approve` with any command-required references.
+   <disposition> --approve` with any command-required references. For `amend-spec`, name the amended
+   nodes: `kotta observation resolve <observation-id> --disposition amend-spec --spec <node…>
+   --approve`, only after the amended specification has landed on the base branch.
 
 Never silently expand the contract during which the issue was discovered. A created contract begins in backlog unless an explicit, separately validated defined transition is authorized.

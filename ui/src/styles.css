@@ -628,6 +628,9 @@ code { font-family: var(--font-mono); }
 .deriv__kicker { font-size: 9px; letter-spacing: .13em; text-transform: uppercase; margin-bottom: 5px; color: var(--text-muted); }
 .deriv__arrow { text-align: center; font-family: var(--font-mono); font-size: 15px; padding: var(--space-1) 0; color: var(--text-muted); }
 .deriv__none { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--text-muted); }
+.deriv__spec-lead { margin: 0; font-size: 12.5px; line-height: 1.5; }
+.deriv__spec-nodes { margin: var(--space-2) 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--space-1); }
+.deriv__spec-node code { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
 .deriv__link {
   display: flex; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; width: 100%;
   text-align: left; cursor: pointer; background: transparent; border: 0; padding: 0;

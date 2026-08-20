@@ -5,8 +5,27 @@ import { findContract } from "../filesystem/entities.js";
 import { entityFilename, filenameMatchesId, mintId } from "../core/identity.js";
 import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
 import { newContract } from "./contract.js";
+import { findSpecNode } from "../spec/registry.js";
 import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
 import { appendCliApprovalAudit, appendLifecycleEvent } from "../core/events.js";
+
+/**
+ * The one list of disposition values, shared by the CLI resolve path and the caller-chat approval
+ * path so the two enforcement surfaces cannot drift apart, and mirrored by the published
+ * `schemas/observation.schema.json` — the drift the schema-to-enum agreement test forbids
+ * (F-01m0f4fd8r3eapgd38f5c4wer9, and the earlier attach-existing / attach-to-existing-contract slip).
+ * `amend-spec` is the primary constructive exit: the noticing changes the agreement, and the tasks
+ * follow from the landed spec delta rather than from resolve.
+ */
+export const OBSERVATION_DISPOSITIONS = [
+  "amend-spec",
+  "create-contract",
+  "attach-to-existing-contract",
+  "investigate",
+  "accept-risk",
+  "reject",
+  "merge-duplicate",
+] as const;
 
 function slugify(value: string): string {
   return value.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
@@ -86,16 +105,29 @@ export function validateObservation(id: string, repositoryRoot?: string) {
   return { ok: errors.length === 0, command: "observation validate", data: { id, state: observation.state, duplicates }, errors };
 }
 
-export function resolveObservation(id: string, disposition: string, approved: boolean, repositoryRoot?: string, options: { approvalRecorded?: boolean; locked?: boolean; commit?: boolean } = {}) {
-  const allowed = ["create-contract", "attach-existing", "investigate", "accept-risk", "reject", "merge-duplicate"];
-  if (!allowed.includes(disposition)) throw new Error(`Unknown disposition '${disposition}'.`);
+export function resolveObservation(id: string, disposition: string, approved: boolean, repositoryRoot?: string, options: { approvalRecorded?: boolean; locked?: boolean; commit?: boolean; spec?: string[] } = {}) {
+  if (!(OBSERVATION_DISPOSITIONS as readonly string[]).includes(disposition)) throw new Error(`Unknown disposition '${disposition}'.`);
   if (!approved) throw new Error("Human approval is required to resolve a observation.");
+  // The amend-spec exit records which specification nodes the amendment touched; every other
+  // disposition takes no spec references, so a stray one is refused rather than silently dropped.
+  const spec = (options.spec ?? []).map((value) => value.trim()).filter(Boolean);
+  if (disposition === "amend-spec") {
+    if (!spec.length) throw new Error("Disposition 'amend-spec' requires --spec naming at least one amended specification node; the resolution has to record what the amendment touched.");
+  } else if (spec.length) {
+    throw new Error(`--spec applies only to the amend-spec disposition, not '${disposition}'.`);
+  }
   const requestedRoot = repositoryRoot ?? findRepositoryRoot();
   const resolveInControlPlane = (root: string) => {
     const observation = findObservation(root, id);
     if (observation.state !== "new") throw new Error(`Observation ${id} is already resolved.`);
     const validation = validateObservation(id, root);
     if (!validation.ok) throw new Error((validation.errors ?? []).map((error) => error.message).join("\n"));
+    // A named node that resolves to nothing would make the reference decoration, so an unresolvable
+    // one is refused by name — the same promise the contract's spec reference holds.
+    if (disposition === "amend-spec") {
+      const missing = spec.filter((reference) => !findSpecNode(root, reference));
+      if (missing.length) throw new Error(`Observation ${id} names specification ${missing.length === 1 ? "node" : "nodes"} that ${missing.length === 1 ? "does" : "do"} not exist: ${missing.join(", ")}.`);
+    }
     const entity = parseMarkdown(readFileSync(observation.path, "utf8"));
     let contractId: string | undefined;
     if (disposition === "create-contract") {
@@ -111,6 +143,7 @@ export function resolveObservation(id: string, disposition: string, approved: bo
     entity.data.disposition = disposition;
     entity.data.resolved_at = new Date().toISOString();
     if (contractId) entity.data.contract = contractId;
+    if (disposition === "amend-spec") entity.data.spec = spec;
     const directory = processPath(root, "observations/resolved");
     mkdirSync(directory, { recursive: true });
     const destination = join(directory, observation.filename);
@@ -118,9 +151,12 @@ export function resolveObservation(id: string, disposition: string, approved: bo
     unlinkSync(observation.path);
     regenerateIndex(root);
     appendLifecycleEvent(root, id, "resolved", `Observation resolved with disposition ${disposition}.`, typeof entity.data.discovered_during === "string" ? entity.data.discovered_during : null);
-    if (!options.approvalRecorded) appendCliApprovalAudit(root, id, "observation.resolve", { disposition }, typeof entity.data.discovered_during === "string" ? entity.data.discovered_during : null);
+    if (!options.approvalRecorded) appendCliApprovalAudit(root, id, "observation.resolve", {
+      disposition,
+      ...(disposition === "amend-spec" ? { spec } : {}),
+    }, typeof entity.data.discovered_during === "string" ? entity.data.discovered_during : null);
     if (options.commit !== false) commitControlState(root, `chore(kotta): resolve ${id}`);
-    return { ok: true, command: "observation resolve", data: { id, disposition, contractId } };
+    return { ok: true, command: "observation resolve", data: { id, disposition, contractId, spec: disposition === "amend-spec" ? spec : undefined } };
   };
   return options.locked ? resolveInControlPlane(requestedRoot) : withControlPlaneMutation(requestedRoot, resolveInControlPlane, { requireClean: false });
 }
