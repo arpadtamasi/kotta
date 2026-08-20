@@ -109,6 +109,22 @@ async function createAndDefine(client: Client, root: string) {
   return id;
 }
 
+const GLOSSARY_ID = "GT-01m0c0000000000000000000ab";
+
+function landGlossaryNode(root: string): string {
+  const directory = join(root, ".kotta/spec/glossary-terms");
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(join(directory, "amend-spec-disposition-000000ab.md"), [
+    "---", `id: ${GLOSSARY_ID}`, "form: glossary-term", "title: Amend-spec disposition", "---", "",
+    "## Definition", "The constructive exit that changes the accepted agreement.", "",
+    "## Usage", "Named by a resolved observation.", "",
+    "## Non-examples", "An automatic close.", "",
+  ].join("\n"));
+  execFileSync("git", ["add", ".kotta/spec"], { cwd: root });
+  execFileSync("git", ["commit", "-m", "docs(spec): define amend-spec"], { cwd: root });
+  return GLOSSARY_ID;
+}
+
 describe("Kotta caller-chat MCP", () => {
   test("adds project MCP configuration idempotently without replacing existing settings", () => {
     const root = fixture();
@@ -196,6 +212,45 @@ describe("Kotta caller-chat MCP", () => {
     expect(result.isError).not.toBe(true);
     expect(findContract(root, id).state).toBe("backlog");
     expect(readEvents(root, id).filter((event) => event.kind === "approval").map((event) => event.phase)).toEqual(["proposed", "rejected"]);
+  });
+
+  test("resolves amend-spec through caller-chat approval and records the named specification nodes", async () => {
+    const root = fixture();
+    const connected = await connect(root, "approve");
+    const specId = landGlossaryNode(root);
+    const captured = JSON.parse(execFileSync("node", [
+      cli, "observation", "new",
+      "--title", "The disposition glossary is incomplete",
+      "--type", "inconsistency",
+      "--evidence", "The accepted specification now defines amend-spec.",
+      "--json",
+    ], { cwd: root, encoding: "utf8" })) as { data: { id: string } };
+    const id = captured.data.id;
+
+    const resolved = await connected.client.callTool({
+      name: "approval_request",
+      arguments: {
+        entity: id,
+        action: "observation.resolve",
+        payload: { disposition: "amend-spec", spec: [specId] },
+      },
+    });
+
+    expect(resolved.isError).not.toBe(true);
+    expect(JSON.stringify(connected.prompt())).toContain(`--spec ${specId}`);
+    expect(readWorkspace(root).observations.find((observation) => observation.id === id)).toMatchObject({
+      status: "resolved",
+      disposition: "amend-spec",
+      spec: [specId],
+    });
+    const approvalPayloads = readEvents(root, id)
+      .filter((event) => event.kind === "approval")
+      .map((event) => event.payload);
+    expect(approvalPayloads).toEqual([
+      expect.objectContaining({ disposition: "amend-spec", spec: [specId] }),
+      expect.objectContaining({ disposition: "amend-spec", spec: [specId] }),
+      expect.objectContaining({ disposition: "amend-spec", spec: [specId] }),
+    ]);
   });
 
   test("retires a signed contract from the caller chat, with the reason and the supersession in the prompt", async () => {
