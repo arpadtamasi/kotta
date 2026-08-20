@@ -1,7 +1,7 @@
 ---
 id: T-01m0ggf64xdh1644m2k8ahwf4p
 title: The public page makes Kotta obvious before the scroll
-status: backlog
+status: defined
 origin: human
 types:
   - feature
@@ -29,6 +29,9 @@ coverage:
   'The shipped page remains responsive, keyboard-usable, readable without JavaScript, free of horizontal overflow, and free of serious or critical axe violations at desktop and mobile widths.':
     - EX-01m0ggd2q6n0vr7ks0skeh1264
     - QA-01m0f0wn89pg0x4zymz08mh15w
+approved_by: cli
+approved_at: '2026-08-20T21:26:43.165Z'
+approval_basis: 'CLI --approve: task.sign'
 ---
 ## Outcome
 
