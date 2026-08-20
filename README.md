@@ -85,6 +85,7 @@ Kotta's structured tools; the equivalent terminal commands remain available for 
 kotta contract validate <contract-id>
 kotta validate
 kotta status
+kotta gap
 ```
 
 Every command that creates an entity prints its identifier. New identifiers are minted
@@ -445,6 +446,14 @@ kotta observation show F-01kz9d5nqwdwb7r2c0jdzchspa
 ```
 
 `show` answers the other half — one entity as it is stored, its state, its set facts and its body — and is deliberately not `contract brief`: the brief assembles the execution package for an agent about to implement, and exists for contracts alone. **The id the CLI prints is the id the CLI accepts:** the short form shown in every listing resolves on every command that takes an id, and an ambiguous short form is refused naming the full ids it matched rather than guessing between them.
+
+`gap` reads only committed bytes from the configured base branch. For every accepted spec node it
+looks for an explicit node-id trace in code, tests, or command definitions, then reports the reverse
+direction too: validation rules and gates with no nearby spec-id trace. The latest commit that
+touched the spec supplies the changed nodes, which lead the report. An `accepted` entry such as
+`"implementation: waiting for the provider sandbox"` keeps a deliberate absence visible under
+Accepted gaps. The report is deterministic and creates no task or observation; its MCP equivalent
+is `gap_report`.
 
 `list` answers "what is in this workspace" for every entity, with the title first and the id after it, and narrows with a repeatable `--state`. It is read-only and deterministic: the same workspace lists the same bytes, and nothing — not even the index — is written. The same four listings reach the calling chat as read-only tools, so an agent orienting itself never has a reason to read `.kotta/` directly.
 

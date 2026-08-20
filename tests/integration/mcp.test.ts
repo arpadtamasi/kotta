@@ -155,11 +155,15 @@ describe("Kotta caller-chat MCP", () => {
     const connected = await connect(root, "approve");
     const tools = await connected.client.listTools();
     expect(tools.tools.map((tool) => tool.name)).toEqual(expect.arrayContaining([
-      "workspace_status", "contract_create", "contract_define", "contract_validate", "contract_start_caller", "approval_request",
+      "workspace_status", "gap_report", "contract_create", "contract_define", "contract_validate", "contract_start_caller", "approval_request",
       "contract_list", "observation_list", "decision_list", "batch_list",
       "contract_show", "observation_show", "decision_show", "batch_show",
     ]));
     expect(tools.tools.find((tool) => tool.name === "workspace_status")?.annotations?.readOnlyHint).toBe(true);
+    expect(tools.tools.find((tool) => tool.name === "gap_report")?.annotations?.readOnlyHint).toBe(true);
+    const gaps = await connected.client.callTool({ name: "gap_report", arguments: {} });
+    expect(gaps.isError).not.toBe(true);
+    expect(JSON.stringify(gaps.structuredContent)).toContain("gap report");
     // Orientation reaches chat with the same answer the terminal gets, and reads nothing into the bargain.
     for (const name of ["contract_list", "observation_list", "decision_list", "batch_list", "contract_show", "observation_show", "decision_show", "batch_show"]) {
       expect(tools.tools.find((tool) => tool.name === name)?.annotations?.readOnlyHint).toBe(true);

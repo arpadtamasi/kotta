@@ -13,6 +13,7 @@ import { entityStates } from "../filesystem/entities.js";
 import { readEvents } from "../core/events.js";
 import { assertCurrentWorkspaceShape, findRepositoryRoot } from "../filesystem/workspace.js";
 import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
+import { gapReport } from "./gap.js";
 
 type ToolPayload = Record<string, unknown>;
 
@@ -60,6 +61,18 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     try {
       const result = statusCommand(root);
       return toolResult(result as unknown as ToolPayload, `Kotta has ${result.data.activeContracts.length} active, ${result.data.definedContracts.length} defined, and ${result.data.reviewContracts.length} review contracts.`);
+    } catch (error) { return toolError(error); }
+  });
+
+  server.registerTool("gap_report", {
+    title: "Read the implementation gap",
+    description: "Read the accepted specification on the configured base branch and report promises without explicit code/test/command evidence plus enforced behavior without a specification trace. Deterministic and read-only; creates no tasks or observations.",
+    inputSchema: {},
+    annotations: readOnly,
+  }, async () => {
+    try {
+      const result = gapReport(root);
+      return toolResult(result as unknown as ToolPayload, result.data.report);
     } catch (error) { return toolError(error); }
   });
 
