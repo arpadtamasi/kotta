@@ -79,6 +79,7 @@ None.
 - entity-filenames-are-keyed-on-the-same-eight-characters-the--dvhj455d
 - harom-szomszed-repo-agents-md-je-ideiglenes-szabalyblokkot-h-10cpc3k3
 - kotta-hand-enumerates-the-agents-and-hosts-it-can-work-with--ccfd497m
+- kotta-has-no-roadmap-concept-sequenced-intent-above-batches--8amqckd2
 - kotta-has-one-gauge-for-governed-work-a-two-minute-page-and--tsb4m5qh
 - kotta-integrate-only-supports-codex-so-claude-code-sessions--n5cp4s0q
 - kotta-migrate-writes-a-root-gitattributes-it-never-reports-i-hkr7tyh2
