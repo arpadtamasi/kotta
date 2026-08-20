@@ -12,6 +12,7 @@ None.
 
 ## Defined contracts
 
+- auto-completing-a-batch-ignores-its-child-batches-so-a-paren-h2fjxngc
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
 - claim-release-force-strands-the-contract-in-active-with-no-c-4ctjgjm8
 - gray-matter-memoizes-frontmatter-so-every-writer-mutates-a-s-0xnynhsv
