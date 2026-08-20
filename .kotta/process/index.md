@@ -84,6 +84,7 @@ None.
 - calling-codex-chat-has-no-kotta-approval-adapter-and-falls-b-txr0k995
 - contract-new-human-output-hides-the-created-contract-id-xwja20bg
 - contract-reopen-is-a-human-gate-with-no-chat-path-so-correct-nz0vwxnz
+- contract-review-cannot-locate-a-valid-moved-control-plane-wo-n5nn9try
 - contract-validate-can-pass-a-backlog-contract-that-sign-imme-0ms18ejw
 - crm-kit-and-flowbench-cannot-be-migrated-unrelated-dirty-tre-9m3dkmxv
 - entity-filenames-are-keyed-on-the-same-eight-characters-the--dvhj455d
