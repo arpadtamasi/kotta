@@ -65,6 +65,7 @@ None.
 - a-workspace-konyvtar-atnevezese-uressen-mutatja-a-boardot-am-0n2rjcpt
 - a1-form-installation-contradicts-the-no-code-invariant-p15dnp69
 - an-observation-has-no-exit-into-the-spec-so-every-constructi-f5c4wer9
+- an-older-cli-silently-downgrades-a-newer-shaped-workspace-in-jk7q3pec
 - az-approval-chatben-ke-rde-s-a-gyakorlatban-me-gis-parancsli-197dfjs9
 - az-approve-kapu-ceremonia-bizonyitek-nelkul-senki-nem-elleno-md9f1zcv
 - az-entitast-letrehozo-parancsok-nem-irjak-ki-az-azonositot-e-9mg56yk6
