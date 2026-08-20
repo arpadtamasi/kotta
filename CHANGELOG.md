@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-08-20
+
+### Fixed
+
+- **Releasing a claim no longer strands the contract.** `kotta claim release --force` deleted the
+  claim and left the contract `active` with no claim and no execution context, where `start`,
+  `execute`, `execute --resume`, `reopen` and `cancel` all refused it — the only exit observed was
+  hand-editing `status` back, which the rules forbid. Release is the documented inverse of `start`,
+  so it now returns the contract to `defined` in the same commit that deletes the claim. The branch
+  and the worktree are still preserved, and `start` reuses exactly the pair the contract records
+  instead of refusing with `Branch already exists`; a branch of that name the contract does not
+  record still refuses.
+- **`observation new` commits what it writes.** Without `--discovered-during` it wrote the
+  observation and regenerated the index without committing either, so the control plane was left
+  dirty and Kotta's own write blocked Kotta's next command: `contract cancel` and `contract reopen`
+  both failed with `Repository is dirty` immediately after a successful capture. The standalone path
+  now takes the same control-plane mutation and the same commit as the attributed one. It records no
+  lifecycle event, because a standalone observation has no contract to attribute one to.
+- **A batch completes on its whole subtree, not just its own contracts.** The automatic completion a
+  closing contract triggers read only the batch's `contracts` array, so a parent holding both direct
+  contracts and child batches closed on its last direct contract while a child was still open — and
+  a parent whose child finished last was never revisited at all. The automatic path and `batch close`
+  now ask one shared question about the whole subtree, and read member state the same way, so a
+  contract executing in its own worktree is no longer mistaken for a defined one.
+- **Every caller gets its own frontmatter.** `parseMarkdown` returned the object gray-matter
+  memoizes for a given source, and commands edit frontmatter in place, so a second parse of an
+  identical file inside one process saw the first caller's edits. It made `kotta migrate` report an
+  empty change list when it planned a file twice, and the long-lived board server parses repeatedly.
+
 ## [0.6.0] - 2026-08-15
 
 ### Added
