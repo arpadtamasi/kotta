@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq323xrdk0ytawtfpam55r
 title: 'A task is revisable until execution: define amends backlog and defined'
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -25,6 +25,10 @@ execution_mode: inherited
 branch_origin: created
 start_ref: HEAD
 start_commit: 16b1ffd85a45e0ed12fa7bff764ebc91b8bd46ec
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-20T21:06:04.728Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 

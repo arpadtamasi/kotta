@@ -23,7 +23,6 @@ None.
 ## Review
 
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
-- a-task-is-revisable-until-execution-define-amends-backlog-an-tfpam55r
 - contract-gate-treats-standalone-generated-documents-as-kotta-grgv0mtw
 - define-validates-coverage-the-sign-gate-retires-for-covered--bkgg3d1k
 - the-gap-report-what-the-spec-promises-and-the-system-lacks-xhxpb5jf
