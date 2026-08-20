@@ -29,7 +29,6 @@ None.
 ## Review
 
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
-- an-observation-can-amend-the-spec-the-amend-spec-disposition-43bwk94f
 - contract-gate-treats-standalone-generated-documents-as-kotta-grgv0mtw
 - every-approval-leaves-a-receipt-approved-by-approved-at-appr-6vs5h0w6
 

@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq306xed253zf243bwk94f
 title: 'An observation can amend the spec: the amend-spec disposition'
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -28,6 +28,7 @@ branch_origin: created
 start_ref: coord/P-01m0fq77101axprvcjwrq3bs61
 start_commit: 167d13306d61dd7fa52bc4fb24e49abae96da9d2
 dependency_integration_target: coord/P-01m0fq77101axprvcjwrq3bs61
+resolution: completed
 ---
 ## Outcome
 
