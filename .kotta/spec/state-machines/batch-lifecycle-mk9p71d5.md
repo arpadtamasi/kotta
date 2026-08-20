@@ -1,0 +1,19 @@
+---
+id: SM-01m0f0wn89m2xwd4z4mk9p71d5
+form: state-machine
+title: "Batch lifecycle"
+entity:
+  - E-01m0f0wn89mpzqng8411pkartq
+---
+
+## Governed lifecycle
+
+How a group of contracts is coordinated from definition to integrated cleanup.
+
+## States
+
+backlog - defined - active (running on its coordinator branch coord/<id>) - done. Derived reporting states after completion: done-unintegrated, cleanup-pending, blocked-*, cleaned.
+
+## Transitions
+
+defined -> active: batch start creates the coordinator branch and worktree from the base branch (or adopts an already checked-out coordinator) and releases the first wave. Waves advance as dependencies complete - done, or in review with the feature branch proven merged into the coordinator. last direct member terminal -> done: automatic, whether or not the batch was started; a parent completes through explicit batch close, which checks the whole subtree - child batches and contracts alike - and refuses while any is not done, naming it. After the coordinator merges to base: finalize verifies ancestry, removes the clean worktree, deletes the merged branch - and refuses anything it cannot prove safe. Member gates are never bypassed by any batch transition.
