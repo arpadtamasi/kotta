@@ -3,6 +3,7 @@ import { basename, dirname, join } from "node:path";
 import { PROFILE_REQUIREMENTS } from "./profiles.js";
 import { CONTRACT_ID, filenameMatchesId } from "./identity.js";
 import { parseMarkdown, sections, subsections } from "./markdown.js";
+import { receiptErrors } from "./approval-receipt.js";
 
 export interface ValidationIssue { code: string; message: string; path?: string }
 export interface ValidationReport { valid: boolean; errors: ValidationIssue[] }
@@ -28,6 +29,7 @@ function validateContract(path: string, expectedState?: string, requireDefinitio
   const id = String(entity.data.id ?? "");
   if (!CONTRACT_ID.test(id)) errors.push({ code: "INVALID_ID", message: "Contract id must be a minted id such as T-01k1n0h5q7zv3m8b4d6xr2ptcw, a sequential T-001, or an imported O-1 identifier.", path });
   if (!filenameMatchesId(basename(path), id)) errors.push({ code: "FILENAME_ID_MISMATCH", message: "Filename must start with the contract id, or end with its short id suffix.", path });
+  for (const issue of receiptErrors(entity.data)) errors.push({ ...issue, path });
   const directoryState = basename(dirname(path));
   const state = String(entity.data.status ?? "");
   if (state !== directoryState) errors.push({ code: "STATE_MISMATCH", message: `status '${state}' does not match directory '${directoryState}'.`, path });

@@ -10,6 +10,7 @@ import { assertClean, git } from "../git/git.js";
 import { branchExists, classifyBaseUpdate, classifyIntegration, coordinatorBranchName, linkedWorktrees, type CleanupState, type CoordinatorMetadata } from "../git/coordinator.js";
 import { batchDependencySatisfied, slugify, startContract } from "./contract.js";
 import { appendCliApprovalAudit, appendLifecycleEvent } from "../core/events.js";
+import { cliApprovalReceipt, receiptErrors, stampReceipt, type ApprovalReceipt } from "../core/approval-receipt.js";
 import { commitControlState, controlPlaneRoot } from "../git/control-plane.js";
 
 interface BatchData {
@@ -195,6 +196,7 @@ export function validateBatch(id: string, repositoryRoot?: string) {
   warnOnBatchKind(id, entity.data);
   if (String(data.id) !== id) errors.push({ code: "ID_MISMATCH", message: "Batch identifier does not match the requested id." });
   if (String(data.status) !== batch.state) errors.push({ code: "STATE_MISMATCH", message: `Batch status must match directory '${batch.state}'.` });
+  errors.push(...receiptErrors(entity.data));
   const body = sections(entity.content);
   for (const heading of ["Goal", "Completion", "Execution notes"]) if (!body.get(heading.toLowerCase())?.trim()) errors.push({ code: "MISSING_SECTION", message: `Missing or empty section: ${heading}.` });
   let waves: string[][] = [];
@@ -427,7 +429,7 @@ export function batchStatus(id: string) {
  * `contract close`/`cancel` already complete a containing batch on their own; this is the explicit
  * path for a batch whose contracts finished outside the batch flow. It never touches a contract.
  */
-export function closeBatch(id: string, approved: boolean, repositoryRoot?: string, options: { skipClean?: boolean; commit?: boolean; approvalRecorded?: boolean } = {}) {
+export function closeBatch(id: string, approved: boolean, repositoryRoot?: string, options: { skipClean?: boolean; commit?: boolean; approvalRecorded?: boolean; receipt?: ApprovalReceipt } = {}) {
   const root = controlPlaneRoot(repositoryRoot ?? findRepositoryRoot());
   const batch = findBatch(root, id);
   const entity = parseMarkdown(readFileSync(batch.path, "utf8"));
@@ -444,6 +446,7 @@ export function closeBatch(id: string, approved: boolean, repositoryRoot?: strin
   if (!options.skipClean) assertClean(root);
   data.status = "done";
   data.updated_at = new Date().toISOString().slice(0, 10);
+  stampReceipt(data, options.receipt ?? cliApprovalReceipt("batch.close"));
   const directory = processPath(root, "batches/done");
   mkdirSync(directory, { recursive: true });
   const destination = join(directory, batch.filename);

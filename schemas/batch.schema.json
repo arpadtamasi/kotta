@@ -168,12 +168,29 @@
       },
       "additionalProperties": false
     },
+    "approved_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "approval_basis": {
+      "type": "string",
+      "minLength": 1
+    },
     "created_at": {
       "$ref": "#/$defs/date"
     },
     "updated_at": {
       "$ref": "#/$defs/date"
     }
+  },
+  "dependentRequired": {
+    "approved_by": ["approved_at", "approval_basis"],
+    "approved_at": ["approved_by", "approval_basis"],
+    "approval_basis": ["approved_by", "approved_at"]
   },
   "$defs": {
     "date": {
