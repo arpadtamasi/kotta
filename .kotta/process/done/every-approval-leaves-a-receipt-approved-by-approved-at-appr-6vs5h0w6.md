@@ -1,7 +1,7 @@
 ---
 id: T-01m0fq30n1ntmbvamm6vs5h0w6
 title: 'Every approval leaves a receipt: approved_by, approved_at, approval_basis'
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -27,6 +27,10 @@ branch_origin: created
 start_ref: coord/P-01m0fq77101axprvcjwrq3bs61
 start_commit: 167d13306d61dd7fa52bc4fb24e49abae96da9d2
 dependency_integration_target: coord/P-01m0fq77101axprvcjwrq3bs61
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-20T21:02:05.420Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
