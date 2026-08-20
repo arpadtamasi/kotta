@@ -102,6 +102,7 @@ None.
 - the-advertised-install-version-is-hardcoded-in-three-files-a-wn3kw5t7
 - the-agent-s-full-stdout-is-stored-in-the-execution-event-wit-fs2s13yd
 - the-board-cannot-show-two-contradiction-classes-that-a-team--2s40aw1j
+- the-board-hides-backlog-entities-whose-state-directory-is-en-vptnvk5g
 - the-define-contract-skill-never-says-what-complete-means-and-cdtrdt8d
 - the-defined-operation-registry-contract-pins-its-acceptance--n9k18wbv
 - the-published-json-schemas-are-documentation-nothing-checks-ge5asz8x
