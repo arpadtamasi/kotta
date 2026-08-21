@@ -3,13 +3,18 @@ id: F-01m0f2mtcnq0cgvdt3ea2n3c6t
 title: >-
   A run wave card keeps counting elapsed time for a contract already in review,
   because it branches on the claim, not on active
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-20'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:12.888Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:12.888Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0f2mtcnq0cgvdt3ea2n3c6t — A run wave card keeps counting elapsed time for a contract already in review, because it branches on the claim, not on active
 
