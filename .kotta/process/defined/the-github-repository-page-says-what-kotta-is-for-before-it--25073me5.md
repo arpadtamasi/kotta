@@ -3,7 +3,7 @@ id: T-01m0hrtpfkq3bx3mmd25073me5
 title: >-
   The GitHub repository page says what Kotta is for before it says how to
   install it
-status: backlog
+status: defined
 origin: human
 types:
   - docs
@@ -31,6 +31,9 @@ coverage:
   Compatibility and migration reference material remains complete on the page and no longer precedes the product claim.:
     - US-01m0hrxc4qmhhrpwz2f288np0t
     - EX-01m0hrxc4xrya8gfs08k289z5r
+approved_by: cli
+approved_at: '2026-08-21T09:03:40.779Z'
+approval_basis: 'CLI --approve: task.sign'
 ---
 ## Outcome
 
