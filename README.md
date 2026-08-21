@@ -10,54 +10,58 @@ It provides executable tasks, type-specific requirements, coordinated work batch
 
 ## What Kotta is for
 
-Software engineering already knows how to say exactly what we want: use cases, user stories,
-acceptance examples, quality scenarios, a glossary that holds, interfaces stated as preconditions
-and postconditions, a trace from every requirement to the thing that proves it. The knowledge was
-never the problem. Writing it down cost more than writing the code, so it was skipped — and what
-survived of the discipline was the ceremony rather than the thinking.
+Software engineering already knows how to say exactly what we want. Use cases, acceptance examples,
+quality scenarios, a glossary that holds, a trace from every requirement to the thing that proves
+it. It got skipped because writing it down cost more than writing the code.
 
-Both halves of that trade have changed. Something else writes the code now, which makes the
-written-down intent the valuable artefact rather than the overhead in front of it. And the weight
-can be made proportionate: a spec-covered task crosses exactly one human gate, at close. A gate
-that reads as "say yes again" is a defect here, not a safeguard.
+That price is gone. Something else writes the code now, and what you wrote down is what it executes.
 
-So Kotta keeps the vocabulary and drops the rigidity. `.kotta/spec/` holds goals, actors, use
-cases, user stories, business rules, entities, interfaces, quality attributes, state machines,
-examples and glossary terms, as plain Markdown you shape directly. The workshops are skills rather
-than phases — impact mapping, story mapping, use-case modeling, example mapping, event storming,
-ubiquitous language, quality scenarios, design by task, requirements traceability — and none of them
-moves work through a lifecycle.
+Kotta keeps the vocabulary and drops the ceremony. One human gate per task, at close. Plain files in
+the repository you already have.
 
-What the old practice could never close, Kotta closes. Every acceptance condition on a task names
-the accepted specification node it came from, review maps each condition to reproducible evidence,
-and `review → done` is a human decision. Traceability stops being a document somebody has to
-maintain and becomes the check that refuses to let a task be defined without it.
+## Where it fits
 
-What it asks of you: you state the outcome and what proves it. Kotta does not infer product intent,
-and an agent working under it may not invent one. It is for a developer or technical lead running
-one or more coding agents in a Git repository they already have.
+For a developer or technical lead running one or more coding agents against a Git repository they
+already have.
+
+**Starting something new.** You have an idea, not a specification. Run the workshops as
+conversation — impact mapping, example mapping, quality scenarios — and each one lands Markdown
+nodes in `.kotta/spec/` instead of a document nobody opens again. Agree one node, and a task
+defined against it can execute.
+
+> A goal node says bookings never double-book a room. An example node states the overlapping
+> reservation that would prove it. The task that implements booking names that example in its
+> acceptance, so review has to produce evidence for that exact case before anyone can close it.
+
+**Rewriting a legacy system.** The behaviour exists; the agreement never got written down, or the
+people who held it have gone. Read the old system into spec nodes rather than into a Word document:
+event storming for the lifecycle, use-case modeling for the flows you must keep, glossary terms for
+the words the old code overloads. Now the rewrite has something to be checked against.
+
+> A state-machine node records the order lifecycle the legacy code actually implements. The rewrite
+> task maps every transition to a test. What you accept is the diff that proves the transitions —
+> not the one that looks finished.
+
+**Continuing a codebase you already have.** Nobody is going to stop and specify everything first,
+and Kotta does not ask for it. Shaping and exploration run without a task at all; you write down
+only the part you are about to touch. `kotta gap` then reports which accepted promises have no
+evidence yet, and which enforcement in the code has no specification behind it.
+
+> Before changing export, record the business rule the export has to obey. The task that changes it
+> names that rule. The next agent that touches export finds the rule instead of guessing at it.
 
 ## What you get
 
-- **An agreement that outlives the session** — outcome, scope, acceptance and decisions are files
-  in your repository, not scrollback. Tomorrow, on another branch, with another agent, they are the
-  same files.
-- **Executable tasks** — an observable outcome, bounded scope, acceptance conditions and
-  verification, stored as Markdown under `.kotta/process/`.
-- **Acceptance tied to accepted specification** — every acceptance condition traces to a node in
-  `.kotta/spec/`, so a task cannot promise something the project never agreed to.
-- **Isolated execution** — a claim binds one task to one agent, one branch and one worktree, and
-  execution never runs on a protected branch.
-- **Evidence before completion** — review maps each acceptance condition to concrete, reproducible
-  evidence; closing requires accepted review and integration.
-- **Human gates with receipts** — consequential transitions are approved by a person in the calling
-  chat, and Kotta records who approved what and when.
-- **Batches** — sequential, parallel or dependency-aware coordination, and nesting for work larger
-  than one batch.
-- **Observations** — capture a possible bug or a piece of debt without silently widening the task
-  you are on.
-- **A read-only local board** — `kotta ui` projects canonical state and history and rejects every
-  mutation.
+- **Tasks that execute** — outcome, scope, acceptance and verification, run by one agent on one
+  branch in one isolated worktree.
+- **Acceptance that traces** — every condition names the specification node it came from, or the
+  task does not become defined.
+- **Evidence, then a human** — review maps each condition to reproducible evidence; `review → done`
+  is your decision, and Kotta records who decided what and when.
+- **Batches** — dependency-aware waves for work bigger than one task, with nesting above it.
+- **Observations** — park what you noticed without widening what you are doing.
+- **Plain files** — Markdown and Git history. `kotta ui` shows it read-only; nothing is hidden
+  behind a service.
 
 ## What Kotta is not
 
