@@ -21,9 +21,11 @@ That reason is gone. You are not the one writing the code any more, and what you
 executes. The specification just became the most valuable file in your repository — and most teams
 do not have one.
 
-Kotta is where you keep it, plus the rule that keeps it honest. A task cannot be defined until every
-acceptance condition names the specification node it came from. It cannot close until review maps
-every condition to evidence you accepted. Your agent does not get to decide it is done.
+Kotta is where you keep it, plus the rule that keeps it honest. Spec tools generate that file and
+hand it to your agent as advice. Here it is a contract: a task cannot be defined until every
+acceptance condition names the specification node it came from, it cannot close until review maps
+every condition to evidence you accepted, and every approval leaves a receipt naming who accepted
+what, and when. Your agent does not get to decide it is done.
 
 Three nouns, one loop. The **specification** says what must be true. The **code** is the
 implementation. A **task** connects them. An **observation** carries back what the running system
@@ -89,7 +91,8 @@ behind it.
 
 Kotta does not write your code, and it never will. It is the control layer around the agents that
 do: keep your chat, your runtime and your issue tracker, and Kotta keeps the agreement and the one
-legal path to completion.
+legal path to completion. It is not a spec generator either — writing the specification is the
+conversation's job; holding everyone to it is Kotta's.
 
 Kotta is intentionally local and file-based. V1 has no hosted service, database, authentication, automatic prioritization, automatic merging, scheduler daemon, or Jira/Linear synchronization.
 
