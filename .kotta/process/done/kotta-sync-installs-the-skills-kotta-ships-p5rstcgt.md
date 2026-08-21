@@ -241,7 +241,14 @@ The manual step "restart a chat session and confirm a Kotta skill appears in the
 
 ### Deviations
 
-Not declared.
+Three, each named in the verification narrative above at close time and accepted with it; this
+field was left stale and is corrected to match the record:
+
+a. A one-file ownership manifest was added that the contract did not describe, so sync can tell
+   its own out-of-date copy from another tool's same-named skill.
+b. Status reports absent installs as well as drift, because both fail the same silent way.
+c. README.md was edited outside the listed scope to remove an install instruction the command
+   replaced.
 
 ### Observations created
 
