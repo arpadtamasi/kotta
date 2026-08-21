@@ -3,13 +3,18 @@ id: F-01m0fjrkdk7wx4jjz0jk7q3pec
 title: >-
   An older CLI silently downgrades a newer-shaped workspace instead of refusing
   it
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-20'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:08:04.237Z'
+approved_by: cli
+approved_at: '2026-08-21T15:08:04.237Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0fjrkdk7wx4jjz0jk7q3pec — An older CLI silently downgrades a newer-shaped workspace instead of refusing it
 

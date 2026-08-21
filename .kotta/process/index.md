@@ -39,7 +39,6 @@ None.
 - a-specifika-cio-s-munka-ra-tova-bbra-is-contract-ke-szu-l-a--vc4e2xry
 - a-vitest-a-worktrees-ala-is-benez-egy-elo-ticket-worktree-me-cahhcmt5
 - a-workspace-konyvtar-atnevezese-uressen-mutatja-a-boardot-am-0n2rjcpt
-- an-older-cli-silently-downgrades-a-newer-shaped-workspace-in-jk7q3pec
 - crm-kit-and-flowbench-cannot-be-migrated-unrelated-dirty-tre-9m3dkmxv
 - kotta-has-no-roadmap-concept-sequenced-intent-above-batches--8amqckd2
 - kotta-has-one-gauge-for-governed-work-a-two-minute-page-and--tsb4m5qh
