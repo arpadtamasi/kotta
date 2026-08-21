@@ -38,7 +38,6 @@ None.
 - F-025-progos-as-first-kotta-publisher-mcp-kottas-for-standard-sme-
 - a-specifika-cio-s-munka-ra-tova-bbra-is-contract-ke-szu-l-a--vc4e2xry
 - a-vitest-a-worktrees-ala-is-benez-egy-elo-ticket-worktree-me-cahhcmt5
-- a-workspace-konyvtar-atnevezese-uressen-mutatja-a-boardot-am-0n2rjcpt
 - kotta-has-no-roadmap-concept-sequenced-intent-above-batches--8amqckd2
 - kotta-has-one-gauge-for-governed-work-a-two-minute-page-and--tsb4m5qh
 - kotta-never-states-what-a-contract-is-the-one-agent-sizing-r-0nnk2emr

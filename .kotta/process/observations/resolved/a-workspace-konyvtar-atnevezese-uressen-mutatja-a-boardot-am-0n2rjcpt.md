@@ -3,13 +3,18 @@ id: F-01kz25qf318bmn1t860n2rjcpt
 title: >-
   A workspace-konyvtar atnevezese uressen mutatja a boardot amig a rename nem
   ert a base branchre
-status: new
+status: resolved
 origin: agent
 observation_type: risk
 confidence: high
 severity: medium
 discovered_during: T-021
 created_at: '2026-08-02'
+disposition: accept-risk
+resolved_at: '2026-08-21T15:08:07.060Z'
+approved_by: cli
+approved_at: '2026-08-21T15:08:07.060Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz25qf318bmn1t860n2rjcpt — A workspace-konyvtar atnevezese uressen mutatja a boardot amig a rename nem ert a base branchre
 
