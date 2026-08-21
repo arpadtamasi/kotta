@@ -14,7 +14,7 @@ A Git repository; the layout created by init or brought current by migrate.
 
 ## Postconditions
 
-One entity, one file; lifecycle state expressed as directory plus status field, kept consistent. Published schemas define tasks, observations, batches, claims, events, and config.
+One entity, one stable file; lifecycle state lives in the frontmatter status field alone, and a transition is an in-place edit, never a move. Published schemas define tasks, observations, batches, claims, events, and config.
 
 ## Invariants
 
@@ -22,4 +22,4 @@ Plain text, mergeable, diffable; the index carries a union merge rule. Identifie
 
 ## Failures
 
-Workspace validation names the malformed file and the violated rule. Two real workspace directories side by side produce a warning naming the ignored one - a state to merge, not to live in. A merge that left one entity in two state directories at once is reported as duplicated state, with the dedupe command as the recovery.
+Workspace validation names the malformed file and the violated rule. Two real workspace directories side by side produce a warning naming the ignored one - a state to merge, not to live in. Two files claiming one identifier inside an entity directory are reported as an identifier collision; a conflicting transition surfaces as an ordinary merge conflict on the status line, resolved like any other conflict - never as a second copy.

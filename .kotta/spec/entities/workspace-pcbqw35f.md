@@ -19,8 +19,8 @@ One per repository, discovered by name (.kotta/ first, the pre-rename directory 
 
 ## Attributes
 
-Bootstrap files (AGENTS.md, README.md, config.yaml, generation metadata); spec/ - the project-owned specification layer with the form registry and node directories; process/ - the service-owned lifecycle layer with tasks by state, observations, batches, profiles, claims, events, decisions, and the generated index.
+Bootstrap files (AGENTS.md, README.md, config.yaml, generation metadata); spec/ - the project-owned specification layer with the form registry and node directories; process/ - the service-owned lifecycle layer with tasks, observations, batches, profiles, claims, events, decisions, and the generated index.
 
 ## Invariants
 
-Plain Markdown, YAML, and JSON - mergeable and diffable. Entity state is directory plus status field, kept consistent. Identifiers never change across migrations; the migration compares the id set before and after and refuses to lose one.
+Plain Markdown, YAML, and JSON - mergeable and diffable. Entity state is the frontmatter status field; a file's location never encodes it. Identifiers never change across migrations; the migration compares the id set before and after and refuses to lose one.
