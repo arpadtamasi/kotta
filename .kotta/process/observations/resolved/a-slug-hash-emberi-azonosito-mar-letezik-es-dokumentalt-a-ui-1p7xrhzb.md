@@ -3,13 +3,18 @@ id: F-01kz4k6c8tej1hv8dr1p7xrhzb
 title: >-
   A slug+hash emberi azonosito mar letezik es dokumentalt - a UI hasznalja, a
   CLI es a skillek soha
-status: new
+status: resolved
 origin: agent
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-03'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:14.647Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:14.647Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz4k6c8tej1hv8dr1p7xrhzb — A slug+hash emberi azonosito mar letezik es dokumentalt - a UI hasznalja, a CLI es a skillek soha
 
