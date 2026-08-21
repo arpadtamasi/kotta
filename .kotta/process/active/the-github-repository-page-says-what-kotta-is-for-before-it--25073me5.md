@@ -3,7 +3,7 @@ id: T-01m0hrtpfkq3bx3mmd25073me5
 title: >-
   The GitHub repository page says what Kotta is for before it says how to
   install it
-status: defined
+status: active
 origin: human
 types:
   - docs
@@ -17,7 +17,7 @@ spec:
   - US-01m0hrxc4qmhhrpwz2f288np0t
   - EX-01m0hrxc4xrya8gfs08k289z5r
   - QA-01m0f0wn89h953x7kv3yykfept
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-21'
 updated_at: '2026-08-21'
@@ -34,6 +34,12 @@ coverage:
 approved_by: cli
 approved_at: '2026-08-21T09:03:40.779Z'
 approval_basis: 'CLI --approve: task.sign'
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: c16571e7aec6a2e79ff611ed301d28bc2ba8ada8
 ---
 ## Outcome
 
