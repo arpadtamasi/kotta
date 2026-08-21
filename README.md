@@ -23,17 +23,17 @@ do not have one.
 
 Kotta is where you keep it, plus the rule that keeps it honest. Spec tools generate that file and
 hand it to your agent as advice. Here it is a contract: a task cannot be defined until every
-acceptance condition names the specification node it came from, it cannot close until review maps
-every condition to evidence you accepted, and every approval leaves a receipt naming who accepted
-what, and when. Your agent does not get to decide it is done.
+acceptance condition names the specification node it came from, it cannot enter review until every
+condition is mapped to evidence, and it cannot close until you approve — and every approval leaves
+a receipt naming who accepted what, and when. Your agent does not get to decide it is done.
 
 Three nouns, one loop. The **specification** says what must be true. The **code** is the
 implementation. A **task** connects them. An **observation** carries back what the running system
 says, so what you noticed gets dispositioned on purpose instead of folded silently into whichever
 task happened to be open.
 
-The vocabulary, none of the ceremony. One human gate per task, at close. Plain files in the
-repository you already have.
+The vocabulary, none of the ceremony. One human gate per task by default, at close — rejecting a
+review is its own decision with its own receipt. Plain files in the repository you already have.
 
 ## Where it fits
 
@@ -74,6 +74,17 @@ behind it.
 > Before changing export, record the business rule the export has to obey. The task that changes it
 > names that rule. The next agent that touches export finds the rule instead of guessing at it.
 
+**The agreement changes.** `changed intent → amended spec → task → code`
+
+The stakeholder moves, the market answers, a decision expires. This is where the spec starts paying
+rent: impact analysis walks the graph from the changed node to everything that cites it, `kotta gap`
+leads its next report with the amended nodes so what you now owe evidence for is the first thing you
+see, and work the change made pointless leaves through `cancel` — naming what superseded it.
+
+> A pricing rule changes. The traceability report names every example, use case and task that cites
+> the old rule; you amend the node, and the obsolete task is cancelled with the record saying which
+> decision killed it — not merely that it ended.
+
 ## What you get
 
 - **Tasks that execute** — outcome, scope, acceptance and verification, run by one agent on one
@@ -91,8 +102,10 @@ behind it.
 
 Kotta does not write your code, and it never will. It is the control layer around the agents that
 do: keep your chat, your runtime and your issue tracker, and Kotta keeps the agreement and the one
-legal path to completion. It is not a spec generator either — writing the specification is the
-conversation's job; holding everyone to it is Kotta's.
+legal path to completion. It is not a spec generator either: the workshops draft with you,
+question by question, and nothing they draft governs anything until a task cites it and a human
+accepts the evidence. Writing the specification is the conversation's job; holding everyone to it
+is Kotta's.
 
 Kotta is intentionally local and file-based. V1 has no hosted service, database, authentication, automatic prioritization, automatic merging, scheduler daemon, or Jira/Linear synchronization.
 
@@ -206,9 +219,13 @@ backlog → defined → active → review → done
 ```
 
 - Tasks define an observable outcome, bounded scope, acceptance conditions, and verification.
-- Every acceptance condition explicitly maps to a referenced accepted spec node. A valid covered
+- Every acceptance condition explicitly maps to a referenced spec node that has landed on the
+  control branch. A valid covered
   definition moves from backlog to defined; there is no separate sign gate by default. Set
   `workflow.require_human_sign_approval: true` only to retain that compatibility gate.
+- A review that does not satisfy you is rejected through `kotta task reopen <id> --approve`: its
+  own decision with its own receipt, the evidence section is cleared, and the task returns to
+  `active` to come back through review.
 - Work that should not continue leaves through `kotta task cancel <id> --resolution <resolution>
   --reason "…" --approve`, from any state before `done`. `close` is for work that was finished and
   merged; `cancel` is for work whose purpose is gone — superseded by a decision, duplicated by
@@ -341,7 +358,7 @@ branch, and re-running it after success is a no-op.
 
 ## Core safety rules
 
-- A backlog item is not executable until it is valid, explicitly covered by accepted spec, and defined.
+- A backlog item is not executable until it is valid, explicitly covered by landed spec, and defined.
 - An observation is not automatically a task.
 - Agents do not invent missing product intent or accepted trade-offs.
 - Every active task has at most one claim and one feature branch.
@@ -401,6 +418,7 @@ kotta task review T-014 \
   --evidence "Export respects active filters=tests/export-filter.test.ts passes" \
   --pull-request PR-123
 kotta task close T-014 --approve
+kotta task reopen T-014 --approve
 
 kotta batch validate P-012
 kotta batch sign P-012 --approve
@@ -428,7 +446,7 @@ kotta observation show F-01kz9d5nqwdwb7r2c0jdzchspa
 
 `show` answers the other half — one entity as it is stored, its state, its set facts and its body — and is deliberately not `task brief`: the brief assembles the execution package for an agent about to implement, and exists for tasks alone. **The id the CLI prints is the id the CLI accepts:** the short form shown in every listing resolves on every command that takes an id, and an ambiguous short form is refused naming the full ids it matched rather than guessing between them.
 
-`gap` reads only committed bytes from the configured base branch. For every accepted spec node it
+`gap` reads only committed bytes from the configured base branch. For every landed spec node it
 looks for an explicit node-id trace in code, tests, or command definitions, then reports the reverse
 direction too: validation rules and gates with no nearby spec-id trace. The latest commit that
 touched the spec supplies the changed nodes, which lead the report. An `accepted` entry such as
