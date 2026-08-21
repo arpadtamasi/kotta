@@ -1,13 +1,18 @@
 ---
 id: F-01m0fk8azq6k7j3bm9vptnvk5g
 title: The board hides backlog entities whose state directory is entirely untracked
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-20'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:06:38.880Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:38.880Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0fk8azq6k7j3bm9vptnvk5g — The board hides backlog entities whose state directory is entirely untracked
 
