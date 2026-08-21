@@ -54,7 +54,6 @@ None.
 - an-older-cli-silently-downgrades-a-newer-shaped-workspace-in-jk7q3pec
 - az-entitast-letrehozo-parancsok-nem-irjak-ki-az-azonositot-e-9mg56yk6
 - az-id-azert-szivarog-a-human-kommunikaciora-mert-o-az-egyetl-szetd8cz
-- batch-start-kiosztja-az-agentet-de-nem-indi-tja-a-plain-exec-xjpmd8ky
 - contract-new-human-output-hides-the-created-contract-id-xwja20bg
 - contract-review-cannot-locate-a-valid-moved-control-plane-wo-n5nn9try
 - crm-kit-and-flowbench-cannot-be-migrated-unrelated-dirty-tre-9m3dkmxv

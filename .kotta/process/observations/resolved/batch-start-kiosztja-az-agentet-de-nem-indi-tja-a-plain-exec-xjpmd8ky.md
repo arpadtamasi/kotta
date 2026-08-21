@@ -3,13 +3,18 @@ id: F-01m0fr12kdarqbdcjzxjpmd8ky
 title: >-
   batch start kiosztja az agentet, de nem indítja - a plain execute-ot pedig a
   saját claimje utasítja el
-status: new
+status: resolved
 origin: agent
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-20'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:10.831Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:10.831Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0fr12kdarqbdcjzxjpmd8ky — batch start kiosztja az agentet, de nem indítja - a plain execute-ot pedig a saját claimje utasítja el
 
