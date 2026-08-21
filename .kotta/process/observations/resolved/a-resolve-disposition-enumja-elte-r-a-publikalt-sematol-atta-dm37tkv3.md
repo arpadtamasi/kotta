@@ -3,13 +3,18 @@ id: F-01kz3k6tn1mnv74fd5dm37tkv3
 title: >-
   A resolve disposition enumja eltér a publikalt sematol: attach-existing vs
   attach-to-existing-contract
-status: new
+status: resolved
 origin: agent
 observation_type: inconsistency
 confidence: high
 severity: medium
 discovered_during: F-01kz3k2axqqy6r4rgqmgt5ybtt
 created_at: '2026-08-03'
+disposition: reject
+resolved_at: '2026-08-21T15:05:59.786Z'
+approved_by: cli
+approved_at: '2026-08-21T15:05:59.787Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz3k6tn1mnv74fd5dm37tkv3 — A resolve disposition enumja eltér a publikalt sematol: attach-existing vs attach-to-existing-contract
 
