@@ -1,13 +1,18 @@
 ---
 id: F-01kzm9v8gsa8zcaj1a8b91d24j
 title: Nothing notices when a contract's premise expires before it is executed
-status: new
+status: resolved
 origin: agent
 observation_type: gap
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-09'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:07.709Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:07.709Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kzm9v8gsa8zcaj1a8b91d24j — Nothing notices when a contract's premise expires before it is executed
 

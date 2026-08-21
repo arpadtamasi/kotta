@@ -71,7 +71,6 @@ None.
 - nincs-backlog-review-es-epp-azert-kell-tolnia-magat-a-termek-sjb9v9w9
 - nincs-sprint-vegi-rendcsinalas-a-close-takarit-de-a-maradeko-6mmdp86q
 - no-before-baseline-is-obtainable-kotta-validate-refuses-a-pr-4e63se3v
-- nothing-notices-when-a-contract-s-premise-expires-before-it--8b91d24j
 - npm-rejects-the-unscoped-kotta-package-name-as-too-similar-eaag2s6z
 - ready-ticket-szovege-nem-javithato-a-define-csak-backlogbol--147t946f
 - renaming-the-workspace-drops-tracked-but-now-ignored-files-o-nkb8sbc4
