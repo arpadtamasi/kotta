@@ -3,13 +3,18 @@ id: F-01kz3vdf6ahkwfdzhw88p5tm36
 title: >-
   A board nemán rejti el a nem commitolt munkat, ha a fo munkafa nem a base
   branchen all - figyelmeztetes csak a teljesen ures ref eseten szolal meg
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-03'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:06:38.375Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:38.375Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz3vdf6ahkwfdzhw88p5tm36 — A board nemán rejti el a nem commitolt munkat, ha a fo munkafa nem a base branchen all - figyelmeztetes csak a teljesen ures ref eseten szolal meg
 
