@@ -3,13 +3,18 @@ id: F-015
 title: >-
   A-Team's default framing is waterfall-ish — make discovery-first / provisional
   plans first-class
-status: new
+status: resolved
 origin: agent
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-07-31'
+disposition: reject
+resolved_at: '2026-08-21T16:49:43.950Z'
+approved_by: cli
+approved_at: '2026-08-21T16:49:43.950Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-015 — A-Team's default framing is waterfall-ish — make discovery-first / provisional plans first-class
 
