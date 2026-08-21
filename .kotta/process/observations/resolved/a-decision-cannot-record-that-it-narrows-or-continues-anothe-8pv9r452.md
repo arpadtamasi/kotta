@@ -3,13 +3,18 @@ id: F-01kz20h7kvbk1s8drg8pv9r452
 title: >-
   A decision cannot record that it narrows or continues another, so the board
   can only guess from prose
-status: new
+status: resolved
 origin: agent
 observation_type: product
 confidence: high
 severity: medium
 discovered_during: T-01kz1xrxw4aheeqv1ca0bv0fcq
 created_at: '2026-08-02'
+disposition: reject
+resolved_at: '2026-08-21T15:06:03.947Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:03.948Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz20h7kvbk1s8drg8pv9r452 — A decision cannot record that it narrows or continues another, so the board can only guess from prose
 
