@@ -1,13 +1,18 @@
 ---
 id: F-01kzhm8vrbt4kgc3bwfs2s13yd
 title: The agent's full stdout is stored in the execution event with no size bound
-status: new
+status: resolved
 origin: agent
 observation_type: gap
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-08'
+disposition: reject
+resolved_at: '2026-08-21T15:06:04.979Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:04.979Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kzhm8vrbt4kgc3bwfs2s13yd — The agent's full stdout is stored in the execution event with no size bound
 
