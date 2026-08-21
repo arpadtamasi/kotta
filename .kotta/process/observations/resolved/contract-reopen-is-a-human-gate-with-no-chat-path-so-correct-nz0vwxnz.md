@@ -3,13 +3,18 @@ id: F-01kzdjbwjtqavthcxbnz0vwxnz
 title: >-
   contract.reopen is a human gate with no chat path, so correcting a review
   record still requires a terminal
-status: new
+status: resolved
 origin: agent
 observation_type: gap
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-07'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:05.113Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:05.113Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kzdjbwjtqavthcxbnz0vwxnz — contract.reopen is a human gate with no chat path, so correcting a review record still requires a terminal
 

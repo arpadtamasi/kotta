@@ -59,7 +59,6 @@ None.
 - az-id-azert-szivarog-a-human-kommunikaciora-mert-o-az-egyetl-szetd8cz
 - batch-start-kiosztja-az-agentet-de-nem-indi-tja-a-plain-exec-xjpmd8ky
 - contract-new-human-output-hides-the-created-contract-id-xwja20bg
-- contract-reopen-is-a-human-gate-with-no-chat-path-so-correct-nz0vwxnz
 - contract-review-cannot-locate-a-valid-moved-control-plane-wo-n5nn9try
 - contract-validate-can-pass-a-backlog-contract-that-sign-imme-0ms18ejw
 - crm-kit-and-flowbench-cannot-be-migrated-unrelated-dirty-tre-9m3dkmxv
