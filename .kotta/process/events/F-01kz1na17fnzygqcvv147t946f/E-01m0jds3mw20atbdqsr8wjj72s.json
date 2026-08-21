@@ -1,0 +1,15 @@
+{
+  "id": "E-01m0jds3mw20atbdqsr8wjj72s",
+  "entity": "F-01kz1na17fnzygqcvv147t946f",
+  "task": null,
+  "kind": "approval",
+  "approval_id": "E-01m0jds3mw20atbdqsr8wjj72s",
+  "phase": "proposed",
+  "action": "observation.resolve",
+  "payload": {
+    "disposition": "merge-duplicate",
+    "surface": "cli"
+  },
+  "source_message": null,
+  "created_at": "2026-08-21T15:07:09.340Z"
+}

@@ -3,13 +3,18 @@ id: F-01kz1na17fnzygqcvv147t946f
 title: >-
   Ready ticket szovege nem javithato — a define csak backlogbol megy, a reopen
   csak review/done-bol, igy egy elgepeles cancel + ujralétrehozas aran javithato
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-02'
+disposition: merge-duplicate
+resolved_at: '2026-08-21T15:07:09.336Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:09.336Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz1na17fnzygqcvv147t946f — Ready ticket szovege nem javithato — a define csak backlogbol megy, a reopen csak review/done-bol, igy egy elgepeles cancel + ujralétrehozas aran javithato
 
