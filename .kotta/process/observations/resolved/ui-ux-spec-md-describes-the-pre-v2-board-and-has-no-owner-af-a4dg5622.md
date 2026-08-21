@@ -3,13 +3,18 @@ id: F-01kz20ghvyn7zfbjffa4dg5622
 title: >-
   ui/UX-SPEC.md describes the pre-v2 board and has no owner after the Kotta v2
   switch
-status: new
+status: resolved
 origin: agent
 observation_type: process
 confidence: high
 severity: medium
 discovered_during: T-01kz1xrxw4aheeqv1ca0bv0fcq
 created_at: '2026-08-02'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:08:00.518Z'
+approved_by: cli
+approved_at: '2026-08-21T15:08:00.518Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz20ghvyn7zfbjffa4dg5622 — ui/UX-SPEC.md describes the pre-v2 board and has no owner after the Kotta v2 switch
 
