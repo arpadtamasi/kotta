@@ -3,13 +3,18 @@ id: F-01kz24pa29b5yhhzpcpky2an1x
 title: >-
   Nincs AGENTS.md — semmi nem mondja meg egy erkezo agensnek, hogy ez a repo
   Kottaval dolgozik
-status: new
+status: resolved
 origin: agent
 observation_type: product
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-02'
+disposition: reject
+resolved_at: '2026-08-21T15:06:02.265Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:02.265Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz24pa29b5yhhzpcpky2an1x — Nincs AGENTS.md — semmi nem mondja meg egy erkezo agensnek, hogy ez a repo Kottaval dolgozik
 
