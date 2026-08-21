@@ -3,13 +3,18 @@ id: F-01m0ajs9kn72tenfgg0nnk2emr
 title: >-
   Kotta never states what a contract is: the one-agent sizing rule is enforced
   in three places and written down in none
-status: new
+status: resolved
 origin: agent
 observation_type: gap
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-18'
+disposition: reject
+resolved_at: '2026-08-21T16:49:47.025Z'
+approved_by: cli
+approved_at: '2026-08-21T16:49:47.025Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0ajs9kn72tenfgg0nnk2emr — Kotta never states what a contract is: the one-agent sizing rule is enforced in three places and written down in none
 

@@ -36,7 +36,6 @@ None.
 - F-025-progos-as-first-kotta-publisher-mcp-kottas-for-standard-sme-
 - kotta-has-no-roadmap-concept-sequenced-intent-above-batches--8amqckd2
 - kotta-has-one-gauge-for-governed-work-a-two-minute-page-and--tsb4m5qh
-- kotta-never-states-what-a-contract-is-the-one-agent-sizing-r-0nnk2emr
 - nincs-backlog-review-es-epp-azert-kell-tolnia-magat-a-termek-sjb9v9w9
 - nincs-sprint-vegi-rendcsinalas-a-close-takarit-de-a-maradeko-6mmdp86q
 - npm-rejects-the-unscoped-kotta-package-name-as-too-similar-eaag2s6z
