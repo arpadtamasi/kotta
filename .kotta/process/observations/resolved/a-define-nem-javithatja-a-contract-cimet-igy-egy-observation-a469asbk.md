@@ -3,13 +3,18 @@ id: F-01kz3kzvcsxm67z31va469asbk
 title: >-
   A define nem javithatja a contract cimet, igy egy observationbol szuletett
   contract cime a szukitett scope utan is a megfigyelest irja le
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: T-01kz3kx1ex19tjw82tbd1366pk
 created_at: '2026-08-03'
+disposition: reject
+resolved_at: '2026-08-21T15:06:00.744Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:00.745Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz3kzvcsxm67z31va469asbk — A define nem javithatja a contract cimet, igy egy observationbol szuletett contract cime a szukitett scope utan is a megfigyelest irja le
 
