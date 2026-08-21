@@ -3,13 +3,18 @@ id: F-01kz1pyenv49cygqcwhqqt57nj
 title: >-
   tests/integration/ui-port-cli.test.ts is flaky: afterEach times out closing
   held servers
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: T-01kz1nzpnafm6n5t0fz43g7nwh
 created_at: '2026-08-02'
+disposition: reject
+resolved_at: '2026-08-21T15:06:03.393Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:03.393Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz1pyenv49cygqcwhqqt57nj — tests/integration/ui-port-cli.test.ts is flaky: afterEach times out closing held servers
 
