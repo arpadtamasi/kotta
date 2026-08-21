@@ -3,13 +3,18 @@ id: F-01m0f2zh16pvet8pz3tsb4m5qh
 title: >-
   Kotta has one gauge for governed work: a two-minute page and a schema
   migration cost the same five steps and two human gates
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-20'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T16:49:49.494Z'
+approved_by: cli
+approved_at: '2026-08-21T16:49:49.494Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0f2zh16pvet8pz3tsb4m5qh — Kotta has one gauge for governed work: a two-minute page and a schema migration cost the same five steps and two human gates
 
