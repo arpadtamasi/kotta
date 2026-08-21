@@ -3,13 +3,18 @@ id: F-01m0fq095ym137rdhxzf4tcqf7
 title: >-
   Observation-rögzítést utasít el a piszkos munkafa, contract-indítós
   hibaüzenettel
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-20'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:06:37.733Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:37.734Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0fq095ym137rdhxzf4tcqf7 — Observation-rögzítést utasít el a piszkos munkafa, contract-indítós hibaüzenettel
 

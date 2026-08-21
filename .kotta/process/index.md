@@ -88,7 +88,6 @@ None.
 - nothing-notices-when-a-contract-s-premise-expires-before-it--8b91d24j
 - nothing-relates-the-human-gate-set-to-the-chat-approval-set--77s7jgtd
 - npm-rejects-the-unscoped-kotta-package-name-as-too-similar-eaag2s6z
-- observation-ro-gzi-te-st-utasi-t-el-a-piszkos-munkafa-contra-zf4tcqf7
 - ready-ticket-szovege-nem-javithato-a-define-csak-backlogbol--147t946f
 - renaming-the-workspace-drops-tracked-but-now-ignored-files-o-nkb8sbc4
 - review-submission-has-no-per-check-evidence-input-for-duplic-rgyj9wyh
