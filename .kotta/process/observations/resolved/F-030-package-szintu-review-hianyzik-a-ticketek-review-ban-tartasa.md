@@ -3,13 +3,18 @@ id: F-030
 title: >-
   Package-szintu review hianyzik — a ticketek review-ban tartasa
   egyben-reviewhoz deadlockolja a csomagot
-status: new
+status: resolved
 origin: agent
 observation_type: gap
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-02'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:10.352Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:10.352Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-030 — Package-szintu review hianyzik — a ticketek review-ban tartasa egyben-reviewhoz deadlockolja a csomagot
 
