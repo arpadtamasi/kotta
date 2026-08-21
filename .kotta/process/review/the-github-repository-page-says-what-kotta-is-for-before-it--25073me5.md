@@ -3,7 +3,7 @@ id: T-01m0hrtpfkq3bx3mmd25073me5
 title: >-
   The GitHub repository page says what Kotta is for before it says how to
   install it
-status: active
+status: review
 origin: human
 types:
   - docs
@@ -114,3 +114,29 @@ None.
   advertises `@arpadtamasi/kotta@0.6.0` while the package publishes 0.7.0, and it installs skills
   with `kotta sync` while the public site uses `npx skills add`. The underlying cause of the first —
   the version is hardcoded in several files — is a separate open observation and is not fixed here.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A reader of the rendered repository page can state what Kotta is for, recognise whether they are the intended reader, and name something Kotta deliberately does not do, before the page presents an install command. | README.md opens with 'What Kotta is for' — the profession learned how to state what it wants and stopped because writing it down cost more than the code, that reason is gone, the specification is now the most valuable file, and the rule that keeps it honest — then 'Where it fits' naming the reader and the three arrivals with their paths (spec to task to code; code to spec to task to code; running system to observation to spec to task to code), then 'What you get' and 'What Kotta is not', all before the first install command. 'What Kotta is not' opens 'Kotta does not write your code, and it never will' and states the absent hosted service, scheduler daemon and Jira/Linear sync. No metric, customer or benchmark claim appears anywhere in the new copy, and it names no decision entity. |
+| The install path on the repository page names the version the package publishes and gives the same skills-install instruction as the public page. | The install command reads 'npm install --global @arpadtamasi/kotta@0.7.0', matching site/index.html and package.json version 0.7.0 (was 0.6.0). The skills step names 'npx skills@1.5.20 add arpadtamasi/kotta' — the command the public site shows — alongside 'kotta sync', which installs the same skills and also writes the workspace rules file. The Skills section lists all twenty shipped skills, verified by an empty two-way diff of its skill names against 'ls skills'; the page previously named eleven. |
+| Compatibility and migration reference material remains complete on the page and no longer precedes the product claim. | 'Renamed from A-Team' and 'Migrating the vocabulary' moved from the third screen to the reference part of the page. A section-by-section comparison against origin/main:README.md reports no change in 'Report a bug', 'How it works', 'CLI overview', 'Renamed from A-Team', 'Migrating the vocabulary', 'Core safety rules', 'Tests', 'Maintainer releases', 'Workspace layout and ownership' or 'Batch coordinator branches'. tests/integration/bug-report.test.ts, which asserts the 'Report a bug' wording with its exact line wrapping, passes 12/12; npm run typecheck exits 0; the full suite was run earlier on this branch with 383 passed and 3 failures in tests/integration/state-duplication.test.ts and tests/integration/ui-port.test.ts that reproduce identically with the change stashed. |
+
+### Verification performed
+
+A reader of the rendered repository page can state what Kotta is for, recognise whether they are the intended reader, and name something Kotta deliberately does not do, before the page presents an install command.: README.md opens with 'What Kotta is for' — the profession learned how to state what it wants and stopped because writing it down cost more than the code, that reason is gone, the specification is now the most valuable file, and the rule that keeps it honest — then 'Where it fits' naming the reader and the three arrivals with their paths (spec to task to code; code to spec to task to code; running system to observation to spec to task to code), then 'What you get' and 'What Kotta is not', all before the first install command. 'What Kotta is not' opens 'Kotta does not write your code, and it never will' and states the absent hosted service, scheduler daemon and Jira/Linear sync. No metric, customer or benchmark claim appears anywhere in the new copy, and it names no decision entity.
+The install path on the repository page names the version the package publishes and gives the same skills-install instruction as the public page.: The install command reads 'npm install --global @arpadtamasi/kotta@0.7.0', matching site/index.html and package.json version 0.7.0 (was 0.6.0). The skills step names 'npx skills@1.5.20 add arpadtamasi/kotta' — the command the public site shows — alongside 'kotta sync', which installs the same skills and also writes the workspace rules file. The Skills section lists all twenty shipped skills, verified by an empty two-way diff of its skill names against 'ls skills'; the page previously named eleven.
+Compatibility and migration reference material remains complete on the page and no longer precedes the product claim.: 'Renamed from A-Team' and 'Migrating the vocabulary' moved from the third screen to the reference part of the page. A section-by-section comparison against origin/main:README.md reports no change in 'Report a bug', 'How it works', 'CLI overview', 'Renamed from A-Team', 'Migrating the vocabulary', 'Core safety rules', 'Tests', 'Maintainer releases', 'Workspace layout and ownership' or 'Batch coordinator branches'. tests/integration/bug-report.test.ts, which asserts the 'Report a bug' wording with its exact line wrapping, passes 12/12; npm run typecheck exits 0; the full suite was run earlier on this branch with 383 passed and 3 failures in tests/integration/state-duplication.test.ts and tests/integration/ui-port.test.ts that reproduce identically with the change stashed.
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
