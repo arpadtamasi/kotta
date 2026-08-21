@@ -3,13 +3,18 @@ id: F-01kzr7nkqjbv4v52024j2z1x6z
 title: >-
   Nothing notices when a claim holder edits the control worktree instead of its
   execution worktree
-status: new
+status: resolved
 origin: agent
 observation_type: gap
 confidence: high
 severity: medium
 discovered_during: T-01kzhnsncw8znqdn14rf5d4tfp
 created_at: '2026-08-11'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:06:40.864Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:40.864Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kzr7nkqjbv4v52024j2z1x6z — Nothing notices when a claim holder edits the control worktree instead of its execution worktree
 
