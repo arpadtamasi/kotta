@@ -46,7 +46,6 @@ None.
 - kotta-has-one-gauge-for-governed-work-a-two-minute-page-and--tsb4m5qh
 - kotta-migrate-writes-a-root-gitattributes-it-never-reports-i-hkr7tyh2
 - kotta-never-states-what-a-contract-is-the-one-agent-sizing-r-0nnk2emr
-- migration-json-keeps-the-pre-vocabulary-words-and-nothing-de-3hcysj58
 - nincs-backlog-review-es-epp-azert-kell-tolnia-magat-a-termek-sjb9v9w9
 - nincs-sprint-vegi-rendcsinalas-a-close-takarit-de-a-maradeko-6mmdp86q
 - no-before-baseline-is-obtainable-kotta-validate-refuses-a-pr-4e63se3v

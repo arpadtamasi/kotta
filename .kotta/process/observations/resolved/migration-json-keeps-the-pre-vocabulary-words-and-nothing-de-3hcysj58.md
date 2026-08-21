@@ -3,13 +3,18 @@ id: F-01kz294gmp94tmevyf3hcysj58
 title: >-
   migration.json keeps the pre-vocabulary words, and nothing decides when it
   stops
-status: new
+status: resolved
 origin: agent
 observation_type: risk
 confidence: high
 severity: medium
 discovered_during: T-023
 created_at: '2026-08-02'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:08:02.063Z'
+approved_by: cli
+approved_at: '2026-08-21T15:08:02.063Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz294gmp94tmevyf3hcysj58 — migration.json keeps the pre-vocabulary words, and nothing decides when it stops
 
