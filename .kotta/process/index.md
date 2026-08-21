@@ -46,8 +46,6 @@ None.
 - a-vitest-a-worktrees-ala-is-benez-egy-elo-ticket-worktree-me-cahhcmt5
 - a-workspace-konyvtar-atnevezese-uressen-mutatja-a-boardot-am-0n2rjcpt
 - an-older-cli-silently-downgrades-a-newer-shaped-workspace-in-jk7q3pec
-- az-entitast-letrehozo-parancsok-nem-irjak-ki-az-azonositot-e-9mg56yk6
-- az-id-azert-szivarog-a-human-kommunikaciora-mert-o-az-egyetl-szetd8cz
 - contract-new-human-output-hides-the-created-contract-id-xwja20bg
 - crm-kit-and-flowbench-cannot-be-migrated-unrelated-dirty-tre-9m3dkmxv
 - harom-szomszed-repo-agents-md-je-ideiglenes-szabalyblokkot-h-10cpc3k3

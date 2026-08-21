@@ -4,13 +4,18 @@ title: >-
   Az id azert szivarog a human kommunikaciora, mert o az egyetlen stabil es
   szerszam-kompatibilis fogodzo - a konvencio ezert nem tartja meg (F-013
   mechanizmusa)
-status: new
+status: resolved
 origin: agent
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-03'
+disposition: merge-duplicate
+resolved_at: '2026-08-21T15:07:16.187Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:16.187Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz3t0a9tpz16m9ehszetd8cz — Az id azert szivarog a human kommunikaciora, mert o az egyetlen stabil es szerszam-kompatibilis fogodzo - a konvencio ezert nem tartja meg (F-013 mechanizmusa)
 

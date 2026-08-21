@@ -3,13 +3,18 @@ id: F-01kz3k7e3a6g28h5j29mg56yk6
 title: >-
   Az entitast letrehozo parancsok nem irjak ki az azonositot ember-olvasható
   kimenetben, pedig a README ezt allitja
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: F-01kz3k2axqqy6r4rgqmgt5ybtt
 created_at: '2026-08-03'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:15.781Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:15.781Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz3k7e3a6g28h5j29mg56yk6 — Az entitast letrehozo parancsok nem irjak ki az azonositot ember-olvasható kimenetben, pedig a README ezt allitja
 
