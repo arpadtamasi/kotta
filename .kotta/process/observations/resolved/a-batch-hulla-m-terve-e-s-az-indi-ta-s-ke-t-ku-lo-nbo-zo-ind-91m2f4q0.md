@@ -1,13 +1,18 @@
 ---
 id: F-01m0fkznyd8437xdzm91m2f4q0
 title: A batch hullám-terve és az indítás két különböző 'indítható' szabályt használ
-status: new
+status: resolved
 origin: agent
 observation_type: inconsistency
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-20'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:11.339Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:11.339Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0fkznyd8437xdzm91m2f4q0 — A batch hullám-terve és az indítás két különböző 'indítható' szabályt használ
 

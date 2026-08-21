@@ -40,7 +40,6 @@ None.
 - F-017-findings-caused-by-an-earlier-ticket-s-under-specification-a
 - F-021-finding-metadata-is-single-valued-in-practice-severity-confi
 - F-025-progos-as-first-kotta-publisher-mcp-kottas-for-standard-sme-
-- a-batch-hulla-m-terve-e-s-az-indi-ta-s-ke-t-ku-lo-nbo-zo-ind-91m2f4q0
 - a-board-aria-modal-felu-letei-nem-tartja-k-bent-a-billentyu--nz688n4t
 - a-board-listai-nem-mutatjak-az-entitasok-korat-csak-az-obser-fx05szh7
 - a-decisions-lista-az-egyetlen-amelynek-nincs-szu-ro-je-e-s-k-zcees10m
