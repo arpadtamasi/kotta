@@ -3,13 +3,18 @@ id: F-01m0f2wmyf10jrfge4yhpzreqm
 title: >-
   The spec namespace has no writing service, so changing the material contracts
   are defined from can only happen as a contract
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-20'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T16:49:48.898Z'
+approved_by: cli
+approved_at: '2026-08-21T16:49:48.898Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0f2wmyf10jrfge4yhpzreqm — The spec namespace has no writing service, so changing the material contracts are defined from can only happen as a contract
 

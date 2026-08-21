@@ -38,4 +38,3 @@ None.
 - kotta-has-one-gauge-for-governed-work-a-two-minute-page-and--tsb4m5qh
 - npm-rejects-the-unscoped-kotta-package-name-as-too-similar-eaag2s6z
 - the-defined-operation-registry-contract-pins-its-acceptance--n9k18wbv
-- the-spec-namespace-has-no-writing-service-so-changing-the-ma-yhpzreqm
