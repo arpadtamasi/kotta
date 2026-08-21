@@ -1,13 +1,18 @@
 ---
 id: F-01m0jd80x094rbjb3xzhxkkj1d
 title: close writes the done record without re-validating it
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-21'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:06:43.808Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:43.808Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0jd80x094rbjb3xzhxkkj1d — close writes the done record without re-validating it
 

@@ -61,7 +61,6 @@ None.
 - az-id-azert-szivarog-a-human-kommunikaciora-mert-o-az-egyetl-szetd8cz
 - batch-start-kiosztja-az-agentet-de-nem-indi-tja-a-plain-exec-xjpmd8ky
 - calling-codex-chat-has-no-kotta-approval-adapter-and-falls-b-txr0k995
-- close-writes-the-done-record-without-re-validating-it-zhxkkj1d
 - contract-new-human-output-hides-the-created-contract-id-xwja20bg
 - contract-reopen-is-a-human-gate-with-no-chat-path-so-correct-nz0vwxnz
 - contract-review-cannot-locate-a-valid-moved-control-plane-wo-n5nn9try
