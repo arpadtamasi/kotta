@@ -3,13 +3,18 @@ id: F-01kz2a97prz9g94726cahhcmt5
 title: >-
   A vitest a .worktrees ala is benez — egy elo ticket-worktree megduplazza a
   tesztkeszletet
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-02'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:08:08.096Z'
+approved_by: cli
+approved_at: '2026-08-21T15:08:08.096Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz2a97prz9g94726cahhcmt5 — A vitest a .worktrees ala is benez — egy elo ticket-worktree megduplazza a tesztkeszletet
 
