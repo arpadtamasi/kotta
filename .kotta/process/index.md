@@ -53,7 +53,6 @@ None.
 - renaming-the-workspace-drops-tracked-but-now-ignored-files-o-nkb8sbc4
 - the-defined-operation-registry-contract-pins-its-acceptance--n9k18wbv
 - the-published-json-schemas-are-documentation-nothing-checks-ge5asz8x
-- the-skills-sync-feature-shipped-without-a-changelog-entry-pxwst12g
 - the-spec-namespace-has-no-writing-service-so-changing-the-ma-yhpzreqm
 - the-test-suite-reads-a-dist-the-merge-hook-is-still-rebuildi-k0ty0f0m
 - ui-port-cli-tests-silently-assert-nothing-when-4311-is-alrea-nbxc71r5

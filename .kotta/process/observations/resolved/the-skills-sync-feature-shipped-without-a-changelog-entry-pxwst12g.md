@@ -1,13 +1,18 @@
 ---
 id: F-01kzhm96dymxx589h9pxwst12g
 title: The skills-sync feature shipped without a CHANGELOG entry
-status: new
+status: resolved
 origin: agent
 observation_type: gap
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-08'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:08:03.112Z'
+approved_by: cli
+approved_at: '2026-08-21T15:08:03.112Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kzhm96dymxx589h9pxwst12g — The skills-sync feature shipped without a CHANGELOG entry
 
