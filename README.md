@@ -10,31 +10,40 @@ It provides executable tasks, type-specific requirements, coordinated work batch
 
 ## What Kotta is for
 
-Software engineering already knows how to say exactly what we want. Use cases, acceptance examples,
-quality scenarios, a glossary that holds, a trace from every requirement to the thing that proves
-it. It got skipped because writing it down cost more than writing the code.
+Your profession spent forty years learning how to say exactly what it wants. Use cases. Acceptance
+examples. Quality scenarios. A glossary that holds. A trace from every requirement to the thing that
+proves it.
 
-That price is gone. Something else writes the code now, and what you wrote down is what it executes.
+Then it stopped doing almost all of it, for one reason: writing it down cost more than writing the
+code.
 
-Three nouns and one loop. The **specification** states what must be true. The **code** is the
-implementation. A **task** connects them: it cannot be defined until every acceptance condition
-names the specification node it comes from, and it cannot close until review maps each condition to
-evidence you accept. What you notice while the system runs comes back as an **observation** — not as
-a silent fix, and not as a task somebody quietly widened.
+That reason is gone. You are not the one writing the code any more, and what you write down is what
+executes. The specification just became the most valuable file in your repository — and most teams
+do not have one.
 
-Kotta keeps the vocabulary and drops the ceremony. One human gate per task, at close. Plain files in
-the repository you already have.
+Kotta is where you keep it, plus the rule that keeps it honest. A task cannot be defined until every
+acceptance condition names the specification node it came from. It cannot close until review maps
+every condition to evidence you accepted. Your agent does not get to decide it is done.
+
+Three nouns, one loop. The **specification** says what must be true. The **code** is the
+implementation. A **task** connects them. An **observation** carries back what the running system
+says, so what you noticed gets dispositioned on purpose instead of folded silently into whichever
+task happened to be open.
+
+The vocabulary, none of the ceremony. One human gate per task, at close. Plain files in the
+repository you already have.
 
 ## Where it fits
 
-For a developer or technical lead running one or more coding agents against a Git repository they
-already have.
+For developers and technical leads running coding agents against a repository that already exists.
+Three ways in, and they are three entries into the same loop.
 
 **Starting something new.** `spec → task → code`
 
-You have an idea, not a specification. Run the workshops as conversation — impact mapping, example
-mapping, quality scenarios — and each one lands Markdown nodes in `.kotta/spec/` instead of a
-document nobody opens again. Agree one node, and a task defined against it can execute.
+You have an idea, not a specification, and you are not going to write one in Word. Run the
+workshops as conversation — impact mapping, example mapping, quality scenarios — and each one lands
+Markdown nodes in `.kotta/spec/`. Agree one node and a task defined against it can execute the same
+hour.
 
 > A goal node says bookings never double-book a room. An example node states the overlapping
 > reservation that would prove it. The task that implements booking names that example in its
@@ -42,10 +51,10 @@ document nobody opens again. Agree one node, and a task defined against it can e
 
 **Rewriting a legacy system.** `code → spec → task → code`
 
-The code is the only specification you have, and it does not say which of its behaviour was ever
-intended. Read it back into spec nodes rather than into a Word document — event storming for the
-lifecycle, use-case modeling for the flows you must keep, glossary terms for the words the old code
-overloads — and from there it is the same loop as new work.
+The code is the only specification you have, and it will not tell you which of its behaviour was
+ever intended. Read it back out — event storming for the lifecycle, use-case modeling for the flows
+you must keep, glossary terms for the words the old code overloads — and the rewrite finally has
+something to be wrong against. From there it is the same loop as new work.
 
 > A state-machine node records the order lifecycle the legacy code actually implements. The rewrite
 > task maps every transition to a test. What you accept is the diff that proves the transitions —
@@ -53,11 +62,12 @@ overloads — and from there it is the same loop as new work.
 
 **Continuing a codebase you already have.** `running system → observation → spec → task → code`
 
-Nobody is going to stop and specify everything first, and Kotta does not ask for it. What the
-running system tells you — a defect, a gap, a promise nothing keeps — is captured as an observation
-and dispositioned deliberately, so it either amends the specification or becomes a task, and never
-widens the one you are on. `kotta gap` reports which accepted promises still have no evidence, and
-which enforcement in the code has no specification behind it.
+Nobody is going to stop the world and specify it first. Kotta never asks you to: you write down
+only the part you are about to touch. What the running system tells you — a defect, a gap, a promise
+nothing keeps — is captured as an observation and dispositioned on purpose, so it either amends the
+specification or becomes its own task, and never widens the one you are on. `kotta gap` names which
+accepted promises still have no evidence, and which enforcement in the code has no specification
+behind it.
 
 > Before changing export, record the business rule the export has to obey. The task that changes it
 > names that rule. The next agent that touches export finds the rule instead of guessing at it.
@@ -77,9 +87,9 @@ which enforcement in the code has no specification behind it.
 
 ## What Kotta is not
 
-Kotta is not an agent and does not write your code. It is the control layer around the agents you
-already use: keep your chat, your runtime and your issue tracker, and Kotta keeps the agreement and
-the one legal path to completion.
+Kotta does not write your code, and it never will. It is the control layer around the agents that
+do: keep your chat, your runtime and your issue tracker, and Kotta keeps the agreement and the one
+legal path to completion.
 
 Kotta is intentionally local and file-based. V1 has no hosted service, database, authentication, automatic prioritization, automatic merging, scheduler daemon, or Jira/Linear synchronization.
 
