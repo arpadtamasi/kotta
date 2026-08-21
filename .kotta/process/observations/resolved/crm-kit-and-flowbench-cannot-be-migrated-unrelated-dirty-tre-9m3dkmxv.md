@@ -3,13 +3,18 @@ id: F-01kz2as3kq6j8t3g0b9m3dkmxv
 title: >-
   crm-kit and flowbench cannot be migrated: unrelated dirty trees, and the
   contract says stop
-status: new
+status: resolved
 origin: agent
 observation_type: process
 confidence: high
 severity: medium
 discovered_during: T-022
 created_at: '2026-08-02'
+disposition: accept-risk
+resolved_at: '2026-08-21T15:08:05.947Z'
+approved_by: cli
+approved_at: '2026-08-21T15:08:05.947Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz2as3kq6j8t3g0b9m3dkmxv — crm-kit and flowbench cannot be migrated: unrelated dirty trees, and the contract says stop
 
