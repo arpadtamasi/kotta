@@ -2,7 +2,7 @@ version: 4
 project:
   name: a-team
 workflow:
-  require_human_sign_approval: true
+  require_human_sign_approval: false
   require_human_done_approval: true
   allow_agent_observations: true
   allow_agent_defined_tasks: false
