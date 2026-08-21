@@ -3,7 +3,7 @@ id: T-01m0hrtpfkq3bx3mmd25073me5
 title: >-
   The GitHub repository page says what Kotta is for before it says how to
   install it
-status: active
+status: review
 origin: human
 types:
   - docs
@@ -114,3 +114,29 @@ None.
   advertises `@arpadtamasi/kotta@0.6.0` while the package publishes 0.7.0, and it installs skills
   with `kotta sync` while the public site uses `npx skills add`. The underlying cause of the first —
   the version is hardcoded in several files — is a separate open observation and is not fixed here.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A reader of the rendered repository page can state what Kotta is for, recognise whether they are the intended reader, and name something Kotta deliberately does not do, before the page presents an install command. | README.md opens with 'What Kotta is for' (line 11), 'What you get' (line 41) and 'What Kotta is not' (line 62); the first install command is at line 82. The opening states the premise — the software-engineering vocabulary for saying exactly what we want, kept without the rigidity that made writing it down cost more than the code — and names the reader in its closing sentence. 'What Kotta is not' states that Kotta is not an agent, is local and file-based, and has no hosted service, scheduler daemon or Jira/Linear sync. Claims checked against the workspace: the eleven spec forms named in the opening match .kotta/spec/forms/*.yaml exactly; the nine workshops match skills/; 'one human gate, at close' is QA-01m0fp2hdkq55yrx9qr5t8pweh and the 'say yes again' sentence is G-01m0fp2hdjsaegywtfk5psy35m. |
+| The install path on the repository page names the version the package publishes and gives the same skills-install instruction as the public page. | The install command reads 'npm install --global @arpadtamasi/kotta@0.7.0', matching site/index.html and package.json version 0.7.0 (was 0.6.0). The skills step names 'npx skills@1.5.20 add arpadtamasi/kotta' — the command the public site shows — alongside 'kotta sync', which installs the same skills and also writes the workspace rules file. The Skills section now lists all twenty shipped skills: a diff of the section's skill names against 'ls skills' is empty in both directions, where the page previously named eleven. |
+| Compatibility and migration reference material remains complete on the page and no longer precedes the product claim. | 'Renamed from A-Team' moved from line 130 to the reference part of the page and 'Migrating the vocabulary' with it, both byte-identical to origin/main, verified by section-by-section comparison. The same comparison reports 'Report a bug', 'How it works', 'CLI overview', 'Core safety rules', 'Tests', 'Maintainer releases', 'Workspace layout and ownership' and 'Batch coordinator branches' unchanged. tests/integration/bug-report.test.ts passes 12/12; npm run typecheck passes; the full suite was run on the previous commit of this branch with 383 passed and 3 failures in tests/integration/state-duplication.test.ts and tests/integration/ui-port.test.ts that reproduce identically with the change stashed. |
+
+### Verification performed
+
+A reader of the rendered repository page can state what Kotta is for, recognise whether they are the intended reader, and name something Kotta deliberately does not do, before the page presents an install command.: README.md opens with 'What Kotta is for' (line 11), 'What you get' (line 41) and 'What Kotta is not' (line 62); the first install command is at line 82. The opening states the premise — the software-engineering vocabulary for saying exactly what we want, kept without the rigidity that made writing it down cost more than the code — and names the reader in its closing sentence. 'What Kotta is not' states that Kotta is not an agent, is local and file-based, and has no hosted service, scheduler daemon or Jira/Linear sync. Claims checked against the workspace: the eleven spec forms named in the opening match .kotta/spec/forms/*.yaml exactly; the nine workshops match skills/; 'one human gate, at close' is QA-01m0fp2hdkq55yrx9qr5t8pweh and the 'say yes again' sentence is G-01m0fp2hdjsaegywtfk5psy35m.
+The install path on the repository page names the version the package publishes and gives the same skills-install instruction as the public page.: The install command reads 'npm install --global @arpadtamasi/kotta@0.7.0', matching site/index.html and package.json version 0.7.0 (was 0.6.0). The skills step names 'npx skills@1.5.20 add arpadtamasi/kotta' — the command the public site shows — alongside 'kotta sync', which installs the same skills and also writes the workspace rules file. The Skills section now lists all twenty shipped skills: a diff of the section's skill names against 'ls skills' is empty in both directions, where the page previously named eleven.
+Compatibility and migration reference material remains complete on the page and no longer precedes the product claim.: 'Renamed from A-Team' moved from line 130 to the reference part of the page and 'Migrating the vocabulary' with it, both byte-identical to origin/main, verified by section-by-section comparison. The same comparison reports 'Report a bug', 'How it works', 'CLI overview', 'Core safety rules', 'Tests', 'Maintainer releases', 'Workspace layout and ownership' and 'Batch coordinator branches' unchanged. tests/integration/bug-report.test.ts passes 12/12; npm run typecheck passes; the full suite was run on the previous commit of this branch with 383 passed and 3 failures in tests/integration/state-duplication.test.ts and tests/integration/ui-port.test.ts that reproduce identically with the change stashed.
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
