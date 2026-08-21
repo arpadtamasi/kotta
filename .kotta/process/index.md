@@ -63,7 +63,6 @@ None.
 - a-vitest-a-worktrees-ala-is-benez-egy-elo-ticket-worktree-me-cahhcmt5
 - a-workspace-konyvtar-atnevezese-uressen-mutatja-a-boardot-am-0n2rjcpt
 - a1-form-installation-contradicts-the-no-code-invariant-p15dnp69
-- an-observation-has-no-exit-into-the-spec-so-every-constructi-f5c4wer9
 - an-older-cli-silently-downgrades-a-newer-shaped-workspace-in-jk7q3pec
 - az-adopter-cli-je-elutasi-tja-a-spec-defini-cio-s-mezo-t-uns-h7ddqa23
 - az-approval-chatben-ke-rde-s-a-gyakorlatban-me-gis-parancsli-197dfjs9

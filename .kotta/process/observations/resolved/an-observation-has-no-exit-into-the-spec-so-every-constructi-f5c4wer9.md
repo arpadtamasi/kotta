@@ -3,13 +3,18 @@ id: F-01m0f4fd8r3eapgd38f5c4wer9
 title: >-
   An observation has no exit into the spec, so every constructive noticing has
   to become a contract
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-20'
+disposition: reject
+resolved_at: '2026-08-21T15:05:59.278Z'
+approved_by: cli
+approved_at: '2026-08-21T15:05:59.278Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0f4fd8r3eapgd38f5c4wer9 — An observation has no exit into the spec, so every constructive noticing has to become a contract
 
