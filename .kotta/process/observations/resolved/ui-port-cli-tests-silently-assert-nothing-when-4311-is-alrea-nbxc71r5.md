@@ -1,13 +1,18 @@
 ---
 id: F-01kz1kdr45j5k28zvqnbxc71r5
 title: ui-port-cli tests silently assert nothing when 4311 is already taken
-status: new
+status: resolved
 origin: agent
 observation_type: process
 confidence: high
 severity: medium
 discovered_during: T-01kz1g2vyhfn5ezzvvyzn4w2gr
 created_at: '2026-08-02'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:08:09.231Z'
+approved_by: cli
+approved_at: '2026-08-21T15:08:09.231Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz1kdr45j5k28zvqnbxc71r5 — ui-port-cli tests silently assert nothing when 4311 is already taken
 
