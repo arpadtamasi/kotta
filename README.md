@@ -10,29 +10,38 @@ It provides executable tasks, type-specific requirements, coordinated work batch
 
 ## What Kotta is for
 
-You can start more agent work than you can watch. The bottleneck is no longer producing code; it is
-keeping the agreement intact while agents move faster than the conversation around them.
+Software engineering already knows how to say exactly what we want: use cases, user stories,
+acceptance examples, quality scenarios, a glossary that holds, interfaces stated as preconditions
+and postconditions, a trace from every requirement to the thing that proves it. The knowledge was
+never the problem. Writing it down cost more than writing the code, so it was skipped — and what
+survived of the discipline was the ceremony rather than the thinking.
 
-Kotta keeps three things intact, and nothing else:
+Both halves of that trade have changed. Something else writes the code now, which makes the
+written-down intent the valuable artefact rather than the overhead in front of it. And the weight
+can be made proportionate: a spec-covered task crosses exactly one human gate, at close. A gate
+that reads as "say yes again" is a defect here, not a safeguard.
 
-- **The agreement outlives the session.** The outcome, the scope, the acceptance conditions and the
-  decisions are files in your repository, not scrollback. Tomorrow, on another branch, with another
-  agent, they are the same files.
-- **"Done" means something.** Every acceptance condition names an accepted specification node,
-  review maps each condition to reproducible evidence, and `review → done` is a human decision. An
-  agent does not accept its own work.
-- **Parallel work does not collide.** One active task is one claim, one feature branch and one
-  isolated worktree. A batch releases dependent work in waves from a deterministic coordinator
-  branch.
+So Kotta keeps the vocabulary and drops the rigidity. `.kotta/spec/` holds goals, actors, use
+cases, user stories, business rules, entities, interfaces, quality attributes, state machines,
+examples and glossary terms, as plain Markdown you shape directly. The workshops are skills rather
+than phases — impact mapping, story mapping, use-case modeling, example mapping, event storming,
+ubiquitous language, quality scenarios, design by task, requirements traceability — and none of them
+moves work through a lifecycle.
+
+What the old practice could never close, Kotta closes. Every acceptance condition on a task names
+the accepted specification node it came from, review maps each condition to reproducible evidence,
+and `review → done` is a human decision. Traceability stops being a document somebody has to
+maintain and becomes the check that refuses to let a task be defined without it.
 
 What it asks of you: you state the outcome and what proves it. Kotta does not infer product intent,
-and an agent working under it may not invent one.
-
-It is for a developer or technical lead running one or more coding agents in a Git repository they
-already have.
+and an agent working under it may not invent one. It is for a developer or technical lead running
+one or more coding agents in a Git repository they already have.
 
 ## What you get
 
+- **An agreement that outlives the session** — outcome, scope, acceptance and decisions are files
+  in your repository, not scrollback. Tomorrow, on another branch, with another agent, they are the
+  same files.
 - **Executable tasks** — an observable outcome, bounded scope, acceptance conditions and
   verification, stored as Markdown under `.kotta/process/`.
 - **Acceptance tied to accepted specification** — every acceptance condition traces to a node in
@@ -326,6 +335,20 @@ branch, and re-running it after success is a no-op.
 - `close-task` — verify completion and safely release resources.
 - `report-kotta-bug` — prepare and, after explicit approval, submit a Kotta defect report as a GitHub Issue.
 - `consolidate-model` — find where one concept lives under several names across code, docs and wire, and propose consolidations in chat. Creates nothing.
+
+The specification workshops draft and read nodes under `.kotta/spec/` and perform no lifecycle
+transition:
+
+- `impact-mapping` — connect a goal to the actors, impacts and deliverables that could reach it.
+- `story-mapping` — arrange user stories along the journey they serve, and slice a release from it.
+- `use-case-modeling` — state a goal-directed interaction with its alternatives and exceptions.
+- `example-mapping` — settle a story's rules and open questions with concrete examples.
+- `event-storming` — map domain events, commands and policies, and find the entities behind them.
+- `ubiquitous-language` — agree one term per concept and record it as a glossary node.
+- `quality-scenarios` — express a non-functional requirement as source, stimulus, response and measure.
+- `design-by-task` — derive the interface obligations a task implies, as preconditions and postconditions.
+- `requirements-traceability` — check coverage from accepted specification to evidence, and report
+  dangling specification edges.
 
 ## CLI overview
 
