@@ -1,0 +1,15 @@
+{
+  "id": "E-01m0jdtn50zj04kbttsz5qg1ay",
+  "entity": "F-01m01cnbg6zpz76s1szcees10m",
+  "task": null,
+  "kind": "approval",
+  "approval_id": "E-01m0jdtn50zj04kbttsz5qg1ay",
+  "phase": "proposed",
+  "action": "observation.resolve",
+  "payload": {
+    "disposition": "attach-to-existing-task",
+    "surface": "cli"
+  },
+  "source_message": null,
+  "created_at": "2026-08-21T15:08:00.032Z"
+}

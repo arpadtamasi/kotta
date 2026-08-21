@@ -1,13 +1,18 @@
 ---
 id: F-01m01cnbg6zpz76s1szcees10m
 title: 'A Decisions lista az egyetlen, amelynek nincs szűrője és keresője'
-status: new
+status: resolved
 origin: agent
 observation_type: gap
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-15'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:08:00.028Z'
+approved_by: cli
+approved_at: '2026-08-21T15:08:00.028Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m01cnbg6zpz76s1szcees10m — A Decisions lista az egyetlen, amelynek nincs szűrője és keresője
 
