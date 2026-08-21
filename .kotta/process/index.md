@@ -59,7 +59,6 @@ None.
 - batch-start-kiosztja-az-agentet-de-nem-indi-tja-a-plain-exec-xjpmd8ky
 - contract-new-human-output-hides-the-created-contract-id-xwja20bg
 - contract-review-cannot-locate-a-valid-moved-control-plane-wo-n5nn9try
-- contract-validate-can-pass-a-backlog-contract-that-sign-imme-0ms18ejw
 - crm-kit-and-flowbench-cannot-be-migrated-unrelated-dirty-tre-9m3dkmxv
 - entity-filenames-are-keyed-on-the-same-eight-characters-the--dvhj455d
 - harom-szomszed-repo-agents-md-je-ideiglenes-szabalyblokkot-h-10cpc3k3

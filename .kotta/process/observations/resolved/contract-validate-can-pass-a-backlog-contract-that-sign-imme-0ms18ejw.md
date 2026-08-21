@@ -1,13 +1,18 @@
 ---
 id: F-01kz8wg6jq5tdae6vy0ms18ejw
 title: contract validate can pass a backlog contract that sign immediately rejects
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-05'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:08.241Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:08.241Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz8wg6jq5tdae6vy0ms18ejw — contract validate can pass a backlog contract that sign immediately rejects
 
