@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdnshte2ffyzcp3bhf9kh1
 title: State lives in one place
-status: defined
+status: active
 origin: human
 types:
   - refactor
@@ -16,7 +16,7 @@ spec:
   - IF-01m0f0wn897newtcbva7xqgvx6
   - E-01m0f0wn89p79s6bffpcbqw35f
   - SM-01m0f0wn89gjy6dbk1j6fjpv6j
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-21'
 updated_at: '2026-08-21'
@@ -30,6 +30,12 @@ coverage:
   'kotta migrate carries a version-4 workspace to the flat version-5 shape with the identifier set proven unchanged, and refuses a workspace whose duplicated state cannot be flattened safely.':
     - IF-01m0f0wn897newtcbva7xqgvx6
     - E-01m0f0wn89p79s6bffpcbqw35f
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: ae041a72939b9a3639a979d5e5f97faa3300e0ba
 ---
 ## Outcome
 
