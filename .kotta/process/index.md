@@ -32,7 +32,6 @@ None.
 ## New observations
 
 - F-007-triage-assistant-agent-gather-decision-context-for-a-finding
-- F-010-the-local-ui-is-visually-overcrowded-needs-a-density-hierarc
 - F-011-task-detail-drawer-is-a-flat-wall-large-entities-need-hierar
 - F-015-a-team-s-default-framing-is-waterfall-ish-make-discovery-fir
 - F-017-findings-caused-by-an-earlier-ticket-s-under-specification-a

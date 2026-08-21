@@ -1,13 +1,18 @@
 ---
 id: F-010
 title: The local UI is visually overcrowded — needs a density/hierarchy pass
-status: new
+status: resolved
 origin: agent
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-07-27'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:58.029Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:58.029Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-010 — The local UI is visually overcrowded — needs a density/hierarchy pass
 
