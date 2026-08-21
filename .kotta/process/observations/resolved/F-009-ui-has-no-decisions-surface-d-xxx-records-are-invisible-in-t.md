@@ -1,13 +1,18 @@
 ---
 id: F-009
 title: UI has no decisions surface — D-xxx records are invisible in the tool
-status: new
+status: resolved
 origin: agent
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-07-27'
+disposition: reject
+resolved_at: '2026-08-21T15:05:38.263Z'
+approved_by: cli
+approved_at: '2026-08-21T15:05:38.263Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-009 — UI has no decisions surface — D-xxx records are invisible in the tool
 

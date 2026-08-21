@@ -32,7 +32,6 @@ None.
 ## New observations
 
 - F-007-triage-assistant-agent-gather-decision-context-for-a-finding
-- F-009-ui-has-no-decisions-surface-d-xxx-records-are-invisible-in-t
 - F-010-the-local-ui-is-visually-overcrowded-needs-a-density-hierarc
 - F-011-task-detail-drawer-is-a-flat-wall-large-entities-need-hierar
 - F-013-bare-ids-in-agent-text-surfaces-cli-output-index-commits-cha
