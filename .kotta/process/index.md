@@ -51,7 +51,6 @@ None.
 - a-decisions-lista-az-egyetlen-amelynek-nincs-szu-ro-je-e-s-k-zcees10m
 - a-kiadatlan-changelog-bejegyzes-a-regi-binaris-nevet-hasznal-m4m7q531
 - a-markdown-h1-a-teljes-azonositot-hordozza-igy-a-mintazott-u-rb71ckkr
-- a-prioritas-szuletesi-attributum-pedig-valtozo-tulajdonsag-a-9666rqce
 - a-run-wave-card-keeps-counting-elapsed-time-for-a-contract-a-ea2n3c6t
 - a-signed-contract-cannot-be-revised-narrowing-one-requires-c-xvjsfgbq
 - a-slug-hash-emberi-azonosito-mar-letezik-es-dokumentalt-a-ui-1p7xrhzb

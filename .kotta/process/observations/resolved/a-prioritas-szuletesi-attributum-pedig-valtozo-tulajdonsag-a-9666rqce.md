@@ -3,13 +3,18 @@ id: F-01kz3y61ve7v8h8k7y9666rqce
 title: >-
   A prioritas szuletesi attributum, pedig valtozo tulajdonsag: alairas utan
   befagy, es semmi nem olvassa
-status: new
+status: resolved
 origin: agent
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-03'
+disposition: reject
+resolved_at: '2026-08-21T15:06:05.508Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:05.508Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz3y61ve7v8h8k7y9666rqce — A prioritas szuletesi attributum, pedig valtozo tulajdonsag: alairas utan befagy, es semmi nem olvassa
 
