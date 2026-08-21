@@ -3,13 +3,18 @@ id: F-01kz1kb601ce79vwj48et554b5
 title: >-
   schemas/package.schema.json rejects every started package and is wired to
   nothing
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: T-01kz1g2vvgqvvzef92qdtczv8w
 created_at: '2026-08-02'
+disposition: reject
+resolved_at: '2026-08-21T15:06:01.227Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:01.227Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz1kb601ce79vwj48et554b5 — schemas/package.schema.json rejects every started package and is wired to nothing
 
