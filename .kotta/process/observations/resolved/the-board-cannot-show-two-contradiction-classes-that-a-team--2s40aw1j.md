@@ -1,13 +1,18 @@
 ---
 id: F-01kz20fzmjvj7hpcdn2s40aw1j
 title: The board cannot show two contradiction classes that a-team validate reports
-status: new
+status: resolved
 origin: agent
 observation_type: risk
 confidence: high
 severity: medium
 discovered_during: T-01kz1xrxw4aheeqv1ca0bv0fcq
 created_at: '2026-08-02'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:06:39.907Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:39.907Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz20fzmjvj7hpcdn2s40aw1j — The board cannot show two contradiction classes that a-team validate reports
 
