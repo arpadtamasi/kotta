@@ -3,13 +3,18 @@ id: F-01kz3y8871e82v1v8dsjb9v9w9
 title: >-
   Nincs backlog review, es epp azert kell tolnia magat a termeknek, mert PM-kent
   ezt mindenki elhagyja
-status: new
+status: resolved
 origin: agent
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-03'
+disposition: reject
+resolved_at: '2026-08-21T16:49:48.220Z'
+approved_by: cli
+approved_at: '2026-08-21T16:49:48.220Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz3y8871e82v1v8dsjb9v9w9 — Nincs backlog review, es epp azert kell tolnia magat a termeknek, mert PM-kent ezt mindenki elhagyja
 

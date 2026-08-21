@@ -36,7 +36,6 @@ None.
 - F-025-progos-as-first-kotta-publisher-mcp-kottas-for-standard-sme-
 - kotta-has-no-roadmap-concept-sequenced-intent-above-batches--8amqckd2
 - kotta-has-one-gauge-for-governed-work-a-two-minute-page-and--tsb4m5qh
-- nincs-backlog-review-es-epp-azert-kell-tolnia-magat-a-termek-sjb9v9w9
 - npm-rejects-the-unscoped-kotta-package-name-as-too-similar-eaag2s6z
 - the-defined-operation-registry-contract-pins-its-acceptance--n9k18wbv
 - the-spec-namespace-has-no-writing-service-so-changing-the-ma-yhpzreqm
