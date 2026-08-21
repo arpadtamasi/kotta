@@ -3,13 +3,18 @@ id: F-01kz3swfa5xh6rvxzq10cpc3k3
 title: >-
   Harom szomszed repo AGENTS.md-je ideiglenes szabalyblokkot hordoz, aminek az
   eltavolitasara semmi nem fog emlekeztetni
-status: new
+status: resolved
 origin: agent
 observation_type: technical-debt
 confidence: high
 severity: medium
 discovered_during: T-01kz3kx1ex19tjw82tbd1366pk
 created_at: '2026-08-03'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:08:03.604Z'
+approved_by: cli
+approved_at: '2026-08-21T15:08:03.604Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz3swfa5xh6rvxzq10cpc3k3 — Harom szomszed repo AGENTS.md-je ideiglenes szabalyblokkot hordoz, aminek az eltavolitasara semmi nem fog emlekeztetni
 
