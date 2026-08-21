@@ -38,7 +38,6 @@ None.
 - F-015-a-team-s-default-framing-is-waterfall-ish-make-discovery-fir
 - F-016-no-per-ticket-cost-metering-token-spend-and-wall-clock-are-i
 - F-017-findings-caused-by-an-earlier-ticket-s-under-specification-a
-- F-018-review-evidence-is-satisfied-by-volume-not-by-fitness-one-b
 - F-021-finding-metadata-is-single-valued-in-practice-severity-confi
 - F-025-progos-as-first-kotta-publisher-mcp-kottas-for-standard-sme-
 - F-030-package-szintu-review-hianyzik-a-ticketek-review-ban-tartasa

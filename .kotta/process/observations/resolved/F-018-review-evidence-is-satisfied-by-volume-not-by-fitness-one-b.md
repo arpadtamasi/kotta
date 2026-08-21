@@ -3,13 +3,18 @@ id: F-018
 title: >-
   Review evidence is satisfied by volume, not by fitness — one blob is pasted
   into every named check
-status: new
+status: resolved
 origin: agent
 observation_type: process
 confidence: high
 severity: high
 discovered_during: null
 created_at: '2026-08-01'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:06:41.334Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:41.334Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-018 — Review evidence is satisfied by volume, not by fitness — one blob is pasted into every named check
 
