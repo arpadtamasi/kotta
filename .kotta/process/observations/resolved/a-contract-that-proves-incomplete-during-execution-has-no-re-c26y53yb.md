@@ -3,13 +3,18 @@ id: F-01kzhna04m3pnghkchc26y53yb
 title: >-
   A contract that proves incomplete during execution has no repair path, and the
   gap it is told to record never reaches the executor
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-08'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:08.828Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:08.828Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kzhna04m3pnghkchc26y53yb — A contract that proves incomplete during execution has no repair path, and the gap it is told to record never reaches the executor
 
