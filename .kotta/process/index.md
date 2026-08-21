@@ -32,7 +32,6 @@ None.
 ## New observations
 
 - F-007-triage-assistant-agent-gather-decision-context-for-a-finding
-- F-017-findings-caused-by-an-earlier-ticket-s-under-specification-a
 - F-021-finding-metadata-is-single-valued-in-practice-severity-confi
 - F-025-progos-as-first-kotta-publisher-mcp-kottas-for-standard-sme-
 - kotta-has-no-roadmap-concept-sequenced-intent-above-batches--8amqckd2

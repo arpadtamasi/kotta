@@ -3,13 +3,18 @@ id: F-017
 title: >-
   Findings caused by an earlier ticket's under-specification are never written
   back — the ticket corpus decays instead of staying regenerable
-status: new
+status: resolved
 origin: human
 observation_type: improvement
 confidence: high
 severity: high
 discovered_during: null
 created_at: '2026-07-31'
+disposition: reject
+resolved_at: '2026-08-21T16:49:46.397Z'
+approved_by: cli
+approved_at: '2026-08-21T16:49:46.397Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-017 — Findings caused by an earlier ticket's under-specification are never written back — the ticket corpus decays instead of staying regenerable
 
