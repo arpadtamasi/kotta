@@ -3,13 +3,18 @@ id: F-01kznzfp4j31dnbbp8k0ty0f0m
 title: >-
   The test suite reads a dist the merge hook is still rebuilding, so a run can
   fail for no reason
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-10'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:08:08.663Z'
+approved_by: cli
+approved_at: '2026-08-21T15:08:08.663Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kznzfp4j31dnbbp8k0ty0f0m — The test suite reads a dist the merge hook is still rebuilding, so a run can fail for no reason
 
