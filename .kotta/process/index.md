@@ -43,5 +43,6 @@ None.
 - nincs-backlog-review-es-epp-azert-kell-tolnia-magat-a-termek-sjb9v9w9
 - nincs-sprint-vegi-rendcsinalas-a-close-takarit-de-a-maradeko-6mmdp86q
 - npm-rejects-the-unscoped-kotta-package-name-as-too-similar-eaag2s6z
+- resolve-moves-the-observation-even-when-its-lifecycle-event--jtfb9f5b
 - the-defined-operation-registry-contract-pins-its-acceptance--n9k18wbv
 - the-spec-namespace-has-no-writing-service-so-changing-the-ma-yhpzreqm
