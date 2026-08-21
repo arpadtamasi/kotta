@@ -1,13 +1,18 @@
 ---
 id: F-01m0g45rarfc7xdwydn5nn9try
 title: Contract review cannot locate a valid moved control-plane worktree
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: T-01m00afb9wt2vrbs3qgrgv0mtw
 created_at: '2026-08-20'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:11.854Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:11.854Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0g45rarfc7xdwydn5nn9try — Contract review cannot locate a valid moved control-plane worktree
 
