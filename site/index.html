@@ -108,18 +108,22 @@
       <section class="arrivals" data-unit="arrivals" aria-labelledby="arrivals-title">
         <div class="container">
           <h2 id="arrivals-title">Three ways in.</h2>
+          <p class="arrivals-lede">The specification states what must be true. The code is the implementation. A task connects them, and an observation carries back what the running system says.</p>
           <ol class="arrival-list">
             <li>
               <h3>New software</h3>
+              <p class="arrival-path"><code>spec → task → code</code></p>
               <p>You have an idea, not a specification. The workshops run as conversation and land specification nodes an agent can execute against.</p>
             </li>
             <li>
               <h3>A legacy rewrite</h3>
-              <p>The behaviour exists; the agreement was never written down. Read the old system into specification nodes and the rewrite has something to be checked against.</p>
+              <p class="arrival-path"><code>code → spec → task → code</code></p>
+              <p>The code is the only specification you have. Read it back into specification nodes and from there it is the same loop as new work.</p>
             </li>
             <li>
               <h3>A codebase already under way</h3>
-              <p>Nothing stops while you specify. Write down only the part you are about to touch; <code>kotta gap</code> names what still has no evidence.</p>
+              <p class="arrival-path"><code>running system → observation → spec → task → code</code></p>
+              <p>Nothing stops while you specify. What the running system tells you is captured as an observation, so it never widens the task you are on.</p>
             </li>
           </ol>
         </div>
