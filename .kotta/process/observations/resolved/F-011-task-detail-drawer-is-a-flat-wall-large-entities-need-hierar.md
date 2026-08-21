@@ -3,13 +3,18 @@ id: F-011
 title: >-
   Task detail drawer is a flat wall — large entities need hierarchy (finding
   detail reads far better)
-status: new
+status: resolved
 origin: agent
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-07-27'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:58.543Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:58.543Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-011 — Task detail drawer is a flat wall — large entities need hierarchy (finding detail reads far better)
 
