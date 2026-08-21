@@ -1,13 +1,18 @@
 ---
 id: F-01m0bt3gag9p10f4rkvc4e2xry
 title: 'A specifikációs munkára továbbra is contract készül, a pozitív küszöb ellenére'
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-19'
+disposition: reject
+resolved_at: '2026-08-21T16:49:44.737Z'
+approved_by: cli
+approved_at: '2026-08-21T16:49:44.738Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0bt3gag9p10f4rkvc4e2xry — A specifikációs munkára továbbra is contract készül, a pozitív küszöb ellenére
 
