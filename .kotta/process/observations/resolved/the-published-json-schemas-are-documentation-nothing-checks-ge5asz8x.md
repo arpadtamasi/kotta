@@ -1,13 +1,18 @@
 ---
 id: F-01kz294y2ev4068xsnge5asz8x
 title: The published JSON schemas are documentation nothing checks
-status: new
+status: resolved
 origin: agent
 observation_type: risk
 confidence: high
 severity: medium
 discovered_during: T-023
 created_at: '2026-08-02'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:08:07.582Z'
+approved_by: cli
+approved_at: '2026-08-21T15:08:07.583Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz294y2ev4068xsnge5asz8x — The published JSON schemas are documentation nothing checks
 
