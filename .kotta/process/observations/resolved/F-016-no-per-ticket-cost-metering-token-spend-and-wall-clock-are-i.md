@@ -3,13 +3,18 @@ id: F-016
 title: >-
   No per-ticket cost metering — token spend and wall-clock per ticket are
   invisible
-status: new
+status: resolved
 origin: human
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-07-31'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:12.359Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:12.359Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-016 — No per-ticket cost metering — token spend and wall-clock per ticket are invisible
 

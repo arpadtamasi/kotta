@@ -36,7 +36,6 @@ None.
 - F-011-task-detail-drawer-is-a-flat-wall-large-entities-need-hierar
 - F-013-bare-ids-in-agent-text-surfaces-cli-output-index-commits-cha
 - F-015-a-team-s-default-framing-is-waterfall-ish-make-discovery-fir
-- F-016-no-per-ticket-cost-metering-token-spend-and-wall-clock-are-i
 - F-017-findings-caused-by-an-earlier-ticket-s-under-specification-a
 - F-021-finding-metadata-is-single-valued-in-practice-severity-confi
 - F-025-progos-as-first-kotta-publisher-mcp-kottas-for-standard-sme-
