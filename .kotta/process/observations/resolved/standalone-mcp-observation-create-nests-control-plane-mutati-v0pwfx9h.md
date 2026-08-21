@@ -1,13 +1,18 @@
 ---
 id: F-01m0g24x5wpqnr0pfqv0pwfx9h
 title: Standalone MCP observation_create nests control-plane mutations
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: T-01m0fq306xed253zf243bwk94f
 created_at: '2026-08-20'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:06:40.423Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:40.423Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0g24x5wpqnr0pfqv0pwfx9h — Standalone MCP observation_create nests control-plane mutations
 

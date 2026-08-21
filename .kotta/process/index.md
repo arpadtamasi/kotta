@@ -90,7 +90,6 @@ None.
 - ready-ticket-szovege-nem-javithato-a-define-csak-backlogbol--147t946f
 - renaming-the-workspace-drops-tracked-but-now-ignored-files-o-nkb8sbc4
 - review-submission-has-no-per-check-evidence-input-for-duplic-rgyj9wyh
-- standalone-mcp-observation-create-nests-control-plane-mutati-v0pwfx9h
 - the-a-team-directory-name-outlives-the-vocabulary-migration--1n909nqf
 - the-advertised-install-version-is-hardcoded-in-three-files-a-wn3kw5t7
 - the-define-contract-skill-never-says-what-complete-means-and-cdtrdt8d
