@@ -1,7 +1,7 @@
 ---
 id: T-01m0j2vr1s33cgsq85xjx1fspg
 title: The public page names the situations Kotta is entered from
-status: review
+status: done
 origin: human
 types:
   - docs
@@ -27,14 +27,15 @@ coverage:
     - EX-01m0j2txqqhxvseynysnpj28wd
     - QA-01m0f0wn89pg0x4zymz08mh15w
 approved_by: cli
-approved_at: '2026-08-21T12:13:47.273Z'
-approval_basis: 'CLI --approve: task.request-changes'
+approved_at: '2026-08-21T12:20:30.058Z'
+approval_basis: 'CLI --approve: task.close'
 assigned_agent: claude
 worktree: .
 execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 7944aefc61eaf0df21a95470c7ea2ee885272027
+resolution: completed
 ---
 ## Outcome
 
