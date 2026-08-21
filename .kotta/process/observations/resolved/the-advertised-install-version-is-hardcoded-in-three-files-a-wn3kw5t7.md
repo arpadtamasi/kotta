@@ -3,13 +3,18 @@ id: F-01kz235wrjck3amwcjwn3kw5t7
 title: >-
   The advertised install version is hardcoded in three files and silently drifts
   from package.json
-status: new
+status: resolved
 origin: agent
 observation_type: process
 confidence: high
 severity: medium
 discovered_during: T-020
 created_at: '2026-08-02'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:08:02.584Z'
+approved_by: cli
+approved_at: '2026-08-21T15:08:02.584Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz235wrjck3amwcjwn3kw5t7 — The advertised install version is hardcoded in three files and silently drifts from package.json
 

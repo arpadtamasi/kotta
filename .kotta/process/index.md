@@ -51,7 +51,6 @@ None.
 - no-before-baseline-is-obtainable-kotta-validate-refuses-a-pr-4e63se3v
 - npm-rejects-the-unscoped-kotta-package-name-as-too-similar-eaag2s6z
 - renaming-the-workspace-drops-tracked-but-now-ignored-files-o-nkb8sbc4
-- the-advertised-install-version-is-hardcoded-in-three-files-a-wn3kw5t7
 - the-defined-operation-registry-contract-pins-its-acceptance--n9k18wbv
 - the-published-json-schemas-are-documentation-nothing-checks-ge5asz8x
 - the-skills-sync-feature-shipped-without-a-changelog-entry-pxwst12g
