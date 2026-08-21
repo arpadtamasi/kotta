@@ -1,7 +1,7 @@
 ---
 id: T-01m0j2vr1s33cgsq85xjx1fspg
 title: The public page names the situations Kotta is entered from
-status: backlog
+status: defined
 origin: human
 types:
   - docs
@@ -26,6 +26,9 @@ coverage:
   'The first viewport still carries the offer, a primary action and the control mechanism at 1440x900, and the page keeps its responsive behaviour, keyboard access, JavaScript-free readability and freedom from serious or critical accessibility violations.':
     - EX-01m0j2txqqhxvseynysnpj28wd
     - QA-01m0f0wn89pg0x4zymz08mh15w
+approved_by: cli
+approved_at: '2026-08-21T11:56:56.039Z'
+approval_basis: 'CLI --approve: task.sign'
 ---
 ## Outcome
 
