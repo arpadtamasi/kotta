@@ -1,13 +1,18 @@
 ---
 id: F-01kz294xzzcswpmkg91n909nqf
 title: The .a-team directory name outlives the vocabulary migration with no end date
-status: new
+status: resolved
 origin: agent
 observation_type: risk
 confidence: high
 severity: medium
 discovered_during: T-023
 created_at: '2026-08-02'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:08:01.560Z'
+approved_by: cli
+approved_at: '2026-08-21T15:08:01.560Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz294xzzcswpmkg91n909nqf — The .a-team directory name outlives the vocabulary migration with no end date
 
