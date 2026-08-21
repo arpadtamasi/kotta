@@ -1,13 +1,18 @@
 ---
 id: F-01m01cmzhyt1j41crgnz688n4t
 title: A board aria-modal felületei nem tartják bent a billentyűzetfókuszt
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-15'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:59.512Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:59.512Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m01cmzhyt1j41crgnz688n4t — A board aria-modal felületei nem tartják bent a billentyűzetfókuszt
 

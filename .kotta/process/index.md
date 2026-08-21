@@ -36,7 +36,6 @@ None.
 - F-017-findings-caused-by-an-earlier-ticket-s-under-specification-a
 - F-021-finding-metadata-is-single-valued-in-practice-severity-confi
 - F-025-progos-as-first-kotta-publisher-mcp-kottas-for-standard-sme-
-- a-board-aria-modal-felu-letei-nem-tartja-k-bent-a-billentyu--nz688n4t
 - a-decisions-lista-az-egyetlen-amelynek-nincs-szu-ro-je-e-s-k-zcees10m
 - a-kiadatlan-changelog-bejegyzes-a-regi-binaris-nevet-hasznal-m4m7q531
 - a-specifika-cio-s-munka-ra-tova-bbra-is-contract-ke-szu-l-a--vc4e2xry
