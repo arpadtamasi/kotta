@@ -18,13 +18,14 @@ None.
 
 ## Active tasks
 
-- the-public-page-names-the-situations-kotta-is-entered-from-xjx1fspg
+None.
 
 ## Review
 
 - a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
 - contract-gate-treats-standalone-generated-documents-as-kotta-grgv0mtw
 - the-github-repository-page-says-what-kotta-is-for-before-it--25073me5
+- the-public-page-names-the-situations-kotta-is-entered-from-xjx1fspg
 
 ## Blocked
 
