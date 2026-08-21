@@ -3,13 +3,18 @@ id: F-01kz36jpn7japyysdhnkb8sbc4
 title: >-
   Renaming the workspace drops tracked-but-now-ignored files out of version
   control, unreported
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: T-022
 created_at: '2026-08-03'
+disposition: accept-risk
+resolved_at: '2026-08-21T15:08:05.388Z'
+approved_by: cli
+approved_at: '2026-08-21T15:08:05.388Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz36jpn7japyysdhnkb8sbc4 — Renaming the workspace drops tracked-but-now-ignored files out of version control, unreported
 

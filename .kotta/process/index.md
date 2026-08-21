@@ -47,7 +47,6 @@ None.
 - nincs-sprint-vegi-rendcsinalas-a-close-takarit-de-a-maradeko-6mmdp86q
 - no-before-baseline-is-obtainable-kotta-validate-refuses-a-pr-4e63se3v
 - npm-rejects-the-unscoped-kotta-package-name-as-too-similar-eaag2s6z
-- renaming-the-workspace-drops-tracked-but-now-ignored-files-o-nkb8sbc4
 - the-defined-operation-registry-contract-pins-its-acceptance--n9k18wbv
 - the-published-json-schemas-are-documentation-nothing-checks-ge5asz8x
 - the-spec-namespace-has-no-writing-service-so-changing-the-ma-yhpzreqm
