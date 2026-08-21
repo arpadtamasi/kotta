@@ -1,7 +1,7 @@
 ---
 id: T-01m0j2vr1s33cgsq85xjx1fspg
 title: The public page names the situations Kotta is entered from
-status: defined
+status: active
 origin: human
 types:
   - docs
@@ -15,7 +15,7 @@ spec:
   - US-01m0j2txqj33mjbyp0rrmwswc7
   - EX-01m0j2txqqhxvseynysnpj28wd
   - QA-01m0f0wn89pg0x4zymz08mh15w
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-21'
 updated_at: '2026-08-21'
@@ -29,6 +29,12 @@ coverage:
 approved_by: cli
 approved_at: '2026-08-21T11:56:56.039Z'
 approval_basis: 'CLI --approve: task.sign'
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 7944aefc61eaf0df21a95470c7ea2ee885272027
 ---
 ## Outcome
 

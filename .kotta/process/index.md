@@ -15,11 +15,10 @@ None.
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
 - one-operation-registry-derives-both-the-cli-and-the-mcp-surf-06fw8n0g
 - the-agent-rules-reach-the-calling-chat-as-a-generated-file-n-atnxppcm
-- the-public-page-names-the-situations-kotta-is-entered-from-xjx1fspg
 
 ## Active tasks
 
-None.
+- the-public-page-names-the-situations-kotta-is-entered-from-xjx1fspg
 
 ## Review
 
