@@ -6,7 +6,7 @@ title: "The MCP tool surface"
 
 ## Purpose
 
-The calling-chat control plane over stdio MCP: workspace status, list and show for every entity, task create/define/validate/brief/start-caller/submit-review, observation create, message recording, and the approval elicitation.
+The calling-chat control plane over stdio MCP: workspace status, the gap report, list and show for every entity (with one-version pre-rename aliases), task create/define/validate/brief/start-caller/submit-review, observation create, message recording, and the approval elicitation.
 
 ## Preconditions
 

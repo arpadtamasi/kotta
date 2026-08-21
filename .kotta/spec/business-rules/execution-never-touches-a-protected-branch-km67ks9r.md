@@ -14,4 +14,4 @@ The base branch is the canonical state and the integration target; executing on 
 
 ## Scope
 
-All task and batch execution. The claim schema itself rejects protected branch names; a single checkout on a protected branch is a canonical writer, not an execution site.
+All task and batch execution. Start refuses to adopt a checkout on a configured protected branch and never mints an execution branch named in git.protected_branches; a single checkout on a protected branch is a canonical writer, not an execution site.
