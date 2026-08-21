@@ -67,7 +67,6 @@ None.
 - kotta-hand-enumerates-the-agents-and-hosts-it-can-work-with--ccfd497m
 - kotta-has-no-roadmap-concept-sequenced-intent-above-batches--8amqckd2
 - kotta-has-one-gauge-for-governed-work-a-two-minute-page-and--tsb4m5qh
-- kotta-integrate-only-supports-codex-so-claude-code-sessions--n5cp4s0q
 - kotta-migrate-writes-a-root-gitattributes-it-never-reports-i-hkr7tyh2
 - kotta-never-states-what-a-contract-is-the-one-agent-sizing-r-0nnk2emr
 - migration-json-keeps-the-pre-vocabulary-words-and-nothing-de-3hcysj58

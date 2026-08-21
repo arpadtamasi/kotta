@@ -3,13 +3,18 @@ id: F-01kzd9sh03y7hwwbeen5cp4s0q
 title: >-
   kotta integrate only supports codex, so Claude Code sessions start with no
   Kotta MCP tools
-status: new
+status: resolved
 origin: agent
 observation_type: gap
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-07'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:06.125Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:06.125Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kzd9sh03y7hwwbeen5cp4s0q — kotta integrate only supports codex, so Claude Code sessions start with no Kotta MCP tools
 
