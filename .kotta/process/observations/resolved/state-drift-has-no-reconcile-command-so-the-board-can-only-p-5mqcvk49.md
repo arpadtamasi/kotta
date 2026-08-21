@@ -3,13 +3,18 @@ id: F-01kz20ghs2e8ym44v45mqcvk49
 title: >-
   State drift has no reconcile command, so the board can only point at a-team
   validate
-status: new
+status: resolved
 origin: agent
 observation_type: product
 confidence: high
 severity: medium
 discovered_during: T-01kz1xrxw4aheeqv1ca0bv0fcq
 created_at: '2026-08-02'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:06:39.413Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:39.413Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz20ghs2e8ym44v45mqcvk49 — State drift has no reconcile command, so the board can only point at a-team validate
 
