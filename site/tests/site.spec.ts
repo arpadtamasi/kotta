@@ -19,13 +19,15 @@ test("renders the approved content task in order", async ({ page }) => {
   });
   await page.goto("./");
 
-  await expect(page.locator("[data-unit]")).toHaveCount(6);
-  expect(await page.locator("[data-unit]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-unit")))).toEqual(["hero", "problem", "workflow", "comparison", "quickstart", "trust"]);
+  await expect(page.locator("[data-unit]")).toHaveCount(7);
+  expect(await page.locator("[data-unit]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-unit")))).toEqual(["hero", "problem", "arrivals", "workflow", "comparison", "quickstart", "trust"]);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Everything we learned about spelling out exactly what we want.");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Your job is to figure out what you want.");
   await expect(page.getByText("Without the rigidity that kept us from doing it properly. Designed to be executed by AI.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "AI can execute more work than you can continuously observe." })).toBeVisible();
   await expect(page.getByRole("heading", { name: "The agreement becomes executable." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Three ways in." })).toBeVisible();
+  await expect(page.locator(".arrival-list li")).toHaveCount(3);
   await expect(page.getByRole("link", { name: "Install Kotta" })).toHaveAttribute("href", "#install");
   await expect(page.getByRole("link", { name: "View on GitHub" })).toHaveAttribute("href", "https://github.com/arpadtamasi/kotta");
   await expect(page.getByText("Human decision required")).toBeVisible();
