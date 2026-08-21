@@ -46,7 +46,6 @@ None.
 - a-vitest-a-worktrees-ala-is-benez-egy-elo-ticket-worktree-me-cahhcmt5
 - a-workspace-konyvtar-atnevezese-uressen-mutatja-a-boardot-am-0n2rjcpt
 - an-older-cli-silently-downgrades-a-newer-shaped-workspace-in-jk7q3pec
-- contract-new-human-output-hides-the-created-contract-id-xwja20bg
 - crm-kit-and-flowbench-cannot-be-migrated-unrelated-dirty-tre-9m3dkmxv
 - harom-szomszed-repo-agents-md-je-ideiglenes-szabalyblokkot-h-10cpc3k3
 - kotta-has-no-roadmap-concept-sequenced-intent-above-batches--8amqckd2

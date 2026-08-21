@@ -1,13 +1,18 @@
 ---
 id: F-01kz9drtga1vdpmggzxwja20bg
 title: contract new human output hides the created contract ID
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: T-01kz8tk2t53jbax6mrseka50v9
 created_at: '2026-08-05'
+disposition: merge-duplicate
+resolved_at: '2026-08-21T15:07:16.694Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:16.694Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz9drtga1vdpmggzxwja20bg — contract new human output hides the created contract ID
 
