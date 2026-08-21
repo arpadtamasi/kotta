@@ -130,8 +130,13 @@ describe("one entity in two state directories (T-036)", () => {
     git(root, "add", "-A");
     git(root, "commit", "-m", "add second task");
 
-    const merge = spawnSync("git", ["merge", "--no-ff", "branch-defined", "-m", "merge"], { cwd: root, encoding: "utf8" });
-    expect(`${merge.stdout}${merge.stderr}`).toContain("CONFLICT (modify/delete)");
+    // Newer git honors the fixture's merge.renames=false and reports CONFLICT (modify/delete);
+    // git 2.43's ort strategy ignores the setting and pairs the move as a rename. The duplicated
+    // shape this test exists for is reconstructed from the two sides either way.
+    const mainBefore = git(root, "rev-parse", "HEAD");
+    spawnSync("git", ["merge", "--no-ff", "branch-defined", "-m", "merge"], { cwd: root, encoding: "utf8" });
+    git(root, "checkout", "branch-defined", "--", `.kotta/process/batches/defined/${filename}`);
+    git(root, "checkout", mainBefore, "--", `.kotta/process/batches/backlog/${filename}`);
     git(root, "add", "-A");
     git(root, "commit", "-m", "merge: kept both copies");
     const backlog = join(root, ".kotta/process/batches/backlog", filename);
@@ -180,8 +185,11 @@ describe("one entity in two state directories (T-036)", () => {
     git(root, "add", "-A");
     git(root, "commit", "-m", "rewrite body");
 
-    const merge = spawnSync("git", ["merge", "--no-ff", "branch-defined", "-m", "merge"], { cwd: root, encoding: "utf8" });
-    expect(`${merge.stdout}${merge.stderr}`).toContain("CONFLICT (modify/delete)");
+    // Same git-version split as above: reconstruct both copies whatever the merge reported.
+    const mainBefore = git(root, "rev-parse", "HEAD");
+    spawnSync("git", ["merge", "--no-ff", "branch-defined", "-m", "merge"], { cwd: root, encoding: "utf8" });
+    git(root, "checkout", "branch-defined", "--", `.kotta/process/defined/${filename}`);
+    git(root, "checkout", mainBefore, "--", `.kotta/process/backlog/${filename}`);
     git(root, "add", "-A");
     git(root, "commit", "-m", "merge: kept both copies");
     const backlog = join(root, ".kotta/process/backlog", filename);

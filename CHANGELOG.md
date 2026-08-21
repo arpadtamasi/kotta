@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- **The public surfaces say what Kotta is for before how to install it.** The README opens with
+  the premise (the profession's specification vocabulary, kept without the ceremony), the
+  spec–task–code–observation loop, the three ways in and the honest limits, and moves the
+  rename/migration reference behind the product claim. The site names the same three arrivals
+  between the problem and the mechanism. The advertised install version follows the released
+  package again.
+
 - **The executable work unit is now `task` on every current surface.** CLI commands, MCP tools,
   schemas, stored relationships, board data, templates, generated rules, shipped skills, docs and
   the site now use the specification's accepted vocabulary. Existing `T-` identifiers never change.
@@ -16,6 +23,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   The former CLI group and read-only MCP list/show tools remain one-version compatibility aliases;
   reading their stored form emits a warning naming the migration. `kotta sync` installs the renamed
   skills and removes only legacy directories proven Kotta-owned by its manifest.
+
+### Fixed
+
+- The state-duplication and ui-port integration suites no longer depend on the environment: the
+  duplicated-entity fixtures reconstruct both copies whatever the local git's rename detection
+  decides, and the non-collision bind failure uses a TEST-NET address instead of a privileged
+  port, so the suite passes as root and across git versions.
 
 ## [0.7.0] - 2026-08-20
 

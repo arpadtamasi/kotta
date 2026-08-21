@@ -114,7 +114,9 @@ describe("ui server binding", () => {
   test("a non-collision failure is not retried", async () => {
     const server = idleServer();
     try {
-      await expect(bindUiServer(server, HOST, undefined, 1)).rejects.toThrow(/EACCES|EADDRNOTAVAIL|EPERM/);
+      // Port 1 only fails for non-root processes; binding a TEST-NET-3 address fails with
+      // EADDRNOTAVAIL for any user, so the non-collision path is exercised as root too.
+      await expect(bindUiServer(server, "203.0.113.1", undefined, 1)).rejects.toThrow(/EACCES|EADDRNOTAVAIL|EPERM/);
     } finally { await close(server); }
   });
 });
