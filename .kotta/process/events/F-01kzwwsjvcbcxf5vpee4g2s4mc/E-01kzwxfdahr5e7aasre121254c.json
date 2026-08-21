@@ -1,0 +1,15 @@
+{
+  "id": "E-01kzwxfdahr5e7aasre121254c",
+  "entity": "F-01kzwwsjvcbcxf5vpee4g2s4mc",
+  "task": null,
+  "kind": "approval",
+  "approval_id": "E-01kzwxfdahr5e7aasre121254c",
+  "phase": "proposed",
+  "action": "observation.resolve",
+  "payload": {
+    "disposition": "create-contract",
+    "surface": "cli"
+  },
+  "source_message": null,
+  "created_at": "2026-08-13T06:38:11.281Z"
+}

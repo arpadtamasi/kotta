@@ -1,0 +1,17 @@
+{
+  "entity": "T-01m0b3jq2yjxbe173w19axk9x8",
+  "task": "T-01m0b3jq2yjxbe173w19axk9x8",
+  "kind": "approval",
+  "approval_id": "E-01m0b8y360zn64vd9ke7vhk89z",
+  "phase": "approved",
+  "action": "task.cancel",
+  "payload": {
+    "resolution": "obsolete",
+    "reason": "A review során jóváhagyott spec/process workspace-szétválasztás átfogóbb, koherens replacement contractot igényel; a részleges központi szabály önállóan nem kerül mainbe.",
+    "superseded_by": "T-01m0b63d3xrhpnvbgaaedjwc92",
+    "surface": "cli"
+  },
+  "source_message": "E-01m0b8y361wscqcynrsz40bg5q",
+  "id": "E-01m0b8y362da164x85sms5dmh9",
+  "created_at": "2026-08-18T20:27:48.802Z"
+}

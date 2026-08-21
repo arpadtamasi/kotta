@@ -4,11 +4,11 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { initCommand } from "../commands/init.js";
-import { briefContract, cancelContract, closeContract, defineContract, newContract, signContract, reopenContract, reviewContract, startContract, validateContract } from "../commands/contract.js";
-import { executeContract, formatExecution } from "../commands/execute.js";
+import { briefTask, cancelTask, closeTask, defineTask, newTask, signTask, reopenTask, reviewTask, startTask, validateTask } from "../commands/task.js";
+import { executeTask, formatExecution } from "../commands/execute.js";
 import { statusCommand } from "../commands/status.js";
 import { newObservation, resolveObservation, validateObservation } from "../commands/observation.js";
-import { closeBatch, finalizeBatch, newBatch, batchStatus, signBatch, startBatch, updateBatchContracts, validateBatch } from "../commands/batch.js";
+import { closeBatch, finalizeBatch, newBatch, batchStatus, signBatch, startBatch, updateBatchTasks, validateBatch } from "../commands/batch.js";
 import { validateWorkspace } from "../commands/validate.js";
 import { listClaims, releaseClaim } from "../commands/claim.js";
 import { formatList, listCommand, type ListResult } from "../commands/list.js";
@@ -19,9 +19,12 @@ import { createDecision } from "../commands/decision.js";
 import { dedupeEntity, describeDedupe, type DedupeResult } from "../commands/dedupe.js";
 import { formatMigration, migrateWorkspace } from "../commands/migrate.js";
 import { assertCurrentWorkspaceShape, findRepositoryRoot } from "../filesystem/workspace.js";
+import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
 import { mcpCommand } from "../commands/mcp.js";
 import { integrateCodex } from "../commands/integrate.js";
 import { syncCommand } from "../commands/sync.js";
+import { gapReport } from "../commands/gap.js";
+import { LEGACY_TASK_COMMAND, warnLegacyTaskVocabulary } from "../compatibility/task-v3.js";
 
 const program = new Command();
 const packagePath = fileURLToPath(new URL("../../package.json", import.meta.url));
@@ -59,17 +62,20 @@ function agentsLines(agents: AgentsSummary | undefined, project: ProjectAgentsSu
 function humanize(result: unknown): string {
   if (typeof result === "object" && result && "command" in result) {
     const command = String((result as { command: unknown }).command);
-    if ((command === "contract dedupe" || command === "batch dedupe") && "data" in result) {
+    if ((command === "task dedupe" || command === "batch dedupe") && "data" in result) {
       return describeDedupe((result as DedupeResult).data);
     }
-    if (command === "contract start" && "data" in result) {
+    if (command === "gap report" && "data" in result) {
+      return String((result as { data: { report: unknown } }).data.report).trimEnd();
+    }
+    if (command === "task start" && "data" in result) {
       const data = (result as { data: { id: unknown; branch: unknown; worktree: unknown; startRef: unknown; startCommit: unknown; nextStep: unknown; executionMode?: unknown; callerStep?: unknown } }).data;
       return [
         `Started ${String(data.id)} from ${String(data.startRef)} at ${String(data.startCommit)}: branch ${String(data.branch)}, worktree ${String(data.worktree)}.`,
         data.executionMode === "inherited"
           ? `Execution mode: inherited context — ${String(data.callerStep)}`
-          : `Next: run the contract in a fresh agent context (D-009) — ${String(data.nextStep)}.`,
-        `'kotta contract execute <id> --agent <agent>' does start, brief and agent launch in one command.`,
+          : `Next: run the task in a fresh agent context (D-009) — ${String(data.nextStep)}.`,
+        `'kotta task execute <id> --agent <agent>' does start, brief and agent launch in one command.`,
       ].join("\n");
     }
     if (command === "batch start" && "data" in result) {
@@ -78,7 +84,7 @@ function humanize(result: unknown): string {
       for (const start of data.starts) lines.push(`Started ${String(start.id)} from ${String(start.startRef)} at ${String(start.startCommit)}.`);
       for (const failure of data.failures) lines.push(`Failed ${String(failure.id)}: ${String(failure.message)}`);
       if (data.waiting.length) lines.push(`Waiting: ${data.waiting.map(String).join(", ")}.`);
-      if (!data.starts.length && !data.waiting.length) lines.push("No contracts were dispatched; every member is done.");
+      if (!data.starts.length && !data.waiting.length) lines.push("No tasks were dispatched; every member is done.");
       return lines.join("\n");
     }
     if (command.endsWith(" list") && "data" in result && "entity" in (result as { data: Record<string, unknown> }).data) {
@@ -87,17 +93,17 @@ function humanize(result: unknown): string {
     if (command.endsWith(" show") && "data" in result && "body" in (result as { data: Record<string, unknown> }).data) {
       return formatShow(result as ShowResult);
     }
-    if (command === "contract new" && "data" in result) {
+    if (command === "task new" && "data" in result) {
       const data = (result as { data: { id: unknown; path: unknown } }).data;
-      return `Created contract ${String(data.id)} at ${String(data.path)}.`;
+      return `Created task ${String(data.id)} at ${String(data.path)}.`;
     }
     if (command === "status" && "data" in result) {
       // The workspace path leads: with `.kotta/` and `.a-team/` both readable, the directory that
       // answered is the first thing a reader needs (D-007).
-      const data = (result as { data: { workspace: unknown; definedContracts: unknown[]; activeContracts: unknown[]; reviewContracts: unknown[]; newObservations: unknown[]; skills?: { shipped: number; installed: number; drifted: string[] }; rules?: { present: boolean; drifted: boolean; path: string }; controlPlane?: { mode: string; branch: string | null } } }).data;
+      const data = (result as { data: { workspace: unknown; definedTasks: unknown[]; activeTasks: unknown[]; reviewTasks: unknown[]; newObservations: unknown[]; skills?: { shipped: number; installed: number; drifted: string[] }; rules?: { present: boolean; drifted: boolean; path: string }; controlPlane?: { mode: string; branch: string | null } } }).data;
       const lines = [
         `Workspace: ${String(data.workspace)}`,
-        `Defined ${data.definedContracts.length}, active ${data.activeContracts.length}, review ${data.reviewContracts.length}, new observations ${data.newObservations.length}.`,
+        `Defined ${data.definedTasks.length}, active ${data.activeTasks.length}, review ${data.reviewTasks.length}, new observations ${data.newObservations.length}.`,
       ];
       // Absent skills and stale skills fail the same way — silently — so both are named here,
       // with the one command that fixes either.
@@ -120,13 +126,14 @@ function humanize(result: unknown): string {
       return `Recorded decision ${String(data.id)} at ${String(data.path)}.`;
     }
     if (command === "sync" && "data" in result) {
-      const data = (result as { data: { target: unknown; created: string[]; updated: string[]; unchanged: string[]; skipped: string[]; agents?: AgentsSummary; projectAgents?: ProjectAgentsSummary; pointer?: string | null } }).data;
+      const data = (result as { data: { target: unknown; created: string[]; updated: string[]; unchanged: string[]; skipped: string[]; removed: string[]; agents?: AgentsSummary; projectAgents?: ProjectAgentsSummary; pointer?: string | null } }).data;
       const changed = [
         data.created.length ? `${data.created.length} installed` : "",
         data.updated.length ? `${data.updated.length} updated` : "",
         data.unchanged.length ? `${data.unchanged.length} unchanged` : "",
       ].filter(Boolean).join(", ");
       const lines = [`Skills in ${String(data.target)}: ${changed || "none shipped"}.`];
+      if (data.removed.length) lines.push(`Removed ${data.removed.length} deprecated Kotta-owned skill director${data.removed.length === 1 ? "y" : "ies"}: ${data.removed.join(", ")}.`);
       // A name collision is reported, never resolved: Kotta cannot know what put the other skill
       // there, so it does not get to decide the directory is disposable.
       if (data.skipped.length) lines.push(`Left alone — another skill already uses the name: ${data.skipped.join(", ")}.`);
@@ -155,18 +162,34 @@ function humanize(result: unknown): string {
  * `migrate` exists precisely to read the old shape, and `ui` explains the gap on the board rather than
  * refusing to start — everything else stops with a message that names `kotta migrate`.
  */
-const SHAPE_EXEMPT = new Set(["init", "migrate", "ui", "mcp", "sync"]);
+const SHAPE_EXEMPT = new Set(["init", "migrate", "ui", "mcp"]);
+
+/**
+ * The shape that decides is the workspace the command will actually read and write — the control
+ * plane — not the checkout the command was typed in. An implementation worktree keeps the baseline
+ * `.kotta/` it branched from and routes every state change back to the control worktree, so judging
+ * the caller's copy refused commands over a workspace they never touch: after the control plane
+ * migrated, every worktree started before it was bricked. A caller that cannot resolve a control
+ * plane falls back to itself, which is also what `resolveControlPlane` returns for a single checkout.
+ */
+function shapeJudgementRoot(caller: string): string {
+  try {
+    return controlPlaneRoot(caller);
+  } catch {
+    return caller;
+  }
+}
 
 /**
  * Which entity an id argument belongs to, by the command group it was typed under.
- * Claims are keyed by the contract they belong to, so they resolve as contracts.
+ * Claims are keyed by the task they belong to, so they resolve as tasks.
  */
 const ID_ENTITY: Record<string, ListableEntity> = {
-  contract: "contract",
+  task: "task",
   observation: "observation",
   decision: "decision",
   batch: "batch",
-  claim: "contract",
+  claim: "task",
 };
 
 /**
@@ -190,10 +213,11 @@ function normaliseIdArgument(action: { parent?: { name(): string } | null; proce
 }
 
 program.hook("preAction", (_program, action) => {
+  if (process.argv[2] === LEGACY_TASK_COMMAND) warnLegacyTaskVocabulary("the deprecated task command alias");
   const names = [action.name(), action.parent?.name()].filter(Boolean) as string[];
   if (names.some((name) => SHAPE_EXEMPT.has(name))) return;
   try {
-    assertCurrentWorkspaceShape(findRepositoryRoot());
+    assertCurrentWorkspaceShape(shapeJudgementRoot(findRepositoryRoot()));
   } catch (error) {
     if (!(error instanceof Error) || !error.message.includes("kotta migrate")) return; // no repository, no workspace: not our refusal
     throw error;
@@ -203,7 +227,7 @@ program.hook("preAction", (_program, action) => {
 
 program
   .command("migrate")
-  .description("Carry a pre-vocabulary workspace to the current shape: directories, stored states and references")
+  .description("Carry a legacy or flat workspace into the spec/ and process/ namespaces")
   .option("--workspace <path>", "Repository root or workspace directory; omitted uses the repository around the cwd")
   .option("--dry-run", "Report every change without writing anything")
   .option("--json")
@@ -234,102 +258,114 @@ program
   .action((options: { json?: boolean }) => print(statusCommand(), Boolean(options.json)));
 
 program
+  .command("gap")
+  .description("Report accepted spec promises without repository evidence and enforcement without a spec trace")
+  .option("--json")
+  .action((options: { json?: boolean }) => print(gapReport(findRepositoryRoot()), Boolean(options.json)));
+
+program
   .command("sync")
   .description("Install the skills Kotta ships and refresh the workspace rules file")
   .option("--link-agents", "Link the project's AGENTS.md to the workspace rules, migrating a recognized legacy Kotta prelude after the human said yes")
   .option("--json")
   .action((options: { linkAgents?: boolean; json?: boolean }) => print(syncCommand({ linkAgents: options.linkAgents }), Boolean(options.json)));
 
-const contract = program.command("contract").description("Create and transition contracts");
-contract
+const task = program.command("task").alias(LEGACY_TASK_COMMAND).description("Create and transition tasks");
+task
   .command("list")
-  .description("List contracts with their state and title")
+  .description("List tasks with their state and title")
   .option("--state <state...>", "Narrow to one or more states")
   .option("--json")
-  .action((options: { state?: string[]; json?: boolean }) => print(listCommand("contract", { state: options.state }), Boolean(options.json)));
-contract
+  .action((options: { state?: string[]; json?: boolean }) => print(listCommand("task", { state: options.state }), Boolean(options.json)));
+task
   .command("show <id>")
-  .description("Show one contract: its state, its set facts and its body")
+  .description("Show one task: its state, its set facts and its body")
   .option("--json")
-  .action((id: string, options: { json?: boolean }) => print(showCommand("contract", id), Boolean(options.json)));
-contract
+  .action((id: string, options: { json?: boolean }) => print(showCommand("task", id), Boolean(options.json)));
+task
   .command("new")
   .requiredOption("--title <title>")
   .requiredOption("--type <type>")
   .option("--profile <profile...>", "Requirement profiles", [])
   .option("--json")
-  .action((options: { title: string; type: string; profile: string[]; json?: boolean }) => print(newContract({ title: options.title, type: options.type, profiles: options.profile }), Boolean(options.json)));
-contract
+  .action((options: { title: string; type: string; profile: string[]; json?: boolean }) => print(newTask({ title: options.title, type: options.type, profiles: options.profile }), Boolean(options.json)));
+task
   .command("validate <id>")
   .option("--json")
-  .action((id: string, options: { json?: boolean }) => print(validateContract(id), Boolean(options.json)));
-contract
+  .action((id: string, options: { json?: boolean }) => print(validateTask(id), Boolean(options.json)));
+task
   .command("define <id>")
   .requiredOption("--from <path>", "Markdown definition file")
   .option("--json")
   .action((id: string, options: { from: string; json?: boolean }) => {
     const sourcePath = resolve(options.from);
-    if (!existsSync(sourcePath)) throw new Error(`Contract definition was not found: ${sourcePath}`);
-    print(defineContract(id, readFileSync(sourcePath, "utf8")), Boolean(options.json));
+    if (!existsSync(sourcePath)) throw new Error(`Task definition was not found: ${sourcePath}`);
+    const definition = readFileSync(sourcePath, "utf8");
+    const result = withControlPlaneMutation(findRepositoryRoot(), (root) => {
+      const defined = defineTask(id, definition, root);
+      commitControlState(root, `chore(kotta): define ${id}`);
+      return defined;
+    }, { requireClean: false });
+    print(result, Boolean(options.json));
   });
-contract
-  // `define` writes the contract; `sign` is the human gate that makes it binding and moves it to
-  // `defined`. Two different acts, so two different verbs (D-01kz240dn155hb97h6px6n2p85).
+task
+  // Accepted-spec coverage normally makes define the backlog -> defined transition. This command
+  // remains only for workspaces that deliberately retain the compatibility gate.
   .command("sign <id>")
-  .description("Human gate: sign a validated backlog contract, moving it to defined")
+  .description("Opt-in compatibility gate: sign a covered backlog task, moving it to defined")
   .option("--approve")
   .option("--json")
-  .action((id: string, options: { approve?: boolean; json?: boolean }) => print(signContract(id, Boolean(options.approve)), Boolean(options.json)));
-contract
+  .action((id: string, options: { approve?: boolean; json?: boolean }) => print(signTask(id, Boolean(options.approve)), Boolean(options.json)));
+task
   .command("start <id>")
   .requiredOption("--agent <agent>")
   .option("--caller", "Let the current caller execute inside the new worktree with inherited context")
   .option("--json")
-  .action((id: string, options: { agent: string; caller?: boolean; json?: boolean }) => print(startContract(id, options.agent, options.caller ? "inherited" : "fresh"), Boolean(options.json)));
-contract
+  .action((id: string, options: { agent: string; caller?: boolean; json?: boolean }) => print(startTask(id, options.agent, options.caller ? "inherited" : "fresh"), Boolean(options.json)));
+task
   .command("execute <id>")
-  .description("Run a defined contract in a fresh agent context: start, brief and agent launch in one command (D-009)")
+  .description("Run a defined task in a fresh agent context: start, brief and agent launch in one command (D-009)")
   .option("--agent <agent>", "Agent to launch; required unless --resume reuses the claim's agent")
   .option("--resume", "Reuse the existing execution context instead of creating a second one")
   .option("--inherit-context <reason>", "Explicit, logged exception to the fresh-context default; a reason is required")
   .option("--json")
   .action(async (id: string, options: { agent?: string; resume?: boolean; inheritContext?: string; json?: boolean }) => {
-    const result = await executeContract(id, { agent: options.agent, resume: options.resume, inheritContext: options.inheritContext });
+    const result = await executeTask(id, { agent: options.agent, resume: options.resume, inheritContext: options.inheritContext });
     process.stdout.write(options.json ? `${JSON.stringify(result)}\n` : `${formatExecution(result)}\n`);
     if (!result.ok) process.exitCode = 1;
   });
-contract
+task
   .command("review <id>")
-  .requiredOption("--evidence <evidence>")
+  .requiredOption("--evidence <evidence>", "Evidence text, or repeat '<exact check>=<evidence>' for a named mapping", (value: string, previous: string[]) => [...previous, value], [])
   .option("--pull-request <identifier>")
-  .option("--deviations <text>", "Declared deviations from the contract; omitted means 'Not declared.'")
+  .option("--deviations <text>", "Declared deviations from the task; omitted means 'Not declared.'")
   .option("--observations-created <text>", "Observations created during execution; omitted means 'Not declared.'")
   .option("--known-concerns <text>", "Known concerns left open; omitted means 'Not declared.'")
   .option("--json")
-  .action((id: string, options: { evidence: string; pullRequest?: string; deviations?: string; observationsCreated?: string; knownConcerns?: string; json?: boolean }) => print(reviewContract(id, options.evidence, options.pullRequest, { deviations: options.deviations, observationsCreated: options.observationsCreated, knownConcerns: options.knownConcerns }), Boolean(options.json)));
-contract
+  .action((id: string, options: { evidence: string[]; pullRequest?: string; deviations?: string; observationsCreated?: string; knownConcerns?: string; json?: boolean }) => print(reviewTask(id, options.evidence, options.pullRequest, { deviations: options.deviations, observationsCreated: options.observationsCreated, knownConcerns: options.knownConcerns }), Boolean(options.json)));
+task
   .command("close <id>")
   .option("--approve")
   .option("--json")
-  .action((id: string, options: { approve?: boolean; json?: boolean }) => print(closeContract(id, Boolean(options.approve)), Boolean(options.json)));
-contract
+  .action((id: string, options: { approve?: boolean; json?: boolean }) => print(closeTask(id, Boolean(options.approve)), Boolean(options.json)));
+task
   .command("cancel <id>")
-  .description("Retire a live contract into done with a non-completed resolution, from any state before done")
+  .description("Retire a live task into done with a non-completed resolution, from any state before done")
   .requiredOption("--resolution <resolution>", "duplicate | obsolete | cancelled")
   .requiredOption("--reason <reason>", "Why this work is being retired")
-  .option("--superseded-by <id>", "The contract or decision that took this work's place; required for duplicate and obsolete")
+  .option("--superseded-by <id>", "The task or decision that took this work's place; required for duplicate and obsolete")
   .option("--approve")
   .option("--json")
   .action((id: string, options: { resolution: string; reason: string; supersededBy?: string; approve?: boolean; json?: boolean }) =>
-    print(cancelContract(id, options.resolution, options.reason, Boolean(options.approve), undefined, { supersededBy: options.supersededBy }), Boolean(options.json)));
-contract
+    print(cancelTask(id, options.resolution, options.reason, Boolean(options.approve), undefined, { supersededBy: options.supersededBy }), Boolean(options.json)));
+task
   .command("brief <id>")
-  .description("Assemble the minimal execution context for a contract (D-009)")
+  .description("Assemble the minimal execution context for a task (D-009)")
   .option("--out <path>", "Write the brief to a file instead of stdout")
   .option("--warn-tokens <count>", "Warn above this approximate token count", (value) => Number(value), 12000)
   .option("--json")
   .action((id: string, options: { out?: string; warnTokens: number; json?: boolean }) => {
-    const result = briefContract(id, { out: options.out, warnTokens: options.warnTokens });
+    const result = briefTask(id, { out: options.out, warnTokens: options.warnTokens });
     if (options.json) {
       console.log(JSON.stringify(result));
       return;
@@ -338,17 +374,17 @@ contract
     const summary = `brief ${id}: ~${result.data.tokens} tokens (${result.data.sections.length} sections)${result.data.path ? ` → ${result.data.path}` : ""}`;
     console.error(result.data.warning ? `${summary}\nWARNING: ${result.data.warning}` : summary);
   });
-contract
+task
   .command("dedupe <id>")
-  .description("Resolve a contract a merge left in two state directories: keep the furthest-advanced copy")
+  .description("Resolve a task a merge left in two state directories: keep the furthest-advanced copy")
   .option("--approve")
   .option("--json")
-  .action((id: string, options: { approve?: boolean; json?: boolean }) => print(dedupeEntity("contract", id, Boolean(options.approve)), Boolean(options.json)));
-contract
+  .action((id: string, options: { approve?: boolean; json?: boolean }) => print(dedupeEntity("task", id, Boolean(options.approve)), Boolean(options.json)));
+task
   .command("reopen <id>")
   .option("--approve")
   .option("--json")
-  .action((id: string, options: { approve?: boolean; json?: boolean }) => print(reopenContract(id, Boolean(options.approve)), Boolean(options.json)));
+  .action((id: string, options: { approve?: boolean; json?: boolean }) => print(reopenTask(id, Boolean(options.approve)), Boolean(options.json)));
 
 const observation = program.command("observation").description("Capture and disposition observations");
 observation
@@ -367,7 +403,7 @@ observation
   .requiredOption("--title <title>")
   .requiredOption("--type <type>")
   .requiredOption("--evidence <evidence>")
-  .option("--discovered-during <contract>")
+  .option("--discovered-during <task>")
   .option("--json")
   .action((options: { title: string; type: string; evidence: string; discoveredDuring?: string; json?: boolean }) => print(newObservation(options), Boolean(options.json)));
 observation
@@ -377,9 +413,10 @@ observation
 observation
   .command("resolve <id>")
   .requiredOption("--disposition <disposition>")
+  .option("--spec <spec...>", "Specification nodes the amendment touched (amend-spec only)")
   .option("--approve")
   .option("--json")
-  .action((id: string, options: { disposition: string; approve?: boolean; json?: boolean }) => print(resolveObservation(id, options.disposition, Boolean(options.approve)), Boolean(options.json)));
+  .action((id: string, options: { disposition: string; spec?: string[]; approve?: boolean; json?: boolean }) => print(resolveObservation(id, options.disposition, Boolean(options.approve), undefined, { spec: options.spec }), Boolean(options.json)));
 
 const decision = program.command("decision").description("Record durable human decisions");
 decision
@@ -421,19 +458,19 @@ batchCommand
   .command("new")
   .requiredOption("--title <title>")
   .option("--goal <goal>")
-  .option("--parallelism <count>", "Maximum concurrent contracts", (value) => Number(value), 2)
+  .option("--parallelism <count>", "Maximum concurrent tasks", (value) => Number(value), 2)
   .option("--json")
   .action((options: { title: string; goal?: string; parallelism: number; json?: boolean }) => print(newBatch(options), Boolean(options.json)));
 batchCommand
   .command("add <batch-id> <member-id>")
-  .description("Add a contract, or another batch to group under this one")
+  .description("Add a task, or another batch to group under this one")
   .option("--json")
-  .action((batchId: string, memberId: string, options: { json?: boolean }) => print(updateBatchContracts(batchId, memberId, "add"), Boolean(options.json)));
+  .action((batchId: string, memberId: string, options: { json?: boolean }) => print(updateBatchTasks(batchId, memberId, "add"), Boolean(options.json)));
 batchCommand
   .command("remove <batch-id> <member-id>")
-  .description("Remove a member contract, or a grouped child batch")
+  .description("Remove a member task, or a grouped child batch")
   .option("--json")
-  .action((batchId: string, memberId: string, options: { json?: boolean }) => print(updateBatchContracts(batchId, memberId, "remove"), Boolean(options.json)));
+  .action((batchId: string, memberId: string, options: { json?: boolean }) => print(updateBatchTasks(batchId, memberId, "remove"), Boolean(options.json)));
 batchCommand
   .command("validate <id>")
   .option("--json")
@@ -455,7 +492,7 @@ batchCommand
   .action((id: string, options: { json?: boolean }) => print(batchStatus(id), Boolean(options.json)));
 batchCommand
   .command("close <id>")
-  .description("Complete a batch whose member contracts have all reached done, from any batch state")
+  .description("Complete a batch whose member tasks have all reached done, from any batch state")
   .option("--approve")
   .option("--json")
   .action((id: string, options: { approve?: boolean; json?: boolean }) => print(closeBatch(id, Boolean(options.approve)), Boolean(options.json)));

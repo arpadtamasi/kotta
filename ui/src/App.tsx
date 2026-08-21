@@ -18,7 +18,7 @@ type Migration = {
   package_count: number;
   split_audit: Array<{ legacy_id: string; disposition: string; reason: string; targets: string[] }>;
 };
-type Contract = {
+type Task = {
   id: string; title: string; status: Status; types: string[]; profiles: string[]; priority: string; risk: string;
   batch: string | null; depends_on: string[]; blocks?: string[]; blocked?: boolean; resolution?: string;
   source_observation?: string | null; assigned_agent?: string | null; worktree?: string | null;
@@ -26,28 +26,29 @@ type Contract = {
   claim?: Claim | null;
   migration?: { legacy_id: string; legacy_title: string; lane: string; legacy_status: string; backlog_section: string; story_points: number | null; ready_candidate: boolean; split: boolean; status_correction?: string | null; source_file: string } | null;
 };
-type Claim = { contract: string; agent: string; branch: string; worktree: string; started_at: string };
+type Claim = { task: string; agent: string; branch: string; worktree: string; started_at: string };
 type Batch = {
-  id: string; title: string; status: string; kind: string; contracts: string[]; batches?: string[]; sections: Record<string, string>;
+  id: string; title: string; status: string; kind: string; tasks: string[]; batches?: string[]; sections: Record<string, string>;
   created_at?: string | null; updated_at?: string | null;
   execution?: { mode?: string; parallelism?: number; stop_on_failure?: boolean };
   coordinator?: { branch?: string; base_branch?: string; base_commit?: string; cleaned_at?: string | null } | null;
 };
 type Observation = {
   id: string; title: string; status: "new" | "resolved"; observation_type: string; severity: string; confidence: string;
-  discovered_during?: string | null; created_at?: string | null; resolution?: string; became?: string | null; sections: Record<string, string>;
+  discovered_during?: string | null; created_at?: string | null; resolution?: string; became?: string | null;
+  disposition?: string; spec?: string[]; sections: Record<string, string>;
 };
 type Decision = { id: string; title: string; date: string | null; sections: Record<string, string> };
 type Diagnostic = { entity: string; id: string; worktree: string; message: string };
 type KottaEvent = {
-  id: string; entity: string; contract: string | null; kind: "message" | "turn-failed" | "lifecycle" | "approval"; created_at: string;
+  id: string; entity: string; task: string | null; kind: "message" | "turn-failed" | "lifecycle" | "approval"; created_at: string;
   role?: "human" | "assistant"; text?: string; thread_id?: string | null; attempt_of?: string | null; state?: string; summary?: string;
   approval_id?: string; phase?: "proposed" | "approved" | "rejected" | "cancelled" | "applied" | "failed"; action?: string;
   payload?: Record<string, unknown>; source_message?: string | null; error?: string | null;
 };
 export type Workspace = {
   project: string; workspace?: string; migration: Migration | null;
-  contracts: Contract[]; batches: Batch[]; observations: Observation[]; decisions?: Decision[]; diagnostics?: Diagnostic[];
+  tasks: Task[]; batches: Batch[]; observations: Observation[]; decisions?: Decision[]; diagnostics?: Diagnostic[];
   events?: KottaEvent[];
   claims?: Claim[];
   /* What the reader has to say about itself before the page is believed — see WorkspaceNotices. */
@@ -55,7 +56,7 @@ export type Workspace = {
 };
 
 /** The rail's five destinations. `running` is an overlay over any of them, not a sixth destination. */
-export type View = "home" | "observations" | "contracts" | "batches" | "decisions";
+export type View = "home" | "observations" | "tasks" | "batches" | "decisions";
 
 /* Reporting leaves the workspace: the board never writes a report, it hands off to GitHub. */
 const BUG_REPORT_URL = "https://github.com/arpadtamasi/kotta/issues/new?template=bug.yml";
@@ -63,11 +64,11 @@ const BUG_REPORT_URL = "https://github.com/arpadtamasi/kotta/issues/new?template
 export const WORKSPACE_ENDPOINT = "/api/workspace";
 /* The stored state and the board's word for it are the same again since T-023: `defined` on disk. */
 const DEFINED: Status = "defined";
-const CONTRACT_STATES: Status[] = ["backlog", "defined", "active", "review", "done"];
+const TASK_STATES: Status[] = ["backlog", "defined", "active", "review", "done"];
 type BatchStatus = "backlog" | "defined" | "active" | "done";
 const BATCH_STATES: BatchStatus[] = ["backlog", "defined", "active", "done"];
 type CreatedSort = "created-desc" | "created-asc";
-type ContractSort = CreatedSort | "priority-desc" | "priority-asc";
+type TaskSort = CreatedSort | "priority-desc" | "priority-asc";
 type ObservationSort = CreatedSort | "severity-desc" | "severity-asc";
 
 /* Identity is mixed for good (D-010): sequential ids stay, minted ones are `<type>-<26 char ULID>`. */
@@ -229,44 +230,44 @@ export type Contradiction = {
 };
 export type MenuItem = { id: string; title: string; batch: string | null; why: string; command: string };
 export type ExecutionMetric = {
-  id: string; contract: string; state: string; completedAt: string;
+  id: string; task: string; state: string; completedAt: string;
   startedAt: string | null; durationMs: number | null;
   usage: { input_tokens: number; output_tokens: number; total_tokens: number; cached_input_tokens?: number } | null;
 };
 
 export type Board = {
-  contracts: Contract[]; batches: Batch[]; observations: Observation[]; decisions: Decision[];
-  contractById: Map<string, Contract>; batchById: Map<string, Batch>; observationById: Map<string, Observation>;
-  undisposed: Observation[]; inReview: Contract[]; closable: Batch[]; defined: Contract[]; running: Contract[]; activeBatches: Batch[];
-  executions: ExecutionMetric[]; latestExecutionByContract: Map<string, ExecutionMetric>;
+  tasks: Task[]; batches: Batch[]; observations: Observation[]; decisions: Decision[];
+  taskById: Map<string, Task>; batchById: Map<string, Batch>; observationById: Map<string, Observation>;
+  undisposed: Observation[]; inReview: Task[]; closable: Batch[]; defined: Task[]; running: Task[]; activeBatches: Batch[];
+  executions: ExecutionMetric[]; latestExecutionByTask: Map<string, ExecutionMetric>;
   queues: Queue[]; queueTotal: number; contradictions: Contradiction[]; menu: MenuItem[];
 };
 
-const isDone = (t?: Contract) => t?.status === "done";
+const isDone = (t?: Task) => t?.status === "done";
 
 /** Everything the three bands, the rail counts and the header stats are derived from. */
 export function readBoard(workspace: Workspace): Board {
-  const contracts = (workspace.contracts ?? []).map((contract) => contract.claim
-    ? { ...contract, assigned_agent: contract.claim.agent, branch: contract.claim.branch }
-    : contract);
+  const tasks = (workspace.tasks ?? []).map((task) => task.claim
+    ? { ...task, assigned_agent: task.claim.agent, branch: task.claim.branch }
+    : task);
   const batches = workspace.batches ?? [];
   const observations = workspace.observations ?? [];
   const decisions = workspace.decisions ?? [];
-  const contractById = new Map(contracts.map((t) => [t.id, t]));
+  const taskById = new Map(tasks.map((t) => [t.id, t]));
   const batchById = new Map(batches.map((p) => [p.id, p]));
   // Nesting is grouping: a parent's work is everything under it, so progress, closability and the
-  // member list all read the subtree rather than the directly named contracts.
-  const subtreeContracts = (batch: Batch, seen = new Set<string>()): string[] => {
+  // member list all read the subtree rather than the directly named tasks.
+  const subtreeTasks = (batch: Batch, seen = new Set<string>()): string[] => {
     if (seen.has(batch.id)) return [];
     seen.add(batch.id);
-    return [...batch.contracts, ...(batch.batches ?? []).flatMap((child) => {
+    return [...batch.tasks, ...(batch.batches ?? []).flatMap((child) => {
       const nested = batchById.get(child);
-      return nested ? subtreeContracts(nested, seen) : [];
+      return nested ? subtreeTasks(nested, seen) : [];
     })];
   };
   const observationById = new Map(observations.map((f) => [f.id, f]));
   const executions = (workspace.events ?? []).flatMap((event): ExecutionMetric[] => {
-    if (event.kind !== "lifecycle" || !event.contract || !event.state?.startsWith("execution-")) return [];
+    if (event.kind !== "lifecycle" || !event.task || !event.state?.startsWith("execution-")) return [];
     const payload = event.payload ?? {};
     const duration = typeof payload.duration_ms === "number" && Number.isFinite(payload.duration_ms) && payload.duration_ms >= 0 ? payload.duration_ms : null;
     const rawUsage = payload.token_usage && typeof payload.token_usage === "object" ? payload.token_usage as Record<string, unknown> : null;
@@ -274,24 +275,24 @@ export function readBoard(workspace: Workspace): Board {
       && [rawUsage.input_tokens, rawUsage.output_tokens, rawUsage.total_tokens].every((value) => typeof value === "number" && Number.isFinite(value) && value >= 0)
       ? rawUsage as ExecutionMetric["usage"] : null;
     return [{
-      id: event.id, contract: event.contract, state: event.state, completedAt: typeof payload.completed_at === "string" ? payload.completed_at : event.created_at,
+      id: event.id, task: event.task, state: event.state, completedAt: typeof payload.completed_at === "string" ? payload.completed_at : event.created_at,
       startedAt: typeof payload.started_at === "string" ? payload.started_at : null, durationMs: duration, usage,
     }];
   }).sort((left, right) => left.completedAt.localeCompare(right.completedAt) || left.id.localeCompare(right.id));
-  const latestExecutionByContract = new Map<string, ExecutionMetric>();
-  for (const execution of executions) latestExecutionByContract.set(execution.contract, execution);
+  const latestExecutionByTask = new Map<string, ExecutionMetric>();
+  for (const execution of executions) latestExecutionByTask.set(execution.task, execution);
   // Every surface names an entity by its title, so the title index is part of reading the board.
   entityTitles.clear();
-  for (const entity of [...contracts, ...batches, ...observations, ...decisions]) entityTitles.set(entity.id, entity.title);
+  for (const entity of [...tasks, ...batches, ...observations, ...decisions]) entityTitles.set(entity.id, entity.title);
 
   // The three queues are the human decisions surfaced directly in chat.
   const undisposed = observations.filter((f) => f.status === "new");
-  const inReview = contracts.filter((t) => t.status === "review");
-  const closable = batches.filter((p) => p.status !== "done" && subtreeContracts(p).length > 0 && subtreeContracts(p).every((id) => isDone(contractById.get(id))) && (p.batches ?? []).every((child) => batchById.get(child)?.status === "done"));
-  // The backlog menu is deliberately NOT a queue: a defined contract is an option, not a debt.
-  const defined = contracts.filter((t) => t.status === DEFINED);
-  const running = contracts.filter((t) => t.status === "active");
-  const activeBatches = batches.filter((p) => p.status === "active" || subtreeContracts(p).some((id) => contractById.get(id)?.status === "active"));
+  const inReview = tasks.filter((t) => t.status === "review");
+  const closable = batches.filter((p) => p.status !== "done" && subtreeTasks(p).length > 0 && subtreeTasks(p).every((id) => isDone(taskById.get(id))) && (p.batches ?? []).every((child) => batchById.get(child)?.status === "done"));
+  // The backlog menu is deliberately NOT a queue: a defined task is an option, not a debt.
+  const defined = tasks.filter((t) => t.status === DEFINED);
+  const running = tasks.filter((t) => t.status === "active");
+  const activeBatches = batches.filter((p) => p.status === "active" || subtreeTasks(p).some((id) => taskById.get(id)?.status === "active"));
 
   const oldest = (values: Array<string | null | undefined>) => values.reduce<number | null>((max, value) => {
     const age = daysSince(value);
@@ -300,21 +301,21 @@ export function readBoard(workspace: Workspace): Board {
 
   const queues: Queue[] = [
     { key: "observations", count: undisposed.length, label: "Observations without a disposition", ask: "yes / no · then it is gone", age: oldest(undisposed.map((f) => f.created_at)), view: "observations" },
-    { key: "review", count: inReview.length, label: "Contracts waiting for review", ask: "accept, or request changes", age: oldest(inReview.map((t) => t.updated_at)), view: "contracts", filter: "review" },
+    { key: "review", count: inReview.length, label: "Tasks waiting for review", ask: "accept, or request changes", age: oldest(inReview.map((t) => t.updated_at)), view: "tasks", filter: "review" },
     { key: "batches", count: closable.length, label: "Batches waiting to be closed", ask: "every member is done", age: oldest(closable.map((p) => p.updated_at)), view: "batches" },
   ];
 
   const label = (id: string) => titleOf(id) ?? id;
   const contradictions: Contradiction[] = [];
-  // 1. Files and git disagree about the same contract — the board shows both and picks neither.
+  // 1. Files and git disagree about the same task — the board shows both and picks neither.
   for (const diagnostic of workspace.diagnostics ?? []) {
-    const contract = contractById.get(diagnostic.id);
+    const task = taskById.get(diagnostic.id);
     contradictions.push({
       key: `drift:${diagnostic.id}`, kind: "state drift", subject: label(diagnostic.id), subjectId: diagnostic.id,
-      title: "A live worktree disagrees with the committed contract",
-      leftLabel: "files say", left: [`state: ${stateLabel(contract?.status ?? "unknown")}`, `.kotta/${contract?.status ?? "?"}/`],
+      title: "A live worktree disagrees with the committed task",
+      leftLabel: "files say", left: [`state: ${stateLabel(task?.status ?? "unknown")}`, `.kotta/${task?.status ?? "?"}/`],
       rightLabel: "git says", right: [diagnostic.worktree, diagnostic.message],
-      command: "kotta validate", action: "Open contract", view: "contracts",
+      command: "kotta validate", action: "Open task", view: "tasks",
     });
   }
   // 2. A recorded link with nothing behind it. `kotta validate` reports the same ones it can see.
@@ -323,53 +324,53 @@ export function readBoard(workspace: Workspace): Board {
     title: `${field} points at ${kind} that is not on disk`,
     leftLabel: "frontmatter says", left: [`${field}: ${target}`],
     rightLabel: "disk says", right: ["no such file", "the link is recorded, the entity is gone"],
-    command: "kotta validate", action: "Open contract", view: "contracts",
+    command: "kotta validate", action: "Open task", view: "tasks",
   });
-  for (const contract of contracts) {
-    if (contract.source_observation && !observationById.has(contract.source_observation)) dangling(contract.id, "source_observation", contract.source_observation, "an observation");
-    if (contract.batch && !batchById.has(contract.batch)) dangling(contract.id, "batch", contract.batch, "a batch");
+  for (const task of tasks) {
+    if (task.source_observation && !observationById.has(task.source_observation)) dangling(task.id, "source_observation", task.source_observation, "an observation");
+    if (task.batch && !batchById.has(task.batch)) dangling(task.id, "batch", task.batch, "a batch");
     for (const field of ["depends_on", "blocks"] as const) {
-      for (const reference of contract[field] ?? []) if (!contractById.has(reference)) dangling(contract.id, field, reference, "a contract");
+      for (const reference of task[field] ?? []) if (!taskById.has(reference)) dangling(task.id, field, reference, "a task");
     }
   }
-  for (const batch of batches) for (const member of batch.contracts) if (!contractById.has(member)) dangling(batch.id, "contracts", member, "a contract");
+  for (const batch of batches) for (const member of batch.tasks) if (!taskById.has(member)) dangling(batch.id, "tasks", member, "a task");
   for (const batch of batches) for (const child of batch.batches ?? []) if (!batchById.has(child)) dangling(batch.id, "batches", child, "a batch");
-  for (const observation of observations) if (observation.became && !contractById.has(observation.became)) dangling(observation.id, "became", observation.became, "a contract");
+  for (const observation of observations) if (observation.became && !taskById.has(observation.became)) dangling(observation.id, "became", observation.became, "a task");
   // 3. Membership recorded on one side only: two files describe the same relationship differently.
-  for (const contract of contracts) {
-    const batch = contract.batch ? batchById.get(contract.batch) : null;
-    if (batch && !batch.contracts.includes(contract.id)) contradictions.push({
-      key: `member:${contract.id}`, kind: "membership", subject: label(contract.id), subjectId: contract.id,
-      title: "The contract claims a batch that does not list it",
-      leftLabel: "the contract says", left: [`batch: ${batch.id}`],
-      rightLabel: "the batch says", right: [`contracts: ${batch.contracts.length ? batch.contracts.map(displayId).join(", ") : "—"}`],
+  for (const task of tasks) {
+    const batch = task.batch ? batchById.get(task.batch) : null;
+    if (batch && !batch.tasks.includes(task.id)) contradictions.push({
+      key: `member:${task.id}`, kind: "membership", subject: label(task.id), subjectId: task.id,
+      title: "The task claims a batch that does not list it",
+      leftLabel: "the task says", left: [`batch: ${batch.id}`],
+      rightLabel: "the batch says", right: [`tasks: ${batch.tasks.length ? batch.tasks.map(displayId).join(", ") : "—"}`],
       command: `kotta batch validate ${batch.id}`, action: "See batches", view: "batches",
     });
   }
-  for (const batch of batches) for (const member of batch.contracts) {
-    const contract = contractById.get(member);
-    if (contract && contract.batch !== batch.id) contradictions.push({
+  for (const batch of batches) for (const member of batch.tasks) {
+    const task = taskById.get(member);
+    if (task && task.batch !== batch.id) contradictions.push({
       key: `member:${batch.id}:${member}`, kind: "membership", subject: label(batch.id), subjectId: batch.id,
-      title: "The batch lists a contract that belongs elsewhere",
-      leftLabel: "the batch says", left: [`contracts: … ${displayId(member)}`],
-      rightLabel: "the contract says", right: [`batch: ${contract.batch ?? "null"}`],
+      title: "The batch lists a task that belongs elsewhere",
+      leftLabel: "the batch says", left: [`tasks: … ${displayId(member)}`],
+      rightLabel: "the task says", right: [`batch: ${task.batch ?? "null"}`],
       command: `kotta batch validate ${batch.id}`, action: "See batches", view: "batches",
     });
   }
 
-  const menu: MenuItem[] = defined.map((contract) => {
-    const waiting = (contract.depends_on ?? []).filter((id) => !isDone(contractById.get(id)));
-    const unblocks = (contract.blocks ?? []).length;
+  const menu: MenuItem[] = defined.map((task) => {
+    const waiting = (task.depends_on ?? []).filter((id) => !isDone(taskById.get(id)));
+    const unblocks = (task.blocks ?? []).length;
     return {
-      id: contract.id, title: contract.title, batch: contract.batch,
+      id: task.id, title: task.title, batch: task.batch,
       why: waiting.length ? `waits on ${waiting.map((id) => titleOf(id) ?? displayId(id)).join(", ")}`
         : unblocks ? `unblocks ${unblocks} other${unblocks === 1 ? "" : "s"}` : "no blockers",
-      command: `kotta contract execute ${contract.id} --agent codex`,
+      command: `kotta task execute ${task.id} --agent codex`,
     };
   });
 
   return {
-    contracts, batches, observations, decisions, contractById, batchById, observationById, subtreeContracts, executions, latestExecutionByContract,
+    tasks, batches, observations, decisions, taskById, batchById, observationById, subtreeTasks, executions, latestExecutionByTask,
     undisposed, inReview, closable, defined, running, activeBatches,
     queues, queueTotal: undisposed.length + inReview.length + closable.length, contradictions, menu,
   };
@@ -440,7 +441,7 @@ export function Rail({ view, onView, board, running, onWatch, refreshed }: {
 }) {
   const chain: Array<{ id: View; step: string; label: string; sub: string; count: number | null }> = [
     { id: "observations", step: "01", label: "Observations", sub: "new information", count: board ? board.undisposed.length : null },
-    { id: "contracts", step: "02", label: "Contracts", sub: "agreements", count: board ? board.contracts.length : null },
+    { id: "tasks", step: "02", label: "Tasks", sub: "agreements", count: board ? board.tasks.length : null },
     { id: "batches", step: "03", label: "Batches", sub: "sequencing", count: board ? board.batches.length : null },
   ];
   const runningCount = board ? board.running.length : 0;
@@ -478,7 +479,7 @@ export function Rail({ view, onView, board, running, onWatch, refreshed }: {
         </span>
         <span className="rail__watch-sub">
           {runningCount
-            ? `${runningCount} contract${runningCount === 1 ? "" : "s"} under way in ${batchCount} batch${batchCount === 1 ? "" : "es"} · Watch →`
+            ? `${runningCount} task${runningCount === 1 ? "" : "s"} under way in ${batchCount} batch${batchCount === 1 ? "" : "es"} · Watch →`
             : "Nothing is running · Watch →"}
         </span>
       </button>
@@ -534,11 +535,11 @@ function RunningStrip({ board, onWatch, onOpen }: { board: Board; onWatch: () =>
   if (!board.running.length) return null;
   return <section className="live" aria-label="Running now">
     <div className="live__label"><span className="pulse is-live" aria-hidden="true" /> Running</div>
-    <div className="live__items scroll" tabIndex={0} role="group" aria-label="Contracts running now">
-      {board.running.map((contract) => <EntityButton key={contract.id} id={contract.id} className="live__item" onOpen={onOpen}>
-        <span className="live__item-title">{contract.title}</span>
-        <Tail id={contract.id} />
-        <span className="live__item-meta">{contract.assigned_agent ?? "no claim"} · running {elapsedSince(contract.claim?.started_at, now)}</span>
+    <div className="live__items scroll" tabIndex={0} role="group" aria-label="Tasks running now">
+      {board.running.map((task) => <EntityButton key={task.id} id={task.id} className="live__item" onOpen={onOpen}>
+        <span className="live__item-title">{task.title}</span>
+        <Tail id={task.id} />
+        <span className="live__item-meta">{task.assigned_agent ?? "no claim"} · running {elapsedSince(task.claim?.started_at, now)}</span>
       </EntityButton>)}
     </div>
     <button type="button" className="live__watch" onClick={onWatch}>Watch →</button>
@@ -558,7 +559,7 @@ export function HomeView({ workspace, board, error, onView, onOpen, onRetry }: {
   onView: (view: View, filter?: Status) => void; onOpen: (id: string) => void; onRetry: () => void;
 }) {
   const loading = !board && !error;
-  const emptyWorkspace = Boolean(board && !board.contracts.length && !board.observations.length && !board.batches.length);
+  const emptyWorkspace = Boolean(board && !board.tasks.length && !board.observations.length && !board.batches.length);
   return <div className="home">
     <section className="band" aria-labelledby="band-waiting">
       <BandHead id="band-waiting" title="Waiting on you">
@@ -567,7 +568,7 @@ export function HomeView({ workspace, board, error, onView, onOpen, onRetry }: {
       <div className="band__body">
         {loading && <Placeholder label="Reading the workspace…" />}
         {error && <BandError error={error} onRetry={onRetry} />}
-        {board && !board.queueTotal && <p className="band__empty">Nothing waiting to decide. Every observation has a disposition, no contract sits in review, no batch is waiting to be closed.</p>}
+        {board && !board.queueTotal && <p className="band__empty">Nothing waiting to decide. Every observation has a disposition, no task sits in review, no batch is waiting to be closed.</p>}
         {board && board.queueTotal > 0 && board.queues.map((queue) => <button key={queue.key} type="button"
           className={`queue ${queue.count ? "" : "is-zero"}`} onClick={() => onView(queue.view, queue.filter)}>
           <span className="queue__top">
@@ -590,7 +591,7 @@ export function HomeView({ workspace, board, error, onView, onOpen, onRetry }: {
       <div className="band__body">
         {loading && <Placeholder label="Reading the workspace…" />}
         {error && <BandError error={error} onRetry={onRetry} />}
-        {board && !board.contradictions.length && <p className="band__empty">Nothing contradictory. Every recorded link resolves, and no worktree disagrees with its contract.</p>}
+        {board && !board.contradictions.length && <p className="band__empty">Nothing contradictory. Every recorded link resolves, and no worktree disagrees with its task.</p>}
         {board?.contradictions.map((item) => <article key={item.key} className="contra">
           <div className="contra__top">
             <span className="contra__kind">{item.kind}</span>
@@ -619,16 +620,16 @@ export function HomeView({ workspace, board, error, onView, onOpen, onRetry }: {
 
     <section className="band" aria-labelledby="band-menu">
       <BandHead id="band-menu" title="What runs next?">
-        {board ? board.defined.length : "—"} executable contracts, with age visible.
+        {board ? board.defined.length : "—"} executable tasks, with age visible.
       </BandHead>
       <div className="band__body">
         {loading && <Placeholder label="Reading the workspace…" />}
         {error && <BandError error={error} onRetry={onRetry} />}
         {board && !board.menu.length && <p className="band__empty">
           Nothing defined to run. {emptyWorkspace
-            ? "This workspace is empty — write the first contract with the CLI:"
-            : "Shape a backlog contract until it validates, then define it:"}
-          <br /><code>{emptyWorkspace ? 'kotta contract new --title "…" --type feature' : "kotta contract sign <id> --approve"}</code>
+            ? "This workspace is empty — write the first task with the CLI:"
+            : "Shape a backlog task until it validates, then define it:"}
+          <br /><code>{emptyWorkspace ? 'kotta task new --title "…" --type feature' : "kotta task sign <id> --approve"}</code>
         </p>}
         {board?.menu.map((item, index) => <div key={item.id} className={`menu ${index === 0 ? "is-first" : ""}`}>
           <div className="menu__top">
@@ -638,14 +639,14 @@ export function HomeView({ workspace, board, error, onView, onOpen, onRetry }: {
         <div className="menu__meta">
           <span className={`tag ${item.batch ? "tag-neutral" : "tag-outline"}`}>{item.batch ? titleOf(item.batch) ?? item.batch : "no batch"}</span>
           <span className="menu__why">{item.why}</span>
-          <span className="menu__age">{entityAge(board.contractById.get(item.id)?.created_at, board.contractById.get(item.id)?.updated_at)}</span>
+          <span className="menu__age">{entityAge(board.taskById.get(item.id)?.created_at, board.taskById.get(item.id)?.updated_at)}</span>
           </div>
           <div className="menu__run">
             <CopyCommand command={item.command} label="Run next →" />
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => onOpen(item.id)}>Chain →</button>
           </div>
         </div>)}
-        {board && board.menu.length > 0 && <button type="button" className="band__more" onClick={() => onView("contracts", DEFINED)}>See all {board.defined.length} defined →</button>}
+        {board && board.menu.length > 0 && <button type="button" className="band__more" onClick={() => onView("tasks", DEFINED)}>See all {board.defined.length} defined →</button>}
       </div>
     </section>
   </div>;
@@ -703,37 +704,39 @@ export function ObservationsView({ board, filter, sort, onFilter, onSort, onOpen
           {observation.discovered_during && <span className="obs__during">seen during {titleOf(observation.discovered_during) ?? displayId(observation.discovered_during)}</span>}
           <span className={`obs__age ${age !== null && age > 30 ? "is-hot" : ""}`}>{observation.created_at ? `created ${relativeTime(observation.created_at)}` : "created date unavailable"}</span>
           {observation.became && <span className="obs__became">→ {titleOf(observation.became) ?? displayId(observation.became)}</span>}
+          {observation.disposition === "amend-spec" && (observation.spec?.length ?? 0) > 0 &&
+            <span className="obs__became">→ amended spec · {observation.spec!.map(displayId).join(", ")}</span>}
         </span>
       </EntityButton>;
     })}
   </div>;
 }
 
-/* ══ Contracts ═════════════════════════════════════════ */
-export function ContractsView({ board, filter, sort, onFilter, onSort, query, onQuery, onOpen }: {
-  board: Board; filter: Status | "all"; sort: ContractSort; onFilter: (f: Status | "all") => void; onSort: (sort: ContractSort) => void; query: string; onQuery: (q: string) => void; onOpen: (id: string) => void;
+/* ══ Tasks ═════════════════════════════════════════ */
+export function TasksView({ board, filter, sort, onFilter, onSort, query, onQuery, onOpen }: {
+  board: Board; filter: Status | "all"; sort: TaskSort; onFilter: (f: Status | "all") => void; onSort: (sort: TaskSort) => void; query: string; onQuery: (q: string) => void; onOpen: (id: string) => void;
 }) {
   const now = useNow();
   const needle = query.trim().toLowerCase();
-  const rows = board.contracts
+  const rows = board.tasks
     .filter((t) => (filter === "all" ? true : t.status === filter))
     .filter((t) => !needle || `${t.id} ${t.title}`.toLowerCase().includes(needle))
     .sort((left, right) => sort.startsWith("priority-")
       ? compareRanked(left.priority, right.priority, sort.endsWith("desc") ? "desc" : "asc") || compareCreated(left, right, "created-desc")
       : compareCreated(left, right, sort as CreatedSort));
-  const count = (state: Status) => board.contracts.filter((t) => t.status === state).length;
+  const count = (state: Status) => board.tasks.filter((t) => t.status === state).length;
   const filters: Array<{ key: Status | "all"; label: string; count: number }> = [
-    { key: "all", label: "all", count: board.contracts.length },
-    ...CONTRACT_STATES.map((state) => ({ key: state, label: stateLabel(state), count: count(state) })),
+    { key: "all", label: "all", count: board.tasks.length },
+    ...TASK_STATES.map((state) => ({ key: state, label: stateLabel(state), count: count(state) })),
   ];
   return <div className="view">
     <div className="view__head">
       <div>
-        <h2>Contracts</h2>
+        <h2>Tasks</h2>
         <p>State, age and execution at scan speed.</p>
       </div>
       <label className="view__search">
-        <span className="visually-hidden">Search contracts by title or id</span>
+        <span className="visually-hidden">Search tasks by title or id</span>
         <input className="input" value={query} onChange={(e) => onQuery(e.target.value)} placeholder="Search title or id…" />
       </label>
     </div>
@@ -746,15 +749,15 @@ export function ContractsView({ board, filter, sort, onFilter, onSort, query, on
         { value: "priority-desc", label: "Priority · highest" }, { value: "priority-asc", label: "Priority · lowest" },
       ]} />
     </div>
-    <div className="ctr__head" aria-hidden="true"><span>contract</span><span>state · priority</span><span>age</span><span>execution</span></div>
-    {rows.length === 0 && <p className="view__empty">No contract matches this filter{needle ? " and search" : ""}.</p>}
-    {rows.map((contract) => <EntityButton key={contract.id} id={contract.id} className="ctr" onOpen={onOpen}>
-      <span className="ctr__title">{contract.title}<Tail id={contract.id} /></span>
-      <span className="ctr__state"><StateTag state={contract.blocked ? "blocked" : contract.status} /><span className="ctr__priority">{contract.priority}</span></span>
-      <span className="ctr__age">{entityAge(contract.created_at, contract.updated_at)}</span>
-      <span className="ctr__execution">{contract.status === "active"
-        ? <><ClaimDot agent={contract.assigned_agent} />running {elapsedSince(contract.claim?.started_at, now)}</>
-        : executionSummary(board.latestExecutionByContract.get(contract.id))}</span>
+    <div className="ctr__head" aria-hidden="true"><span>task</span><span>state · priority</span><span>age</span><span>execution</span></div>
+    {rows.length === 0 && <p className="view__empty">No task matches this filter{needle ? " and search" : ""}.</p>}
+    {rows.map((task) => <EntityButton key={task.id} id={task.id} className="ctr" onOpen={onOpen}>
+      <span className="ctr__title">{task.title}<Tail id={task.id} /></span>
+      <span className="ctr__state"><StateTag state={task.blocked ? "blocked" : task.status} /><span className="ctr__priority">{task.priority}</span></span>
+      <span className="ctr__age">{entityAge(task.created_at, task.updated_at)}</span>
+      <span className="ctr__execution">{task.status === "active"
+        ? <><ClaimDot agent={task.assigned_agent} />running {elapsedSince(task.claim?.started_at, now)}</>
+        : executionSummary(board.latestExecutionByTask.get(task.id))}</span>
     </EntityButton>)}
   </div>;
 }
@@ -791,8 +794,8 @@ export function BatchesView({ board, filter, sort, onFilter, onSort, onOpen }: {
       <div className="batch-list__head" aria-hidden="true"><span>batch</span><span>state</span><span>scope</span><span>progress</span><span>age</span></div>
       <div className="batch-list" aria-label="Batches">
         {rows.map((batch) => {
-          const memberIds = board.subtreeContracts(batch);
-          const done = memberIds.filter((id) => board.contractById.get(id)?.status === "done").length;
+          const memberIds = board.subtreeTasks(batch);
+          const done = memberIds.filter((id) => board.taskById.get(id)?.status === "done").length;
           const total = memberIds.length;
           const progress = total ? Math.round((done / total) * 100) : 0;
           const children = batch.batches?.length ?? 0;
@@ -802,7 +805,7 @@ export function BatchesView({ board, filter, sort, onFilter, onSort, onOpen }: {
               <span className="batch-row__goal">{firstLine(batch.sections.goal) || "No goal recorded."}</span>
             </span>
             <span className="batch-row__state"><StateTag state={batch.status} /></span>
-            <span className="batch-row__scope">{batch.contracts.length} direct · {children} child batch{children === 1 ? "" : "es"} · {total} total</span>
+            <span className="batch-row__scope">{batch.tasks.length} direct · {children} child batch{children === 1 ? "" : "es"} · {total} total</span>
             <span className="batch-row__progress" aria-label={`${done} of ${total} complete`}>
               <span><b>{done} / {total}</b><span>{progress}%</span></span>
               <span className="bar"><span style={{ width: `${progress}%` }} /></span>
@@ -861,34 +864,34 @@ function LinkRow({ link, onOpen }: { link: Link; onOpen: (id: string) => void })
 }
 
 export function DerivationPanel({ id, board, onOpen }: { id: string; board: Board; onOpen: (id: string) => void }) {
-  const contract = board.contractById.get(id);
+  const task = board.taskById.get(id);
   const batch = board.batchById.get(id);
   const observation = board.observationById.get(id);
 
   // came from
   let came: ReactNode = <p className="deriv__none">Nothing records where this came from.</p>;
-  if (contract) {
-    const source = contract.source_observation;
+  if (task) {
+    const source = task.source_observation;
     came = !source
-      ? <p className="deriv__none">No <code>source_observation</code> recorded — written straight as a contract.</p>
+      ? <p className="deriv__none">No <code>source_observation</code> recorded — written straight as a task.</p>
       : board.observationById.has(source)
-        ? <LinkRow link={{ id: source, title: titleOf(source), note: `disposition: contract · ${board.observationById.get(source)?.observation_type}` }} onOpen={onOpen} />
+        ? <LinkRow link={{ id: source, title: titleOf(source), note: `disposition: task · ${board.observationById.get(source)?.observation_type}` }} onOpen={onOpen} />
         : <Dangling field="source_observation" id={source} />;
   } else if (observation) {
     const during = observation.discovered_during;
     came = !during
-      ? <p className="deriv__none">Not discovered during a contract — reported straight into the queue.</p>
-      : board.contractById.has(during)
-        ? <LinkRow link={{ id: during, title: titleOf(during), note: "seen during this contract" }} onOpen={onOpen} />
+      ? <p className="deriv__none">Not discovered during a task — reported straight into the queue.</p>
+      : board.taskById.has(during)
+        ? <LinkRow link={{ id: during, title: titleOf(during), note: "seen during this task" }} onOpen={onOpen} />
         : <Dangling field="discovered_during" id={during} />;
   } else if (batch) {
-    came = <p className="deriv__none">A batch is written, not derived — it groups contracts by reason.</p>;
+    came = <p className="deriv__none">A batch is written, not derived — it groups tasks by reason.</p>;
   }
 
   // goes with
   let goes: ReactNode = <p className="deriv__none">Nothing else goes with this.</p>;
-  if (contract) {
-    const batchId = contract.batch;
+  if (task) {
+    const batchId = task.batch;
     const target = batchId ? board.batchById.get(batchId) : null;
     goes = !batchId
       ? <p className="deriv__none">Not in a batch — nothing else has to be solved together with it.</p>
@@ -897,26 +900,37 @@ export function DerivationPanel({ id, board, onOpen }: { id: string; board: Boar
         : <>
           <LinkRow link={{ id: target.id, title: target.title, note: firstLine(target.sections.goal) }} onOpen={onOpen} />
           <div className="deriv__siblings">
-            {target.contracts.filter((member) => member !== contract.id).map((member) => {
-              const sibling = board.contractById.get(member);
+            {target.tasks.filter((member) => member !== task.id).map((member) => {
+              const sibling = board.taskById.get(member);
               return sibling
                 ? <EntityButton key={member} id={member} className="deriv__sibling" onOpen={onOpen}>
                   <span>{sibling.title}</span><StateTag state={sibling.status} />
                 </EntityButton>
-                : <div key={member} className="deriv__sibling"><Dangling field="contracts" id={member} /></div>;
+                : <div key={member} className="deriv__sibling"><Dangling field="tasks" id={member} /></div>;
             })}
           </div>
         </>;
   } else if (observation) {
+    const amended = observation.disposition === "amend-spec" ? observation.spec ?? [] : [];
     const became = observation.became;
-    goes = !became
-      ? <p className="deriv__none">No contract was written from this yet.</p>
-      : board.contractById.has(became)
-        ? <LinkRow link={{ id: became, title: titleOf(became), note: "became this contract" }} onOpen={onOpen} />
-        : <Dangling field="became" id={became} />;
+    goes = amended.length
+      // amend-spec is the constructive exit into the specification: the noticing changed the
+      // agreement, so what it goes with is the specification nodes the amendment touched. Spec nodes
+      // are not board entities, so they are named rather than linked.
+      ? <div className="deriv__spec">
+          <p className="deriv__spec-lead">Amended the specification — the agreement changed here:</p>
+          <ul className="deriv__spec-nodes">
+            {amended.map((node) => <li key={node} className="deriv__spec-node"><code>{displayId(node)}</code></li>)}
+          </ul>
+        </div>
+      : !became
+        ? <p className="deriv__none">No task was written from this yet.</p>
+        : board.taskById.has(became)
+          ? <LinkRow link={{ id: became, title: titleOf(became), note: "became this task" }} onOpen={onOpen} />
+          : <Dangling field="became" id={became} />;
   } else if (batch) {
     const nested = batch.batches ?? [];
-    const memberIds = board.subtreeContracts(batch);
+    const memberIds = board.subtreeTasks(batch);
     goes = <div className="deriv__siblings">
       {nested.map((child) => {
         const grouped = board.batchById.get(child);
@@ -926,14 +940,14 @@ export function DerivationPanel({ id, board, onOpen }: { id: string; board: Boar
           </EntityButton>
           : <div key={child} className="deriv__sibling"><Dangling field="batches" id={child} /></div>;
       })}
-      {memberIds.length === 0 && nested.length === 0 && <p className="deriv__none">No member contracts.</p>}
+      {memberIds.length === 0 && nested.length === 0 && <p className="deriv__none">No member tasks.</p>}
       {memberIds.map((member) => {
-        const sibling = board.contractById.get(member);
+        const sibling = board.taskById.get(member);
         return sibling
           ? <EntityButton key={member} id={member} className="deriv__sibling" onOpen={onOpen}>
             <span>{sibling.title}</span><StateTag state={sibling.status} />
           </EntityButton>
-          : <div key={member} className="deriv__sibling"><Dangling field="contracts" id={member} /></div>;
+          : <div key={member} className="deriv__sibling"><Dangling field="tasks" id={member} /></div>;
       })}
     </div>;
   }
@@ -986,9 +1000,9 @@ function titleCase(value: string): string {
 function approvalLabel(action?: string, payload?: Record<string, unknown>): string {
   if (action === "observation.resolve" && typeof payload?.disposition === "string") return `Resolve observation as ${titleCase(payload.disposition)}`;
   return ({
-    "contract.sign": "Approve contract for execution",
-    "contract.close": "Accept review and close contract",
-    "contract.request-changes": "Request changes",
+    "task.sign": "Approve task for execution",
+    "task.close": "Accept review and close task",
+    "task.request-changes": "Request changes",
     "observation.resolve": "Resolve observation",
     "batch.close": "Close completed batch",
   } as Record<string, string>)[action ?? ""] ?? titleCase(action ?? "approval");
@@ -1013,7 +1027,7 @@ function EntityTimeline({ id, workspace }: {
           return <article key={item.id} id={`approval-${item.approval_id}`} tabIndex={-1} className={`approval approval--${phase}`}>
             <div className="approval__kind">Approval · {phase}</div>
             <b>{approvalLabel(item.action, item.payload)}</b>
-            <code>{item.action} {item.entity}{item.action === "observation.resolve" ? ` --disposition ${String(item.payload?.disposition)}` : ""}</code>
+            <code>{item.action} {item.entity}{item.action === "observation.resolve" ? ` --disposition ${String(item.payload?.disposition)}${Array.isArray(item.payload?.spec) && item.payload.spec.length ? ` --spec ${(item.payload.spec as unknown[]).map(String).join(",")}` : ""}` : ""}</code>
             {outcome?.error && <span role="alert">{outcome.error}</span>}
             {phase === "proposed" && <span>Waiting in the calling chat.</span>}
           </article>;
@@ -1026,23 +1040,23 @@ function EntityTimeline({ id, workspace }: {
   </section>;
 }
 
-function ContractSection({ label, value, onOpen }: { label: string; value?: string; onOpen: (id: string) => void }) {
+function TaskSection({ label, value, onOpen }: { label: string; value?: string; onOpen: (id: string) => void }) {
   if (!value?.trim()) return null;
-  return <section className="contract-brief__section">
+  return <section className="task-brief__section">
     <h3>{label}</h3>
     <MarkdownContent value={value} onEntity={onOpen} />
   </section>;
 }
 
-function ContractTabs({ contract, workspace, board, onOpen }: { contract: Contract; workspace: Workspace; board: Board; onOpen: (id: string) => void }) {
+function TaskTabs({ task, workspace, board, onOpen }: { task: Task; workspace: Workspace; board: Board; onOpen: (id: string) => void }) {
   const tabs = ["brief", "context", "activity"] as const;
   type Tab = typeof tabs[number];
   const [active, setActive] = useState<Tab>("brief");
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const now = useNow();
-  const latest = board.latestExecutionByContract.get(contract.id);
+  const latest = board.latestExecutionByTask.get(task.id);
   const normalizedName = (name: string) => name.toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ").trim();
-  const sectionByName = new Map(Object.entries(contract.sections).map(([name, body]) => [normalizedName(name), body]));
+  const sectionByName = new Map(Object.entries(task.sections).map(([name, body]) => [normalizedName(name), body]));
   const section = (name: string) => sectionByName.get(normalizedName(name));
   const goal = section("user goal")?.trim() || section("outcome");
   const outcome = section("outcome")?.trim() && section("outcome")?.trim() !== goal?.trim() ? section("outcome") : undefined;
@@ -1050,7 +1064,7 @@ function ContractTabs({ contract, workspace, board, onOpen }: { contract: Contra
   const contextKeys = ["scope", "non goals", "open decisions", "execution notes"];
   const activityKeys = ["review evidence", "verification performed", "deviations", "observations created", "known concerns"];
   const reserved = new Set(["user goal", "outcome", "acceptance", "constraints", "verification", ...contextKeys, ...activityKeys].map(normalizedName));
-  const specialist = Object.entries(contract.sections).filter(([name, body]) => body?.trim() && !reserved.has(normalizedName(name)));
+  const specialist = Object.entries(task.sections).filter(([name, body]) => body?.trim() && !reserved.has(normalizedName(name)));
   const onTabKey = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
     let next = index;
     if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
@@ -1064,45 +1078,45 @@ function ContractTabs({ contract, workspace, board, onOpen }: { contract: Contra
   };
 
   return <>
-    <dl className="contract-metrics" aria-label="Contract status and age">
-      <div><dt>State</dt><dd><StateTag state={contract.blocked ? "blocked" : contract.status} /></dd></div>
-      <div><dt>Age</dt><dd>{entityAge(contract.created_at, contract.updated_at)}</dd></div>
-      <div><dt>Current run</dt><dd>{contract.status === "active" ? `Running ${elapsedSince(contract.claim?.started_at, now)}` : "Not running"}</dd></div>
+    <dl className="task-metrics" aria-label="Task status and age">
+      <div><dt>State</dt><dd><StateTag state={task.blocked ? "blocked" : task.status} /></dd></div>
+      <div><dt>Age</dt><dd>{entityAge(task.created_at, task.updated_at)}</dd></div>
+      <div><dt>Current run</dt><dd>{task.status === "active" ? `Running ${elapsedSince(task.claim?.started_at, now)}` : "Not running"}</dd></div>
       <div><dt>Last execution</dt><dd>{latest?.durationMs === null || !latest ? "Not recorded" : formatDuration(latest.durationMs)}</dd></div>
       <div><dt>Tokens</dt><dd>{formatTokens(latest?.usage?.total_tokens)}</dd></div>
     </dl>
-    <div className="contract-tabs" role="tablist" aria-label="Contract detail sections">
+    <div className="task-tabs" role="tablist" aria-label="Task detail sections">
       {tabs.map((tab, index) => <button
-        key={tab} type="button" role="tab" id={`${contract.id}-${tab}-tab`} aria-controls={`${contract.id}-${tab}-panel`}
+        key={tab} type="button" role="tab" id={`${task.id}-${tab}-tab`} aria-controls={`${task.id}-${tab}-panel`}
         aria-selected={active === tab} tabIndex={active === tab ? 0 : -1}
         ref={(node) => { tabRefs.current[index] = node; }} onClick={() => setActive(tab)} onKeyDown={(event) => onTabKey(event, index)}
       >{titleCase(tab)}</button>)}
     </div>
-    <div className="contract-panel" role="tabpanel" tabIndex={0} id={`${contract.id}-${active}-panel`} aria-labelledby={`${contract.id}-${active}-tab`}>
-      {active === "brief" && <div className="contract-brief">
-        {briefSections.length === 0 && <p className="contract-panel__empty">No structured brief recorded.</p>}
-        <ContractSection label="Goal" value={goal} onOpen={onOpen} />
-        <ContractSection label="Expected output" value={outcome} onOpen={onOpen} />
-        <ContractSection label="Success conditions" value={section("acceptance")} onOpen={onOpen} />
-        <ContractSection label="Constraints" value={section("constraints")} onOpen={onOpen} />
-        <ContractSection label="Verification" value={section("verification")} onOpen={onOpen} />
+    <div className="task-panel" role="tabpanel" tabIndex={0} id={`${task.id}-${active}-panel`} aria-labelledby={`${task.id}-${active}-tab`}>
+      {active === "brief" && <div className="task-brief">
+        {briefSections.length === 0 && <p className="task-panel__empty">No structured brief recorded.</p>}
+        <TaskSection label="Goal" value={goal} onOpen={onOpen} />
+        <TaskSection label="Expected output" value={outcome} onOpen={onOpen} />
+        <TaskSection label="Success conditions" value={section("acceptance")} onOpen={onOpen} />
+        <TaskSection label="Constraints" value={section("constraints")} onOpen={onOpen} />
+        <TaskSection label="Verification" value={section("verification")} onOpen={onOpen} />
       </div>}
-      {active === "context" && <div className="contract-context">
-        <dl className="contract-context__facts">
-          <div><dt>Claim</dt><dd>{contract.assigned_agent ?? "unclaimed"}</dd></div>
-          <div><dt>Branch</dt><dd>{contract.branch ?? "not started"}</dd></div>
-          <div><dt>Depends on</dt><dd>{contract.depends_on?.length ? contract.depends_on.map(displayId).join(", ") : "none"}</dd></div>
+      {active === "context" && <div className="task-context">
+        <dl className="task-context__facts">
+          <div><dt>Claim</dt><dd>{task.assigned_agent ?? "unclaimed"}</dd></div>
+          <div><dt>Branch</dt><dd>{task.branch ?? "not started"}</dd></div>
+          <div><dt>Depends on</dt><dd>{task.depends_on?.length ? task.depends_on.map(displayId).join(", ") : "none"}</dd></div>
         </dl>
-        <DerivationPanel id={contract.id} board={board} onOpen={onOpen} />
-        {contextKeys.map((name) => <ContractSection key={name} label={titleCase(name)} value={section(name)} onOpen={onOpen} />)}
-        {specialist.length > 0 && <details className="contract-more">
-          <summary>Additional contract sections · {specialist.length}</summary>
-          {specialist.map(([name, body]) => <ContractSection key={name} label={titleCase(name)} value={body} onOpen={onOpen} />)}
+        <DerivationPanel id={task.id} board={board} onOpen={onOpen} />
+        {contextKeys.map((name) => <TaskSection key={name} label={titleCase(name)} value={section(name)} onOpen={onOpen} />)}
+        {specialist.length > 0 && <details className="task-more">
+          <summary>Additional task sections · {specialist.length}</summary>
+          {specialist.map(([name, body]) => <TaskSection key={name} label={titleCase(name)} value={body} onOpen={onOpen} />)}
         </details>}
       </div>}
-      {active === "activity" && <div className="contract-activity">
-        {activityKeys.map((name) => <ContractSection key={name} label={titleCase(name)} value={section(name)} onOpen={onOpen} />)}
-        <EntityTimeline id={contract.id} workspace={workspace} />
+      {active === "activity" && <div className="task-activity">
+        {activityKeys.map((name) => <TaskSection key={name} label={titleCase(name)} value={section(name)} onOpen={onOpen} />)}
+        <EntityTimeline id={task.id} workspace={workspace} />
       </div>}
     </div>
   </>;
@@ -1112,12 +1126,12 @@ export function EntityDrawer({ id, workspace, board, onClose, onOpen }: {
   id: string; workspace: Workspace; board: Board; onClose: () => void; onOpen: (id: string) => void;
 }) {
   const ref = useDialog(onClose);
-  const contract = board.contractById.get(id);
+  const task = board.taskById.get(id);
   const batch = board.batchById.get(id);
   const observation = board.observationById.get(id);
   const decision = board.decisions.find((d) => d.id === id);
-  const entity = contract ?? batch ?? observation ?? decision;
-  const kind = contract ? "contract" : batch ? "batch" : observation ? "observation" : decision ? "decision" : "entity";
+  const entity = task ?? batch ?? observation ?? decision;
+  const kind = task ? "task" : batch ? "batch" : observation ? "observation" : decision ? "decision" : "entity";
   const drift = (workspace.diagnostics ?? []).filter((d) => d.id === id);
 
   const fields: Array<[string, string]> = [];
@@ -1125,8 +1139,8 @@ export function EntityDrawer({ id, workspace, board, onClose, onOpen }: {
     fields.push(["state", observation.status], ["type", observation.observation_type], ["severity", observation.severity], ["confidence", observation.confidence],
       ["age", observation.created_at ? `created ${relativeTime(observation.created_at)}` : "created date unavailable"]);
   } else if (batch) {
-    const total = board.subtreeContracts(batch).length;
-    fields.push(["state", batch.status], ["kind", batch.kind], ["contracts", `${total} total · ${batch.contracts.length} direct`],
+    const total = board.subtreeTasks(batch).length;
+    fields.push(["state", batch.status], ["kind", batch.kind], ["tasks", `${total} total · ${batch.tasks.length} direct`],
       ["child batches", String(batch.batches?.length ?? 0)],
       ["age", entityAge(batch.created_at, batch.updated_at)]);
   } else if (decision) {
@@ -1148,7 +1162,7 @@ export function EntityDrawer({ id, workspace, board, onClose, onOpen }: {
             <div className="dangling__kind">state drift</div>
             {drift.map((d, i) => <div key={i} className="contra__line">{d.message} · {d.worktree}</div>)}
           </div>}
-          {contract ? <ContractTabs key={contract.id} contract={contract} workspace={workspace} board={board} onOpen={onOpen} /> : <>
+          {task ? <TaskTabs key={task.id} task={task} workspace={workspace} board={board} onOpen={onOpen} /> : <>
             <dl className="drawer__fields">
               {fields.map(([key, value]) => <div key={key}>
                 <dt>{key}</dt>
@@ -1171,91 +1185,91 @@ export function EntityDrawer({ id, workspace, board, onClose, onOpen }: {
 }
 
 /* ══ The run ═══════════════════════════════════════════ */
-export type RunWaves = { waves: Contract[][]; remainder: Contract[] };
+export type RunWaves = { waves: Task[][]; remainder: Task[] };
 
 /**
  * Stable topological layers for one batch. Only in-batch edges sequence its
  * members; cycles are left unresolved so the Run never manufactures an order.
  */
-export function computeRunWaves(input: Workspace["contracts"]): RunWaves {
-  const members = input.filter((contract, index) => input.findIndex((candidate) => candidate.id === contract.id) === index);
-  const memberIds = new Set(members.map((contract) => contract.id));
+export function computeRunWaves(input: Workspace["tasks"]): RunWaves {
+  const members = input.filter((task, index) => input.findIndex((candidate) => candidate.id === task.id) === index);
+  const memberIds = new Set(members.map((task) => task.id));
   const placed = new Set<string>();
   let pending = [...members];
-  const waves: Contract[][] = [];
+  const waves: Task[][] = [];
 
   while (pending.length > 0) {
-    const wave = pending.filter((contract) => (contract.depends_on ?? []).every((dependency) => !memberIds.has(dependency) || placed.has(dependency)));
+    const wave = pending.filter((task) => (task.depends_on ?? []).every((dependency) => !memberIds.has(dependency) || placed.has(dependency)));
     if (wave.length === 0) break;
     waves.push(wave);
-    for (const contract of wave) placed.add(contract.id);
-    pending = pending.filter((contract) => !placed.has(contract.id));
+    for (const task of wave) placed.add(task.id);
+    pending = pending.filter((task) => !placed.has(task.id));
   }
 
   return { waves, remainder: pending };
 }
 
 type RunCardState = Status | "blocked" | "inconsistent";
-const runCardState = (contract: Contract): RunCardState => contract.blocked ? "blocked" : contract.status === "backlog" ? "inconsistent" : contract.status;
-const runCardLabel = (contract: Contract) => contract.blocked ? "blocked" : contract.status;
+const runCardState = (task: Task): RunCardState => task.blocked ? "blocked" : task.status === "backlog" ? "inconsistent" : task.status;
+const runCardLabel = (task: Task) => task.blocked ? "blocked" : task.status;
 
-function runComposition(contracts: Contract[]): string {
+function runComposition(tasks: Task[]): string {
   const order: Array<[RunCardState, string]> = [
     ["done", "done"], ["active", "active"], ["review", "review"], ["blocked", "blocked"], ["defined", "waiting"], ["inconsistent", "inconsistent"],
   ];
   return order
-    .map(([state, label]) => [contracts.filter((contract) => runCardState(contract) === state).length, label] as const)
+    .map(([state, label]) => [tasks.filter((task) => runCardState(task) === state).length, label] as const)
     .filter(([count]) => count > 0)
     .map(([count, label]) => `${count} ${label}`)
     .join(" · ");
 }
 
-function runWaitingReason(contract: Contract, memberById: Map<string, Contract>, unresolved: boolean): string {
-  const dependencies = contract.depends_on ?? [];
+function runWaitingReason(task: Task, memberById: Map<string, Task>, unresolved: boolean): string {
+  const dependencies = task.depends_on ?? [];
   const missing = dependencies.filter((id) => !memberById.has(id));
   if (missing.length > 0) return `unresolved dependency · ${missing.map(displayId).join(", ")}`;
   if (unresolved) return "dependency cycle or blocked chain";
-  if (contract.blocked) return contract.sections.blocker ?? contract.sections.blocked ?? "blocked in canonical workspace";
-  if (contract.status === "backlog") return "backlog member · inconsistent with an active batch";
+  if (task.blocked) return task.sections.blocker ?? task.sections.blocked ?? "blocked in canonical workspace";
+  if (task.status === "backlog") return "backlog member · inconsistent with an active batch";
   const waiting = dependencies.filter((id) => memberById.get(id)?.status !== "done");
   if (waiting.length > 0) return `waiting on ${waiting.map(displayId).join(", ")}`;
   return "ready to start";
 }
 
-function RunContractCard({ contract, metric, memberById, unresolved, selected, now, owner, onSelect }: {
-  contract: Contract; metric?: ExecutionMetric; memberById: Map<string, Contract>; unresolved: boolean; selected?: boolean; now: number; owner?: Batch | null; onSelect: (id: string) => void;
+function RunTaskCard({ task, metric, memberById, unresolved, selected, now, owner, onSelect }: {
+  task: Task; metric?: ExecutionMetric; memberById: Map<string, Task>; unresolved: boolean; selected?: boolean; now: number; owner?: Batch | null; onSelect: (id: string) => void;
 }) {
-  const state = runCardState(contract);
-  const claimed = Boolean(contract.claim);
+  const state = runCardState(task);
+  const claimed = Boolean(task.claim);
   return <button
     type="button"
     className={`run__card run__card--${state}`}
     aria-pressed={selected === undefined ? undefined : selected}
-    title={entityLabel(contract.id)}
-    onClick={() => onSelect(contract.id)}
+    title={entityLabel(task.id)}
+    onClick={() => onSelect(task.id)}
   >
-    <span className="run__card-top"><Tail id={contract.id} /><StateTag state={runCardLabel(contract)} /></span>
-    <span className="run__card-title">{contract.title}</span>
+    <span className="run__card-top"><Tail id={task.id} /><StateTag state={runCardLabel(task)} /></span>
+    <span className="run__card-title">{task.title}</span>
     {owner && <span className="run__card-owner">in {owner.title} <Tail id={owner.id} /></span>}
     <span className="run__card-meta">
       {claimed
-        ? <><ClaimDot agent={contract.assigned_agent} />{contract.assigned_agent} · running {elapsedSince(contract.claim?.started_at, now)}</>
+        ? <><ClaimDot agent={task.assigned_agent} />{task.assigned_agent} · running {elapsedSince(task.claim?.started_at, now)}</>
         : metric ? executionSummary(metric)
-          : contract.status === "done" ? "completed · metrics not recorded"
-            : contract.status === "review" ? "awaiting review · metrics not recorded"
-              : runWaitingReason(contract, memberById, unresolved)}
+          : task.status === "done" ? "completed · metrics not recorded"
+            : task.status === "review" ? "awaiting review · metrics not recorded"
+              : runWaitingReason(task, memberById, unresolved)}
     </span>
   </button>;
 }
 
 function RunWaveGraph({ batch, members, metrics, selectedId, now, ownerRootId, batchById, onSelect }: {
-  batch: Batch; members: Contract[]; metrics: Map<string, ExecutionMetric>; selectedId?: string | null; now: number; ownerRootId?: string; batchById?: Map<string, Batch>; onSelect: (id: string) => void;
+  batch: Batch; members: Task[]; metrics: Map<string, ExecutionMetric>; selectedId?: string | null; now: number; ownerRootId?: string; batchById?: Map<string, Batch>; onSelect: (id: string) => void;
 }) {
   const topology = computeRunWaves(members);
-  const memberById = new Map(members.map((contract) => [contract.id, contract]));
+  const memberById = new Map(members.map((task) => [task.id, task]));
   const groups = [
-    ...topology.waves.map((contracts, index) => ({ key: `wave-${index + 1}`, label: `Wave ${index + 1}`, contracts, unresolved: false })),
-    ...(topology.remainder.length > 0 ? [{ key: "unresolved", label: "Unresolved topology", contracts: topology.remainder, unresolved: true }] : []),
+    ...topology.waves.map((tasks, index) => ({ key: `wave-${index + 1}`, label: `Wave ${index + 1}`, tasks, unresolved: false })),
+    ...(topology.remainder.length > 0 ? [{ key: "unresolved", label: "Unresolved topology", tasks: topology.remainder, unresolved: true }] : []),
   ];
 
   if (groups.length === 0) return <p className="run__empty">No members to sequence.</p>;
@@ -1263,12 +1277,12 @@ function RunWaveGraph({ batch, members, metrics, selectedId, now, ownerRootId, b
     <div className="run__waves">
       {groups.map((group, index) => <div className="run__wave-unit" key={group.key}>
         <section className={`run__wave${group.unresolved ? " run__wave--unresolved" : ""}`} aria-labelledby={`${batch.id}-${group.key}`}>
-          <div className="run__wave-head"><b id={`${batch.id}-${group.key}`}>{group.label}</b><span>{runComposition(group.contracts)}</span></div>
+          <div className="run__wave-head"><b id={`${batch.id}-${group.key}`}>{group.label}</b><span>{runComposition(group.tasks)}</span></div>
           <div className="run__wave-stack">
-            {group.contracts.map((contract) => <RunContractCard
-              key={contract.id} contract={contract} metric={metrics.get(contract.id)} memberById={memberById} unresolved={group.unresolved}
-              selected={selectedId === undefined ? undefined : selectedId === contract.id} now={now}
-              owner={contract.batch && contract.batch !== ownerRootId ? batchById?.get(contract.batch) : null} onSelect={onSelect}
+            {group.tasks.map((task) => <RunTaskCard
+              key={task.id} task={task} metric={metrics.get(task.id)} memberById={memberById} unresolved={group.unresolved}
+              selected={selectedId === undefined ? undefined : selectedId === task.id} now={now}
+              owner={task.batch && task.batch !== ownerRootId ? batchById?.get(task.batch) : null} onSelect={onSelect}
             />)}
           </div>
         </section>
@@ -1303,11 +1317,11 @@ function BatchHierarchy({ batch, board, onOpen, sort, path = new Set<string>() }
         const child = board.batchById.get(id);
         if (!child) return <div key={id} className="batch-hierarchy__missing">Missing batch <Tail id={id} /></div>;
         if (nextPath.has(id)) return <div key={id} className="batch-hierarchy__missing">Cycle to {child.title} <Tail id={id} /></div>;
-        const subtree = board.subtreeContracts(child);
+        const subtree = board.subtreeTasks(child);
         return <div key={id} className="batch-hierarchy__branch">
           <button type="button" className="batch-hierarchy__node" onClick={() => onOpen(child.id)} title={entityLabel(child.id)}>
             <span><StateTag state={child.status} /><strong>{child.title}</strong><Tail id={child.id} /></span>
-            <small>{child.contracts.length} direct · {subtree.length} total contract{subtree.length === 1 ? "" : "s"}</small>
+            <small>{child.tasks.length} direct · {subtree.length} total task{subtree.length === 1 ? "" : "s"}</small>
           </button>
           <BatchHierarchy batch={child} board={board} onOpen={onOpen} sort={sort} path={nextPath} />
         </div>;
@@ -1316,21 +1330,21 @@ function BatchHierarchy({ batch, board, onOpen, sort, path = new Set<string>() }
   </div>;
 }
 
-function BatchTreeContent({ batch, board, members, now, selectedId, batchSort, onBatchOpen, onContractSelect }: {
-  batch: Batch; board: Board; members: Contract[]; now: number; selectedId?: string | null; batchSort?: CreatedSort; onBatchOpen: (id: string) => void; onContractSelect: (id: string) => void;
+function BatchTreeContent({ batch, board, members, now, selectedId, batchSort, onBatchOpen, onTaskSelect }: {
+  batch: Batch; board: Board; members: Task[]; now: number; selectedId?: string | null; batchSort?: CreatedSort; onBatchOpen: (id: string) => void; onTaskSelect: (id: string) => void;
 }) {
   return <>
     <BatchHierarchy batch={batch} board={board} onOpen={onBatchOpen} sort={batchSort} />
-    <div className="run__canvas-head"><b>Dependency order</b><span>Waves include every contract in this batch tree.</span><span className="run__scroll-hint">shift + wheel ↔</span></div>
-    <RunWaveGraph batch={batch} members={members} metrics={board.latestExecutionByContract} selectedId={selectedId} now={now} ownerRootId={batch.id} batchById={board.batchById} onSelect={onContractSelect} />
+    <div className="run__canvas-head"><b>Dependency order</b><span>Waves include every task in this batch tree.</span><span className="run__scroll-hint">shift + wheel ↔</span></div>
+    <RunWaveGraph batch={batch} members={members} metrics={board.latestExecutionByTask} selectedId={selectedId} now={now} ownerRootId={batch.id} batchById={board.batchById} onSelect={onTaskSelect} />
   </>;
 }
 
 function BatchDependencyDetail({ batch, board, onOpen }: { batch: Batch; board: Board; onOpen: (id: string) => void }) {
   const now = useNow();
-  const memberIds = board.subtreeContracts(batch);
-  const members = memberIds.map((id) => board.contractById.get(id)).filter((contract): contract is Contract => Boolean(contract));
-  const done = members.filter((contract) => contract.status === "done").length;
+  const memberIds = board.subtreeTasks(batch);
+  const members = memberIds.map((id) => board.taskById.get(id)).filter((task): task is Task => Boolean(task));
+  const done = members.filter((task) => task.status === "done").length;
   const children = batch.batches?.length ?? 0;
   return <section className="batch-detail" aria-labelledby={`${batch.id}-dependency-title`}>
     <div className="batch-detail__head">
@@ -1338,20 +1352,20 @@ function BatchDependencyDetail({ batch, board, onOpen }: { batch: Batch; board: 
       <span>{done} / {members.length} complete · {children} child batch{children === 1 ? "" : "es"}</span>
     </div>
     <div className="batch-tree batch-tree--detail">
-      <BatchTreeContent batch={batch} board={board} members={members} now={now} onBatchOpen={onOpen} onContractSelect={onOpen} />
+      <BatchTreeContent batch={batch} board={board} members={members} now={now} onBatchOpen={onOpen} onTaskSelect={onOpen} />
     </div>
   </section>;
 }
 
-function BatchTreeSection({ batch, board, now, selectedId, onBatchOpen, onContractSelect }: {
-  batch: Batch; board: Board; now: number; selectedId?: string | null; onBatchOpen: (id: string) => void; onContractSelect: (id: string) => void;
+function BatchTreeSection({ batch, board, now, selectedId, onBatchOpen, onTaskSelect }: {
+  batch: Batch; board: Board; now: number; selectedId?: string | null; onBatchOpen: (id: string) => void; onTaskSelect: (id: string) => void;
 }) {
-  const memberIds = board.subtreeContracts(batch);
-  const members = memberIds.map((id) => board.contractById.get(id)).filter((contract): contract is Contract => Boolean(contract));
-  const done = members.filter((contract) => contract.status === "done").length;
-  const active = members.filter((contract) => contract.status === "active").length;
-  const review = members.filter((contract) => contract.status === "review").length;
-  const blocked = members.filter((contract) => contract.blocked).length;
+  const memberIds = board.subtreeTasks(batch);
+  const members = memberIds.map((id) => board.taskById.get(id)).filter((task): task is Task => Boolean(task));
+  const done = members.filter((task) => task.status === "done").length;
+  const active = members.filter((task) => task.status === "active").length;
+  const review = members.filter((task) => task.status === "review").length;
+  const blocked = members.filter((task) => task.blocked).length;
   const progress = memberIds.length ? Math.round((done / memberIds.length) * 100) : 0;
   const children = batch.batches?.length ?? 0;
   const execution = `${batch.execution?.mode ?? "dependency-aware"} · parallelism ${batch.execution?.parallelism ?? 2} · ${(batch.execution?.stop_on_failure ?? true) ? "stop on failure" : "continue on failure"}`;
@@ -1370,7 +1384,7 @@ function BatchTreeSection({ batch, board, now, selectedId, onBatchOpen, onContra
         <span className="bar bar--dark"><span style={{ width: `${progress}%` }} /></span>
       </div>
     </div>
-    <BatchTreeContent batch={batch} board={board} members={members} now={now} selectedId={selectedId} onBatchOpen={onBatchOpen} onContractSelect={onContractSelect} />
+    <BatchTreeContent batch={batch} board={board} members={members} now={now} selectedId={selectedId} onBatchOpen={onBatchOpen} onTaskSelect={onTaskSelect} />
   </section>;
 }
 
@@ -1378,7 +1392,7 @@ export function RunOverlay({ board, onClose, onOpen }: { board: Board; onClose: 
   const ref = useDialog(onClose);
   const now = useNow();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = selectedId ? board.contractById.get(selectedId) ?? null : null;
+  const selected = selectedId ? board.taskById.get(selectedId) ?? null : null;
   const recent = [...board.executions].reverse().slice(0, 12);
   const activeRoots = rootBatches(board, board.activeBatches);
   return <div className="run" role="dialog" aria-modal="true" aria-label="The run" tabIndex={-1} ref={ref}>
@@ -1390,26 +1404,26 @@ export function RunOverlay({ board, onClose, onOpen }: { board: Board; onClose: 
     </div>
     <div className="run__body">
       <div className="run__batches scroll">
-        {board.activeBatches.length === 0 && board.running.length === 0 && <p className="run__empty">Nothing is running. A batch starts with <code>kotta batch start &lt;id&gt;</code>, a single contract with <code>kotta contract execute &lt;id&gt; --agent codex</code>.</p>}
+        {board.activeBatches.length === 0 && board.running.length === 0 && <p className="run__empty">Nothing is running. A batch starts with <code>kotta batch start &lt;id&gt;</code>, a single task with <code>kotta task execute &lt;id&gt; --agent codex</code>.</p>}
         {activeRoots.length > 0 && <div className="batch-tree batch-tree--run">
-          {activeRoots.map((batch) => <BatchTreeSection key={batch.id} batch={batch} board={board} now={now} selectedId={selectedId} onBatchOpen={onOpen} onContractSelect={setSelectedId} />)}
-          <div className="run__legend" aria-label="Contract state legend">
+          {activeRoots.map((batch) => <BatchTreeSection key={batch.id} batch={batch} board={board} now={now} selectedId={selectedId} onBatchOpen={onOpen} onTaskSelect={setSelectedId} />)}
+          <div className="run__legend" aria-label="Task state legend">
             {[["done", "done"], ["active", "active"], ["review", "review"], ["defined", "defined"], ["blocked", "blocked"], ["inconsistent", "backlog / inconsistent"]].map(([state, label]) => <span key={state}><i className={`run__legend-swatch run__legend-swatch--${state}`} />{label}</span>)}
-            <em>Choose a contract to inspect it without leaving the run.</em>
+            <em>Choose a task to inspect it without leaving the run.</em>
           </div>
         </div>}
         {board.running.filter((t) => !t.batch).length > 0 && <section className="run__batch">
           <div className="run__loose-head"><h3>Outside every batch</h3><span>Loose work</span></div>
-          {board.running.filter((t) => !t.batch).map((contract) => <EntityButton key={contract.id} id={contract.id} className="run__row" onOpen={onOpen}>
-            <span className="run__row-title">{contract.title}</span>
-            <StateTag state={contract.status} />
-            <span className="run__row-claim"><ClaimDot agent={contract.assigned_agent} />{contract.assigned_agent ?? "no claim"} · {contract.branch ?? "no branch"}</span>
-            <span className="run__row-act">running {elapsedSince(contract.claim?.started_at, now)}</span>
+          {board.running.filter((t) => !t.batch).map((task) => <EntityButton key={task.id} id={task.id} className="run__row" onOpen={onOpen}>
+            <span className="run__row-title">{task.title}</span>
+            <StateTag state={task.status} />
+            <span className="run__row-claim"><ClaimDot agent={task.assigned_agent} />{task.assigned_agent ?? "no claim"} · {task.branch ?? "no branch"}</span>
+            <span className="run__row-act">running {elapsedSince(task.claim?.started_at, now)}</span>
           </EntityButton>)}
         </section>}
       </div>
       <div className="run__side">
-        <div className="run__side-head"><span>{selected ? "Contract context" : "Recent executions"}</span>{selected && <button type="button" onClick={() => setSelectedId(null)}>← Recent executions</button>}</div>
+        <div className="run__side-head"><span>{selected ? "Task context" : "Recent executions"}</span>{selected && <button type="button" onClick={() => setSelectedId(null)}>← Recent executions</button>}</div>
         {selected ? <div className="run__context scroll">
           <div className="run__context-state"><Tail id={selected.id} /><StateTag state={runCardLabel(selected)} /></div>
           <h3>{selected.title}</h3>
@@ -1418,15 +1432,15 @@ export function RunOverlay({ board, onClose, onOpen }: { board: Board; onClose: 
             <div><dt>branch</dt><dd>{selected.branch ?? "not started"}</dd></div>
             <div><dt>age</dt><dd>{entityAge(selected.created_at, selected.updated_at)}</dd></div>
             <div><dt>current run</dt><dd>{selected.status === "active" ? elapsedSince(selected.claim?.started_at, now) : "not running"}</dd></div>
-            <div><dt>last duration</dt><dd>{board.latestExecutionByContract.get(selected.id)?.durationMs === null || !board.latestExecutionByContract.has(selected.id) ? "Not recorded" : formatDuration(board.latestExecutionByContract.get(selected.id)?.durationMs)}</dd></div>
-            <div><dt>last tokens</dt><dd>{formatTokens(board.latestExecutionByContract.get(selected.id)?.usage?.total_tokens)}</dd></div>
+            <div><dt>last duration</dt><dd>{board.latestExecutionByTask.get(selected.id)?.durationMs === null || !board.latestExecutionByTask.has(selected.id) ? "Not recorded" : formatDuration(board.latestExecutionByTask.get(selected.id)?.durationMs)}</dd></div>
+            <div><dt>last tokens</dt><dd>{formatTokens(board.latestExecutionByTask.get(selected.id)?.usage?.total_tokens)}</dd></div>
             <div><dt>depends on</dt><dd>{selected.depends_on?.length ? selected.depends_on.map(displayId).join(", ") : "none"}</dd></div>
           </dl>
-          <button type="button" className="run__open-detail" onClick={() => onOpen(selected.id)}>Open full contract detail →</button>
+          <button type="button" className="run__open-detail" onClick={() => onOpen(selected.id)}>Open full task detail →</button>
         </div> : <div className="run__ticker scroll">
             {recent.map((execution) => <div key={execution.id} className="run__tick">
               <span className="run__tick-time">{relativeTime(execution.completedAt, now)}</span>
-              <span className="run__tick-text">{execution.state.replace("execution-", "")} · {board.contractById.get(execution.contract)?.title ?? displayId(execution.contract)}<small>{executionSummary(execution)}</small></span>
+              <span className="run__tick-text">{execution.state.replace("execution-", "")} · {board.taskById.get(execution.task)?.title ?? displayId(execution.task)}<small>{executionSummary(execution)}</small></span>
             </div>)}
             {recent.length === 0 && <p className="run__empty">No recorded execution metrics.</p>}
           </div>}
@@ -1441,12 +1455,12 @@ export function CliSheet({ onClose }: { onClose: () => void }) {
   const groups: Array<{ label: string; rows: Array<[string, string]> }> = [
     { label: "observations", rows: [
       ["kotta observation new --title … --type …", "record what was noticed"],
-      ["kotta observation resolve <id> --disposition … --approve", "reject it, or turn it into a contract"],
+      ["kotta observation resolve <id> --disposition … --approve", "reject it, or turn it into a task"],
     ] },
-    { label: "contracts", rows: [
-      ["kotta contract sign <id> --approve", "backlog → defined; validates the contract"],
-      ["kotta contract execute <id> --agent codex", "run a defined contract in a fresh context"],
-      ["kotta contract close <id> --approve", "review → done"],
+    { label: "tasks", rows: [
+      ["kotta task sign <id> --approve", "backlog → defined; validates the task"],
+      ["kotta task execute <id> --agent codex", "run a defined task in a fresh context"],
+      ["kotta task close <id> --approve", "review → done"],
     ] },
     { label: "batches", rows: [
       ["kotta batch start <id>", "start it; claims and worktrees per member"],
@@ -1493,8 +1507,8 @@ export function App() {
   const [watching, setWatching] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [refreshed, setRefreshed] = useState(0);
-  const [contractFilter, setContractFilter] = useState<Status | "all">("all");
-  const [contractSort, setContractSort] = useState<ContractSort>("created-desc");
+  const [taskFilter, setTaskFilter] = useState<Status | "all">("all");
+  const [taskSort, setTaskSort] = useState<TaskSort>("created-desc");
   const [obsFilter, setObsFilter] = useState<ObsFilter>("new");
   const [obsSort, setObsSort] = useState<ObservationSort>("created-desc");
   const [batchFilter, setBatchFilter] = useState<BatchStatus | "all">("all");
@@ -1522,7 +1536,7 @@ export function App() {
   const goto = useCallback((next: View, filter?: Status) => {
     setView(next);
     setWatching(false);
-    if (filter) setContractFilter(filter);
+    if (filter) setTaskFilter(filter);
     if (next === "observations") setObsFilter("new");
   }, []);
 
@@ -1553,7 +1567,7 @@ export function App() {
         {view !== "home" && !board && <div className="view"><Placeholder rows={6} label="Reading the workspace…" />
           {error && <BandError error={error} onRetry={() => void refresh()} />}</div>}
         {view === "observations" && board && <ObservationsView board={board} filter={obsFilter} sort={obsSort} onFilter={setObsFilter} onSort={setObsSort} onOpen={setDetailId} />}
-        {view === "contracts" && board && <ContractsView board={board} filter={contractFilter} sort={contractSort} onFilter={setContractFilter} onSort={setContractSort} query={query} onQuery={setQuery} onOpen={setDetailId} />}
+        {view === "tasks" && board && <TasksView board={board} filter={taskFilter} sort={taskSort} onFilter={setTaskFilter} onSort={setTaskSort} query={query} onQuery={setQuery} onOpen={setDetailId} />}
         {view === "batches" && board && <BatchesView board={board} filter={batchFilter} sort={batchSort} onFilter={setBatchFilter} onSort={setBatchSort} onOpen={setDetailId} />}
         {view === "decisions" && board && <DecisionsView board={board} onOpen={setDetailId} />}
       </main>

@@ -1,0 +1,24 @@
+id: business-rule
+version: 1
+directory: business-rules
+canonical_source: Ross
+description: A durable constraint or derivation that the business expects behavior to obey.
+identity:
+  prefix: BR
+  format: "<prefix>-<26-character lowercase Crockford ULID>"
+  filename: "<slug>-<last 8 id characters>.md"
+required_fields:
+  frontmatter: [id, form, title]
+  body_headings: [Rule, Rationale, Scope]
+required_edges:
+  - name: evidence
+    direction: incoming
+    fields: [subjects]
+    source_forms: [example]
+    target_forms: [business-rule]
+    minimum: 1
+    question: What would break if this rule were violated?
+recognition_signals:
+  - The conversation uses must, may only, never, always, eligible, or calculated as.
+  - A policy remains true across more than one interaction.
+  - An exception, threshold, classification, or derivation controls behavior.

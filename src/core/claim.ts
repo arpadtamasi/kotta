@@ -1,7 +1,7 @@
-import { CONTRACT_ID } from "./identity.js";
+import { TASK_ID } from "./identity.js";
 
 export interface ClaimData {
-  contract?: unknown;
+  task?: unknown;
   agent?: unknown;
   branch?: unknown;
   worktree?: unknown;
@@ -17,7 +17,7 @@ export interface ClaimData {
 
 export function validateClaim(data: ClaimData): string[] {
   const errors: string[] = [];
-  if (!CONTRACT_ID.test(String(data.contract ?? ""))) errors.push("contract must be a minted id, T-001, or an imported O-1 identifier");
+  if (!TASK_ID.test(String(data.task ?? ""))) errors.push("task must be a minted id, T-001, or an imported O-1 identifier");
   if (!String(data.agent ?? "").trim()) errors.push("agent is required");
   if (!String(data.branch ?? "").trim()) errors.push("branch is required");
   if (!String(data.worktree ?? "").trim()) errors.push("worktree is required");

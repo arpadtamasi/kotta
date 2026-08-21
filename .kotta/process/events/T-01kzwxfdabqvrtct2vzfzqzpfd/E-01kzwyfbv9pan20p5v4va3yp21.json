@@ -1,0 +1,15 @@
+{
+  "entity": "T-01kzwxfdabqvrtct2vzfzqzpfd",
+  "task": "T-01kzwxfdabqvrtct2vzfzqzpfd",
+  "kind": "approval",
+  "approval_id": "E-01kzwydgzz06z18w2wb7tdkwkq",
+  "phase": "failed",
+  "action": "task.sign",
+  "payload": {
+    "surface": "caller-chat"
+  },
+  "source_message": null,
+  "error": "Caller chat could not present human approval: MCP error -32001: Request timed out",
+  "id": "E-01kzwyfbv9pan20p5v4va3yp21",
+  "created_at": "2026-08-13T06:55:38.345Z"
+}

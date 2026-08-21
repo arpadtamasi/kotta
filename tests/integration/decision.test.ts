@@ -20,7 +20,7 @@ function runAsync(cwd: string, args: string[], env?: NodeJS.ProcessEnv): Promise
 }
 
 async function waitForCandidate(root: string): Promise<void> {
-  const directory = join(root, ".kotta/decisions");
+  const directory = join(root, ".kotta/process/decisions");
   for (let attempt = 0; attempt < 200; attempt += 1) {
     if (readdirSync(directory).some((name) => name.startsWith(".D-001-") && name.endsWith(".tmp"))) return;
     await new Promise((resolvePromise) => setTimeout(resolvePromise, 10));
@@ -50,7 +50,7 @@ describe("durable decision CLI", () => {
     const createdData = (JSON.parse(created.stdout) as { ok: boolean; command: string; data: { id: string; path: string } });
     expect(createdData).toMatchObject({ ok: true, command: "decision create" });
     expect(createdData.data.id).toMatch(/^D-[0-9a-hjkmnp-tv-z]{26}$/);
-    expect(createdData.data.path).toContain(`.kotta/decisions/${createdData.data.id}.md`);
+    expect(createdData.data.path).toContain(`.kotta/process/decisions/${createdData.data.id}.md`);
     expect(readFileSync(createdData.data.path, "utf8")).toContain("## Consequences");
     const humanSource = join(root, "second.md");
     writeFileSync(humanSource, validSource.replace("Adopt blue-green cutover", "Keep rollback window"));
@@ -60,7 +60,7 @@ describe("durable decision CLI", () => {
     const validation = run(root, ["validate"]);
     expect(validation.status).toBe(0);
     expect(JSON.parse(validation.stdout)).toMatchObject({ ok: true, data: { decisions: 2 } });
-    const recorded = readdirSync(join(root, ".kotta/decisions")).sort();
+    const recorded = readdirSync(join(root, ".kotta/process/decisions")).sort();
     expect(recorded).toHaveLength(2);
     for (const name of recorded) expect(name).toMatch(/^D-[0-9a-hjkmnp-tv-z]{26}\.md$/);
   });
@@ -81,7 +81,7 @@ describe("durable decision CLI", () => {
       expect(result.status).toBe(1);
       expect(JSON.parse(result.stdout)).toMatchObject({ ok: false, errors: [expect.objectContaining({ code: "COMMAND_FAILED" })] });
     }
-    expect(readdirSync(join(root, ".kotta/decisions"))).toEqual([]);
+    expect(readdirSync(join(root, ".kotta/process/decisions"))).toEqual([]);
   });
 
   test("cleans the candidate after an injected pre-publication failure and safely retries", () => {
@@ -93,15 +93,15 @@ describe("durable decision CLI", () => {
     });
     expect(failed.status).toBe(1);
     expect(failed.stdout).toContain("Injected decision write failure");
-    expect(readdirSync(join(root, ".kotta/decisions"))).toEqual([]);
+    expect(readdirSync(join(root, ".kotta/process/decisions"))).toEqual([]);
 
     expect(run(root, ["decision", "create", "--from", source, "--id", "D-007", "--approve"]).status).toBe(0);
-    expect(existsSync(join(root, ".kotta/decisions/D-007.md"))).toBe(true);
+    expect(existsSync(join(root, ".kotta/process/decisions/D-007.md"))).toBe(true);
   });
 
   test("workspace validation reports malformed canonical decision records", () => {
     const root = initialize();
-    writeFileSync(join(root, ".kotta/decisions/D-001-broken.md"), "---\nid: D-001\ntitle: [\n---\n");
+    writeFileSync(join(root, ".kotta/process/decisions/D-001-broken.md"), "---\nid: D-001\ntitle: [\n---\n");
     const result = run(root, ["validate"]);
     expect(result.status).toBe(1);
     expect(JSON.parse(result.stdout)).toMatchObject({
@@ -114,8 +114,8 @@ describe("durable decision CLI", () => {
     const root = initialize();
     const first = validSource.replace("title: Adopt blue-green cutover", "id: D-001\ntitle: First");
     const second = first.replace("title: First", "title: Second");
-    writeFileSync(join(root, ".kotta/decisions/D-001-first.md"), first);
-    writeFileSync(join(root, ".kotta/decisions/D-001-second.md"), second);
+    writeFileSync(join(root, ".kotta/process/decisions/D-001-first.md"), first);
+    writeFileSync(join(root, ".kotta/process/decisions/D-001-second.md"), second);
     const result = run(root, ["validate"]);
     expect(result.status).toBe(1);
     expect(JSON.parse(result.stdout)).toMatchObject({
@@ -123,25 +123,25 @@ describe("durable decision CLI", () => {
     });
   });
 
-  test("records a decision in a linked worktree that has no .kotta/decisions directory", () => {
+  test("records a decision in a linked worktree that has no .kotta/process/decisions directory", () => {
     const root = initialize();
     execFileSync("git", ["add", "-A"], { cwd: root });
     execFileSync("git", ["-c", "user.email=kotta@example.com", "-c", "user.name=kotta", "commit", "-m", "chore: init"], { cwd: root });
     const worktree = join(root, ".worktrees/decision");
     execFileSync("git", ["worktree", "add", worktree, "-b", "feat/decision"], { cwd: root });
     // Git carries no empty directories into a linked worktree; the writer used to crash with ENOENT here.
-    expect(existsSync(join(worktree, ".kotta/decisions"))).toBe(false);
+    expect(existsSync(join(worktree, ".kotta/process/decisions"))).toBe(false);
 
     const source = join(worktree, "cutover.md");
     writeFileSync(source, validSource);
     const created = run(worktree, ["decision", "create", "--from", source, "--approve"]);
     expect(created.status).toBe(0);
     const { id, path } = (JSON.parse(created.stdout) as { data: { id: string; path: string } }).data;
-    expect(path.endsWith(join(".kotta/decisions", `${id}.md`))).toBe(true);
+    expect(path.endsWith(join(".kotta/process/decisions", `${id}.md`))).toBe(true);
     expect(existsSync(path)).toBe(true);
-    expect(existsSync(join(worktree, ".kotta/decisions"))).toBe(false);
+    expect(existsSync(join(worktree, ".kotta/process/decisions"))).toBe(false);
     // Durable decisions join lifecycle state on the control plane.
-    expect(existsSync(join(root, ".kotta/decisions", `${id}.md`))).toBe(true);
+    expect(existsSync(join(root, ".kotta/process/decisions", `${id}.md`))).toBe(true);
 
     const validation = run(worktree, ["validate"]);
     expect(validation.status).toBe(0);
@@ -167,8 +167,8 @@ describe("durable decision CLI", () => {
     expect(second.status).toBe(0);
     expect(delayed.status).toBe(1);
     expect(delayed.stdout).toContain("Decision D-001 already exists");
-    expect(readdirSync(join(root, ".kotta/decisions"))).toEqual(["D-001.md"]);
-    const canonical = readFileSync(join(root, ".kotta/decisions/D-001.md"), "utf8");
+    expect(readdirSync(join(root, ".kotta/process/decisions"))).toEqual(["D-001.md"]);
+    const canonical = readFileSync(join(root, ".kotta/process/decisions/D-001.md"), "utf8");
     expect(canonical).toContain("title: Second title");
     expect(canonical).not.toContain("title: First title");
   });

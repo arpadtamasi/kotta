@@ -1,6 +1,0 @@
-contract: T-01kzhnsncw8znqdn14rf5d4tfp
-agent: claude
-branch: feat/T-01kzhnsncw8znqdn14rf5d4tfp-a-contract-that-proves-incomplete-has-a-way-back
-worktree: .worktrees/T-01kzhnsncw8znqdn14rf5d4tfp
-execution_mode: inherited
-started_at: 2026-08-10T23:00:14.188Z

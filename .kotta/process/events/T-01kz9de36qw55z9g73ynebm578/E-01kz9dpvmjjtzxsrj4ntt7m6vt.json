@@ -1,0 +1,12 @@
+{
+  "id": "E-01kz9dpvmjjtzxsrj4ntt7m6vt",
+  "entity": "T-01kz9de36qw55z9g73ynebm578",
+  "task": "T-01kz9de36qw55z9g73ynebm578",
+  "kind": "approval",
+  "approval_id": "E-01kz9dpvmjjtzxsrj4ntt7m6vt",
+  "phase": "proposed",
+  "action": "task.sign",
+  "payload": {},
+  "source_message": null,
+  "created_at": "2026-08-05T16:57:03.891Z"
+}

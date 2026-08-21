@@ -6,7 +6,7 @@ const viewports = [
   { name: "desktop", width: 1440, height: 900 },
 ] as const;
 
-test("renders the approved content contract in order", async ({ page }) => {
+test("renders the approved content task in order", async ({ page }) => {
   const requests: string[] = [];
   const failedResponses: string[] = [];
   const responseTypes = new Map<string, string>();
@@ -19,23 +19,48 @@ test("renders the approved content contract in order", async ({ page }) => {
   });
   await page.goto("./");
 
-  await expect(page.locator("[data-unit]")).toHaveCount(6);
-  expect(await page.locator("[data-unit]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-unit")))).toEqual(["hero", "problem", "workflow", "comparison", "quickstart", "trust"]);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("AI can finish work too large for you to see.");
-  await expect(page.getByRole("heading", { name: "The agent is no longer the bottleneck. Human oversight is." })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Keep AI-sized output inside human-sized work batches." })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Create your first contract" })).toHaveAttribute("href", "#install");
-  await expect(page.getByRole("link", { name: "See the workflow" })).toHaveAttribute("href", "#how");
+  await expect(page.locator("[data-unit]")).toHaveCount(7);
+  expect(await page.locator("[data-unit]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-unit")))).toEqual(["hero", "problem", "arrivals", "workflow", "comparison", "quickstart", "trust"]);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Everything we learned about spelling out exactly what we want.");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Your job is to figure out what you want.");
+  await expect(page.getByText("Without the rigidity that kept us from doing it properly. Designed to be executed by AI.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "AI can execute more work than you can continuously observe." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "The agreement becomes executable." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Three ways in." })).toBeVisible();
+  await expect(page.locator(".arrival-list li")).toHaveCount(3);
+  await expect(page.getByRole("link", { name: "Install Kotta" })).toHaveAttribute("href", "#install");
+  await expect(page.getByRole("link", { name: "View on GitHub" })).toHaveAttribute("href", "https://github.com/arpadtamasi/kotta");
+  await expect(page.getByText("Human decision required")).toBeVisible();
+  await expect(page.getByText("One agent · one branch · one isolated worktree.")).toBeVisible();
   await expect(page.locator("tbody tr")).toHaveCount(4);
-  await expect(page.locator("tbody th")).toHaveText(["Agent chat", "Jira / Linear", "Agent orchestrator", "Kotta"]);
-  await expect(page.locator("#install")).toContainText("@arpadtamasi/kotta@0.6.0");
+  await expect(page.locator("tbody th")).toHaveText(["Agent chat", "Issue tracker", "Agent runtime", "Kotta"]);
+  await expect(page.locator("#install")).toContainText("@arpadtamasi/kotta@0.7.0");
   await expect(page.locator("#install")).toContainText("npx skills@1.5.20 add arpadtamasi/kotta");
-  await expect(page.locator("#install")).toContainText("Continue in chat");
-  await expect(page.locator("#install")).toContainText("## Acceptance");
+  await expect(page.locator("#install")).toContainText("/setup-kotta");
+  await expect(page.locator("#install")).toContainText("/define-task");
   expect([...responseTypes.entries()].find(([path]) => path.endsWith(".css"))?.[1]).toContain("text/css");
   await expect(page.locator("body")).toHaveCSS("background-color", "rgb(243, 242, 242)");
   expect(requests.some((url) => new URL(url).pathname.startsWith("/api/"))).toBe(false);
   expect(failedResponses).toEqual([]);
+});
+
+test("desktop first viewport carries the offer, action and control mechanism", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("./");
+
+  const essentials = [
+    page.getByRole("heading", { level: 1 }),
+    page.getByRole("link", { name: "Install Kotta" }),
+    page.getByRole("link", { name: "View on GitHub" }),
+    page.locator(".task-record"),
+    page.getByText("Human decision required"),
+  ];
+  for (const essential of essentials) {
+    await expect(essential).toBeVisible();
+    const box = await essential.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.y + box!.height).toBeLessThanOrEqual(900);
+  }
 });
 
 for (const viewport of viewports) {
@@ -57,11 +82,11 @@ for (const viewport of viewports) {
       expect(new URL(href).protocol).toBe("https:");
     }
 
+    await page.screenshot({ path: testInfo.outputPath(`${viewport.name}-full.png`), fullPage: true });
     await page.keyboard.press("Tab");
     await expect(page.getByRole("link", { name: "Skip to content" })).toBeFocused();
     expect(await page.getByRole("link", { name: "Skip to content" }).evaluate((element) => getComputedStyle(element).outlineStyle)).not.toBe("none");
     expect(await page.locator(".button").first().evaluate((element) => parseFloat(getComputedStyle(element).transitionDuration))).toBeLessThanOrEqual(0.01);
-    await page.screenshot({ path: testInfo.outputPath(`${viewport.name}-full.png`), fullPage: true });
   });
 }
 
@@ -86,6 +111,6 @@ test("remains readable without JavaScript", async ({ browser }) => {
   const page = await context.newPage();
   await page.goto("http://127.0.0.1:4174/kotta/");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Create your first contract" })).toHaveAttribute("href", "#install");
+  await expect(page.getByRole("link", { name: "Install Kotta" })).toHaveAttribute("href", "#install");
   await context.close();
 });

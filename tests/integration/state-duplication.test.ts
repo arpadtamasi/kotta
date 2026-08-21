@@ -3,6 +3,7 @@ import { copyFileSync, existsSync, mkdtempSync, readFileSync, realpathSync, writ
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
 /**
  * T-036 — directory-as-state duplication (second root of F-008).
@@ -36,6 +37,7 @@ function repository(label: string, options: { detectRenames?: boolean } = {}): s
   // merge (or `merge.renames=false`) drops it, and then both copies survive. Both shapes are real.
   if (options.detectRenames === false) git(root, "config", "merge.renames", "false");
   run(root, ["init"]);
+  retainLegacySignGate(root);
   git(root, "add", "-A");
   git(root, "commit", "-m", "init kotta");
   return root;
@@ -50,28 +52,28 @@ function keepBothSides(root: string, files: Array<{ branch: string; path: string
 
 describe("one entity in two state directories (T-036)", () => {
   test("validate names both places after a merge, and dedupe keeps the furthest-advanced copy", () => {
-    const root = repository("contract");
-    const contract = run(root, ["contract", "new", "--title", "Merge me", "--type", "feature"]).data as { id: string; path: string };
-    const filename = basename(contract.path);
+    const root = repository("task");
+    const task = run(root, ["task", "new", "--title", "Merge me", "--type", "feature"]).data as { id: string; path: string };
+    const filename = basename(task.path);
     git(root, "add", "-A");
-    git(root, "commit", "-m", "capture contract");
+    git(root, "commit", "-m", "capture task");
 
     // Build the historical split while main remains the checked-out control plane. Modern Kotta
     // no longer creates this shape, but dedupe must still repair repositories that already have it.
     const commonBase = git(root, "rev-parse", "HEAD");
-    run(root, ["contract", "sign", contract.id, "--approve"]);
+    run(root, ["task", "sign", task.id, "--approve"]);
     git(root, "branch", "branch-defined");
     git(root, "reset", "--hard", commonBase);
-    run(root, ["contract", "cancel", contract.id, "--resolution", "cancelled", "--reason", "Retired to produce the duplicated state", "--approve"]);
+    run(root, ["task", "cancel", task.id, "--resolution", "cancelled", "--reason", "Retired to produce the duplicated state", "--approve"]);
 
     const merge = spawnSync("git", ["merge", "--no-ff", "branch-defined", "-m", "merge"], { cwd: root, encoding: "utf8" });
     expect(`${merge.stdout}${merge.stderr}`).toContain("CONFLICT (rename/rename)");
     keepBothSides(root, [
-      { branch: "branch-defined", path: `.kotta/defined/${filename}` },
-      { branch: "main", path: `.kotta/done/${filename}` },
+      { branch: "branch-defined", path: `.kotta/process/defined/${filename}` },
+      { branch: "main", path: `.kotta/process/done/${filename}` },
     ]);
-    const defined = join(root, ".kotta/defined", filename);
-    const done = join(root, ".kotta/done", filename);
+    const defined = join(root, ".kotta/process/defined", filename);
+    const done = join(root, ".kotta/process/done", filename);
     expect(existsSync(defined) && existsSync(done)).toBe(true);
 
     // Acceptance 1: the duplicate is its own error case and names both places.
@@ -85,32 +87,32 @@ describe("one entity in two state directories (T-036)", () => {
     expect(report.errors.some((error) => error.code === "DUPLICATE_ID")).toBe(false);
 
     // Acceptance 5: without approval nothing is removed.
-    const unapproved = attempt(root, ["contract", "dedupe", contract.id]);
+    const unapproved = attempt(root, ["task", "dedupe", task.id]);
     expect(unapproved.status).toBe(1);
     expect(unapproved.stdout).toContain("Human approval is required");
     expect(existsSync(defined) && existsSync(done)).toBe(true);
 
     // Acceptance 2: the later lifecycle state wins and the discarded copy is named — here in the
     // human-readable output; the batch test below asserts the same in the structured result.
-    const resolved = spawnSync("node", [cli, "contract", "dedupe", contract.id, "--approve"], { cwd: root, encoding: "utf8" });
+    const resolved = spawnSync("node", [cli, "task", "dedupe", task.id, "--approve"], { cwd: root, encoding: "utf8" });
     expect(resolved.status).toBe(0);
-    expect(resolved.stdout).toContain(`Kept ${contract.id} at ${done} (done)`);
+    expect(resolved.stdout).toContain(`Kept ${task.id} at ${done} (done)`);
     expect(resolved.stdout).toContain(`dropped ${defined} (defined`);
     expect(existsSync(defined)).toBe(false);
     expect(existsSync(done)).toBe(true);
     expect(run(root, ["validate"])).toMatchObject({ ok: true });
 
     // Re-running finds a single copy and refuses rather than silently doing nothing.
-    const again = attempt(root, ["contract", "dedupe", contract.id, "--approve"]);
+    const again = attempt(root, ["task", "dedupe", task.id, "--approve"]);
     expect(again.status).toBe(1);
     expect(again.stdout).toContain("nothing to resolve");
   });
 
   test("a batch duplicated across batches/backlog and batches/defined resolves the same way", () => {
     const root = repository("batch", { detectRenames: false });
-    const first = run(root, ["contract", "new", "--title", "First slice", "--type", "feature"]).data as { id: string };
-    const second = run(root, ["contract", "new", "--title", "Second slice", "--type", "feature"]).data as { id: string };
-    run(root, ["contract", "sign", first.id, "--approve"]);
+    const first = run(root, ["task", "new", "--title", "First slice", "--type", "feature"]).data as { id: string };
+    const second = run(root, ["task", "new", "--title", "Second slice", "--type", "feature"]).data as { id: string };
+    run(root, ["task", "sign", first.id, "--approve"]);
     const batch = run(root, ["batch", "new", "--title", "Batch one", "--goal", "Ship the slices"]).data as { id: string; path: string };
     run(root, ["batch", "add", batch.id, first.id]);
     const filename = basename(batch.path);
@@ -126,14 +128,14 @@ describe("one entity in two state directories (T-036)", () => {
     git(root, "reset", "--hard", commonBase);
     run(root, ["batch", "add", batch.id, second.id]);
     git(root, "add", "-A");
-    git(root, "commit", "-m", "add second contract");
+    git(root, "commit", "-m", "add second task");
 
     const merge = spawnSync("git", ["merge", "--no-ff", "branch-defined", "-m", "merge"], { cwd: root, encoding: "utf8" });
     expect(`${merge.stdout}${merge.stderr}`).toContain("CONFLICT (modify/delete)");
     git(root, "add", "-A");
     git(root, "commit", "-m", "merge: kept both copies");
-    const backlog = join(root, ".kotta/batches/backlog", filename);
-    const defined = join(root, ".kotta/batches/defined", filename);
+    const backlog = join(root, ".kotta/process/batches/backlog", filename);
+    const defined = join(root, ".kotta/process/batches/defined", filename);
     expect(existsSync(backlog) && existsSync(defined)).toBe(true);
 
     const validation = attempt(root, ["validate"]);
@@ -152,29 +154,29 @@ describe("one entity in two state directories (T-036)", () => {
     };
     expect(resolved.kept).toEqual({ state: "defined", path: defined });
     // The dropped copy carried a different membership list; the resolution says so instead of hiding it.
-    expect(resolved.dropped).toEqual([{ state: "backlog", path: backlog, differing_fields: ["contracts"] }]);
+    expect(resolved.dropped).toEqual([{ state: "backlog", path: backlog, differing_fields: ["tasks"] }]);
     expect(existsSync(backlog)).toBe(false);
   });
 
   test("dedupe stops when the two copies have different bodies", () => {
     const root = repository("diverged", { detectRenames: false });
-    const contract = run(root, ["contract", "new", "--title", "Contested", "--type", "feature"]).data as { id: string; path: string };
-    const filename = basename(contract.path);
+    const task = run(root, ["task", "new", "--title", "Contested", "--type", "feature"]).data as { id: string; path: string };
+    const filename = basename(task.path);
     git(root, "add", "-A");
-    git(root, "commit", "-m", "capture contract");
+    git(root, "commit", "-m", "capture task");
 
     const commonBase = git(root, "rev-parse", "HEAD");
-    run(root, ["contract", "sign", contract.id, "--approve"]);
+    run(root, ["task", "sign", task.id, "--approve"]);
     git(root, "branch", "branch-defined");
     git(root, "reset", "--hard", commonBase);
 
-    // Main rewrites the contract body in place while the other branch moves it to defined.
+    // Main rewrites the task body in place while the other branch moves it to defined.
     const definition = join(root, "definition.md");
     const body = ["Outcome", "Scope", "Non-goals", "Acceptance", "Verification", "Constraints", "Open decisions", "Execution notes"]
       .map((heading) => `## ${heading}\n\n${heading === "Open decisions" ? "None." : `Rewritten ${heading.toLowerCase()} that the other branch never saw.`}`)
       .join("\n\n");
     writeFileSync(definition, `---\ntypes:\n  - feature\n---\n${body}\n`);
-    run(root, ["contract", "define", contract.id, "--from", definition]);
+    run(root, ["task", "define", task.id, "--from", definition]);
     git(root, "add", "-A");
     git(root, "commit", "-m", "rewrite body");
 
@@ -182,12 +184,12 @@ describe("one entity in two state directories (T-036)", () => {
     expect(`${merge.stdout}${merge.stderr}`).toContain("CONFLICT (modify/delete)");
     git(root, "add", "-A");
     git(root, "commit", "-m", "merge: kept both copies");
-    const backlog = join(root, ".kotta/backlog", filename);
-    const defined = join(root, ".kotta/defined", filename);
+    const backlog = join(root, ".kotta/process/backlog", filename);
+    const defined = join(root, ".kotta/process/defined", filename);
     expect(existsSync(backlog) && existsSync(defined)).toBe(true);
 
     // Acceptance 3: divergent bodies are not a machine decision.
-    const refused = attempt(root, ["contract", "dedupe", contract.id, "--approve"]);
+    const refused = attempt(root, ["task", "dedupe", task.id, "--approve"]);
     expect(refused.status).toBe(1);
     expect(refused.stdout).toContain("different bodies");
     expect(refused.stdout).toContain(backlog);
@@ -198,12 +200,12 @@ describe("one entity in two state directories (T-036)", () => {
 
   test("dedupe refuses an identifier collision inside one state directory", () => {
     const root = repository("collision");
-    const contract = run(root, ["contract", "new", "--title", "Shared identity", "--type", "feature"]).data as { id: string; path: string };
-    const twin = join(root, ".kotta/backlog", `other-${basename(contract.path)}`);
-    copyFileSync(contract.path, twin);
+    const task = run(root, ["task", "new", "--title", "Shared identity", "--type", "feature"]).data as { id: string; path: string };
+    const twin = join(root, ".kotta/process/backlog", `other-${basename(task.path)}`);
+    copyFileSync(task.path, twin);
     writeFileSync(twin, readFileSync(twin, "utf8").replace("title: Shared identity", "title: A different entity"));
 
-    const refused = attempt(root, ["contract", "dedupe", contract.id, "--approve"]);
+    const refused = attempt(root, ["task", "dedupe", task.id, "--approve"]);
     expect(refused.status).toBe(1);
     expect(refused.stdout).toContain("identifier collision");
     expect(existsSync(twin)).toBe(true);

@@ -1,0 +1,15 @@
+{
+  "id": "E-01m0aqexrqg63jwk5jz1p8pfnz",
+  "entity": "T-01m0apvt0hm3wcmwa6qbvwqess",
+  "task": "T-01m0apvt0hm3wcmwa6qbvwqess",
+  "kind": "approval",
+  "approval_id": "E-01m0aqexrqg63jwk5jz1p8pfnz",
+  "phase": "proposed",
+  "action": "task.sign",
+  "payload": {
+    "surface": "caller-chat"
+  },
+  "source_message": null,
+  "client_event_id": null,
+  "created_at": "2026-08-18T15:22:25.944Z"
+}

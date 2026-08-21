@@ -6,6 +6,68 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- **The executable work unit is now `task` on every current surface.** CLI commands, MCP tools,
+  schemas, stored relationships, board data, templates, generated rules, shipped skills, docs and
+  the site now use the specification's accepted vocabulary. Existing `T-` identifiers never change.
+  `kotta migrate` upgrades version-3 workspaces to version 4, including batch membership,
+  observation and claim links, event links and approval actions, and the workflow configuration.
+  The former CLI group and read-only MCP list/show tools remain one-version compatibility aliases;
+  reading their stored form emits a warning naming the migration. `kotta sync` installs the renamed
+  skills and removes only legacy directories proven Kotta-owned by its manifest.
+
+## [0.7.0] - 2026-08-20
+
+### Added
+
+- **A contract can name the specification it rests on.** A contract's frontmatter carries an
+  optional `spec` list of specification node ids, accepted by `contract define` alongside the other
+  definition fields and left empty by default, so the whole lifecycle runs exactly as before for a
+  contract that names none. A reference that resolves is accepted; one that does not is refused by
+  name at `contract define`, and `contract validate` reports it as `SPEC_NOT_FOUND` afterwards, so a
+  node deleted after definition surfaces instead of rotting silently. The reference runs one way
+  only: a contract names specification, specification never names a contract.
+- **The brief carries the specification the contract was defined from.** `contract brief` appends
+  each referenced node's full text as its own `## Specification <id> (<form>)` section, separate
+  from the contract body, and names any it could not resolve under `## Missing specification`. An
+  agent executing from a fresh context therefore receives the material the contract was written
+  against, not just a reference to it.
+- **`kotta validate` measures the specification against its own forms.** The form registry under
+  `spec/forms/` is now enforced: a missing required frontmatter field, a missing required body
+  heading, and an edge below its declared minimum are each reported with their file and their form,
+  and a dangling edge is told apart from one that resolves to a node of the wrong form. A form the
+  project adds participates on the same terms as a shipped one.
+
+## [0.6.1] - 2026-08-20
+
+### Fixed
+
+- **Releasing a claim no longer strands the contract.** `kotta claim release --force` deleted the
+  claim and left the contract `active` with no claim and no execution context, where `start`,
+  `execute`, `execute --resume`, `reopen` and `cancel` all refused it — the only exit observed was
+  hand-editing `status` back, which the rules forbid. Release is the documented inverse of `start`,
+  so it now returns the contract to `defined` in the same commit that deletes the claim. The branch
+  and the worktree are still preserved, and `start` reuses exactly the pair the contract records
+  instead of refusing with `Branch already exists`; a branch of that name the contract does not
+  record still refuses.
+- **`observation new` commits what it writes.** Without `--discovered-during` it wrote the
+  observation and regenerated the index without committing either, so the control plane was left
+  dirty and Kotta's own write blocked Kotta's next command: `contract cancel` and `contract reopen`
+  both failed with `Repository is dirty` immediately after a successful capture. The standalone path
+  now takes the same control-plane mutation and the same commit as the attributed one. It records no
+  lifecycle event, because a standalone observation has no contract to attribute one to.
+- **A batch completes on its whole subtree, not just its own contracts.** The automatic completion a
+  closing contract triggers read only the batch's `contracts` array, so a parent holding both direct
+  contracts and child batches closed on its last direct contract while a child was still open — and
+  a parent whose child finished last was never revisited at all. The automatic path and `batch close`
+  now ask one shared question about the whole subtree, and read member state the same way, so a
+  contract executing in its own worktree is no longer mistaken for a defined one.
+- **Every caller gets its own frontmatter.** `parseMarkdown` returned the object gray-matter
+  memoizes for a given source, and commands edit frontmatter in place, so a second parse of an
+  identical file inside one process saw the first caller's edits. It made `kotta migrate` report an
+  empty change list when it planned a file twice, and the long-lived board server parses repeatedly.
+
 ## [0.6.0] - 2026-08-15
 
 ### Added

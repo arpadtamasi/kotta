@@ -19,20 +19,20 @@ Kotta is a repository-native dispatch system for human–AI development teams. A
 state lives as markdown/YAML files in the repo (`.kotta/`); the CLI is the only
 mutator; the UI is a local, single-operator control surface served by `kotta ui`.
 
-**The core value is NOT "a contract board."** It is the pipeline:
+**The core value is NOT "a task board."** It is the pipeline:
 
 ```
-observation  →  contract  →  batch  →  run
+observation  →  task  →  batch  →  run
 (cheap,     (validated,  (batch the   (hand the batch
 agent-scale  executable   related      to the machine,
-intake)      contract)    work)        watch it, review it)
+intake)      task)    work)        watch it, review it)
 ```
 
 - **Observation** — an observation (from an agent or a human). Explicitly *not* a task.
-  Sits in an inbox until a human dispositions it (reject / turn into a contract).
-- **Contract** — an executable contract: outcome, scope, acceptance, verification.
+  Sits in an inbox until a human dispositions it (reject / turn into a task).
+- **Task** — an executable task: outcome, scope, acceptance, verification.
   Lifecycle `backlog → defined → active → review → done`, where directory = state.
-- **Batch** — the launch unit: a set of contracts with execution semantics
+- **Batch** — the launch unit: a set of tasks with execution semantics
   (sequential / parallel / dependency-aware, parallelism N, stop_on_failure).
   This is what the operator "hands to the machine in one go."
 - **Run** — active execution: claims, feature branches, isolated git worktrees,
@@ -53,8 +53,8 @@ the UI must never show the operator something an agent can't also derive.
 The operator's three standing questions, in priority order:
 
 1. **What needs ME right now?** (observations to triage, reviews to accept, blocked work)
-2. **What is the machine doing?** (active runs, per-contract progress, failures)
-3. **What can I launch next?** (defined contracts, batches worth composing/starting)
+2. **What is the machine doing?** (active runs, per-task progress, failures)
+3. **What can I launch next?** (defined tasks, batches worth composing/starting)
 
 ## 3. Problems with the current UI (v0)
 
@@ -68,13 +68,13 @@ an editorial poster. Concrete UX failures to fix:
    decorative eyebrows ("CONTEXT SEAL", "MIGRATION CONTROL ROOM"), staggered
    card animations. Ornament outranks information.
 3. **The old board mixed viewing and control.** Agent chat and lifecycle actions lived inside a
-   contract drawer, creating a second control surface that diverged from the calling chat.
+   task drawer, creating a second control surface that diverged from the calling chat.
 4. **The batch is not a launch unit in the UI.** Batches are cards with a
    progress bar and a member-editor. There is no "launch," no execution-mode
    display, no run monitor. The climax of the product is missing.
 5. **No run/execution view at all.** Active worktrees, claims, branches, agent
    activity are invisible. (This session literally found drift the UI could not
-   have shown: contracts sitting "defined" while worktrees held finished work.)
+   have shown: tasks sitting "defined" while worktrees held finished work.)
 6. **Migration-mode remnants** (legacy lanes, split audit, migration stamps)
    leak into the default experience and confuse the mental model.
 7. **The kanban treats all five states as equal columns**, though backlog/defined
@@ -86,14 +86,14 @@ Screenshots of the current UI live in `ui/spec-assets/`, captured 2026-07-26
 against this repository's own live workspace:
 
 - `01-full-page.png` — the entire single-page layout (Observations → Batches → board)
-- `02-contract-drawer-chat.png` — contract drawer, chat view, empty-thread state
-- `03-contract-drawer-brief.png` — contract drawer, Brief view (contract sections)
+- `02-task-drawer-chat.png` — task drawer, chat view, empty-thread state
+- `03-task-drawer-brief.png` — task drawer, Brief view (task sections)
 - `04-batch-drawer.png` — batch drawer for an active batch (membership locked)
 
-**They are evidence for §3 and a reference for real content density (contract
+**They are evidence for §3 and a reference for real content density (task
 title lengths, section sizes, entity counts). Do NOT inherit their visual
 language, layout, or single-page structure — §4 replaces it.** One thing v0
-does get right and must be preserved: contract state is resolved from live
+does get right and must be preserved: task state is resolved from live
 worktrees (in the shots, T-012 shows Active and T-013 Review because their
 worktrees exist — even while a stale generated index still said "defined").
 That truth-from-derivation behavior is the §7 foundation.
@@ -124,12 +124,12 @@ Always visible, one row, answers question #1 without navigation. Items, each a
 count + one-click jump:
 
 - Observations awaiting disposition → Inbox
-- Contracts in review (decision waiting in the calling chat) → Run
-- Blocked contracts → Run
+- Tasks in review (decision waiting in the calling chat) → Run
+- Blocked tasks → Run
 - Failed / stalled runs → Run
 - State-drift warnings (see §7) → wherever the drift is
 
-Empty state is a feature: "Nothing needs you — N contracts running, M defined."
+Empty state is a feature: "Nothing needs you — N tasks running, M defined."
 
 ### 4.2 Stage: Inbox (observations)
 
@@ -144,15 +144,15 @@ Purpose: inspect observations and their disposition state without mutating them 
 
 ### 4.3 Stage: Shape (backlog → defined)
 
-Purpose: turn raw items into executable contracts.
+Purpose: turn raw items into executable tasks.
 
 - Two panes: **Backlog** (unshaped) and **Ready** (validated, waiting to be
   batchd/launched).
-- Contract rows, not cards: id, title, type/profile chips, priority/risk, batch
+- Task rows, not cards: id, title, type/profile chips, priority/risk, batch
   membership (or "unbatchd" chip), depends_on.
 - Validation state and any rule violations appear inline on the row. Definition and validation
   happen through the calling chat.
-- Ready pane groups by batch; unbatchd defined contracts are visually flagged
+- Ready pane groups by batch; unbatchd defined tasks are visually flagged
   (they are launchable-but-unbatched — a decision waiting to happen).
 
 ### 4.4 Stage: Batches (composition + launch)
@@ -163,7 +163,7 @@ product's climax — invest here.
 - Batch list: id, kind, status, member count, completion, execution mode
   summary (`dependency-aware · parallelism 2 · stop on failure`).
 - Batch detail (master–detail, not a modal drawer):
-  - goal (markdown), member contracts with live status,
+  - goal (markdown), member tasks with live status,
   - dependency graph of members (even a simple topological column layout is
     enough — the operator must see what runs in parallel vs. sequenced),
   - execution settings (mode, parallelism, stop_on_failure) read from frontmatter,
@@ -176,14 +176,14 @@ product's climax — invest here.
 Purpose: watch the machine work and see what decision is waiting in the calling chat.
 
 - Organized **by batch run**, not by kanban column. Each running batch is a
-  block; its member contracts are rows with: status (active/review/blocked/done),
+  block; its member tasks are rows with: status (active/review/blocked/done),
   claim (agent name), branch, worktree path, last activity.
-- Contract row expands to: acceptance contract vs. evidence (for review state),
+- Task row expands to: acceptance task vs. evidence (for review state),
   PR link, and its chat thread.
 - Review rows show acceptance evidence and the exact pending decision, without action controls.
-- Independent (non-batch) active contracts appear in their own "loose work"
+- Independent (non-batch) active tasks appear in their own "loose work"
   block.
-- Done batches/contracts roll into **Done** (an archive stage or filter —
+- Done batches/tasks roll into **Done** (an archive stage or filter —
   low-priority screen; a searchable list is enough).
 
 ### 4.6 Read-only activity timeline
@@ -197,7 +197,7 @@ result.
 ## 5. What the design must express (principles)
 
 1. **Pipeline before everything.** A newcomer should read the nav and understand
-   the model: observations become contracts, contracts become batches, batches
+   the model: observations become tasks, tasks become batches, batches
    run. The IA is the onboarding.
 2. **Truth and provenance.** Every entity shows where it lives: file path,
    directory-derived status, branch, worktree, claim. A subtle "derived from
@@ -214,9 +214,9 @@ result.
 
 ## 6. Data & API reality
 
-- `GET /api/workspace` — full workspace JSON (contracts, batches, observations,
+- `GET /api/workspace` — full workspace JSON (tasks, batches, observations,
   optional migration block); UI polls every 1.5 s. Fields: see types in
-  `ui/src/App.tsx` (Contract, Batch, Observation, Workspace).
+  `ui/src/App.tsx` (Task, Batch, Observation, Workspace).
 - `GET /api/agents` — `{ codex: boolean, claude: boolean }`.
 - Every non-GET/HEAD request returns `405`; historical chat, approval, observation and batch write
   routes are intentionally unavailable from the board.
@@ -227,12 +227,12 @@ result.
   persistent chat and drift diagnostics are included in the workspace response.
 
 Migration mode (`workspace.migration != null`) still exists: keep it as a
-clearly-separated overlay/badge on affected contracts plus one entry point to the
+clearly-separated overlay/badge on affected tasks plus one entry point to the
 split-audit log — it must not shape the default IA.
 
 ## 7. State-drift surfacing (small but existential)
 
-When derived signals disagree — e.g. a contract's directory says `defined` but a
+When derived signals disagree — e.g. a task's directory says `defined` but a
 worktree/claim exists for it — the UI must show a drift warning on the entity
 and in the needs-you strip, never silently pick one story. **[backend-gap]** for
 the detection API; the design must reserve the slot.

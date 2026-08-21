@@ -11,7 +11,7 @@ export function git(root: string, args: string[]): string {
 }
 
 export function assertClean(root: string): void {
-  if (git(root, ["status", "--porcelain"])) throw new Error("Repository is dirty. Commit or remove pending changes before starting a contract.");
+  if (git(root, ["status", "--porcelain"])) throw new Error("Repository is dirty. Commit or remove pending changes before starting a task.");
 }
 
 export function assertSafeWorktreePath(path: string): void {

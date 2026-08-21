@@ -1,15 +1,16 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "yaml";
-import { WORKSPACE_DIRECTORY_LABEL, findRepositoryRoot, hasWorkspace, workspacePath } from "../filesystem/workspace.js";
-import { BATCH_STATES, CONTRACT_STATES, idFromEntityFile } from "../filesystem/entities.js";
-import { validateContractFile } from "../core/validation.js";
+import { WORKSPACE_DIRECTORY_LABEL, findRepositoryRoot, hasWorkspace, processPath, workspacePath } from "../filesystem/workspace.js";
+import { BATCH_STATES, TASK_STATES, idFromEntityFile } from "../filesystem/entities.js";
+import { validateTaskFile } from "../core/validation.js";
 import { validateBatch } from "./batch.js";
 import { validateClaim } from "../core/claim.js";
 import { parseMarkdown } from "../core/markdown.js";
 import { validateDecisionFile } from "../core/decision.js";
 import { readEvents, validateEvent } from "../core/events.js";
 import { controlPlaneRoot } from "../git/control-plane.js";
+import { readFormRegistry, readSpecNodes, validateSpecWorkspace } from "../spec/registry.js";
 
 interface Located { state: string; path: string }
 
@@ -18,7 +19,7 @@ interface Located { state: string; path: string }
  * single state directory, and one entity that a merge left in several state directories. Only the
  * second has a deterministic resolution, so it is reported as its own case naming every place.
  */
-function duplicateIssues(located: Map<string, Located[]>, kind: "contract" | "batch"): Array<{ code: string; message: string; path: string }> {
+function duplicateIssues(located: Map<string, Located[]>, kind: "task" | "batch"): Array<{ code: string; message: string; path: string }> {
   const issues: Array<{ code: string; message: string; path: string }> = [];
   for (const [id, copies] of located) {
     if (copies.length < 2) continue;
@@ -43,16 +44,16 @@ export function validateWorkspace() {
   const root = controlPlaneRoot(findRepositoryRoot());
   const errors: Array<{ code: string; message: string; path?: string }> = [];
   if (!existsSync(workspacePath(root))) {
-    return { ok: false, command: "validate", data: { contracts: 0 }, errors: [{ code: "WORKSPACE_NOT_FOUND", message: `No ${WORKSPACE_DIRECTORY_LABEL} workspace exists at ${root}. Run kotta init first.`, path: root }] };
+    return { ok: false, command: "validate", data: { tasks: 0 }, errors: [{ code: "WORKSPACE_NOT_FOUND", message: `No ${WORKSPACE_DIRECTORY_LABEL} workspace exists at ${root}. Run kotta init first.`, path: root }] };
   }
   const seen = new Map<string, Located[]>();
   const references: Array<{ id: string; field: "depends_on" | "blocks"; reference: string; path: string }> = [];
-  for (const state of CONTRACT_STATES) {
-    const directory = workspacePath(root, state);
+  for (const state of TASK_STATES) {
+    const directory = processPath(root, state);
     if (!existsSync(directory)) continue;
     for (const filename of readdirSync(directory).filter((name) => name.endsWith(".md"))) {
       const path = join(directory, filename);
-      const report = validateContractFile(path);
+      const report = validateTaskFile(path);
       errors.push(...report.errors);
       // The frontmatter carries identity; a minted entity's filename holds only its short suffix.
       const id = idFromEntityFile(path, filename) ?? filename.replace(/\.md$/, "");
@@ -64,11 +65,11 @@ export function validateWorkspace() {
           for (const reference of values) references.push({ id, field, reference, path });
         }
       } catch {
-        // validateContractFile already reports malformed frontmatter for this path.
+        // validateTaskFile already reports malformed frontmatter for this path.
       }
       if (state === "active") {
-        const claimPath = workspacePath(root, "claims", `${id}.yaml`);
-        if (!existsSync(claimPath)) errors.push({ code: "MISSING_CLAIM", message: `Active contract ${id} has no claim.`, path });
+        const claimPath = processPath(root, "claims", `${id}.yaml`);
+        if (!existsSync(claimPath)) errors.push({ code: "MISSING_CLAIM", message: `Active task ${id} has no claim.`, path });
         else {
           const claimErrors = validateClaim(parse(readFileSync(claimPath, "utf8")) as Record<string, unknown>);
           for (const message of claimErrors) errors.push({ code: "INVALID_CLAIM", message: `Claim ${id}: ${message}.`, path: claimPath });
@@ -76,19 +77,19 @@ export function validateWorkspace() {
       }
     }
   }
-  errors.push(...duplicateIssues(seen, "contract"));
+  errors.push(...duplicateIssues(seen, "task"));
   for (const reference of references) {
     if (!seen.has(reference.reference)) {
       errors.push({
         code: "DANGLING_REFERENCE",
-        message: `${reference.id} ${reference.field} references missing contract ${reference.reference}.`,
+        message: `${reference.id} ${reference.field} references missing task ${reference.reference}.`,
         path: reference.path,
       });
     }
   }
   const seenBatches = new Map<string, Located[]>();
   for (const state of BATCH_STATES) {
-    const directory = workspacePath(root, "batches", state);
+    const directory = processPath(root, "batches", state);
     if (!existsSync(directory)) continue;
     for (const filename of readdirSync(directory).filter((name) => name.endsWith(".md"))) {
       const path = join(directory, filename);
@@ -103,7 +104,7 @@ export function validateWorkspace() {
     }
   }
   errors.push(...duplicateIssues(seenBatches, "batch"));
-  const decisionsDirectory = workspacePath(root, "decisions");
+  const decisionsDirectory = processPath(root, "decisions");
   const decisions = existsSync(decisionsDirectory)
     ? readdirSync(decisionsDirectory).filter((name) => name.endsWith(".md"))
     : [];
@@ -120,12 +121,17 @@ export function validateWorkspace() {
   let events: ReturnType<typeof readEvents> = [];
   try { events = readEvents(root); }
   catch (error) {
-    errors.push({ code: "INVALID_EVENT", message: error instanceof Error ? error.message : String(error), path: workspacePath(root, "events") });
+    errors.push({ code: "INVALID_EVENT", message: error instanceof Error ? error.message : String(error), path: processPath(root, "events") });
   }
   for (const event of events) {
-    const path = workspacePath(root, "events", event.entity, `${event.id}.json`);
+    const path = processPath(root, "events", event.entity, `${event.id}.json`);
     for (const message of validateEvent(event)) errors.push({ code: "INVALID_EVENT", message: `${event.id}: ${message}.`, path });
-    if (event.contract && !seen.has(event.contract)) errors.push({ code: "DANGLING_EVENT_CONTRACT", message: `${event.id} references missing contract ${event.contract}.`, path });
+    if (event.task && !seen.has(event.task)) errors.push({ code: "DANGLING_EVENT_TASK", message: `${event.id} references missing task ${event.task}.`, path });
   }
-  return { ok: errors.length === 0, command: "validate", data: { contracts: seen.size, decisions: decisions.length, events: events.length }, errors };
+  // The specification carries its own schema in the form registry; until now nothing enforced it.
+  const spec = validateSpecWorkspace(root);
+  errors.push(...spec);
+  const specNodes = readSpecNodes(root, readFormRegistry(root).forms).nodes.length;
+
+  return { ok: errors.length === 0, command: "validate", data: { tasks: seen.size, decisions: decisions.length, events: events.length, specNodes }, errors };
 }

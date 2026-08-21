@@ -5,18 +5,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { App } from "../../ui/src/App";
-import { decision, observation, batch, contract, workspace } from "./fixtures";
+import { decision, observation, batch, task, workspace } from "./fixtures";
 
-const WRITE_PATHS = ["/api/chat", "/api/approval/propose", "/api/approval/decide", "/api/contract/sign", "/api/batch", "/api/batch/contracts", "/api/observation", "/api/observation/resolve"];
+const WRITE_PATHS = ["/api/chat", "/api/approval/propose", "/api/approval/decide", "/api/task/sign", "/api/batch", "/api/batch/tasks", "/api/observation", "/api/observation/resolve"];
 
 const data = workspace({
-  contracts: [
-    contract("T-012", "Make the UI workspace argument explicit", { status: "active", batch: "P-003", assigned_agent: "codex", source_observation: "F-001" }),
-    contract("T-013", "Add a discoverable bug-reporting path", { status: "review", batch: "P-003" }),
-    contract("T-014", "Port collision returns raw EADDRINUSE", { status: "defined" }),
-    contract("T-029", "Reading the board makes no per-file git call", { status: "done" }),
+  tasks: [
+    task("T-012", "Make the UI workspace argument explicit", { status: "active", batch: "P-003", assigned_agent: "codex", source_observation: "F-001" }),
+    task("T-013", "Add a discoverable bug-reporting path", { status: "review", batch: "P-003" }),
+    task("T-014", "Port collision returns raw EADDRINUSE", { status: "defined" }),
+    task("T-029", "Reading the board makes no per-file git call", { status: "done" }),
   ],
-  batches: [batch("P-003", "Trustworthy daily use", { status: "active", contracts: ["T-012", "T-013"] })],
+  batches: [batch("P-003", "Trustworthy daily use", { status: "active", tasks: ["T-012", "T-013"] })],
   observations: [observation("F-001", "CLI help contradicts the --workspace default"), observation("F-002", "The board hides worktree state", { status: "resolved", became: "T-029" })],
   decisions: [decision("D-001", "The directory is the state")],
 });
@@ -52,16 +52,16 @@ describe("Passive board navigation", () => {
 
   it("keeps every view and entity drawer free of mutation controls", async () => {
     await boot();
-    const views = ["Observations", "Contracts", "Batches", "Decisions", "Home"];
+    const views = ["Observations", "Tasks", "Batches", "Decisions", "Home"];
     let rendered = document.body.innerHTML;
     for (const view of views) {
       go(view);
       rendered += document.body.innerHTML;
     }
-    go("Contracts");
-    const contractRow = screen.getAllByText("Make the UI workspace argument explicit").map((node) => node.closest("button")).find(Boolean);
-    if (!contractRow) throw new Error("Contract row was not rendered.");
-    fireEvent.click(contractRow);
+    go("Tasks");
+    const taskRow = screen.getAllByText("Make the UI workspace argument explicit").map((node) => node.closest("button")).find(Boolean);
+    if (!taskRow) throw new Error("Task row was not rendered.");
+    fireEvent.click(taskRow);
     rendered += document.body.innerHTML;
     fireEvent.keyDown(window, { key: "Escape" });
     // both overlays too
@@ -80,7 +80,7 @@ describe("Passive board navigation", () => {
 
   it("clicking every control on every view still issues no write", async () => {
     await boot();
-    for (const view of ["Home", "Observations", "Contracts", "Batches", "Decisions"]) {
+    for (const view of ["Home", "Observations", "Tasks", "Batches", "Decisions"]) {
       go(view);
       // Click everything that is currently on screen, then close whatever it opened.
       const controls = screen.getAllByRole("button");
@@ -98,7 +98,7 @@ describe("Passive board navigation", () => {
     const sheet = await screen.findByRole("dialog", { name: "CLI fallback" });
     expect(sheet.textContent).toContain("The calling chat is the primary approval surface.");
     expect(sheet.textContent).toContain("The board is read-only.");
-    expect(sheet.textContent).toContain("kotta contract close <id> --approve");
+    expect(sheet.textContent).toContain("kotta task close <id> --approve");
     fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByRole("dialog")).toBeNull();
   });

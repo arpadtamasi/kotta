@@ -102,6 +102,23 @@ describe("kotta sync", () => {
     );
   });
 
+  test("replaces Kotta-owned legacy task skill names without touching unowned directories", () => {
+    const ownedLegacy = "define-contract";
+    const unownedLegacy = "start-contract";
+    for (const name of [ownedLegacy, unownedLegacy]) {
+      mkdirSync(join(skillsHome, name), { recursive: true });
+      writeFileSync(join(skillsHome, name, "SKILL.md"), `legacy ${name}\n`);
+    }
+    writeFileSync(join(skillsHome, ".kotta-installed.json"), `${JSON.stringify({ skills: [ownedLegacy] })}\n`);
+
+    const result = run(["sync"]) as { data: { removed: string[] } };
+
+    expect(result.data.removed).toEqual([ownedLegacy]);
+    expect(existsSync(join(skillsHome, ownedLegacy))).toBe(false);
+    expect(existsSync(join(skillsHome, "define-task/SKILL.md"))).toBe(true);
+    expect(readFileSync(join(skillsHome, unownedLegacy, "SKILL.md"), "utf8")).toContain("legacy");
+  });
+
   test("writes nothing inside a repository that has no workspace", () => {
     const before = readdirSync(repository).sort();
 
@@ -134,11 +151,11 @@ describe("the workspace rules file", () => {
     "",
     "## Rules for agents",
     "",
-    "1. **No change without an active contract you hold the claim for.**",
+    "1. **No change without an active task you hold the claim for.**",
     "",
     "## Skills",
     "",
-    "A defect in Kotta itself is not a contract here: report it.",
+    "A defect in Kotta itself is not a task here: report it.",
     "",
     projectInstructions,
   ].join("\n");
@@ -154,27 +171,28 @@ describe("the workspace rules file", () => {
     expect(result.data.pointer).toBe("@.kotta/AGENTS.md");
   });
 
-  test("renders a generic effect-based contract boundary without product-specific exceptions", () => {
+  test("renders the accepted-commitment threshold and the spec/process ownership boundary", () => {
     run(["init"]);
-    const status = run(["status"]) as { data: { activeContracts: unknown[] } };
+    const status = run(["status"]) as { data: { activeTasks: unknown[] } };
 
-    expect(status.data.activeContracts).toEqual([]);
+    expect(status.data.activeTasks).toEqual([]);
     const written = readFileSync(rules(), "utf8").toLowerCase().replace(/\s+/g, " ");
-    expect(written).not.toContain("no change without an active contract");
-    expect(written).toContain("explicitly requested by the human");
-    expect(written).toContain("process-only documentation");
-    expect(written).toContain("tool or agent context");
-    expect(written).toContain("non-product housekeeping");
-    expect(written).toContain("product behaviour");
-    expect(written).toContain("source code");
-    expect(written).toContain("user-visible or published documentation");
-    expect(written).toContain("shipped artifacts or configuration");
-    expect(written).toContain("build or release behaviour");
-    expect(written).toContain("production operations");
-    expect(written).toContain("acceptance-relevant deliverable");
-    expect(written).toContain("active contract you hold the claim for");
+    expect(written).not.toContain("no change without an active task");
+    expect(written).toContain("a task gates execution of an accepted commitment");
+    expect(written).toContain("a human has accepted");
+    expect(written).toContain("checked against acceptance conditions");
+    expect(written).toContain("shaping, exploration, and specification may run without a task");
+    expect(written).toContain("specification itself is the accepted deliverable");
+    expect(written).toContain("crosses into executing the accepted outcome");
+    // Absorbing one task into another already dropped this clause once; the rule is only
+    // complete when it also says that maintaining Kotta is not the project's work.
+    expect(written).toContain("keeping kotta itself working");
+    expect(written).toContain("kotta is the project's tool, not its deliverable");
+    expect(written).toContain("active task you hold the claim for");
     expect(written).toContain("ask one focused question");
-    expect(written).toContain("never hand-edit `.kotta/`");
+    expect(written).toContain("project-owned specification knowledge");
+    expect(written).toContain("kotta-owned execution and lifecycle state");
+    expect(written).toContain("never hand-edit kotta-owned `process/` records");
   });
 
   test("sync refreshes its own copy and leaves an edited one alone", () => {
@@ -344,7 +362,7 @@ describe("kotta init", () => {
 
 describe("test isolation", () => {
   test("the suite never installs into the operator's real home", () => {
-    // A regression guard for a defect this contract introduced and then fixed: `init` installs
+    // A regression guard for a defect this task introduced and then fixed: `init` installs
     // skills, most tests call `init`, and the first full run wrote into ~/.claude/skills.
     expect(process.env.KOTTA_SKILLS_HOME).toBeTruthy();
     expect(process.env.KOTTA_SKILLS_HOME).not.toContain(join(homedir(), ".claude"));

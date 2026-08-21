@@ -1,17 +1,27 @@
-import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, rmdirSync, statSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { parseMarkdown, renderMarkdown } from "../core/markdown.js";
 import { readWorkspaceConfig } from "../core/config.js";
 import {
   LEGACY_WORKSPACE_DIRECTORY,
+  PROCESS_DIRECTORIES,
+  PROCESS_DIRECTORY,
+  SPEC_DIRECTORY,
+  WORKSPACE_DIRECTORIES,
+  WORKSPACE_SCHEMA_VERSION,
   WORKSPACE_DIRECTORY,
+  bundledFormsDirectory,
   ensureIndexMergeAttribute,
   findRepositoryRoot,
+  indexMergeAttribute,
+  registeredSpecDirectories,
   regenerateIndex,
+  syncWorkspaceForms,
+  validateSpecDirectory,
   workspaceDirectoryName,
 } from "../filesystem/workspace.js";
-import { CONTRACT_STATES } from "../filesystem/entities.js";
+import { TASK_STATES } from "../filesystem/entities.js";
 
 /**
  * `kotta migrate` — one command that carries a workspace from any older shape to the current one.
@@ -22,14 +32,15 @@ import { CONTRACT_STATES } from "../filesystem/entities.js";
  * - **Identifiers are never touched** (D-010). No id, no filename and no reference *value* moves; only
  *   directory names, field names and stored state values do. This is vocabulary, not identity — and
  *   the command proves it, by comparing the id set before and after and refusing to lose one.
- * - **Idempotent and interrupt-safe.** Every step is derived from what is on disk, never from a stored
- *   progress marker, and every rewrite is conditional on the old form being present. A partial run is
- *   finished by running the command again; a finished workspace reports "already current".
+ * - **Idempotent and fail-before-write.** The complete move/rewrite/create plan and every conflict is
+ *   resolved before mutation. A finished workspace reports "already current"; an unsafe mixed or
+ *   conflicting workspace is left byte-identical.
  * - **Dry run first.** `--dry-run` computes the identical plan and writes nothing.
  */
 
 export type MigrationChange =
   | { kind: "move"; from: string; to: string }
+  | { kind: "create"; path: string }
   | { kind: "rewrite"; path: string; fields: string[] }
   | { kind: "regenerate"; path: string };
 
@@ -49,30 +60,39 @@ export interface MigrateResult {
   data: MigrateData;
 }
 
-const CONTRACT_KEYS: Record<string, string> = { package: "batch", source_finding: "source_observation" };
-const BATCH_KEYS: Record<string, string> = { tickets: "contracts" };
+const TASK_KEYS: Record<string, string> = { package: "batch", source_finding: "source_observation" };
+// Compatibility: v3 and earlier workspaces called the work unit `contract`. Migration is the
+// one writer that understands those stored names and rewrites them into the v4 task vocabulary.
+const BATCH_KEYS: Record<string, string> = { tickets: "tasks", contracts: "tasks" };
 const BATCH_AUTHORITY_KEYS: Record<string, string> = {
   create_findings: "create_observations",
-  create_subtickets: "create_subcontracts",
-  reorder_independent_tickets: "reorder_independent_contracts",
+  create_subtickets: "create_subtasks",
+  reorder_independent_tickets: "reorder_independent_tasks",
+  create_subcontracts: "create_subtasks",
+  reorder_independent_contracts: "reorder_independent_tasks",
 };
 const OBSERVATION_KEYS: Record<string, string> = {
   finding_type: "observation_type",
-  related_ticket: "related_contract",
-  ticket: "contract",
+  related_ticket: "related_task",
+  ticket: "task",
+  related_contract: "related_task",
+  contract: "task",
 };
 const OBSERVATION_DISPOSITIONS: Record<string, string> = {
-  "create-ticket": "create-contract",
-  "attach-to-existing-ticket": "attach-to-existing-contract",
+  "create-ticket": "create-task",
+  "attach-to-existing-ticket": "attach-to-existing-task",
+  "create-contract": "create-task",
+  "attach-to-existing-contract": "attach-to-existing-task",
 };
-const CLAIM_KEYS: Record<string, string> = { ticket: "contract" };
+const CLAIM_KEYS: Record<string, string> = { ticket: "task", contract: "task" };
 const CONFIG_WORKFLOW_KEYS: Record<string, string> = {
   require_human_ready_approval: "require_human_sign_approval",
   allow_agent_findings: "allow_agent_observations",
-  allow_agent_ready_tickets: "allow_agent_defined_contracts",
+  allow_agent_ready_tickets: "allow_agent_defined_tasks",
+  allow_agent_defined_contracts: "allow_agent_defined_tasks",
 };
 const CONFIG_VALIDATION_KEYS: Record<string, string> = { require_verification_for_ready: "require_verification_for_defined" };
-const CONFIG_VERSION = 2;
+const CONFIG_VERSION = WORKSPACE_SCHEMA_VERSION;
 
 /**
  * A planned rewrite. `write` takes the target path because the file may move first: the plan is
@@ -115,15 +135,13 @@ function markdownFiles(directory: string): string[] {
   return readdirSync(directory).filter((name) => name.endsWith(".md")).sort().map((name) => join(directory, name));
 }
 
-function planEntity(path: string, entity: "contract" | "batch" | "observation"): Rewrite {
+function planEntity(path: string, entity: "task" | "batch" | "observation"): Rewrite {
   const parsed = parseMarkdown(readFileSync(path, "utf8"));
-  // gray-matter memoizes on the source string and hands back the same object; a migration must never
-  // mutate that shared instance, so every planner works on its own copy.
-  const data = structuredClone(parsed.data);
+  const data = parsed.data;
   const fields: string[] = [];
 
-  if (entity === "contract") {
-    fields.push(...renameKeys(data, CONTRACT_KEYS));
+  if (entity === "task") {
+    fields.push(...renameKeys(data, TASK_KEYS));
     if (data.status === "ready") { data.status = "defined"; fields.push("status: ready → defined"); }
     if (data.origin === "finding") { data.origin = "observation"; fields.push("origin: finding → observation"); }
   }
@@ -153,6 +171,16 @@ function planClaim(path: string): Rewrite {
   return { fields, write: (target) => writeFileSync(target, stringifyYaml(data)) };
 }
 
+function planEvent(path: string): Rewrite {
+  const data = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
+  const fields = renameKeys(data, { contract: "task" });
+  if (typeof data.action === "string" && data.action.startsWith("contract.")) {
+    data.action = `task.${data.action.slice("contract.".length)}`;
+    fields.push("action: contract.* → task.*");
+  }
+  return { fields, write: (target) => writeFileSync(target, `${JSON.stringify(data, null, 2)}\n`) };
+}
+
 function planConfig(path: string): Rewrite {
   const data = (parseYaml(readFileSync(path, "utf8")) ?? {}) as Record<string, unknown>;
   const fields = renameKeys(data, { packages: "batches" });
@@ -172,29 +200,19 @@ function isRealDirectory(path: string): boolean {
 }
 
 /**
- * Moves `from` onto `to`. When `to` already exists — what an interrupted earlier run leaves behind —
- * the entries are merged one by one and the emptied source is removed, so re-running always converges.
+ * Moves one preflighted source onto an absent destination. Conflict handling belongs entirely to
+ * planning: reaching this function means every target was proven absent before the first write.
  */
 function moveDirectory(from: string, to: string): void {
   if (!existsSync(from)) return;
-  if (!existsSync(to)) {
-    mkdirSync(dirname(to), { recursive: true });
-    renameSync(from, to);
-    return;
-  }
-  for (const name of readdirSync(from)) {
-    const source = join(from, name);
-    const target = join(to, name);
-    if (!existsSync(target)) renameSync(source, target);
-    else if (statSync(source).isDirectory()) moveDirectory(source, target);
-    else unlinkSync(source); // identical filename on both sides: the migrated copy is already there.
-  }
-  rmdirSync(from);
+  if (existsSync(to)) throw new Error(`Migration destination already exists: ${to}. Nothing was moved.`);
+  mkdirSync(dirname(to), { recursive: true });
+  renameSync(from, to);
 }
 
 /** Every entity directory an id can live in, under either vocabulary. Used for the id-stability proof. */
 const ID_DIRECTORIES = [
-  ...CONTRACT_STATES.map(String), "ready",
+  ...TASK_STATES.map(String), "ready",
   "observations/new", "observations/resolved", "findings/new", "findings/resolved",
   ...["backlog", "ready", "defined", "active", "done"].flatMap((state) => [`batches/${state}`, `packages/${state}`]),
   "decisions",
@@ -203,7 +221,8 @@ const ID_DIRECTORIES = [
 /** Every id in the workspace, read from the frontmatter: the set that must be identical afterwards (D-010). */
 export function workspaceIds(workspace: string): string[] {
   const ids = new Set<string>();
-  for (const directory of ID_DIRECTORIES) {
+  const directories = [...ID_DIRECTORIES, ...ID_DIRECTORIES.map((directory) => `${PROCESS_DIRECTORY}/${directory}`)];
+  for (const directory of directories) {
     for (const path of markdownFiles(join(workspace, directory))) {
       const id = String(parseMarkdown(readFileSync(path, "utf8")).data.id ?? "").trim();
       if (id) ids.add(id);
@@ -227,34 +246,125 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
   const dryRun = Boolean(options.dryRun);
   const changes: MigrationChange[] = [];
 
-  // 1. The workspace directory itself. A `.a-team` symlink beside a real `.kotta` is the supported
-  //    bridge (D-007), not something to migrate: only a real legacy directory moves.
+  // 1. Resolve the physical workspace name. Two real roots are never merged: neither one has
+  // authority over the other, and discovering that only after writes would be data loss.
   const legacyWorkspace = join(root, LEGACY_WORKSPACE_DIRECTORY);
   const targetWorkspace = join(root, WORKSPACE_DIRECTORY);
+  if (isRealDirectory(legacyWorkspace) && isRealDirectory(targetWorkspace)) {
+    throw new Error(`Migration cannot choose between ${legacyWorkspace} and ${targetWorkspace}: both are real directories. Nothing was written.`);
+  }
   const movesWorkspace = isRealDirectory(legacyWorkspace) && !isRealDirectory(targetWorkspace);
   const workspace = movesWorkspace ? legacyWorkspace : join(root, workspaceDirectoryName(root));
   if (!existsSync(workspace)) throw new Error(`No Kotta workspace exists at ${root}. Run 'kotta init' first.`);
   if (movesWorkspace) changes.push({ kind: "move", from: LEGACY_WORKSPACE_DIRECTORY, to: WORKSPACE_DIRECTORY });
   const idsBefore = workspaceIds(workspace);
 
-  // 2. Entity directories, planned against the layout that is actually on disk.
+  // 2. Read and validate the data-driven spec registry before classifying any project directory.
+  // A form controls where its nodes move, so an unsafe or ambiguous declaration is a hard preflight
+  // failure, not something migration tries to repair.
   const label = basename(workspace);
-  const moves: Array<{ from: string; to: string }> = [];
-  const move = (from: string, to: string) => {
-    if (!existsSync(join(workspace, from))) return;
-    moves.push({ from, to });
-    changes.push({ kind: "move", from: `${label}/${from}`, to: `${WORKSPACE_DIRECTORY}/${to}` });
-  };
-  move("ready", "defined");
-  move("findings", "observations");
-  move("packages", "batches");
-  // `packages/ready` becomes `batches/ready` in the move above, and only then `batches/defined`.
-  if (existsSync(join(workspace, "packages/ready")) || existsSync(join(workspace, "batches/ready"))) {
-    moves.push({ from: "batches/ready", to: "batches/defined" });
-    changes.push({ kind: "move", from: `${label}/batches/ready`, to: `${WORKSPACE_DIRECTORY}/batches/defined` });
+  const flatForms = join(workspace, "forms");
+  const nestedForms = join(workspace, SPEC_DIRECTORY, "forms");
+  if (existsSync(flatForms) && existsSync(nestedForms)) {
+    throw new Error(`Migration destination conflict: both ${flatForms} and ${nestedForms} exist. Nothing was written.`);
+  }
+  if (existsSync(flatForms) && !isRealDirectory(flatForms)) {
+    throw new Error(`Migration cannot safely move the form registry at ${flatForms}: it must be a real directory inside the workspace. Nothing was written.`);
+  }
+  const formDirectory = existsSync(flatForms) ? flatForms : existsSync(nestedForms) ? nestedForms : bundledFormsDirectory();
+  let specDirectories: string[] = [];
+  try {
+    specDirectories = registeredSpecDirectories(root, formDirectory);
+  } catch (error) {
+    throw new Error(`Migration cannot classify specification nodes: ${error instanceof Error ? error.message : String(error)} Nothing was written.`);
+  }
+  const reservedRoots = new Set([
+    ...PROCESS_DIRECTORIES.map((directory) => directory.split("/")[0]),
+    ...["ready", "findings", "packages", SPEC_DIRECTORY, PROCESS_DIRECTORY, "forms"],
+  ]);
+  for (const directory of specDirectories) {
+    validateSpecDirectory(directory, formDirectory);
+    if (reservedRoots.has(directory.split("/")[0])) {
+      throw new Error(`Migration cannot safely classify registered spec directory '${directory}': its root is reserved for workspace or process data. Nothing was written.`);
+    }
   }
 
-  // 3. Frontmatter, claims and config: planned on today's paths, applied to tomorrow's.
+  const registeredRoots = new Set(specDirectories.map((directory) => directory.split("/")[0]));
+  const unsafeSpecPaths: string[] = [];
+  for (const top of registeredRoots) {
+    const source = join(workspace, top);
+    if (!existsSync(source)) continue;
+    if (!isRealDirectory(source)) {
+      unsafeSpecPaths.push(source);
+      continue;
+    }
+    const walk = (current: string, relativePath: string) => {
+      for (const entry of readdirSync(current, { withFileTypes: true })) {
+        const childRelative = `${relativePath}/${entry.name}`;
+        const insideDeclared = specDirectories.some((directory) => childRelative === directory || childRelative.startsWith(`${directory}/`));
+        const ancestorOfDeclared = specDirectories.some((directory) => directory.startsWith(`${childRelative}/`));
+        if (!insideDeclared && !ancestorOfDeclared) {
+          unsafeSpecPaths.push(join(workspace, childRelative));
+          continue;
+        }
+        if (entry.isDirectory() && !insideDeclared) walk(join(current, entry.name), childRelative);
+      }
+    };
+    walk(source, top);
+  }
+  if (unsafeSpecPaths.length) {
+    throw new Error(`Migration cannot safely classify registered specification director${unsafeSpecPaths.length === 1 ? "y" : "ies"}: ${unsafeSpecPaths.join(", ")}. Nothing was written.`);
+  }
+  const knownRoots = new Set([...reservedRoots, ...registeredRoots]);
+  const unknownRoots = readdirSync(workspace, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && !knownRoots.has(entry.name))
+    .map((entry) => join(workspace, entry.name));
+  if (unknownRoots.length) {
+    throw new Error(`Migration cannot classify workspace data director${unknownRoots.length === 1 ? "y" : "ies"}: ${unknownRoots.join(", ")}. Declare each spec node directory in a form or move unrelated data out of the workspace. Nothing was written.`);
+  }
+
+  // A nested namespace plus any flat data is a destination conflict even when the exact child is
+  // absent: proceeding would bless a half-migrated workspace and make later recovery ambiguous.
+  const flatRoots = [...reservedRoots, ...registeredRoots]
+    .filter((name) => ![SPEC_DIRECTORY, PROCESS_DIRECTORY].includes(name) && existsSync(join(workspace, name)));
+  if ((existsSync(join(workspace, SPEC_DIRECTORY)) || existsSync(join(workspace, PROCESS_DIRECTORY))) && flatRoots.length) {
+    throw new Error(`Migration found mixed legacy and nested workspace data: ${flatRoots.map((name) => join(workspace, name)).join(", ")}. Nothing was written.`);
+  }
+
+  // 3. Plan every path move. Every destination is checked now, before the first mutation.
+  const moves: Array<{ from: string; to: string }> = [];
+  const move = (from: string, to: string, virtual = false, reportedFrom = from) => {
+    if (!virtual && !existsSync(join(workspace, from))) return;
+    if (moves.some((entry) => entry.to === to)) {
+      throw new Error(`Migration has multiple sources for ${join(workspace, to)}. Nothing was written.`);
+    }
+    if (existsSync(join(workspace, to))) {
+      throw new Error(`Migration destination already exists: ${join(workspace, to)}. Nothing was written.`);
+    }
+    moves.push({ from, to });
+    changes.push({ kind: "move", from: `${label}/${reportedFrom}`, to: `${WORKSPACE_DIRECTORY}/${to}` });
+  };
+
+  for (const state of TASK_STATES) move(state, `${PROCESS_DIRECTORY}/${state}`);
+  move("ready", `${PROCESS_DIRECTORY}/defined`);
+  move("findings", `${PROCESS_DIRECTORY}/observations`);
+  move("observations", `${PROCESS_DIRECTORY}/observations`);
+
+  const batchSource = existsSync(join(workspace, "packages")) ? "packages" : existsSync(join(workspace, "batches")) ? "batches" : null;
+  if (batchSource) {
+    const ready = existsSync(join(workspace, batchSource, "ready"));
+    if (ready && existsSync(join(workspace, batchSource, "defined"))) {
+      throw new Error(`Migration cannot merge ${join(workspace, batchSource, "ready")} with ${join(workspace, batchSource, "defined")}. Nothing was written.`);
+    }
+    move(batchSource, `${PROCESS_DIRECTORY}/batches`);
+    if (ready) move(`${PROCESS_DIRECTORY}/batches/ready`, `${PROCESS_DIRECTORY}/batches/defined`, true, `${batchSource}/ready`);
+  }
+  for (const directory of ["profiles", "claims", "events", "decisions"]) move(directory, `${PROCESS_DIRECTORY}/${directory}`);
+  move("forms", `${SPEC_DIRECTORY}/forms`);
+  for (const top of registeredRoots) move(top, `${SPEC_DIRECTORY}/${top}`);
+  if (existsSync(join(workspace, "index.md"))) move("index.md", `${PROCESS_DIRECTORY}/index.md`);
+
+  // 4. Frontmatter, claims and config: planned on today's paths, applied to tomorrow's.
   const rewrites: Array<{ relativePath: string; rewrite: Rewrite }> = [];
   const plan = (path: string, planner: (path: string) => Rewrite) => {
     const rewrite = planner(path);
@@ -264,37 +374,82 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
     changes.push({ kind: "rewrite", path: relativePath, fields: rewrite.fields });
   };
 
-  for (const state of [...CONTRACT_STATES.map(String), "ready"]) {
-    for (const path of markdownFiles(join(workspace, state))) plan(path, (file) => planEntity(file, "contract"));
-  }
-  for (const directory of ["batches", "packages"]) {
-    for (const state of ["backlog", "ready", "defined", "active", "done"]) {
-      for (const path of markdownFiles(join(workspace, directory, state))) plan(path, (file) => planEntity(file, "batch"));
+  for (const prefix of ["", PROCESS_DIRECTORY]) {
+    for (const state of [...TASK_STATES.map(String), "ready"]) {
+      for (const path of markdownFiles(join(workspace, prefix, state))) plan(path, (file) => planEntity(file, "task"));
     }
   }
-  for (const directory of ["observations", "findings"]) {
-    for (const state of ["new", "resolved"]) {
-      for (const path of markdownFiles(join(workspace, directory, state))) plan(path, (file) => planEntity(file, "observation"));
+  for (const prefix of ["", PROCESS_DIRECTORY]) {
+    for (const directory of ["batches", "packages"]) {
+      for (const state of ["backlog", "ready", "defined", "active", "done"]) {
+        for (const path of markdownFiles(join(workspace, prefix, directory, state))) plan(path, (file) => planEntity(file, "batch"));
+      }
+    }
+    for (const directory of ["observations", "findings"]) {
+      for (const state of ["new", "resolved"]) {
+        for (const path of markdownFiles(join(workspace, prefix, directory, state))) plan(path, (file) => planEntity(file, "observation"));
+      }
     }
   }
-  const claims = join(workspace, "claims");
-  if (existsSync(claims)) {
-    for (const name of readdirSync(claims).filter((entry) => entry.endsWith(".yaml")).sort()) plan(join(claims, name), planClaim);
+  for (const claims of [join(workspace, "claims"), join(workspace, PROCESS_DIRECTORY, "claims")]) {
+    if (existsSync(claims)) {
+      for (const name of readdirSync(claims).filter((entry) => entry.endsWith(".yaml")).sort()) plan(join(claims, name), planClaim);
+    }
+  }
+  for (const events of [join(workspace, "events"), join(workspace, PROCESS_DIRECTORY, "events")]) {
+    if (!existsSync(events)) continue;
+    for (const entity of readdirSync(events, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort()) {
+      for (const name of readdirSync(join(events, entity)).filter((entry) => entry.endsWith(".json")).sort()) {
+        plan(join(events, entity, name), planEvent);
+      }
+    }
   }
   const config = join(workspace, "config.yaml");
   if (existsSync(config)) plan(config, planConfig);
 
+  // Required empty directories are material workspace structure even though Git cannot preserve
+  // them. Creating them is explicit in the dry-run and idempotent on the next run.
+  const required = [
+    ...PROCESS_DIRECTORIES.map((directory) => `${PROCESS_DIRECTORY}/${directory}`),
+    `${SPEC_DIRECTORY}/forms`,
+    ...specDirectories.map((directory) => `${SPEC_DIRECTORY}/${directory}`),
+  ];
+  const futurePathExists = (path: string): boolean => {
+    if (existsSync(join(workspace, path))) return true;
+    return moves.some((entry) => {
+      if (path === entry.to) return true;
+      if (!path.startsWith(`${entry.to}/`)) return false;
+      const suffix = path.slice(entry.to.length + 1);
+      return existsSync(join(workspace, entry.from, suffix));
+    });
+  };
+  const creates = [...new Set(required)].filter((path) => !futurePathExists(path));
+  for (const path of creates) changes.push({ kind: "create", path: `${WORKSPACE_DIRECTORY}/${path}` });
+
+  const attribute = indexMergeAttribute(WORKSPACE_DIRECTORY);
+  const attributesPath = join(root, ".gitattributes");
+  const attributes = existsSync(attributesPath) ? readFileSync(attributesPath, "utf8") : "";
+  const staleAttributes = WORKSPACE_DIRECTORIES.flatMap((directory) => [
+    `${directory}/index.md merge=union`,
+    indexMergeAttribute(directory),
+  ]).filter((candidate) => candidate !== attribute);
+  const attributeLines = attributes.split(/\r?\n/);
+  const attributeCurrent = attributeLines.filter((line) => line === attribute).length === 1 && !staleAttributes.some((line) => attributeLines.includes(line));
+  if (!attributeCurrent) changes.push({ kind: "rewrite", path: ".gitattributes", fields: [`workspace index merge attribute → ${attribute}`] });
+
   const current = changes.length === 0;
-  if (!current) changes.push({ kind: "regenerate", path: "index.md" });
+  if (!current) changes.push({ kind: "regenerate", path: `${WORKSPACE_DIRECTORY}/${PROCESS_DIRECTORY}/index.md` });
 
   if (!dryRun && !current) {
     if (movesWorkspace) {
       moveDirectory(legacyWorkspace, targetWorkspace);
-      ensureIndexMergeAttribute(root);
     }
     const applied = movesWorkspace ? targetWorkspace : workspace;
     for (const entry of moves) moveDirectory(join(applied, entry.from), join(applied, entry.to));
     for (const entry of rewrites) entry.rewrite.write(join(applied, remap(entry.relativePath, moves)));
+    for (const path of creates) mkdirSync(join(applied, path), { recursive: true });
+    syncWorkspaceForms(root);
+    ensureIndexMergeAttribute(root);
     regenerateIndex(root);
   }
 
@@ -335,6 +490,7 @@ export function formatMigration(result: MigrateResult): string {
   ];
   for (const change of data.changes) {
     if (change.kind === "move") lines.push(`  move       ${change.from} → ${change.to}`);
+    else if (change.kind === "create") lines.push(`  create     ${change.path}`);
     else if (change.kind === "rewrite") lines.push(`  rewrite    ${change.path}: ${change.fields.join(", ")}`);
     else lines.push(`  regenerate ${change.path}`);
   }

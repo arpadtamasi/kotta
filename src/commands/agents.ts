@@ -152,7 +152,7 @@ function legacyProjectSection(current: string): string | null {
   const prelude = current.slice(0, boundary.index).replaceAll("\r\n", "\n");
   if (!prelude.startsWith(LEGACY_KOTTA_OPENING)) return null;
   if (!LEGACY_KOTTA_SECTIONS.every((section) => prelude.includes(`\n${section}\n`))) return null;
-  if (!prelude.includes("A defect in Kotta itself is not a contract here:")) return null;
+  if (!prelude.includes("A defect in Kotta itself is not a task here:")) return null;
   return current.slice(boundary.index);
 }
 

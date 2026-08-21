@@ -28,8 +28,8 @@ function measure(): string[][] {
   return captured;
 }
 
-function contract(id: string, status: string): string {
-  return `---\nid: ${id}\ntitle: Synthetic contract ${id}\nstatus: ${status}\ntypes: [bug]\nprofiles: [bug]\n---\n# ${id} — Synthetic contract\n\n## Outcome\n\nBatch reads stay fast.\n`;
+function task(id: string, status: string): string {
+  return `---\nid: ${id}\ntitle: Synthetic task ${id}\nstatus: ${status}\ntypes: [bug]\nprofiles: [bug]\n---\n# ${id} — Synthetic task\n\n## Outcome\n\nBatch reads stay fast.\n`;
 }
 
 function run(root: string, args: string[]): void {
@@ -40,14 +40,14 @@ function run(root: string, args: string[]): void {
 // Legacy-name fixture on purpose (T-020): the batched ref read must work on a `.a-team/` workspace too.
 function bigWorkspace(entities: number, options: { checkoutSideBranch: boolean }): string {
   const root = realpathSync(mkdtempSync(join(tmpdir(), "kotta-ui-batch-")));
-  mkdirSync(join(root, ".a-team/defined"), { recursive: true });
-  writeFileSync(join(root, ".a-team/config.yaml"), "version: 1\nproject:\n  name: batch-fixture\n");
+  mkdirSync(join(root, ".a-team/process/defined"), { recursive: true });
+  writeFileSync(join(root, ".a-team/config.yaml"), "version: 3\nproject:\n  name: batch-fixture\n");
   for (let index = 1; index <= entities; index++) {
     const id = `T-${String(index).padStart(3, "0")}`;
-    writeFileSync(join(root, `.a-team/defined/${id}-synthetic.md`), contract(id, "defined"));
+    writeFileSync(join(root, `.a-team/process/defined/${id}-synthetic.md`), task(id, "defined"));
   }
-  mkdirSync(join(root, ".a-team/claims"), { recursive: true });
-  writeFileSync(join(root, ".a-team/claims/T-001.yaml"), "contract: T-001\nagent: codex\nbranch: feat/T-001\nworktree: .worktrees/T-001\nstarted_at: 2026-08-14T08:30:00Z\n");
+  mkdirSync(join(root, ".a-team/process/claims"), { recursive: true });
+  writeFileSync(join(root, ".a-team/process/claims/T-001.yaml"), "task: T-001\nagent: codex\nbranch: feat/T-001\nworktree: .worktrees/T-001\nstarted_at: 2026-08-14T08:30:00Z\n");
   run(root, ["init", "-b", "main"]);
   run(root, ["add", "-A"]);
   run(root, ["commit", "-m", "fixture: synthetic workspace"]);
@@ -55,9 +55,9 @@ function bigWorkspace(entities: number, options: { checkoutSideBranch: boolean }
   return root;
 }
 
-function commitContractOnMain(root: string, id: string): void {
+function commitTaskOnMain(root: string, id: string): void {
   run(root, ["checkout", "-q", "main"]);
-  writeFileSync(join(root, `.a-team/defined/${id}-synthetic.md`), contract(id, "defined"));
+  writeFileSync(join(root, `.a-team/process/defined/${id}-synthetic.md`), task(id, "defined"));
   run(root, ["add", "-A"]);
   run(root, ["commit", "-m", `fixture: add ${id}`]);
   run(root, ["checkout", "-q", "work"]);
@@ -71,10 +71,10 @@ describe("batched, cached base-ref reads (T-029)", () => {
     const workspace = readWorkspace(root);
     const calls = measure();
 
-    expect(workspace.contracts).toHaveLength(210);
-    expect(workspace.contracts.every((entry) => entry.status === "defined")).toBe(true);
-    expect(workspace.contracts.find((entry) => entry.id === "T-210")).toMatchObject({ title: "Synthetic contract T-210" });
-    expect(workspace.contracts.find((entry) => entry.id === "T-001")).toMatchObject({ claim: { agent: "codex", started_at: "2026-08-14T08:30:00Z" } });
+    expect(workspace.tasks).toHaveLength(210);
+    expect(workspace.tasks.every((entry) => entry.status === "defined")).toBe(true);
+    expect(workspace.tasks.find((entry) => entry.id === "T-210")).toMatchObject({ title: "Synthetic task T-210" });
+    expect(workspace.tasks.find((entry) => entry.id === "T-001")).toMatchObject({ claim: { agent: "codex", started_at: "2026-08-14T08:30:00Z" } });
     expect(workspace.claims).toHaveLength(1);
     expect(calls.length).toBeLessThanOrEqual(2);
     expect(calls.map((args) => args[0]).sort()).toEqual(["archive", "rev-parse"]);
@@ -85,32 +85,32 @@ describe("batched, cached base-ref reads (T-029)", () => {
     const workspace = readWorkspace(root);
     const calls = measure();
 
-    expect(workspace.contracts).toHaveLength(210);
+    expect(workspace.tasks).toHaveLength(210);
     expect(calls.map((args) => args[0])).not.toContain("archive");
     expect(calls.map((args) => args[0])).not.toContain("show");
     expect(calls).toHaveLength(1); // rev-parse only
   });
 
   test("a new commit on the base ref invalidates the cache and refreshes the data", () => {
-    commitContractOnMain(root, "T-211");
+    commitTaskOnMain(root, "T-211");
     measure();
     const workspace = readWorkspace(root);
     const calls = measure();
 
     expect(calls.map((args) => args[0])).toContain("archive");
-    expect(workspace.contracts).toHaveLength(211);
-    expect(workspace.contracts.find((entry) => entry.id === "T-211")).toMatchObject({ status: "defined" });
+    expect(workspace.tasks).toHaveLength(211);
+    expect(workspace.tasks.find((entry) => entry.id === "T-211")).toMatchObject({ status: "defined" });
   });
 
   test("on the base branch, uncommitted additions still show with one extra status call", () => {
     const base = bigWorkspace(3, { checkoutSideBranch: false });
-    writeFileSync(join(base, ".a-team/defined/T-004-synthetic.md"), contract("T-004", "defined"));
+    writeFileSync(join(base, ".a-team/process/defined/T-004-synthetic.md"), task("T-004", "defined"));
     measure();
     const workspace = readWorkspace(base);
     const calls = measure();
 
-    expect(workspace.contracts).toHaveLength(4);
-    expect(workspace.contracts.find((entry) => entry.id === "T-004")).toMatchObject({ status: "defined" });
+    expect(workspace.tasks).toHaveLength(4);
+    expect(workspace.tasks.find((entry) => entry.id === "T-004")).toMatchObject({ status: "defined" });
     expect(calls.map((args) => args[0]).sort()).toEqual(["archive", "rev-parse", "status"]);
   });
 
@@ -123,8 +123,8 @@ describe("batched, cached base-ref reads (T-029)", () => {
       const workspace = readWorkspace(fallbackRoot);
       const calls = measure();
 
-      expect(workspace.contracts).toHaveLength(5);
-      expect(workspace.contracts.find((entry) => entry.id === "T-003")).toMatchObject({ status: "defined" });
+      expect(workspace.tasks).toHaveLength(5);
+      expect(workspace.tasks.find((entry) => entry.id === "T-003")).toMatchObject({ status: "defined" });
       expect(calls.map((args) => args[0])).toContain("show");
       expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining("falling back to per-file git reads"));
     } finally {

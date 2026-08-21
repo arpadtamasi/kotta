@@ -7,7 +7,7 @@ import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { EntityDrawer, readBoard, type Workspace } from "../../ui/src/App";
-import { decision, observation, batch, contract, workspace } from "./fixtures";
+import { decision, observation, batch, task, workspace } from "./fixtures";
 
 afterEach(() => {
   cleanup();
@@ -15,22 +15,22 @@ afterEach(() => {
 });
 
 const populated = workspace({
-  contracts: [
-    contract("T-012", "Make the UI workspace argument explicit", {
+  tasks: [
+    task("T-012", "Make the UI workspace argument explicit", {
       status: "active", batch: "P-003", source_observation: "F-001", assigned_agent: "codex", branch: "kotta/t-012",
-      claim: { contract: "T-012", agent: "codex", branch: "kotta/t-012", worktree: ".worktrees/T-012", started_at: "2026-08-14T08:00:00Z" },
+      claim: { task: "T-012", agent: "codex", branch: "kotta/t-012", worktree: ".worktrees/T-012", started_at: "2026-08-14T08:00:00Z" },
       sections: { user_goal: "Know which workspace is being read.", outcome: "The argument is explicit.", acceptance: "The path is visible.", constraints: "The board stays read-only.", verification: "Run the component test.", scope: "The board and UI server." },
     }),
-    contract("T-013", "Add a discoverable bug-reporting path", { status: "review", batch: "P-003" }),
-    contract("T-014", "Port collision returns raw EADDRINUSE", { status: "defined", source_observation: "F-404" }),
-    contract("T-019", "Sweep unfinished work", { status: "backlog" }),
+    task("T-013", "Add a discoverable bug-reporting path", { status: "review", batch: "P-003" }),
+    task("T-014", "Port collision returns raw EADDRINUSE", { status: "defined", source_observation: "F-404" }),
+    task("T-019", "Sweep unfinished work", { status: "backlog" }),
   ],
-  batches: [batch("P-003", "Trustworthy daily use", { status: "active", contracts: ["T-012", "T-013"], sections: { goal: "One module: truthful execution state." } })],
+  batches: [batch("P-003", "Trustworthy daily use", { status: "active", tasks: ["T-012", "T-013"], sections: { goal: "One module: truthful execution state." } })],
   observations: [observation("F-001", "CLI help contradicts the --workspace default", { status: "resolved", became: "T-012", discovered_during: "T-019" })],
   decisions: [decision("D-001", "The directory is the state")],
   events: [
-    { id: "E-01kzzzzzzzzzzzzzzzzzzzzzzz", entity: "T-012", contract: "T-012", kind: "lifecycle", created_at: "2026-08-14T07:00:00Z", state: "execution-implemented", summary: "Executor completed.", payload: { started_at: "2026-08-14T06:47:30Z", completed_at: "2026-08-14T07:00:00Z", duration_ms: 750_000, token_usage: { input_tokens: 1000, output_tokens: 250, total_tokens: 1250 } } },
-    { id: "E-01kzzzzzzzzzzzzzzzzzzzzzzy", entity: "T-012", contract: "T-012", kind: "message", created_at: "2026-08-14T07:05:00Z", role: "human", text: "Keep the activity secondary." },
+    { id: "E-01kzzzzzzzzzzzzzzzzzzzzzzz", entity: "T-012", task: "T-012", kind: "lifecycle", created_at: "2026-08-14T07:00:00Z", state: "execution-implemented", summary: "Executor completed.", payload: { started_at: "2026-08-14T06:47:30Z", completed_at: "2026-08-14T07:00:00Z", duration_ms: 750_000, token_usage: { input_tokens: 1000, output_tokens: 250, total_tokens: 1250 } } },
+    { id: "E-01kzzzzzzzzzzzzzzzzzzzzzzy", entity: "T-012", task: "T-012", kind: "message", created_at: "2026-08-14T07:05:00Z", role: "human", text: "Keep the activity secondary." },
   ],
 });
 
@@ -55,10 +55,10 @@ function openContext() {
 }
 
 describe("Entity drawer — derivation", () => {
-  it("names the contract by its title and draws came from and goes with", () => {
+  it("names the task by its title and draws came from and goes with", () => {
     openDrawer("T-012");
     openContext();
-    const drawer = screen.getByRole("dialog", { name: "contract: Make the UI workspace argument explicit" });
+    const drawer = screen.getByRole("dialog", { name: "task: Make the UI workspace argument explicit" });
     expect(within(drawer).getByRole("heading", { name: "Make the UI workspace argument explicit" })).toBeDefined();
     const derivation = within(drawer).getByRole("region", { name: "Derivation" });
     expect(within(derivation).getByText("came from")).toBeDefined();
@@ -79,11 +79,11 @@ describe("Entity drawer — derivation", () => {
     expect(within(derivation).getByText(/no such entity on disk/)).toBeDefined();
   });
 
-  it("says plainly when a contract has no source and no batch", () => {
+  it("says plainly when a task has no source and no batch", () => {
     openDrawer("T-019");
     openContext();
     const derivation = screen.getByRole("region", { name: "Derivation" });
-    expect(within(derivation).getByText(/written straight as a contract/)).toBeDefined();
+    expect(within(derivation).getByText(/written straight as a task/)).toBeDefined();
     expect(within(derivation).getByText("Not in a batch — nothing else has to be solved together with it.")).toBeDefined();
   });
 
@@ -92,6 +92,18 @@ describe("Entity drawer — derivation", () => {
     const derivation = screen.getByRole("region", { name: "Derivation" });
     expect(within(derivation).getByText("Sweep unfinished work")).toBeDefined();
     expect(within(derivation).getByText("Make the UI workspace argument explicit")).toBeDefined();
+  });
+
+  it("shows the specification nodes an amend-spec observation touched, instead of a task", () => {
+    const data = workspace({ observations: [observation("F-050", "The lifecycle glossary is silent on amend-spec", {
+      status: "resolved", disposition: "amend-spec", spec: ["SM-01m0f0wn892ntx934by9gwednb", "GT-01m0f0wn89ep8038fwn1nf1kkc"],
+    })] });
+    openDrawer("F-050", data);
+    const derivation = screen.getByRole("region", { name: "Derivation" });
+    expect(within(derivation).getByText(/Amended the specification/)).toBeDefined();
+    expect(within(derivation).getByText("SM-01m0f0wn892ntx934by9gwednb")).toBeDefined();
+    expect(within(derivation).getByText("GT-01m0f0wn89ep8038fwn1nf1kkc")).toBeDefined();
+    expect(within(derivation).queryByText(/No task was written/)).toBeNull();
   });
 
   it("lists the members of a batch as its goes-with", () => {
@@ -108,7 +120,7 @@ describe("Entity drawer — derivation", () => {
   });
 });
 
-describe("Entity drawer — focused contract information", () => {
+describe("Entity drawer — focused task information", () => {
   it("opens on a structured brief and keeps chat last", () => {
     openDrawer("T-012");
     expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Brief", "Context", "Activity"]);
@@ -180,21 +192,21 @@ describe("Entity drawer — open and close", () => {
 });
 
 // Nesting is grouping (D-01kztxvppd40r77cq7kw9b8wzr): a parent that names only child batches has
-// work in it, and the board has to show both the children and the contracts underneath them.
+// work in it, and the board has to show both the children and the tasks underneath them.
 describe("Entity drawer — a batch that groups other batches", () => {
   const nested = workspace({
-    contracts: [
-      contract("T-100", "Build parser", { status: "done", batch: "P-010" }),
-      contract("T-101", "Expose command", { status: "active", batch: "P-011" }),
+    tasks: [
+      task("T-100", "Build parser", { status: "done", batch: "P-010" }),
+      task("T-101", "Expose command", { status: "active", batch: "P-011" }),
     ],
     batches: [
-      batch("P-010", "Core", { contracts: ["T-100"] }),
-      batch("P-011", "Surface", { contracts: ["T-101"] }),
+      batch("P-010", "Core", { tasks: ["T-100"] }),
+      batch("P-011", "Surface", { tasks: ["T-101"] }),
       batch("P-012", "Product", { batches: ["P-010", "P-011"] }),
     ],
   });
 
-  it("draws its children and the contracts underneath them, not an empty batch", () => {
+  it("draws its children and the tasks underneath them, not an empty batch", () => {
     openDrawer("P-012", nested);
     const dependencyTree = screen.getByRole("region", { name: "Dependency tree" });
     expect(within(dependencyTree).getByLabelText("Nested batches in Product")).toBeDefined();
@@ -204,9 +216,9 @@ describe("Entity drawer — a batch that groups other batches", () => {
 
     expect(within(derivation).getByRole("button", { name: /Core/ })).toBeDefined();
     expect(within(derivation).getByRole("button", { name: /Surface/ })).toBeDefined();
-    // The work list is the subtree: a parent with no direct contracts is not empty.
+    // The work list is the subtree: a parent with no direct tasks is not empty.
     expect(within(derivation).getByRole("button", { name: /Build parser/ })).toBeDefined();
     expect(within(derivation).getByRole("button", { name: /Expose command/ })).toBeDefined();
-    expect(within(derivation).queryByText("No member contracts.")).toBeNull();
+    expect(within(derivation).queryByText("No member tasks.")).toBeNull();
   });
 });

@@ -1,0 +1,9 @@
+{
+  "entity": "T-01m0ggf64xdh1644m2k8ahwf4p",
+  "task": "T-01m0ggf64xdh1644m2k8ahwf4p",
+  "kind": "lifecycle",
+  "state": "backlog",
+  "summary": "Task definition validated and awaits the workspace's opt-in sign gate.",
+  "id": "E-01m0gggg4ez9cvbjphsrszg57m",
+  "created_at": "2026-08-20T21:16:24.079Z"
+}

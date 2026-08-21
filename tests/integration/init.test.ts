@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, readdirSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
@@ -20,9 +20,17 @@ describe("kotta init", () => {
     expect(readFileSync(join(repository, ".kotta/config.yaml"), "utf8")).toContain(
       "base_branch: main",
     );
-    expect(readFileSync(join(repository, ".kotta/index.md"), "utf8")).toContain(
+    expect(readFileSync(join(repository, ".kotta/config.yaml"), "utf8")).toContain("version: 4");
+    expect(readFileSync(join(repository, ".kotta/config.yaml"), "utf8")).toContain("require_human_sign_approval: false");
+    expect(readFileSync(join(repository, ".kotta/process/index.md"), "utf8")).toContain(
       "Generated file. Do not edit manually.",
     );
-    expect(existsSync(join(repository, ".kotta/profiles/ui.yaml"))).toBe(true);
+    expect(existsSync(join(repository, ".kotta/process/profiles/ui.yaml"))).toBe(true);
+    expect(existsSync(join(repository, ".kotta/spec/forms/goal.yaml"))).toBe(true);
+    expect(existsSync(join(repository, ".kotta/spec/goals"))).toBe(true);
+    expect(readFileSync(join(repository, ".gitattributes"), "utf8")).toContain(".kotta/process/index.md merge=union");
+    expect(readdirSync(join(repository, ".kotta")).sort()).toEqual([
+      ".kotta-generated.json", "AGENTS.md", "README.md", "config.yaml", "process", "spec",
+    ]);
   });
 });

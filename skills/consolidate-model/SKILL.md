@@ -13,7 +13,7 @@ This skill finds those collisions and **proposes consolidations in chat**. That 
 
 ## The hard rule
 
-**This skill creates nothing.** No file, no wiki page, no contract, no observation, no
+**This skill creates nothing.** No file, no wiki page, no task, no observation, no
 decision, no commit. It reads, it compares, it proposes. Every proposal is a sentence the
 human accepts, rejects, or rewrites.
 
@@ -23,7 +23,7 @@ more items to triage, and the triage queue is already the bottleneck. The value 
 paperwork.
 
 If the human decides a proposal should become work, they say so, and the normal Kotta path
-takes over (`kotta observation new`, or a contract). Never anticipate that.
+takes over (`kotta observation new`, or a task). Never anticipate that.
 
 Say which step you are in: `scoping` → `reading` → `comparing` → `proposing`.
 
@@ -38,7 +38,7 @@ Then locate, and say what you found:
 - **Type sources** — the exported domain types (`libs/`, `src/core/`, `src/model/`).
 - **Wire and storage** — request/response schemas, stored document field names.
 - **User-facing vocabulary** — the spec, glossary, or README that states what things are
-  called *to a person*. In a Kotta workspace also `.kotta/decisions/`.
+  called *to a person*. In a Kotta workspace also `.kotta/process/decisions/`.
 - **Capability docs** — user story maps, requirement docs, anything shaped as
   "as a X I want Y".
 
@@ -92,17 +92,17 @@ Two signals, both worth reporting:
 
 ### Check 4 — Orphan residue from a closed migration
 
-Read the **Non-goals** of closed contracts, and the transitional notes in specs. Look for
+Read the **Non-goals** of closed tasks, and the transitional notes in specs. Look for
 things deliberately left behind: an old field name kept for compatibility, an old directory
 name still read, a legacy artefact still parsed.
 
 For each one, ask two questions:
 
 1. Does the named thing still exist?
-2. Does anything — a decision, a contract, an observation, a dated note — say **when it goes away**?
+2. Does anything — a decision, a task, an observation, a dated note — say **when it goes away**?
 
 Report only when the answer is *yes* then *no*. Deliberate residue with an expiry is fine and
-should not be reported. Deliberate residue without one is the finding: the contract preserved
+should not be reported. Deliberate residue without one is the finding: the task preserved
 the decision and nobody preserved the deadline.
 
 ### Check 5 — A missing edge between two documents

@@ -1,0 +1,17 @@
+{
+  "entity": "T-01m0apr10hgh3zhh2t5s4wf2xr",
+  "task": "T-01m0apr10hgh3zhh2t5s4wf2xr",
+  "kind": "approval",
+  "approval_id": "E-01m0arczrr3m3mc81hrq2ydv8w",
+  "phase": "applied",
+  "action": "task.cancel",
+  "payload": {
+    "resolution": "duplicate",
+    "reason": "Szűkebb című előd: a cím csak az alapot nevezte meg, a define a címet nem javíthatja; a teljes scope az utódban él.",
+    "superseded_by": "T-01m0apvt0hm3wcmwa6qbvwqess",
+    "surface": "cli"
+  },
+  "source_message": "E-01m0arczrs5m4j9fvcdkzgf0s6",
+  "id": "E-01m0arczrtkeejwj7bsk7bme70",
+  "created_at": "2026-08-18T15:38:51.034Z"
+}

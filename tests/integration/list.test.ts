@@ -3,6 +3,7 @@ import { mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from 
 import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
 const cli = resolve("dist/cli/index.js");
 
@@ -35,29 +36,30 @@ function workspaceSnapshot(repository: string): Record<string, string> {
   return snapshot;
 }
 
-function fixture(label: string): { repository: string; contracts: string[] } {
+function fixture(label: string): { repository: string; tasks: string[] } {
   const repository = mkdtempSync(join(tmpdir(), `kotta-list-${label}-`));
   git(repository, "init", "-b", "main");
   git(repository, "config", "user.name", "Kotta Test");
   git(repository, "config", "user.email", "test@example.com");
   writeFileSync(join(repository, "README.md"), "fixture\n");
   cliRun(repository, ["init", "--json"]);
-  const contracts = ["Ship the exporter", "Retire the old importer"].map((title) => {
-    const created = cliRun(repository, ["contract", "new", "--title", title, "--type", "feature", "--json"]);
+  retainLegacySignGate(repository);
+  const tasks = ["Ship the exporter", "Retire the old importer"].map((title) => {
+    const created = cliRun(repository, ["task", "new", "--title", title, "--type", "feature", "--json"]);
     return (JSON.parse(created.stdout) as { data: { id: string } }).data.id;
   });
   cliRun(repository, ["observation", "new", "--title", "The importer logs nothing", "--type", "bug", "--evidence", "Observed in the fixture.", "--json"]);
-  return { repository, contracts };
+  return { repository, tasks };
 }
 
 describe("listing every entity", () => {
-  test("lists contracts and observations with their state and title", () => {
-    const { repository, contracts } = fixture("basic");
+  test("lists tasks and observations with their state and title", () => {
+    const { repository, tasks } = fixture("basic");
 
-    const listed = json(repository, ["contract", "list"]).data;
-    expect(listed.entity).toBe("contract");
+    const listed = json(repository, ["task", "list"]).data;
+    expect(listed.entity).toBe("task");
     expect(listed.count).toBe(2);
-    expect(listed.entities.map(({ id }) => id).sort()).toEqual([...contracts].sort());
+    expect(listed.entities.map(({ id }) => id).sort()).toEqual([...tasks].sort());
     expect(listed.entities.every(({ state }) => state === "backlog")).toBe(true);
     expect(listed.entities.map(({ title }) => title).sort()).toEqual(["Retire the old importer", "Ship the exporter"]);
 
@@ -66,10 +68,10 @@ describe("listing every entity", () => {
     expect(observations.entities[0]).toMatchObject({ state: "new", title: "The importer logs nothing" });
 
     // The title leads in human output; the id is present but never first.
-    const human = cliRun(repository, ["contract", "list"]);
+    const human = cliRun(repository, ["task", "list"]);
     expect(human.status).toBe(0);
     expect(human.stdout).toContain("Ship the exporter");
-    expect(human.stdout.trim().endsWith("2 contracts.")).toBe(true);
+    expect(human.stdout.trim().endsWith("2 tasks.")).toBe(true);
   });
 
   test("decisions and batches list too, and batches read their own directories", () => {
@@ -80,23 +82,23 @@ describe("listing every entity", () => {
   });
 
   test("--state narrows, repeats union, and an unknown state is refused naming the states that exist", () => {
-    const { repository, contracts } = fixture("states");
+    const { repository, tasks } = fixture("states");
     const definition = join(repository, "definition.md");
     writeFileSync(definition, [
       "## Outcome", "", "The exporter ships.", "", "## Scope", "", "1. Ship it.", "",
       "## Acceptance", "", "- It ships.", "", "## Verification", "", "- Run it.", "",
       "## Open decisions", "", "None.", "",
     ].join("\n"));
-    cliRun(repository, ["contract", "define", contracts[0], "--from", definition, "--json"]);
-    cliRun(repository, ["contract", "sign", contracts[0], "--approve", "--json"]);
+    cliRun(repository, ["task", "define", tasks[0], "--from", definition, "--json"]);
+    cliRun(repository, ["task", "sign", tasks[0], "--approve", "--json"]);
 
-    expect(json(repository, ["contract", "list", "--state", "defined"]).data).toMatchObject({ count: 1 });
-    expect(json(repository, ["contract", "list", "--state", "backlog"]).data).toMatchObject({ count: 1 });
-    expect(json(repository, ["contract", "list", "--state", "backlog", "--state", "defined"]).data).toMatchObject({ count: 2 });
-    expect(json(repository, ["contract", "list", "--state", "review"]).data).toMatchObject({ count: 0 });
-    expect(cliRun(repository, ["contract", "list", "--state", "review"]).stdout).toContain("No contracts in review.");
+    expect(json(repository, ["task", "list", "--state", "defined"]).data).toMatchObject({ count: 1 });
+    expect(json(repository, ["task", "list", "--state", "backlog"]).data).toMatchObject({ count: 1 });
+    expect(json(repository, ["task", "list", "--state", "backlog", "--state", "defined"]).data).toMatchObject({ count: 2 });
+    expect(json(repository, ["task", "list", "--state", "review"]).data).toMatchObject({ count: 0 });
+    expect(cliRun(repository, ["task", "list", "--state", "review"]).stdout).toContain("No tasks in review.");
 
-    const refused = cliRun(repository, ["contract", "list", "--state", "nope"]);
+    const refused = cliRun(repository, ["task", "list", "--state", "nope"]);
     expect(refused.status).not.toBe(0);
     expect(refused.stdout + refused.stderr).toContain("backlog, defined, active, review, done");
   });
@@ -113,9 +115,9 @@ describe("listing every entity", () => {
   test("listing writes nothing: the workspace is byte-identical afterwards, and repeats produce identical bytes", () => {
     const { repository } = fixture("read-only");
     const before = workspaceSnapshot(repository);
-    const first = cliRun(repository, ["contract", "list"]).stdout;
-    for (const entity of ["contract", "observation", "decision", "batch"]) cliRun(repository, [entity, "list"]);
+    const first = cliRun(repository, ["task", "list"]).stdout;
+    for (const entity of ["task", "observation", "decision", "batch"]) cliRun(repository, [entity, "list"]);
     expect(workspaceSnapshot(repository)).toEqual(before);
-    expect(cliRun(repository, ["contract", "list"]).stdout).toBe(first);
+    expect(cliRun(repository, ["task", "list"]).stdout).toBe(first);
   });
 });

@@ -3,22 +3,22 @@
 // Home is the landing view: three bands, in the design's order and wording. These tests
 // drive the four states the board can be in when it opens — loading, default, empty and
 // error — and they pin the one derivation that is easy to get wrong: a defined backlog
-// contract is a menu item under "What runs next?", never a queue item under "Waiting on you".
+// task is a menu item under "What runs next?", never a queue item under "Waiting on you".
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { HomeView, WorkspaceNotices, readBoard } from "../../ui/src/App";
-import { observation, batch, contract, workspace } from "./fixtures";
+import { observation, batch, task, workspace } from "./fixtures";
 
 afterEach(cleanup);
 
 const populated = workspace({
-  contracts: [
-    contract("T-001", "Define the shaping plan schema", { status: "defined", batch: "P-001" }),
-    contract("T-002", "Introduce a shared mutation lock", { status: "defined", blocks: ["T-003"] }),
-    contract("T-003", "Transactional shape apply", { status: "review" }),
-    contract("T-004", "Publish the onboarding site", { status: "done", batch: "P-002" }),
+  tasks: [
+    task("T-001", "Define the shaping plan schema", { status: "defined", batch: "P-001" }),
+    task("T-002", "Introduce a shared mutation lock", { status: "defined", blocks: ["T-003"] }),
+    task("T-003", "Transactional shape apply", { status: "review" }),
+    task("T-004", "Publish the onboarding site", { status: "done", batch: "P-002" }),
   ],
-  batches: [batch("P-001", "Code-aware synthesis", { contracts: ["T-001"] }), batch("P-002", "Trustworthy onboarding", { contracts: ["T-004"] })],
+  batches: [batch("P-001", "Code-aware synthesis", { tasks: ["T-001"] }), batch("P-002", "Trustworthy onboarding", { tasks: ["T-004"] })],
   observations: [observation("F-007", "Triage-assistant agent"), observation("F-009", "The board has no decisions surface")],
 });
 
@@ -43,20 +43,20 @@ describe("Home — the three bands", () => {
     expect(headings).toEqual(["Waiting on you", "Doesn't add up", "What runs next?"]);
     expect(screen.getByText("Explicit decisions, oldest first.")).toBeDefined();
     expect(screen.getByText("Conflicting canonical facts that need attention.")).toBeDefined();
-    expect(screen.getByText(/executable contracts, with age visible/)).toBeDefined();
+    expect(screen.getByText(/executable tasks, with age visible/)).toBeDefined();
   });
 
   it("derives Waiting on you from the three --approve gates, and nothing else", () => {
     renderHome();
     const waiting = band("Waiting on you");
     expect(within(waiting).getByText("Observations without a disposition")).toBeDefined();
-    expect(within(waiting).getByText("Contracts waiting for review")).toBeDefined();
+    expect(within(waiting).getByText("Tasks waiting for review")).toBeDefined();
     expect(within(waiting).getByText("Batches waiting to be closed")).toBeDefined();
-    // two undisposed observations, one contract in review, one all-done batch
+    // two undisposed observations, one task in review, one all-done batch
     expect(within(waiting).getAllByText(/^[0-9]+$/).map((node) => node.textContent)).toEqual(["2", "1", "1"]);
   });
 
-  it("puts every defined contract under What runs next?, never in a queue", () => {
+  it("puts every defined task under What runs next?, never in a queue", () => {
     renderHome();
     const menu = band("What runs next?");
     expect(within(menu).getByRole("button", { name: /Define the shaping plan schema/ })).toBeDefined();
@@ -66,8 +66,8 @@ describe("Home — the three bands", () => {
     expect(within(waiting).queryByText(/Define the shaping plan schema/)).toBeNull();
     expect(within(waiting).queryByText(/Introduce a shared mutation lock/)).toBeNull();
     // The affordance names the CLI command; it does not run it.
-    expect(within(menu).getByText("kotta contract execute T-001 --agent codex")).toBeDefined();
-    expect(within(menu).getByRole("button", { name: "Copy command: kotta contract execute T-001 --agent codex" })).toBeDefined();
+    expect(within(menu).getByText("kotta task execute T-001 --agent codex")).toBeDefined();
+    expect(within(menu).getByRole("button", { name: "Copy command: kotta task execute T-001 --agent codex" })).toBeDefined();
   });
 
   it("names the batch of a menu item by its title, with the id only as a marker", () => {
@@ -81,8 +81,8 @@ describe("Home — the three bands", () => {
   it("routes a queue row to the view that holds it", () => {
     const onView = vi.fn();
     renderHome({ onView });
-    fireEvent.click(screen.getByRole("button", { name: /Contracts waiting for review/ }));
-    expect(onView).toHaveBeenCalledWith("contracts", "review");
+    fireEvent.click(screen.getByRole("button", { name: /Tasks waiting for review/ }));
+    expect(onView).toHaveBeenCalledWith("tasks", "review");
   });
 });
 
@@ -103,7 +103,7 @@ describe("Home — empty workspace", () => {
     expect(screen.getByText(/Nothing waiting to decide/)).toBeDefined();
     expect(screen.getByText(/Nothing contradictory/)).toBeDefined();
     expect(screen.getByText(/Nothing defined to run/)).toBeDefined();
-    expect(screen.getByText('kotta contract new --title "…" --type feature')).toBeDefined();
+    expect(screen.getByText('kotta task new --title "…" --type feature')).toBeDefined();
     expect(screen.queryByText(/See all/)).toBeNull();
   });
 });
@@ -123,7 +123,7 @@ describe("Home — error", () => {
 
 describe("Doesn't add up", () => {
   it("shows a dangling reference as a contradiction between the frontmatter and the disk", () => {
-    const broken = workspace({ contracts: [contract("T-010", "Show worktree state", { source_observation: "F-404" })] });
+    const broken = workspace({ tasks: [task("T-010", "Show worktree state", { source_observation: "F-404" })] });
     renderHome({ workspace: broken, board: readBoard(broken) });
     const contradictions = band("Doesn't add up");
     expect(within(contradictions).getByText("dangling reference")).toBeDefined();
@@ -131,15 +131,15 @@ describe("Doesn't add up", () => {
     expect(within(contradictions).getByText("kotta validate")).toBeDefined();
   });
 
-  it("shows a batch and a contract that disagree about membership", () => {
+  it("shows a batch and a task that disagree about membership", () => {
     const drifted = workspace({
-      contracts: [contract("T-020", "Sweep unfinished work", { batch: "P-009" })],
-      batches: [batch("P-009", "Daily use", { contracts: [] })],
+      tasks: [task("T-020", "Sweep unfinished work", { batch: "P-009" })],
+      batches: [batch("P-009", "Daily use", { tasks: [] })],
     });
     renderHome({ workspace: drifted, board: readBoard(drifted) });
     const contradictions = band("Doesn't add up");
     expect(within(contradictions).getByText("membership")).toBeDefined();
-    expect(within(contradictions).getByText("The contract claims a batch that does not list it")).toBeDefined();
+    expect(within(contradictions).getByText("The task claims a batch that does not list it")).toBeDefined();
   });
 });
 

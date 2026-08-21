@@ -1,0 +1,14 @@
+{
+  "entity": "T-01kzw15bre7s0wms8d42xfajx0",
+  "task": "T-01kzw15bre7s0wms8d42xfajx0",
+  "kind": "approval",
+  "approval_id": "E-01kzww4gj25agmr0aqfwq90t65",
+  "phase": "applied",
+  "action": "task.close",
+  "payload": {
+    "surface": "cli"
+  },
+  "source_message": "E-01kzww4gj2h8ac36wayzm96ree",
+  "id": "E-01kzww4gj39nsxn0j19sxpyetb",
+  "created_at": "2026-08-13T06:14:45.571Z"
+}

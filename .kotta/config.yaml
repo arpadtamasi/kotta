@@ -1,11 +1,13 @@
-version: 2
+version: 4
 project:
   name: a-team
 workflow:
   require_human_sign_approval: true
   require_human_done_approval: true
   allow_agent_observations: true
-  allow_agent_defined_contracts: false
+  allow_agent_defined_tasks: false
+agents:
+  permission_mode: acceptEdits
 git:
   base_branch: main
   protected_branches:

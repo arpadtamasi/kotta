@@ -24,9 +24,9 @@ export default defineConfig({
     // ~/.claude/skills. Redirected once here, and inherited by spawned CLI processes, exactly as
     // the browser opener above.
     env: { KOTTA_UI_OPEN_COMMAND: "true", KOTTA_SKILLS_HOME: join(tmpdir(), "kotta-test-skills") },
-    // Kotta gives every active contract a linked worktree under `worktree_root` (.worktrees by
+    // Kotta gives every active task a linked worktree under `worktree_root` (.worktrees by
     // default), and each one is a full checkout carrying its own copy of tests/. Vitest ignores
-    // .gitignore when discovering tests, so without this the suite runs once per open contract
+    // .gitignore when discovering tests, so without this the suite runs once per open task
     // against a `dist/` resolved from this root — a result that means nothing in either direction.
     exclude: [...configDefaults.exclude, "site/tests/**", ".worktrees/**"],
   },

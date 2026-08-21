@@ -1,0 +1,24 @@
+id: quality-attribute
+version: 1
+directory: quality-attributes
+canonical_source: SEI Quality Attribute Scenario
+description: A measurable non-functional response under a stated stimulus and environment.
+identity:
+  prefix: QA
+  format: "<prefix>-<26-character lowercase Crockford ULID>"
+  filename: "<slug>-<last 8 id characters>.md"
+required_fields:
+  frontmatter: [id, form, title]
+  body_headings: [Source, Stimulus, Environment, Artifact, Response, Measure]
+required_edges:
+  - name: verification
+    direction: incoming
+    fields: [subjects]
+    source_forms: [example]
+    target_forms: [quality-attribute]
+    minimum: 1
+    question: Who measures this quality, and where?
+recognition_signals:
+  - Performance, reliability, security, accessibility, or operability is quantified.
+  - A percentile, threshold, workload, environment, or failure budget is named.
+  - A vague quality word needs an observable response and measure.

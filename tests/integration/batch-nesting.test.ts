@@ -3,6 +3,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
 const cli = resolve("dist/cli/index.js");
 
@@ -23,13 +24,14 @@ function repository(label: string): string {
   git(root, "add", ".");
   git(root, "commit", "-m", "initial");
   run(root, ["init"]);
+  retainLegacySignGate(root);
   git(root, "add", ".");
   git(root, "commit", "-m", "kotta");
   return root;
 }
 
-function contract(root: string, title: string): { id: string; path: string } {
-  const created = (run(root, ["contract", "new", "--title", title, "--type", "feature"]) as { data: { id: string; path: string } }).data;
+function task(root: string, title: string): { id: string; path: string } {
+  const created = (run(root, ["task", "new", "--title", title, "--type", "feature"]) as { data: { id: string; path: string } }).data;
   writeFileSync(created.path, readFileSync(created.path, "utf8")
     .replace("Describe the observable outcome.", `${title} works.`)
     .replace("- Define an observable condition.", `- ${title} is observable.`)
@@ -43,8 +45,8 @@ const batch = (root: string, title: string): string =>
 describe("a batch that groups other batches", () => {
   test("reads as one work list, with dependencies ordered across children", () => {
     const root = repository("tree");
-    const parser = contract(root, "Build parser");
-    const command = contract(root, "Expose command");
+    const parser = task(root, "Build parser");
+    const command = task(root, "Expose command");
     // The dependency crosses the two children: ordering is a property of the tree, not of a batch.
     writeFileSync(command.path, readFileSync(command.path, "utf8").replace("depends_on: []", `depends_on:\n  - ${parser.id}`));
 
@@ -53,13 +55,13 @@ describe("a batch that groups other batches", () => {
     const product = batch(root, "Product");
     run(root, ["batch", "add", core, parser.id]);
     run(root, ["batch", "add", surface, command.id]);
-    // Children are added by the same command that adds a contract, routed by the id it is given.
+    // Children are added by the same command that adds a task, routed by the id it is given.
     expect(run(root, ["batch", "add", product, surface])).toMatchObject({ ok: true, data: { batches: [surface] } });
     run(root, ["batch", "add", product, core]);
 
-    const shown = run(root, ["batch", "status", product]) as { data: { children: Array<{ id: string }>; contracts: Array<{ id: string }> } };
+    const shown = run(root, ["batch", "status", product]) as { data: { children: Array<{ id: string }>; tasks: Array<{ id: string }> } };
     expect(shown.data.children.map((child) => child.id).sort()).toEqual([core, surface].sort());
-    expect(shown.data.contracts.map((member) => member.id).sort()).toEqual([parser.id, command.id].sort());
+    expect(shown.data.tasks.map((member) => member.id).sort()).toEqual([parser.id, command.id].sort());
 
     const validated = run(root, ["batch", "validate", product]) as { data: { waves: string[][] } };
     expect(validated.data.waves).toEqual([[parser.id], [command.id]]);
@@ -67,7 +69,7 @@ describe("a batch that groups other batches", () => {
 
   test("refuses a cycle at any depth, a second parent, and itself", () => {
     const root = repository("shape");
-    const work = contract(root, "Only work");
+    const work = task(root, "Only work");
     const leaf = batch(root, "Leaf");
     const middle = batch(root, "Middle");
     const top = batch(root, "Top");
@@ -89,14 +91,14 @@ describe("a batch that groups other batches", () => {
     expect(secondParent.stdout).toContain(`already belongs to ${middle}`);
 
     // Nothing was written by any of the three refusals.
-    expect(readFileSync(join(root, ".kotta/index.md"), "utf8")).toBeTruthy();
+    expect(readFileSync(join(root, ".kotta/process/index.md"), "utf8")).toBeTruthy();
     expect(run(root, ["batch", "status", top]) as { data: { children: unknown[] } }).toMatchObject({ data: { children: [{ id: middle }] } });
   });
 
   test("is not run directly: execution stays a leaf operation", () => {
     const root = repository("start");
-    const work = contract(root, "Only work");
-    run(root, ["contract", "sign", work.id, "--approve"]);
+    const work = task(root, "Only work");
+    run(root, ["task", "sign", work.id, "--approve"]);
     const leaf = batch(root, "Leaf");
     const parent = batch(root, "Parent");
     run(root, ["batch", "add", leaf, work.id]);
@@ -112,18 +114,18 @@ describe("a batch that groups other batches", () => {
     expect(refused.stdout).toContain(leaf);
   });
 
-  test("closes only when every child batch and every contract underneath is done", () => {
+  test("closes only when every child batch and every task underneath is done", () => {
     const root = repository("close");
-    const work = contract(root, "Only work");
+    const work = task(root, "Only work");
     const leaf = batch(root, "Leaf");
     const parent = batch(root, "Parent");
     run(root, ["batch", "add", leaf, work.id]);
     run(root, ["batch", "add", parent, leaf]);
     git(root, "add", ".");
     git(root, "commit", "-m", "compose the tree");
-    run(root, ["contract", "cancel", work.id, "--resolution", "cancelled", "--reason", "Retired to finish the leaf", "--approve"]);
+    run(root, ["task", "cancel", work.id, "--resolution", "cancelled", "--reason", "Retired to finish the leaf", "--approve"]);
 
-    // The contract is done, so the leaf completed itself; the parent still waits on nothing else.
+    // The task is done, so the leaf completed itself; the parent still waits on nothing else.
     const openChild = attempt(root, ["batch", "close", parent, "--approve"]);
     if (openChild.status !== 0) expect(openChild.stdout).toContain("child batch");
 
@@ -131,31 +133,54 @@ describe("a batch that groups other batches", () => {
     expect(run(root, ["batch", "close", parent, "--approve"])).toMatchObject({ ok: true, data: { status: "done" } });
   });
 
+  test("a parent mixing direct tasks with child batches waits for both (F-01m0f1mqaydrtkx3x2nbck58ke)", () => {
+    const root = repository("mixed-completion");
+    const direct = task(root, "Direct work");
+    const nested = task(root, "Nested work");
+    const child = batch(root, "Child");
+    const parent = batch(root, "Parent");
+    run(root, ["batch", "add", child, nested.id]);
+    run(root, ["batch", "add", parent, direct.id]);
+    run(root, ["batch", "add", parent, child]);
+    git(root, "add", ".");
+    git(root, "commit", "-m", "compose the tree");
+
+    // The parent's last direct task finishes while the child batch is still open.
+    run(root, ["task", "cancel", direct.id, "--resolution", "cancelled", "--reason", "Direct work retired", "--approve"]);
+    expect(run(root, ["batch", "status", parent])).toMatchObject({ data: { id: parent, status: "backlog" } });
+    expect(run(root, ["batch", "status", child])).toMatchObject({ data: { id: child, status: "backlog" } });
+
+    // Finishing the child's only task completes the child, and the parent with it.
+    run(root, ["task", "cancel", nested.id, "--resolution", "cancelled", "--reason", "Nested work retired", "--approve"]);
+    expect(run(root, ["batch", "status", child])).toMatchObject({ data: { id: child, status: "done" } });
+    expect(run(root, ["batch", "status", parent])).toMatchObject({ data: { id: parent, status: "done" } });
+  });
+
   test("removing a child returns it to a root with its own members intact", () => {
     const root = repository("remove");
-    const work = contract(root, "Only work");
+    const work = task(root, "Only work");
     const leaf = batch(root, "Leaf");
     const parent = batch(root, "Parent");
     run(root, ["batch", "add", leaf, work.id]);
     run(root, ["batch", "add", parent, leaf]);
 
     expect(run(root, ["batch", "remove", parent, leaf])).toMatchObject({ ok: true, data: { batches: [] } });
-    expect(run(root, ["batch", "status", leaf]) as { data: { contracts: unknown[] } }).toMatchObject({ data: { contracts: [{ id: work.id }] } });
+    expect(run(root, ["batch", "status", leaf]) as { data: { tasks: unknown[] } }).toMatchObject({ data: { tasks: [{ id: work.id }] } });
     // Freed from its parent, it may be grouped again — the one-parent rule was the only obstacle.
     expect(run(root, ["batch", "add", parent, leaf])).toMatchObject({ ok: true, data: { batches: [leaf] } });
   });
 
   test("kotta validate reports a hand-made cycle", () => {
     const root = repository("validate");
-    const work = contract(root, "Only work");
+    const work = task(root, "Only work");
     const first = batch(root, "First");
     const second = batch(root, "Second");
     run(root, ["batch", "add", first, work.id]);
     run(root, ["batch", "add", first, second]);
 
     // Written by hand, which is exactly the state `kotta validate` exists to catch.
-    const secondPath = join(root, ".kotta/batches/backlog", `second-${second.slice(-8)}.md`);
-    writeFileSync(secondPath, readFileSync(secondPath, "utf8").replace("contracts: []", `contracts: []\nbatches:\n  - ${first}`));
+    const secondPath = join(root, ".kotta/process/batches/backlog", `second-${second.slice(-8)}.md`);
+    writeFileSync(secondPath, readFileSync(secondPath, "utf8").replace("tasks: []", `tasks: []\nbatches:\n  - ${first}`));
 
     const report = attempt(root, ["validate"]);
     expect(report.status).not.toBe(0);

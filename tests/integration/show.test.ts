@@ -3,8 +3,10 @@ import { mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from 
 import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
 const cli = resolve("dist/cli/index.js");
+const SHOW_SPEC_ID = "GT-01m0c0000000000000000000sh";
 
 function cliRun(repository: string, args: string[]): { status: number | null; stdout: string; stderr: string } {
   return spawnSync("node", [cli, ...args], { cwd: repository, encoding: "utf8" });
@@ -41,29 +43,34 @@ function fixture(label: string): { repository: string; id: string; short: string
   git(repository, "config", "user.email", "test@example.com");
   writeFileSync(join(repository, "README.md"), "fixture\n");
   cliRun(repository, ["init", "--json"]);
-  const created = json<{ data: { id: string } }>(repository, ["contract", "new", "--title", "Ship the exporter", "--type", "feature"]);
+  retainLegacySignGate(repository);
+  writeFileSync(join(repository, ".kotta/spec/glossary-terms/shipped-000000sh.md"), [
+    "---", `id: ${SHOW_SPEC_ID}`, "form: glossary-term", "title: Shipped", "---", "",
+    "## Definition", "It ships.", "", "## Usage", "Task acceptance.", "", "## Non-examples", "It waits.", "",
+  ].join("\n"));
+  const created = json<{ data: { id: string } }>(repository, ["task", "new", "--title", "Ship the exporter", "--type", "feature"]);
   cliRun(repository, ["observation", "new", "--title", "The importer logs nothing", "--type", "bug", "--evidence", "Observed in the fixture.", "--json"]);
-  const listed = json<{ data: { entities: { id: string }[] } }>(repository, ["contract", "list"]);
-  const shown = cliRun(repository, ["contract", "list"]).stdout;
+  const listed = json<{ data: { entities: { id: string }[] } }>(repository, ["task", "list"]);
+  const shown = cliRun(repository, ["task", "list"]).stdout;
   const short = shown.split(/\s+/).filter((token) => /^T-[0-9a-z]{8}$/.test(token))[0];
   expect(listed.data.entities[0].id).toBe(created.data.id);
   return { repository, id: created.data.id, short };
 }
 
 describe("showing one entity", () => {
-  test("shows a contract by its full id and by the short id the listing prints", () => {
+  test("shows a task by its full id and by the short id the listing prints", () => {
     const { repository, id, short } = fixture("basic");
     expect(short).toBeTruthy();
     expect(short).not.toBe(id);
 
-    const full = json<{ data: { id: string; state: string; title: string; body: string; facts: Record<string, string> } }>(repository, ["contract", "show", id]);
+    const full = json<{ data: { id: string; state: string; title: string; body: string; facts: Record<string, string> } }>(repository, ["task", "show", id]);
     expect(full.data).toMatchObject({ id, state: "backlog", title: "Ship the exporter" });
     expect(full.data.facts.types).toBe("feature");
     expect(full.data.body).toContain(id);
     // The short id resolves to exactly the same entity, canonicalised on the way in.
-    expect(json<{ data: unknown }>(repository, ["contract", "show", short]).data).toEqual(full.data);
+    expect(json<{ data: unknown }>(repository, ["task", "show", short]).data).toEqual(full.data);
 
-    const human = cliRun(repository, ["contract", "show", short]);
+    const human = cliRun(repository, ["task", "show", short]);
     expect(human.status).toBe(0);
     expect(human.stdout.startsWith("Ship the exporter")).toBe(true);
     expect(human.stdout).toContain("state");
@@ -86,33 +93,34 @@ describe("showing one entity", () => {
     const { repository, short } = fixture("short-elsewhere");
     const definition = join(repository, "definition.md");
     writeFileSync(definition, [
+      "---", `spec: [${SHOW_SPEC_ID}]`, "coverage:", `  \"It ships.\": [${SHOW_SPEC_ID}]`, "---", "",
       "## Outcome", "", "The exporter ships.", "", "## Scope", "", "1. Ship it.", "",
       "## Non-goals", "", "- Anything else.", "", "## Acceptance", "", "- It ships.", "",
       "## Verification", "", "- Run it.", "", "## Constraints", "", "- Ship nothing else.", "",
       "## Open decisions", "", "None.", "", "## Execution notes", "", "- Start in src/.", "",
     ].join("\n"));
-    expect(cliRun(repository, ["contract", "define", short, "--from", definition, "--json"]).status).toBe(0);
-    expect(cliRun(repository, ["contract", "validate", short, "--json"]).status).toBe(0);
-    expect(json<{ data: { entities: { state: string }[] } }>(repository, ["contract", "list"]).data.entities[0].state).toBe("backlog");
+    expect(cliRun(repository, ["task", "define", short, "--from", definition, "--json"]).status).toBe(0);
+    expect(cliRun(repository, ["task", "validate", short, "--json"]).status).toBe(0);
+    expect(json<{ data: { entities: { state: string }[] } }>(repository, ["task", "list"]).data.entities[0].state).toBe("backlog");
   });
 
   test("an unknown id fails naming it, and nothing about brief or batch status changes", () => {
     const { repository, id } = fixture("unknown");
-    const missing = cliRun(repository, ["contract", "show", "T-nope"]);
+    const missing = cliRun(repository, ["task", "show", "T-nope"]);
     expect(missing.status).not.toBe(0);
     expect(missing.stdout + missing.stderr).toContain("T-nope");
 
-    // `show` is not the brief: the brief still assembles its own package for contracts.
-    const brief = cliRun(repository, ["contract", "brief", id, "--json"]);
+    // `show` is not the brief: the brief still assembles its own package for tasks.
+    const brief = cliRun(repository, ["task", "brief", id, "--json"]);
     expect(brief.status).toBe(0);
-    expect(JSON.parse(brief.stdout).command).toBe("contract brief");
+    expect(JSON.parse(brief.stdout).command).toBe("task brief");
   });
 
   test("showing writes nothing: the workspace is byte-identical afterwards", () => {
     const { repository, id, short } = fixture("read-only");
     const before = workspaceSnapshot(repository);
-    cliRun(repository, ["contract", "show", id]);
-    cliRun(repository, ["contract", "show", short]);
+    cliRun(repository, ["task", "show", id]);
+    cliRun(repository, ["task", "show", short]);
     cliRun(repository, ["observation", "list"]);
     expect(workspaceSnapshot(repository)).toEqual(before);
   });

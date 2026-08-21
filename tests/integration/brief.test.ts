@@ -5,6 +5,7 @@ import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 
 const cli = resolve("dist/cli/index.js");
+const BRIEF_SPEC_ID = "GT-01m0c0000000000000000000bf";
 
 function run(repository: string, args: string[]): Record<string, unknown> {
   const result = spawnSync("node", [cli, ...args, "--json"], { cwd: repository, encoding: "utf8" });
@@ -19,11 +20,22 @@ function git(repository: string, ...args: string[]): void {
 function fixtureRepository(): { repository: string; id: string } {
   const repository = mkdtempSync(join(tmpdir(), "kotta-brief-"));
   git(repository, "init", "-b", "main");
+  git(repository, "config", "user.name", "Kotta Test");
+  git(repository, "config", "user.email", "test@example.com");
   writeFileSync(join(repository, "README.md"), "fixture\n");
   run(repository, ["init"]);
-  const id = (run(repository, ["contract", "new", "--title", "Ship the exporter", "--type", "feature"]) as { data: { id: string } }).data.id;
+  writeFileSync(join(repository, ".kotta/spec/glossary-terms/export-file-000000bf.md"), [
+    "---", `id: ${BRIEF_SPEC_ID}`, "form: glossary-term", "title: Export file", "---", "",
+    "## Definition", "Exporter produces a file.", "", "## Usage", "Exporter acceptance.", "", "## Non-examples", "No output.", "",
+  ].join("\n"));
+  const id = (run(repository, ["task", "new", "--title", "Ship the exporter", "--type", "feature"]) as { data: { id: string } }).data.id;
   const definition = join(repository, "definition.md");
-  writeFileSync(definition, `# ${id} — Ship the exporter
+  writeFileSync(definition, `---
+spec: [${BRIEF_SPEC_ID}]
+coverage:
+  "Exporter produces a file.": [${BRIEF_SPEC_ID}]
+---
+# ${id} — Ship the exporter
 
 ## Outcome
 
@@ -57,7 +69,7 @@ None.
 
 None.
 `);
-  run(repository, ["contract", "define", id, "--from", definition]);
+  run(repository, ["task", "define", id, "--from", definition]);
   const decision = join(repository, "D-001-source.md");
   writeFileSync(decision, `---
 id: D-001
@@ -82,15 +94,15 @@ None.
   return { repository, id };
 }
 
-describe("contract brief (T-026 / D-009)", () => {
-  test("assembles contract + referenced decisions and reports missing ones", () => {
+describe("task brief (T-026 / D-009)", () => {
+  test("assembles task + referenced decisions and reports missing ones", () => {
     const { repository, id } = fixtureRepository();
-    const result = run(repository, ["contract", "brief", id]) as { data: Record<string, unknown> };
+    const result = run(repository, ["task", "brief", id]) as { data: Record<string, unknown> };
     const data = result.data as { brief: string; decisions: string[]; missingDecisions: string[]; tokens: number; warning: string | null };
     expect(data.decisions).toEqual(["D-001"]);
     expect(data.missingDecisions).toEqual(["D-999"]);
     expect(data.brief).toContain(`# Execution brief — ${id}`);
-    expect(data.brief).toContain("## Contract");
+    expect(data.brief).toContain("## Task");
     expect(data.brief).toContain("D-001 — Exporter format is CSV");
     expect(data.brief).toContain("Referenced but not found");
     expect(data.brief).not.toContain("## Observation");
@@ -100,14 +112,14 @@ describe("contract brief (T-026 / D-009)", () => {
 
   test("is deterministic: two runs produce identical bytes", () => {
     const { repository, id } = fixtureRepository();
-    const first = run(repository, ["contract", "brief", id]) as { data: { brief: string } };
-    const second = run(repository, ["contract", "brief", id]) as { data: { brief: string } };
+    const first = run(repository, ["task", "brief", id]) as { data: { brief: string } };
+    const second = run(repository, ["task", "brief", id]) as { data: { brief: string } };
     expect(second.data.brief).toBe(first.data.brief);
   });
 
   test("warns above the token threshold and names the largest section", () => {
     const { repository, id } = fixtureRepository();
-    const result = run(repository, ["contract", "brief", id, "--warn-tokens", "10"]) as { data: { warning: string | null; largestSection: string } };
+    const result = run(repository, ["task", "brief", id, "--warn-tokens", "10"]) as { data: { warning: string | null; largestSection: string } };
     expect(result.data.warning).toContain("limit 10");
     expect(result.data.warning).toContain(result.data.largestSection);
   });
@@ -115,7 +127,7 @@ describe("contract brief (T-026 / D-009)", () => {
   test("writes the brief to a file with --out", () => {
     const { repository, id } = fixtureRepository();
     const out = join(repository, "brief.md");
-    const result = run(repository, ["contract", "brief", id, "--out", out]) as { data: { path: string | null } };
+    const result = run(repository, ["task", "brief", id, "--out", out]) as { data: { path: string | null } };
     expect(result.data.path).toBe(out);
     expect(readFileSync(out, "utf8")).toContain(`# Execution brief — ${id}`);
   });

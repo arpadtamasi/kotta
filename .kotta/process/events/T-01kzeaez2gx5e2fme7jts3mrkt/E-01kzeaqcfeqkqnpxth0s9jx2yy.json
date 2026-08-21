@@ -1,0 +1,14 @@
+{
+  "entity": "T-01kzeaez2gx5e2fme7jts3mrkt",
+  "task": "T-01kzeaez2gx5e2fme7jts3mrkt",
+  "kind": "approval",
+  "approval_id": "E-01kzeaqc5yqd6qr7mzjsntyz0r",
+  "phase": "rejected",
+  "action": "task.sign",
+  "payload": {
+    "surface": "caller-chat"
+  },
+  "source_message": "E-01kzeaqcfe97fnxqqcv3cpsfe8",
+  "id": "E-01kzeaqcfeqkqnpxth0s9jx2yy",
+  "created_at": "2026-08-07T14:41:07.566Z"
+}

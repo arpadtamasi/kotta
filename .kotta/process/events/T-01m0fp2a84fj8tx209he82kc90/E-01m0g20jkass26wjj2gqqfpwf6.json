@@ -1,0 +1,17 @@
+{
+  "id": "E-01m0g20jkass26wjj2gqqfpwf6",
+  "entity": "T-01m0fp2a84fj8tx209he82kc90",
+  "task": "T-01m0fp2a84fj8tx209he82kc90",
+  "kind": "approval",
+  "approval_id": "E-01m0g20jkass26wjj2gqqfpwf6",
+  "phase": "proposed",
+  "action": "task.cancel",
+  "payload": {
+    "resolution": "cancelled",
+    "reason": "A munka a OneAndA repóban, a T-01m0fp31g9z3148cczqhek1g1x contract keretében elkészült, lezárult és a main ágra került (51f96742); a Kotta repóban tévesen létrehozott párhuzamos contractnak nincs önálló tárgya.",
+    "superseded_by": null,
+    "surface": "cli"
+  },
+  "source_message": null,
+  "created_at": "2026-08-20T17:03:02.250Z"
+}
