@@ -1,13 +1,18 @@
 ---
 id: F-01m0g6hsgby0yb89zrrgyj9wyh
 title: Review submission has no per-check evidence input for duplicate validation
-status: new
+status: resolved
 origin: agent
 observation_type: inconsistency
 confidence: high
 severity: medium
 discovered_during: T-01m0fq318dpmktbc2jtv3d65m7
 created_at: '2026-08-20'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:06:41.821Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:41.821Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0g6hsgby0yb89zrrgyj9wyh — Review submission has no per-check evidence input for duplicate validation
 
