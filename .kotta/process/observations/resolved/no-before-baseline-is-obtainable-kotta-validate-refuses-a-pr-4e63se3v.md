@@ -3,13 +3,18 @@ id: F-01kz2arn0v8smvsnvv4e63se3v
 title: >-
   No before-baseline is obtainable: kotta validate refuses a pre-vocabulary
   workspace
-status: new
+status: resolved
 origin: agent
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: T-022
 created_at: '2026-08-02'
+disposition: accept-risk
+resolved_at: '2026-08-21T15:08:06.475Z'
+approved_by: cli
+approved_at: '2026-08-21T15:08:06.476Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz2arn0v8smvsnvv4e63se3v — No before-baseline is obtainable: kotta validate refuses a pre-vocabulary workspace
 

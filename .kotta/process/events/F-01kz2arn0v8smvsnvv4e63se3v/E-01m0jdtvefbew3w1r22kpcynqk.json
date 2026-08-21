@@ -1,0 +1,15 @@
+{
+  "id": "E-01m0jdtvefbew3w1r22kpcynqk",
+  "entity": "F-01kz2arn0v8smvsnvv4e63se3v",
+  "task": "T-022",
+  "kind": "approval",
+  "approval_id": "E-01m0jdtvefbew3w1r22kpcynqk",
+  "phase": "proposed",
+  "action": "observation.resolve",
+  "payload": {
+    "disposition": "accept-risk",
+    "surface": "cli"
+  },
+  "source_message": null,
+  "created_at": "2026-08-21T15:08:06.479Z"
+}
