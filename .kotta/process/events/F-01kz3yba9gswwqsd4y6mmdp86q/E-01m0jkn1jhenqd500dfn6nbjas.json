@@ -1,0 +1,15 @@
+{
+  "id": "E-01m0jkn1jhenqd500dfn6nbjas",
+  "entity": "F-01kz3yba9gswwqsd4y6mmdp86q",
+  "task": null,
+  "kind": "approval",
+  "approval_id": "E-01m0jkn1jhenqd500dfn6nbjas",
+  "phase": "proposed",
+  "action": "observation.resolve",
+  "payload": {
+    "disposition": "merge-duplicate",
+    "surface": "cli"
+  },
+  "source_message": null,
+  "created_at": "2026-08-21T16:49:47.601Z"
+}

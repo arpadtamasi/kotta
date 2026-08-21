@@ -3,13 +3,18 @@ id: F-01kz3yba9gswwqsd4y6mmdp86q
 title: >-
   Nincs sprint vegi rendcsinalas: a close takarit, de a maradekot - tavoli
   branchek, elhagyott agak, tulelo konyvtarak - soha semmi nem jelenti
-status: new
+status: resolved
 origin: agent
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-03'
+disposition: merge-duplicate
+resolved_at: '2026-08-21T16:49:47.596Z'
+approved_by: cli
+approved_at: '2026-08-21T16:49:47.596Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz3yba9gswwqsd4y6mmdp86q — Nincs sprint vegi rendcsinalas: a close takarit, de a maradekot - tavoli branchek, elhagyott agak, tulelo konyvtarak - soha semmi nem jelenti
 
