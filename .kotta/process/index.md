@@ -57,7 +57,6 @@ None.
 - a1-form-installation-contradicts-the-no-code-invariant-p15dnp69
 - an-older-cli-silently-downgrades-a-newer-shaped-workspace-in-jk7q3pec
 - az-approval-chatben-ke-rde-s-a-gyakorlatban-me-gis-parancsli-197dfjs9
-- az-approve-kapu-ceremonia-bizonyitek-nelkul-senki-nem-elleno-md9f1zcv
 - az-entitast-letrehozo-parancsok-nem-irjak-ki-az-azonositot-e-9mg56yk6
 - az-id-azert-szivarog-a-human-kommunikaciora-mert-o-az-egyetl-szetd8cz
 - batch-sign-approve-is-the-only-human-gate-that-leaves-no-rec-cg79yx4p

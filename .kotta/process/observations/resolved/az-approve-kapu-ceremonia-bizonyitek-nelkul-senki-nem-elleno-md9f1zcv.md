@@ -3,13 +3,18 @@ id: F-01kz678s2x51xy0jhfmd9f1zcv
 title: >-
   Az --approve kapu ceremonia bizonyitek nelkul: senki nem ellenorzi ki gepelte,
   es semmi nem rogziti hogy jovahagyas tortent
-status: new
+status: resolved
 origin: agent
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-04'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:06:42.338Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:42.338Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz678s2x51xy0jhfmd9f1zcv — Az --approve kapu ceremonia bizonyitek nelkul: senki nem ellenorzi ki gepelte, es semmi nem rogziti hogy jovahagyas tortent
 
