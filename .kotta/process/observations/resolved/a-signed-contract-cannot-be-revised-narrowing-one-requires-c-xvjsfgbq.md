@@ -1,13 +1,18 @@
 ---
 id: F-01kzhjhe5t9exnxr4fxvjsfgbq
 title: A signed contract cannot be revised; narrowing one requires cancel then reopen
-status: new
+status: resolved
 origin: agent
 observation_type: gap
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-08'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:07.167Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:07.167Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kzhjhe5t9exnxr4fxvjsfgbq — A signed contract cannot be revised; narrowing one requires cancel then reopen
 
