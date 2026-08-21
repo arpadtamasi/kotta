@@ -3,13 +3,18 @@ id: F-022
 title: >-
   State gates are bypassable because the store is the filesystem — tickets reach
   done by git mv, and validate only notices afterwards
-status: new
+status: resolved
 origin: agent
 observation_type: risk
 confidence: high
 severity: high
 discovered_during: null
 created_at: '2026-08-01'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:06:36.739Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:36.739Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-022 — State gates are bypassable because the store is the filesystem — tickets reach done by git mv, and validate only notices afterwards
 
