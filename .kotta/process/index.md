@@ -50,7 +50,6 @@ None.
 - az-id-azert-szivarog-a-human-kommunikaciora-mert-o-az-egyetl-szetd8cz
 - contract-new-human-output-hides-the-created-contract-id-xwja20bg
 - crm-kit-and-flowbench-cannot-be-migrated-unrelated-dirty-tre-9m3dkmxv
-- entity-filenames-are-keyed-on-the-same-eight-characters-the--dvhj455d
 - harom-szomszed-repo-agents-md-je-ideiglenes-szabalyblokkot-h-10cpc3k3
 - kotta-has-no-roadmap-concept-sequenced-intent-above-batches--8amqckd2
 - kotta-has-one-gauge-for-governed-work-a-two-minute-page-and--tsb4m5qh

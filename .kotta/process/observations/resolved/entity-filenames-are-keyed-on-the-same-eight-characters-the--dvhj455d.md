@@ -3,13 +3,18 @@ id: F-01kznx56zc91gqg24advhj455d
 title: >-
   Entity filenames are keyed on the same eight characters the display is, so two
   colliding ids collide on disk
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-10'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:15.244Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:15.244Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kznx56zc91gqg24advhj455d — Entity filenames are keyed on the same eight characters the display is, so two colliding ids collide on disk
 
