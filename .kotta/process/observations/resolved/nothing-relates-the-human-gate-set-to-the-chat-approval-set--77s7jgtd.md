@@ -3,13 +3,18 @@ id: F-01kze54x7ykmsz496c77s7jgtd
 title: >-
   Nothing relates the human-gate set to the chat-approval set, so batch sign
   joins reopen as a gate reachable only from a terminal
-status: new
+status: resolved
 origin: agent
 observation_type: gap
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-07'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:05.631Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:05.632Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kze54x7ykmsz496c77s7jgtd — Nothing relates the human-gate set to the chat-approval set, so batch sign joins reopen as a gate reachable only from a terminal
 

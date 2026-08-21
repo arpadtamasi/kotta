@@ -75,7 +75,6 @@ None.
 - nincs-sprint-vegi-rendcsinalas-a-close-takarit-de-a-maradeko-6mmdp86q
 - no-before-baseline-is-obtainable-kotta-validate-refuses-a-pr-4e63se3v
 - nothing-notices-when-a-contract-s-premise-expires-before-it--8b91d24j
-- nothing-relates-the-human-gate-set-to-the-chat-approval-set--77s7jgtd
 - npm-rejects-the-unscoped-kotta-package-name-as-too-similar-eaag2s6z
 - ready-ticket-szovege-nem-javithato-a-define-csak-backlogbol--147t946f
 - renaming-the-workspace-drops-tracked-but-now-ignored-files-o-nkb8sbc4
