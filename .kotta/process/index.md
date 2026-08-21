@@ -93,6 +93,5 @@ None.
 - the-skills-sync-feature-shipped-without-a-changelog-entry-pxwst12g
 - the-spec-namespace-has-no-writing-service-so-changing-the-ma-yhpzreqm
 - the-test-suite-reads-a-dist-the-merge-hook-is-still-rebuildi-k0ty0f0m
-- two-schema-required-workflow-config-keys-are-read-by-no-code-dm1nqzh6
 - ui-port-cli-tests-silently-assert-nothing-when-4311-is-alrea-nbxc71r5
 - ui-ux-spec-md-describes-the-pre-v2-board-and-has-no-owner-af-a4dg5622

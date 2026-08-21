@@ -1,13 +1,18 @@
 ---
 id: F-01m0jd80fd37cnyvyadm1nqzh6
 title: Two schema-required workflow config keys are read by no code
-status: new
+status: resolved
 origin: agent
 observation_type: inconsistency
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-21'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:06:43.324Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:43.324Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0jd80fd37cnyvyadm1nqzh6 — Two schema-required workflow config keys are read by no code
 
