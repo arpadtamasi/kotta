@@ -1,13 +1,20 @@
 ---
 id: F-01m0fp0k01d8hy795n8amqckd2
 title: Kotta has no roadmap concept - sequenced intent above batches lives nowhere
-status: new
+status: resolved
 origin: agent
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-20'
+disposition: amend-spec
+resolved_at: '2026-08-21T17:05:14.977Z'
+approved_by: cli
+approved_at: '2026-08-21T17:05:14.977Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - GT-01m0jksma4w2aqeeasvp8d8393
 ---
 # F-01m0fp0k01d8hy795n8amqckd2 — Kotta has no roadmap concept - sequenced intent above batches lives nowhere
 

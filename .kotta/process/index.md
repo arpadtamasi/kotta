@@ -32,5 +32,4 @@ None.
 ## New observations
 
 - F-021-finding-metadata-is-single-valued-in-practice-severity-confi
-- kotta-has-no-roadmap-concept-sequenced-intent-above-batches--8amqckd2
 - the-defined-operation-registry-contract-pins-its-acceptance--n9k18wbv
