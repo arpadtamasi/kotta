@@ -3,13 +3,18 @@ id: F-01kzhnpeadvsq1yxhkcdtrdt8d
 title: >-
   The define-contract skill never says what 'complete' means, and nothing
   re-checks completeness at handoff
-status: new
+status: resolved
 origin: agent
 observation_type: gap
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-08'
+disposition: merge-duplicate
+resolved_at: '2026-08-21T15:07:09.848Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:09.848Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kzhnpeadvsq1yxhkcdtrdt8d — The define-contract skill never says what 'complete' means, and nothing re-checks completeness at handoff
 

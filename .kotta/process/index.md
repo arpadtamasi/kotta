@@ -73,7 +73,6 @@ None.
 - renaming-the-workspace-drops-tracked-but-now-ignored-files-o-nkb8sbc4
 - the-a-team-directory-name-outlives-the-vocabulary-migration--1n909nqf
 - the-advertised-install-version-is-hardcoded-in-three-files-a-wn3kw5t7
-- the-define-contract-skill-never-says-what-complete-means-and-cdtrdt8d
 - the-defined-operation-registry-contract-pins-its-acceptance--n9k18wbv
 - the-published-json-schemas-are-documentation-nothing-checks-ge5asz8x
 - the-skills-sync-feature-shipped-without-a-changelog-entry-pxwst12g
