@@ -1,13 +1,18 @@
 ---
 id: F-01kz9c3h0jddvtwq4feaag2s6z
 title: npm rejects the unscoped kotta package name as too similar
-status: new
+status: resolved
 origin: agent
 observation_type: blocker
 confidence: high
 severity: medium
 discovered_during: T-01kz8tk2t53jbax6mrseka50v9
 created_at: '2026-08-05'
+disposition: accept-risk
+resolved_at: '2026-08-21T16:49:50.660Z'
+approved_by: cli
+approved_at: '2026-08-21T16:49:50.660Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz9c3h0jddvtwq4feaag2s6z — npm rejects the unscoped kotta package name as too similar
 

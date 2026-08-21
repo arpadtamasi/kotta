@@ -34,5 +34,4 @@ None.
 - F-021-finding-metadata-is-single-valued-in-practice-severity-confi
 - F-025-progos-as-first-kotta-publisher-mcp-kottas-for-standard-sme-
 - kotta-has-no-roadmap-concept-sequenced-intent-above-batches--8amqckd2
-- npm-rejects-the-unscoped-kotta-package-name-as-too-similar-eaag2s6z
 - the-defined-operation-registry-contract-pins-its-acceptance--n9k18wbv
