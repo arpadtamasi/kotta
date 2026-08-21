@@ -3,13 +3,18 @@ id: F-01m0fq09grp3qcka6pxqg5ysgq
 title: >-
   kotta observation list --status: az opció neve --state, a hibaüzenet jól
   tereli
-status: new
+status: resolved
 origin: agent
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-20'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:06:44.816Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:44.816Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0fq09grp3qcka6pxqg5ysgq — kotta observation list --status: az opció neve --state, a hibaüzenet jól tereli
 

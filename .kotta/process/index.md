@@ -73,7 +73,6 @@ None.
 - kotta-integrate-only-supports-codex-so-claude-code-sessions--n5cp4s0q
 - kotta-migrate-writes-a-root-gitattributes-it-never-reports-i-hkr7tyh2
 - kotta-never-states-what-a-contract-is-the-one-agent-sizing-r-0nnk2emr
-- kotta-observation-list-status-az-opcio-neve-state-a-hibau-ze-xqg5ysgq
 - migration-json-keeps-the-pre-vocabulary-words-and-nothing-de-3hcysj58
 - nincs-backlog-review-es-epp-azert-kell-tolnia-magat-a-termek-sjb9v9w9
 - nincs-sprint-vegi-rendcsinalas-a-close-takarit-de-a-maradeko-6mmdp86q
