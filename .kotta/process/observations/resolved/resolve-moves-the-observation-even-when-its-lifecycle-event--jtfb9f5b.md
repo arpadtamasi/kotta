@@ -1,13 +1,18 @@
 ---
 id: F-01m0jdv8gmn91txnn6jtfb9f5b
 title: resolve moves the observation even when its lifecycle event fails to write
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-21'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T16:49:43.173Z'
+approved_by: cli
+approved_at: '2026-08-21T16:49:43.173Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0jdv8gmn91txnn6jtfb9f5b — resolve moves the observation even when its lifecycle event fails to write
 
