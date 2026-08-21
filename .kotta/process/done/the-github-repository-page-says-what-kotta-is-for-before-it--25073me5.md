@@ -3,7 +3,7 @@ id: T-01m0hrtpfkq3bx3mmd25073me5
 title: >-
   The GitHub repository page says what Kotta is for before it says how to
   install it
-status: review
+status: done
 origin: human
 types:
   - docs
@@ -32,14 +32,15 @@ coverage:
     - US-01m0hrxc4qmhhrpwz2f288np0t
     - EX-01m0hrxc4xrya8gfs08k289z5r
 approved_by: cli
-approved_at: '2026-08-21T12:12:49.405Z'
-approval_basis: 'CLI --approve: task.request-changes'
+approved_at: '2026-08-21T12:20:29.542Z'
+approval_basis: 'CLI --approve: task.close'
 assigned_agent: claude
 worktree: .
 execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: c16571e7aec6a2e79ff611ed301d28bc2ba8ada8
+resolution: completed
 ---
 ## Outcome
 
