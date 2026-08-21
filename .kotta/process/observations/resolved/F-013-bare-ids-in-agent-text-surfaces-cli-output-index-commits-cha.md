@@ -3,13 +3,18 @@ id: F-013
 title: >-
   Bare ids in agent/text surfaces (CLI output, index, commits, chat) carry no
   meaning — the more painful half of F-012
-status: new
+status: resolved
 origin: agent
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-07-28'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:13.430Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:13.430Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-013 — Bare ids in agent/text surfaces (CLI output, index, commits, chat) carry no meaning — the more painful half of F-012
 
