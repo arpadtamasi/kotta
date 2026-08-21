@@ -1,13 +1,18 @@
 ---
 id: F-01m0bt2tkhfwgfp1zs197dfjs9
 title: 'Az approval chatben kérdés, a gyakorlatban mégis parancslista a terminálba'
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-19'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:04.020Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:04.020Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0bt2tkhfwgfp1zs197dfjs9 — Az approval chatben kérdés, a gyakorlatban mégis parancslista a terminálba
 

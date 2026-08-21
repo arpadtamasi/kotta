@@ -55,7 +55,6 @@ None.
 - a-vitest-a-worktrees-ala-is-benez-egy-elo-ticket-worktree-me-cahhcmt5
 - a-workspace-konyvtar-atnevezese-uressen-mutatja-a-boardot-am-0n2rjcpt
 - an-older-cli-silently-downgrades-a-newer-shaped-workspace-in-jk7q3pec
-- az-approval-chatben-ke-rde-s-a-gyakorlatban-me-gis-parancsli-197dfjs9
 - az-entitast-letrehozo-parancsok-nem-irjak-ki-az-azonositot-e-9mg56yk6
 - az-id-azert-szivarog-a-human-kommunikaciora-mert-o-az-egyetl-szetd8cz
 - batch-start-kiosztja-az-agentet-de-nem-indi-tja-a-plain-exec-xjpmd8ky
