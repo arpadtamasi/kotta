@@ -3,13 +3,18 @@ id: F-01kzdjxzvmajrstw4eccfd497m
 title: >-
   Kotta hand-enumerates the agents and hosts it can work with, and falling
   outside the list fails silently
-status: new
+status: resolved
 origin: agent
 observation_type: gap
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-07'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:06.630Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:06.630Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kzdjxzvmajrstw4eccfd497m — Kotta hand-enumerates the agents and hosts it can work with, and falling outside the list fails silently
 
