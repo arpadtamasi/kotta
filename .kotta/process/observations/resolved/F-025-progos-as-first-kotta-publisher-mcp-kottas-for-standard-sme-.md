@@ -1,13 +1,18 @@
 ---
 id: F-025
 title: Progos as first kotta publisher — MCP kottas for standard SME software
-status: new
+status: resolved
 origin: human
 observation_type: product
 confidence: low
 severity: medium
 discovered_during: null
 created_at: '2026-08-01'
+disposition: investigate
+resolved_at: '2026-08-21T16:49:51.211Z'
+approved_by: cli
+approved_at: '2026-08-21T16:49:51.211Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-025 — Progos as first kotta publisher — MCP kottas for standard SME software
 
