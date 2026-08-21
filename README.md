@@ -16,6 +16,12 @@ it. It got skipped because writing it down cost more than writing the code.
 
 That price is gone. Something else writes the code now, and what you wrote down is what it executes.
 
+Three nouns and one loop. The **specification** states what must be true. The **code** is the
+implementation. A **task** connects them: it cannot be defined until every acceptance condition
+names the specification node it comes from, and it cannot close until review maps each condition to
+evidence you accept. What you notice while the system runs comes back as an **observation** — not as
+a silent fix, and not as a task somebody quietly widened.
+
 Kotta keeps the vocabulary and drops the ceremony. One human gate per task, at close. Plain files in
 the repository you already have.
 
@@ -24,28 +30,34 @@ the repository you already have.
 For a developer or technical lead running one or more coding agents against a Git repository they
 already have.
 
-**Starting something new.** You have an idea, not a specification. Run the workshops as
-conversation — impact mapping, example mapping, quality scenarios — and each one lands Markdown
-nodes in `.kotta/spec/` instead of a document nobody opens again. Agree one node, and a task
-defined against it can execute.
+**Starting something new.** `spec → task → code`
+
+You have an idea, not a specification. Run the workshops as conversation — impact mapping, example
+mapping, quality scenarios — and each one lands Markdown nodes in `.kotta/spec/` instead of a
+document nobody opens again. Agree one node, and a task defined against it can execute.
 
 > A goal node says bookings never double-book a room. An example node states the overlapping
 > reservation that would prove it. The task that implements booking names that example in its
 > acceptance, so review has to produce evidence for that exact case before anyone can close it.
 
-**Rewriting a legacy system.** The behaviour exists; the agreement never got written down, or the
-people who held it have gone. Read the old system into spec nodes rather than into a Word document:
-event storming for the lifecycle, use-case modeling for the flows you must keep, glossary terms for
-the words the old code overloads. Now the rewrite has something to be checked against.
+**Rewriting a legacy system.** `code → spec → task → code`
+
+The code is the only specification you have, and it does not say which of its behaviour was ever
+intended. Read it back into spec nodes rather than into a Word document — event storming for the
+lifecycle, use-case modeling for the flows you must keep, glossary terms for the words the old code
+overloads — and from there it is the same loop as new work.
 
 > A state-machine node records the order lifecycle the legacy code actually implements. The rewrite
 > task maps every transition to a test. What you accept is the diff that proves the transitions —
 > not the one that looks finished.
 
-**Continuing a codebase you already have.** Nobody is going to stop and specify everything first,
-and Kotta does not ask for it. Shaping and exploration run without a task at all; you write down
-only the part you are about to touch. `kotta gap` then reports which accepted promises have no
-evidence yet, and which enforcement in the code has no specification behind it.
+**Continuing a codebase you already have.** `running system → observation → spec → task → code`
+
+Nobody is going to stop and specify everything first, and Kotta does not ask for it. What the
+running system tells you — a defect, a gap, a promise nothing keeps — is captured as an observation
+and dispositioned deliberately, so it either amends the specification or becomes a task, and never
+widens the one you are on. `kotta gap` reports which accepted promises still have no evidence, and
+which enforcement in the code has no specification behind it.
 
 > Before changing export, record the business rule the export has to obey. The task that changes it
 > names that rule. The next agent that touches export finds the rule instead of guessing at it.
