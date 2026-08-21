@@ -1,13 +1,18 @@
 ---
 id: F-01m0as3gk50qm7d8hfp15dnp69
 title: A1 form installation contradicts the no-code invariant
-status: new
+status: resolved
 origin: agent
 observation_type: defect
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-18'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:06:44.330Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:44.331Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0as3gk50qm7d8hfp15dnp69 — A1 form installation contradicts the no-code invariant
 

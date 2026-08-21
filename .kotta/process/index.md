@@ -54,7 +54,6 @@ None.
 - a-specifika-cio-s-munka-ra-tova-bbra-is-contract-ke-szu-l-a--vc4e2xry
 - a-vitest-a-worktrees-ala-is-benez-egy-elo-ticket-worktree-me-cahhcmt5
 - a-workspace-konyvtar-atnevezese-uressen-mutatja-a-boardot-am-0n2rjcpt
-- a1-form-installation-contradicts-the-no-code-invariant-p15dnp69
 - an-older-cli-silently-downgrades-a-newer-shaped-workspace-in-jk7q3pec
 - az-approval-chatben-ke-rde-s-a-gyakorlatban-me-gis-parancsli-197dfjs9
 - az-entitast-letrehozo-parancsok-nem-irjak-ki-az-azonositot-e-9mg56yk6
