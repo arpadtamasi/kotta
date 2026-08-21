@@ -42,7 +42,6 @@ None.
 - crm-kit-and-flowbench-cannot-be-migrated-unrelated-dirty-tre-9m3dkmxv
 - kotta-has-no-roadmap-concept-sequenced-intent-above-batches--8amqckd2
 - kotta-has-one-gauge-for-governed-work-a-two-minute-page-and--tsb4m5qh
-- kotta-migrate-writes-a-root-gitattributes-it-never-reports-i-hkr7tyh2
 - kotta-never-states-what-a-contract-is-the-one-agent-sizing-r-0nnk2emr
 - nincs-backlog-review-es-epp-azert-kell-tolnia-magat-a-termek-sjb9v9w9
 - nincs-sprint-vegi-rendcsinalas-a-close-takarit-de-a-maradeko-6mmdp86q

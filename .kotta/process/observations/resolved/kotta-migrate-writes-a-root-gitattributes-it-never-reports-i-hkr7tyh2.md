@@ -3,13 +3,18 @@ id: F-01kz2ar8fk0nfvxgd7hkr7tyh2
 title: >-
   kotta migrate writes a root .gitattributes it never reports, in dry-run or
   after
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: T-022
 created_at: '2026-08-02'
+disposition: accept-risk
+resolved_at: '2026-08-21T15:08:04.861Z'
+approved_by: cli
+approved_at: '2026-08-21T15:08:04.861Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz2ar8fk0nfvxgd7hkr7tyh2 — kotta migrate writes a root .gitattributes it never reports, in dry-run or after
 
