@@ -1,13 +1,18 @@
 ---
 id: F-01kz9d5nqwdwb7r2c0jdzchspa
 title: Live Pages quickstart still advertises kotta 0.3.0
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: T-01kz8tk2t53jbax6mrseka50v9
 created_at: '2026-08-05'
+disposition: reject
+resolved_at: '2026-08-21T15:06:01.734Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:01.734Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz9d5nqwdwb7r2c0jdzchspa — Live Pages quickstart still advertises kotta 0.3.0
 
