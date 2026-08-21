@@ -3,13 +3,18 @@ id: F-01m0fqy11da1bj6r0880e02tt6
 title: >-
   batch sign commit nélkül írja át az állapotot, és a következő parancsot
   blokkolja
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-20'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:06:37.229Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:37.230Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0fqy11da1bj6r0880e02tt6 — batch sign commit nélkül írja át az állapotot, és a következő parancsot blokkolja
 
