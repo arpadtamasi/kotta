@@ -1,13 +1,18 @@
 ---
 id: F-01m0jd8010zwe9kf4kcg79yx4p
 title: batch sign --approve is the only human gate that leaves no receipt
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-21'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:06:42.828Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:42.828Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0jd8010zwe9kf4kcg79yx4p — batch sign --approve is the only human gate that leaves no receipt
 

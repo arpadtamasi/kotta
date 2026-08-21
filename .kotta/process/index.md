@@ -59,7 +59,6 @@ None.
 - az-approval-chatben-ke-rde-s-a-gyakorlatban-me-gis-parancsli-197dfjs9
 - az-entitast-letrehozo-parancsok-nem-irjak-ki-az-azonositot-e-9mg56yk6
 - az-id-azert-szivarog-a-human-kommunikaciora-mert-o-az-egyetl-szetd8cz
-- batch-sign-approve-is-the-only-human-gate-that-leaves-no-rec-cg79yx4p
 - batch-start-kiosztja-az-agentet-de-nem-indi-tja-a-plain-exec-xjpmd8ky
 - calling-codex-chat-has-no-kotta-approval-adapter-and-falls-b-txr0k995
 - close-writes-the-done-record-without-re-validating-it-zhxkkj1d
