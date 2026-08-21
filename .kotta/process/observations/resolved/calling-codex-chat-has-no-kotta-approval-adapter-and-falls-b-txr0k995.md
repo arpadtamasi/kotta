@@ -1,13 +1,18 @@
 ---
 id: F-01kz9dmjb3m6jczvwbtxr0k995
 title: Calling Codex chat has no Kotta approval adapter and falls back to terminal
-status: new
+status: resolved
 origin: agent
 observation_type: blocker
 confidence: high
 severity: medium
 discovered_during: T-01kz8tk2t53jbax6mrseka50v9
 created_at: '2026-08-05'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:07:04.564Z'
+approved_by: cli
+approved_at: '2026-08-21T15:07:04.564Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz9dmjb3m6jczvwbtxr0k995 — Calling Codex chat has no Kotta approval adapter and falls back to terminal
 
