@@ -3,13 +3,18 @@ id: F-01m0f521m0j5f0we3hb316tnhj
 title: >-
   tests/integration/batch-coordinator.test.ts fails non-deterministically, on a
   different test each time
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-20'
+disposition: reject
+resolved_at: '2026-08-21T15:06:02.805Z'
+approved_by: cli
+approved_at: '2026-08-21T15:06:02.805Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0f521m0j5f0we3hb316tnhj — tests/integration/batch-coordinator.test.ts fails non-deterministically, on a different test each time
 
