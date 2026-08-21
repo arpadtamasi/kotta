@@ -3,13 +3,18 @@ id: F-01kz25qv5kenxezrzmm4m7q531
 title: >-
   A kiadatlan changelog-bejegyzes a regi binaris nevet hasznalja abban a
   release-ben ami atnevezi
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: T-021
 created_at: '2026-08-02'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-21T15:08:01.066Z'
+approved_by: cli
+approved_at: '2026-08-21T15:08:01.066Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01kz25qv5kenxezrzmm4m7q531 — A kiadatlan changelog-bejegyzes a regi binaris nevet hasznalja abban a release-ben ami atnevezi
 
