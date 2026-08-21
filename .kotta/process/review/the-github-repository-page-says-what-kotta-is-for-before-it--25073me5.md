@@ -3,7 +3,7 @@ id: T-01m0hrtpfkq3bx3mmd25073me5
 title: >-
   The GitHub repository page says what Kotta is for before it says how to
   install it
-status: active
+status: review
 origin: human
 types:
   - docs
@@ -114,3 +114,29 @@ None.
   advertises `@arpadtamasi/kotta@0.6.0` while the package publishes 0.7.0, and it installs skills
   with `kotta sync` while the public site uses `npx skills add`. The underlying cause of the first —
   the version is hardcoded in several files — is a separate open observation and is not fixed here.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A reader of the rendered repository page can state what Kotta is for, recognise whether they are the intended reader, and name something Kotta deliberately does not do, before the page presents an install command. | README.md now opens with 'What Kotta is for' (line 11), 'What you get' (line 34) and 'What Kotta is not' (line 53); the first install command appears at line 73. 'What Kotta is for' names the reader in its closing sentence; 'What Kotta is not' states that Kotta is not an agent, is local and file-based, and has no hosted service, scheduler daemon or Jira/Linear sync. Verified with 'grep -n $'^#' README.md' at commit 7b08b44. |
+| The install path on the repository page names the version the package publishes and gives the same skills-install instruction as the public page. | README.md:73 reads 'npm install --global @arpadtamasi/kotta@0.7.0', matching site/index.html:167 and package.json version 0.7.0 (was 0.6.0). The skills step now names 'npx skills@1.5.20 add arpadtamasi/kotta' — the command the public site shows — alongside 'kotta sync', which installs the same skills and also writes the workspace rules file. |
+| Compatibility and migration reference material remains complete on the page and no longer precedes the product claim. | 'Renamed from A-Team' moved from line 130 to line 470 and 'Migrating the vocabulary' from line 184 to line 524, both byte-identical, verified by a section-by-section comparison against origin/main:README.md. A line-multiset comparison of the whole file reports exactly three removed lines: the old 0.6.0 install command, one reflowed paragraph line, and the '## Scope' heading that became '## What Kotta is not'. Nothing else was removed. npm test: 383 passed, 3 pre-existing failures in tests/integration/state-duplication.test.ts and tests/integration/ui-port.test.ts that reproduce identically with the change stashed; tests/integration/bug-report.test.ts passes 12/12; npm run typecheck passes. |
+
+### Verification performed
+
+A reader of the rendered repository page can state what Kotta is for, recognise whether they are the intended reader, and name something Kotta deliberately does not do, before the page presents an install command.: README.md now opens with 'What Kotta is for' (line 11), 'What you get' (line 34) and 'What Kotta is not' (line 53); the first install command appears at line 73. 'What Kotta is for' names the reader in its closing sentence; 'What Kotta is not' states that Kotta is not an agent, is local and file-based, and has no hosted service, scheduler daemon or Jira/Linear sync. Verified with 'grep -n $'^#' README.md' at commit 7b08b44.
+The install path on the repository page names the version the package publishes and gives the same skills-install instruction as the public page.: README.md:73 reads 'npm install --global @arpadtamasi/kotta@0.7.0', matching site/index.html:167 and package.json version 0.7.0 (was 0.6.0). The skills step now names 'npx skills@1.5.20 add arpadtamasi/kotta' — the command the public site shows — alongside 'kotta sync', which installs the same skills and also writes the workspace rules file.
+Compatibility and migration reference material remains complete on the page and no longer precedes the product claim.: 'Renamed from A-Team' moved from line 130 to line 470 and 'Migrating the vocabulary' from line 184 to line 524, both byte-identical, verified by a section-by-section comparison against origin/main:README.md. A line-multiset comparison of the whole file reports exactly three removed lines: the old 0.6.0 install command, one reflowed paragraph line, and the '## Scope' heading that became '## What Kotta is not'. Nothing else was removed. npm test: 383 passed, 3 pre-existing failures in tests/integration/state-duplication.test.ts and tests/integration/ui-port.test.ts that reproduce identically with the change stashed; tests/integration/bug-report.test.ts passes 12/12; npm run typecheck passes.
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
