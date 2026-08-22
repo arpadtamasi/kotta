@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdnswngt3tcdtbzbcat152
 title: Review evidence is machine-checkable
-status: active
+status: review
 origin: human
 types:
   - feature
@@ -16,7 +16,7 @@ spec:
   - EX-01m0m33yxvyppm683xrd5tk8f3
   - UC-01m0f0wn89dy38s6whbfa0jafn
 branch: claude/graft-kottara-837884
-pull_request: null
+pull_request: claude/graft-kottara-837884
 created_at: '2026-08-21'
 updated_at: '2026-08-22'
 coverage:
@@ -86,3 +86,29 @@ None.
 ## Execution notes
 
 None.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| An evidence entry declaring `run: <command>` is executed at review submission in the task's execution checkout, and the recorded evidence carries the command, the commit it ran on, and exit 0. | run: npx vitest run tests/integration/review-machine-evidence.test.ts — verified: exit 0 at c7e51e1 |
+| A declared check that exits non-zero refuses the whole submission naming the check and the exit code; the task stays active with its claim and nothing is written to the review evidence. | the refusal test asserts exit 1 naming the check and 'exited with 3', state active, and a byte-identical task file afterwards |
+| Prose evidence entries submit exactly as before, and declared and prose entries mix freely in one submission. | the receipt test submits one run: entry and one prose entry together; the prose row is recorded without a verified suffix, and the pre-existing review-evidence suites pass unchanged |
+
+### Verification performed
+
+An evidence entry declaring `run: <command>` is executed at review submission in the task's execution checkout, and the recorded evidence carries the command, the commit it ran on, and exit 0.: run: npx vitest run tests/integration/review-machine-evidence.test.ts
+A declared check that exits non-zero refuses the whole submission naming the check and the exit code; the task stays active with its claim and nothing is written to the review evidence.: the refusal test asserts exit 1 naming the check and 'exited with 3', state active, and a byte-identical task file afterwards
+Prose evidence entries submit exactly as before, and declared and prose entries mix freely in one submission.: the receipt test submits one run: entry and one prose entry together; the prose row is recorded without a verified suffix, and the pre-existing review-evidence suites pass unchanged
+
+### Deviations
+
+None.
+
+### Observations created
+
+None.
+
+### Known concerns
+
+The declared command runs unsandboxed and without a timeout, exactly as the operator's environment runs commands - stated in the business rule's scope.
