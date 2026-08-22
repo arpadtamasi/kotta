@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdntgw2z8qpy6wqz1z519k
 title: A task's text is repairable in every pre-execution state
-status: review
+status: done
 origin: human
 types:
   - bug
@@ -33,6 +33,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 9b088c20a1c62a197718e0f30e18b7a774c9726f
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-22T16:31:46.791Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
