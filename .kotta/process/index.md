@@ -31,4 +31,3 @@ None.
 ## New observations
 
 - F-021-finding-metadata-is-single-valued-in-practice-severity-confi
-- the-defined-operation-registry-contract-pins-its-acceptance--n9k18wbv

@@ -3,13 +3,22 @@ id: F-01m0ahnn050zz0zr7yn9k18wbv
 title: >-
   The defined operation-registry contract pins its acceptance to counts that are
   wrong: 40 subcommands and 10 MCP tools against an actual 44 and 18
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-18'
+disposition: amend-spec
+resolved_at: '2026-08-22T22:40:47.299Z'
+approved_by: cli
+approved_at: '2026-08-22T22:40:47.299Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - BR-01m0nsyasfnjc9s4073r8zb33j
+  - IF-01m0f0wn8994dzf9z1sdygxa04
+  - IF-01m0f0wn89cq1pnnsta9q8wqx9
 ---
 # F-01m0ahnn050zz0zr7yn9k18wbv — The defined operation-registry contract pins its acceptance to counts that are wrong: 40 subcommands and 10 MCP tools against an actual 44 and 18
 
