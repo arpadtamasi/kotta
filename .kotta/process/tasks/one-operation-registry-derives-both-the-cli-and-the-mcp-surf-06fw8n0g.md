@@ -10,178 +10,154 @@ profiles:
 priority: medium
 risk: medium
 batch: null
-depends_on:
-  - T-01kzda6d8qr4yxqcb41yd5vn20
+depends_on: []
 blocks: []
 branch: null
 pull_request: null
 created_at: '2026-08-07'
-updated_at: '2026-08-07'
+updated_at: '2026-08-22'
+spec:
+  - BR-01m0nsyasfnjc9s4073r8zb33j
+  - IF-01m0f0wn8994dzf9z1sdygxa04
+  - IF-01m0f0wn89cq1pnnsta9q8wqx9
+coverage:
+  'One registry module declares every Kotta operation with a surface-independent id, its service function, and its exposure on each surface, and every operation not exposed to chat carries a recorded reason.':
+    - BR-01m0nsyasfnjc9s4073r8zb33j
+  'Both surfaces are built from the declaration: the CLI command table and the MCP tool list are derived, and an entity-parameterised family expands deterministically over the entities it names.':
+    - BR-01m0nsyasfnjc9s4073r8zb33j
+    - IF-01m0f0wn89cq1pnnsta9q8wqx9
+  'A totality test derives both surfaces from the code and compares them against the registry as sets, failing when either side carries an operation the other does not name; no surface count appears in the assertion.':
+    - BR-01m0nsyasfnjc9s4073r8zb33j
+  'An entry may carry a renderer, and every command whose output the CLI special-cases today keeps its exact human output through that field rather than through a switch beside the registry.':
+    - BR-01m0nsyasfnjc9s4073r8zb33j
+    - IF-01m0f0wn8994dzf9z1sdygxa04
+  'Every existing CLI command and MCP tool keeps its name, arguments, options, input schema, annotations, human output, --json output and exit code, proven against snapshots captured from the built surfaces before the change.':
+    - IF-01m0f0wn8994dzf9z1sdygxa04
+    - IF-01m0f0wn89cq1pnnsta9q8wqx9
 ---
-# T-01kzda6nj9hd2z45tt06fw8n0g — One operation registry derives both the CLI and the MCP surface
-
 ## Outcome
 
 Which Kotta operations are reachable from a terminal and which are reachable from a calling chat is
-stated once, in one place, and both surfaces are built from that statement. Adding an operation
-without deciding its chat exposure becomes impossible rather than merely undocumented, and the
-current asymmetry between the two surfaces becomes readable instead of inferred by comparing two
-hand-written lists.
+stated once, in one declaration, and both surfaces are built from it. Adding an operation without
+deciding its chat exposure becomes impossible rather than merely undocumented, and the asymmetry
+between the two surfaces becomes readable instead of inferred by comparing two hand-written lists.
 
 ## Current structural problem
 
 Kotta has two entry points over one service layer, and the layer is not the problem — the two
-surface lists are. `src/cli/index.ts` registers 40 subcommands. `src/commands/mcp.ts` registers 10
-tools. Both delegate to the same functions in `src/commands/`, but nothing relates the two lists to
-each other.
+surface lists are. `src/cli/index.ts` registers its commands by hand; `src/commands/mcp.ts`
+registers its tools by hand, two of them through loops that expand one call site into a tool per
+entity. Both delegate to the same functions under `src/commands/`, but nothing relates the lists.
 
-The knowledge of "what is exposed where" is therefore spread across at least three independent
-places that must be kept in agreement by hand:
-
-- the `program.command(...)` chain in `src/cli/index.ts`
-- the `server.registerTool(...)` calls in `src/commands/mcp.ts`
-- the server instruction string at `src/commands/mcp.ts:47`, which prose-lists which actions route
-  through `approval_request`
-
-Nothing fails when they disagree. There is no type, test or validation that observes the
-relationship, so 30 CLI commands having no chat equivalent is indistinguishable from an oversight.
+The knowledge of "what is exposed where" is spread across places kept in agreement by hand: the
+command chain in the CLI, the `registerTool` calls in the MCP server, the server instruction string
+that prose-lists which actions route through `approval_request`, and the `humanize` switch that
+formats particular commands. Nothing fails when they disagree, so an operation reaching one surface
+and not the other is indistinguishable from a deliberate omission.
 
 ## Demonstrated cost or risk
 
-- The one host-wiring command in the repository is hardcoded to a single host: `src/cli/index.ts:315`
-  rejects any host but `codex`, and `humanize` carries a matching special case at
-  `src/cli/index.ts:64`. A Claude Code session opened in this repository on 2026-08-07 consequently
-  started with zero Kotta tools, and the human was told to run `kotta contract close --approve` in a
-  terminal — the exact round-trip that `T-01kz8tk2t53jbax6mrseka50v9` shipped to remove. Recorded as
-  observation `F-01kzd9sh03y7hwwbeen5cp4s0q`.
-- A new command lands in the CLI and silently never reaches chat. The omission produces no error, no
-  warning and no record, so the chat surface degrades relative to the CLI with every addition.
-- The prose list at `src/commands/mcp.ts:47` is a fourth copy of the gating knowledge. If a sixth
-  approval action is added to the `approval_request` enum, that sentence does not notice.
-- Reviewing whether the chat surface is adequate requires diffing two files by eye. No artifact
-  answers "which operations are deliberately terminal-only".
+- A Claude Code session opened in this repository on 2026-08-07 started with zero Kotta tools while
+  the CLI had a full surface, and the human was told to run a close command in a terminal — the
+  exact round-trip an earlier task shipped to remove. Recorded as `F-01kzd9sh03y7hwwbeen5cp4s0q`.
+- Counting the surfaces by hand produced acceptance conditions that were false when written and
+  moved twice within four days: `F-01m0ahnn050zz0zr7yn9k18wbv` measured 44 and 18 against a text
+  claiming 40 and 10, and the same surfaces read 43 and 19 after `dedupe` and the pre-rename MCP
+  aliases were removed. The prose list of gated actions is stale in the same way — it says five
+  where `APPROVAL_ACTIONS` now holds six.
+- A new command lands in the CLI and silently never reaches chat: no error, no warning, no record.
+- Answering "which operations are deliberately terminal-only" requires diffing two files by eye.
 
 ## Behavioural invariants
 
 - Every existing CLI subcommand keeps its name, arguments, flags, human output, `--json` output and
-  exit code.
-- Every existing MCP tool keeps its name, input schema, annotations and structured result shape.
-- `approval_request` keeps eliciting through the host, and the same five actions stay gated:
-  `contract.sign`, `observation.resolve`, `contract.close`, `contract.request-changes`,
-  `batch.close`.
-- The CLI-only operations stay CLI-only. This contract makes the omissions explicit; it does not
-  change them.
-- Both surfaces keep calling the same service functions, and the service layer's behaviour is
+  exit code; every existing MCP tool keeps its name, input schema, annotations and result shape.
+- `approval_request` keeps eliciting through the host, gating exactly the actions
+  `APPROVAL_ACTIONS` holds today; this task neither adds nor removes a gated action.
+- The operations that are terminal-only stay terminal-only. This task makes the omissions explicit;
+  it does not change them.
+- Both surfaces keep calling the same service functions, whose behaviour and signatures are
   untouched.
-- `kotta --version`, `kotta --help` and every subcommand's `--help` keep their current text and
-  structure.
-- The `.a-team/` compatibility path and workspace-shape assertion still run where they run now.
+- `kotta --version`, `kotta --help` and every subcommand's `--help` keep their current text.
+- The `.a-team/` compatibility path and the workspace-shape assertion still run where they run now.
 
 ## Target structural property
 
-One declarative registry of operations. Each entry names the operation, its service function, and
-its exposure on each surface. The CLI command table and the MCP tool table are both derived from
-that registry, so an operation cannot exist on one surface without a recorded decision about the
-other.
-
-Omission from the chat surface is explicit and carries a reason. A registry entry declares its MCP
-exposure rather than defaulting to absent, so "terminal-only" is a statement in the code rather than
-the result of nobody having written a tool.
+One declarative registry of operations, following D-01m0nsz3vhrjkfv0r2y13mz0ys. Each entry carries a
+surface-independent id, its service function, its exposure per surface, and optionally a renderer.
+The CLI command table and the MCP tool list are both derived from it, so an operation cannot exist
+on one surface without a recorded decision about the other. A mode of one service stays a flag on
+its operation rather than a second entry, an entity-parameterised family is declared once and
+expands over the entities it names, and per-operation output becomes a declared field rather than a
+switch statement beside the registry. Omission from chat is a statement in the declaration, not the
+result of nobody having written a tool.
 
 ## Excluded redesign
 
 - No new operations, no renames, no removals on either surface.
 - No change to what `approval_request` gates or to how elicitation works.
-- No change to any service function's behaviour or signature. The one signature change this work
-  benefits from is `T-01kzda6d8qr4yxqcb41yd5vn20` and is out of scope here.
-- No plugin or third-party extension mechanism.
-- No code-generation build step if a runtime registry is sufficient.
+- No change to any service function's behaviour or signature.
+- No plugin or third-party extension mechanism; no code-generation build step if a runtime registry
+  is sufficient.
 - No change to `kotta ui`, which stays a read-only projection and is not a third surface.
-- No new host support for `integrate`. That gap is evidence for this contract, not its scope.
+- No new host support for `integrate`. That gap is evidence for this task, not its scope.
 
 ## Behaviour-preserving verification
 
-The surfaces are the observable behaviour here, so they are pinned before the registry is
-introduced and compared after:
+The surfaces are the observable behaviour here, so they are pinned before the registry lands and
+compared after:
 
 - A snapshot test captures the full CLI surface — every subcommand, argument, option and help text —
-  from the built binary before the change. The same snapshot must match afterwards, unmodified.
+  from the built binary before the change, and must match afterwards unmodified.
 - A snapshot test captures the MCP tool list with each tool's name, input schema and annotations,
-  taken from the server rather than the source. The same snapshot must match afterwards.
-- The existing integration and MCP suites run unchanged. Any test that has to be edited to pass
-  marks a behaviour change and fails this contract.
-- A new test asserts the registry itself is total: every entry declares its exposure on both
-  surfaces, and every registered CLI command and MCP tool traces back to exactly one entry. This is
-  the property the contract adds, so it is verified directly rather than inferred.
+  taken from the server rather than from the source, and must match afterwards.
+- The existing integration and MCP suites run unchanged. A test that has to be edited to pass marks
+  a behaviour change and fails this task.
+- The totality test derives both surfaces and compares them against the registry as sets. It is
+  written so that growing the surface cannot make it stale: no count is asserted.
 
 ## Scope
 
-1. Introduce a declarative operation registry describing each Kotta operation, its service function,
-   and its exposure on the CLI and MCP surfaces, with an explicit reason recorded for any operation
-   not exposed to chat.
-2. Derive the MCP tool registrations from the registry, preserving each current tool's name, schema,
-   annotations and result shape exactly.
-3. Derive the CLI command registrations from the registry, preserving each current command's name,
-   arguments, options, output and exit codes exactly.
-4. Replace the prose action list at `src/commands/mcp.ts:47` with text derived from the registry's
-   gated actions, so it cannot fall out of date.
-5. Add the surface-snapshot tests and the registry totality test described above.
-6. Record the current terminal-only operations with their reasons as part of the registry, without
-   changing whether they are exposed.
+1. Introduce the operation registry: surface-independent id, service function, per-surface exposure
+   with a reason for every chat omission, and an optional renderer.
+2. Derive the MCP tool registrations from it, preserving each tool's name, schema, annotations and
+   result shape exactly, with the entity families expanding as they do today.
+3. Derive the CLI command registrations from it, preserving each command's name, arguments, options,
+   output and exit codes exactly, and moving the `humanize` special cases onto the renderer field.
+4. Derive the server instruction string's gated-action list from the registry so it cannot fall out
+   of date.
+5. Add the two surface snapshots and the totality test.
+6. Record today's terminal-only operations with their reasons, without changing their exposure.
 
 ## Non-goals
 
 - Exposing any currently terminal-only operation to chat.
 - Adding hosts to `integrate`, or changing how host configuration is written.
-- Unifying error formatting, output shaping or `--json` rendering between the surfaces beyond what
-  deriving the tables requires.
+- Unifying error formatting or `--json` rendering beyond what deriving the tables requires.
 - A general command framework, middleware layer or dependency-injection container.
 - Any change to the board, its API, or the approval event schema.
 
 ## Acceptance
 
-- One registry module lists every Kotta operation, and each entry states its CLI exposure and its
-  MCP exposure, with a reason string present on every operation not exposed to chat.
-- The CLI surface after the change is identical to the captured pre-change snapshot: same 40
-  subcommands, same arguments, same options, same help text.
-- The MCP surface after the change is identical to the captured pre-change snapshot: same 10 tools,
-  same names, same input schemas, same annotations.
-- A test fails if a CLI command exists with no registry entry, if an MCP tool exists with no registry
-  entry, or if an entry omits either exposure declaration.
-- Adding a registry entry that declares no MCP exposure and no reason fails that test, demonstrated
-  by a fixture rather than asserted in prose.
-- The server instruction text listing gated actions is produced from the registry, and adding a
-  sixth action to the `approval_request` enum changes that text without a separate edit.
-- `approval_request` still elicits and still gates exactly the five current actions.
-- `kotta validate`, `npm run typecheck` and the full suite pass, and no existing test file required
-  an assertion change.
+- One registry module declares every Kotta operation with a surface-independent id, its service function, and its exposure on each surface, and every operation not exposed to chat carries a recorded reason.
+- Both surfaces are built from the declaration: the CLI command table and the MCP tool list are derived, and an entity-parameterised family expands deterministically over the entities it names.
+- A totality test derives both surfaces from the code and compares them against the registry as sets, failing when either side carries an operation the other does not name; no surface count appears in the assertion.
+- An entry may carry a renderer, and every command whose output the CLI special-cases today keeps its exact human output through that field rather than through a switch beside the registry.
+- Every existing CLI command and MCP tool keeps its name, arguments, options, input schema, annotations, human output, --json output and exit code, proven against snapshots captured from the built surfaces before the change.
 
 ## Verification
 
-- `npx vitest run` on the new CLI-surface and MCP-surface snapshot tests — before and after,
-  asserting no diff.
-- `npx vitest run` on the registry totality test, including the negative fixture for a missing
-  exposure declaration.
-- `npx vitest run tests/integration/` — the existing lifecycle coverage, unmodified.
-- The existing MCP test file, unmodified.
-- `npm run typecheck`.
-- `npx vitest run --exclude '.worktrees/**'` — full suite, excluding linked worktrees so the run
-  measures this branch only.
-- Manual: start the server with `kotta mcp`, list tools, and confirm the set and schemas match the
-  snapshot.
+- Surface snapshots captured from the built binary and from the MCP server before the change, and
+  compared after; any difference fails the task.
+- The totality test, run against a deliberately unregistered command and a deliberately
+  unregistered tool, fails in both directions.
+- The full vitest suite and typecheck stay green, with no existing test edited to pass.
 
 ## Constraints
 
-- `.kotta/` remains the canonical source of truth, and both surfaces keep routing every mutation
-  through the existing validated services and `withControlPlaneMutation`.
-- The registry describes exposure; it must not become a place where validation, gating or lifecycle
-  rules are re-implemented.
-- Prefer a runtime registry over generated source. A build step is only acceptable if a runtime
-  table cannot preserve the CLI help text exactly.
-- This work is behaviour-preserving. Any observable difference on either surface is a defect, not an
-  improvement, and the excluded redesign list is binding even where a change looks obviously better.
-- `T-01kzda6d8qr4yxqcb41yd5vn20` should land first so the registry is not built around a
-  path-shaped outlier.
+The registry is an internal structure: it is not written into `.kotta/`, carries no migration and
+appears in no published schema. Operation ids are internal identifiers. The gated-action set stays
+exactly what `APPROVAL_ACTIONS` holds when the work starts.
 
 ## Open decisions
 
@@ -189,16 +165,4 @@ None.
 
 ## Execution notes
 
-- One decision was made while defining this contract rather than deferred: MCP exposure is declared
-  per operation with a required reason for omission, rather than defaulting to absent. The reason is
-  that the observed failure mode was silence — nobody noticed the chat surface was missing — and a
-  default-absent registry reproduces exactly that silence. Reversing this later is cheap: it is a
-  type change on one field plus the totality test.
-- The registry is expected to record uncomfortable entries. `init`, `migrate` and `integrate` are
-  terminal-only for a bootstrap reason: the MCP server cannot register itself. `claim`, `dedupe` and
-  `validate` are terminal-only for a recovery reason: they are needed precisely when a host
-  connection is unavailable. Writing those reasons down is part of the deliverable.
-- `src/cli/index.ts:64` currently special-cases `"integrate codex"` inside `humanize`. Deriving the
-  command table does not remove that; it makes it visible as a per-operation formatting concern.
-- The 40-vs-10 asymmetry is the current state, not a defect to fix here. This contract makes it
-  legible so that a later, separate decision can change it deliberately.
+None.
