@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdnswngt3tcdtbzbcat152
 title: Review evidence is machine-checkable
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -34,6 +34,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 58507dd5eb6bbc0d824cbbbeeaad809f8bb135b5
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-22T09:08:13.090Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
