@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdntgw2z8qpy6wqz1z519k
 title: A task's text is repairable in every pre-execution state
-status: active
+status: review
 origin: human
 types:
   - bug
@@ -15,7 +15,7 @@ spec:
   - SM-01m0f0wn89gjy6dbk1j6fjpv6j
   - EX-01m0mzvcvdvxzpr59p8v7387n3
 branch: claude/graft-kottara-837884
-pull_request: null
+pull_request: claude/graft-kottara-837884
 created_at: '2026-08-21'
 updated_at: '2026-08-22'
 coverage:
@@ -81,3 +81,29 @@ None.
 ## Execution notes
 
 None.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| `kotta task define <id> --draft --from <file>` stores or amends a backlog task's text with its structure validated and no coverage required, and the task stays in backlog. | run: npx vitest run tests/integration/task-draft.test.ts — verified: exit 0 at 2d04a3a |
+| `--draft` on a task that has left backlog is refused, and a definition submitted without `--draft` still requires every acceptance condition to cite a landed specification node. | the 'refused by name' test asserts exit 1 with '--draft amends a captured task' on a defined task, and the gate test asserts ACCEPTANCE_NOT_COVERED for the identical definition without --draft |
+| A changed title in a draft renames the stored file within process/tasks/. | the store test drafts with title 'Draft me properly' and asserts the old path is gone and the stored file is process/tasks/draft-me-properly-*, status backlog |
+
+### Verification performed
+
+`kotta task define <id> --draft --from <file>` stores or amends a backlog task's text with its structure validated and no coverage required, and the task stays in backlog.: run: npx vitest run tests/integration/task-draft.test.ts
+`--draft` on a task that has left backlog is refused, and a definition submitted without `--draft` still requires every acceptance condition to cite a landed specification node.: the 'refused by name' test asserts exit 1 with '--draft amends a captured task' on a defined task, and the gate test asserts ACCEPTANCE_NOT_COVERED for the identical definition without --draft
+A changed title in a draft renames the stored file within process/tasks/.: the store test drafts with title 'Draft me properly' and asserts the old path is gone and the stored file is process/tasks/draft-me-properly-*, status backlog
+
+### Deviations
+
+None.
+
+### Observations created
+
+None.
+
+### Known concerns
+
+A structurally broken draft is still refused (MISSING_SECTION) - drafting relaxes coverage only, never the section skeleton; pinned by its own test.

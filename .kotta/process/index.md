@@ -18,11 +18,11 @@ None.
 
 ## Active tasks
 
-- a-task-s-text-is-repairable-in-every-pre-execution-state-qz1z519k
+None.
 
 ## Review
 
-None.
+- a-task-s-text-is-repairable-in-every-pre-execution-state-qz1z519k
 
 ## Blocked
 
