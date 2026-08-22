@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **A declared check is run, not transcribed.** A review evidence value may start with
+  `run: <command>`: the submission executes it in the task's execution checkout before anything
+  is written, refuses the whole submission by name when it exits non-zero, and records the
+  command, the commit it ran on and `exit 0` next to the evidence as the receipt of a real run.
+  Prose evidence stays allowed and unmarked; nothing re-runs at close; no sandbox is added.
+
 ### Breaking
 
 - **State lives in one place: workspace shape v5.** One entity is one stable file —

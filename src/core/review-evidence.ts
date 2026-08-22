@@ -13,6 +13,16 @@ export interface PreparedReviewEvidence {
 const normalized = (value: string): string => value.trim().replace(/\s+/g, " ");
 
 /**
+ * The command a `run:`-prefixed evidence value declares, or null for prose. The prefix is the
+ * whole surface (BR-01m0m33yxt2vqxb3jvqc186ssy): no flag, no second evidence vocabulary — an
+ * entry either names a runnable check or remains prose the reviewer weighs.
+ */
+export function declaredCommand(evidence: string): string | null {
+  const match = /^run:\s*(\S[\s\S]*)$/.exec(evidence.trim());
+  return match ? match[1].trim() : null;
+}
+
+/**
  * The legacy surface supplied one blob. Named mappings use the exact check text as their key; the
  * task already owns those names, so no second identifier vocabulary is introduced.
  */

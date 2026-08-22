@@ -190,7 +190,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
 
   server.registerTool("task_submit_review", {
     title: "Submit task for review",
-    description: "Submit an active task with acceptance evidence after implementation and verification are complete.",
+    description: "Submit an active task with acceptance evidence after implementation and verification are complete. An evidence value starting with 'run: <command>' declares a runnable check: it is executed in the execution checkout, a non-zero exit refuses the submission, and a success is recorded next to the evidence as command, commit and exit 0.",
     inputSchema: {
       id: z.string().min(1),
       evidence: z.union([z.string().min(1), z.record(z.string(), z.string().min(1))]),
