@@ -1,7 +1,7 @@
 ---
 id: T-01kzda6nj9hd2z45tt06fw8n0g
 title: One operation registry derives both the CLI and the MCP surface
-status: defined
+status: active
 origin: human
 types:
   - refactor
@@ -12,7 +12,7 @@ risk: medium
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-07'
 updated_at: '2026-08-22'
@@ -34,6 +34,12 @@ coverage:
   'Every existing CLI command and MCP tool keeps its name, arguments, options, input schema, annotations, human output, --json output and exit code, proven against snapshots captured from the built surfaces before the change.':
     - IF-01m0f0wn8994dzf9z1sdygxa04
     - IF-01m0f0wn89cq1pnnsta9q8wqx9
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 7813c6fa33394ecb950b0689563cad0e279cf9e2
 ---
 ## Outcome
 
