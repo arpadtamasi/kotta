@@ -419,9 +419,12 @@ kotta task brief T-014 --out /tmp/T-014-brief.md
 kotta task execute T-014 --agent claude
 kotta task execute T-014 --resume
 kotta task review T-014 \
-  --evidence "Filtered export is produced=tests/export.test.ts passes" \
-  --evidence "Export respects active filters=tests/export-filter.test.ts passes" \
+  --evidence "Filtered export is produced=run: npx vitest run tests/export.test.ts" \
+  --evidence "Export respects active filters=tests/export-filter.test.ts inspected" \
   --pull-request PR-123
+# An evidence value starting with `run:` declares a runnable check: the submission executes it
+# in the execution checkout, refuses on a non-zero exit, and records the command, the commit it
+# ran on and `exit 0` next to the evidence. Entries without `run:` remain prose.
 kotta task close T-014 --approve
 kotta task reopen T-014 --approve
 

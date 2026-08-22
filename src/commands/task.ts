@@ -1,4 +1,5 @@
 import { mkdirSync, readdirSync, writeFileSync, readFileSync, existsSync, unlinkSync, renameSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { join, resolve } from "node:path";
 import { parse as parseYaml, stringify } from "yaml";
 import { findRepositoryRoot, regenerateIndex, workspaceDirectoryName, processPath } from "../filesystem/workspace.js";
@@ -15,7 +16,7 @@ import { readWorkspaceConfig } from "../core/config.js";
 import { appendCliApprovalAudit, appendLifecycleEvent } from "../core/events.js";
 import { cliApprovalReceipt, stampReceipt, type ApprovalReceipt } from "../core/approval-receipt.js";
 import { readEnv } from "../core/env.js";
-import { assertDistinctReviewEvidence, prepareReviewEvidence, type ReviewEvidenceInput } from "../core/review-evidence.js";
+import { assertDistinctReviewEvidence, declaredCommand, prepareReviewEvidence, type ReviewEvidenceInput } from "../core/review-evidence.js";
 import { taskCoverage, validateTaskCoverage, type CoverageEntry } from "../core/coverage.js";
 
 export function slugify(value: string): string {
@@ -427,8 +428,22 @@ export function reviewTask(id: string, evidence: ReviewEvidenceInput, pullReques
   const checks = [...acceptance, ...profileChecks];
   const preparedEvidence = prepareReviewEvidence(checks, evidence);
   assertDistinctReviewEvidence(preparedEvidence.entries);
+  // A declared check is run, not transcribed (BR-01m0m33yxt2vqxb3jvqc186ssy): every `run:` entry
+  // executes in the execution checkout before anything is written, so a failing check refuses the
+  // whole submission and a recorded one is the receipt of a real run.
+  const runnable = preparedEvidence.entries
+    .map((entry) => ({ check: entry.check, command: declaredCommand(entry.evidence) }))
+    .filter((entry): entry is { check: string; command: string } => entry.command !== null);
+  const verifiedAt = runnable.length ? git(executionRoot, ["rev-parse", "HEAD"]).slice(0, 7) : null;
+  for (const entry of runnable) {
+    const outcome = spawnSync(entry.command, { cwd: executionRoot, shell: true, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+    if (outcome.status !== 0) {
+      throw new Error(`Declared check for '${entry.check}' failed: '${entry.command}' exited with ${outcome.status ?? `signal ${outcome.signal ?? "unknown"}`}. The submission was refused; ${id} stays active.`);
+    }
+  }
+  const verified = new Set(runnable.map((entry) => entry.check));
   const evidenceRows = preparedEvidence.entries.map(({ check, evidence: answer }) =>
-    `| ${check.replaceAll("|", "\\|")} | ${answer.replaceAll("|", "\\|").replaceAll("\n", " ")} |`).join("\n");
+    `| ${check.replaceAll("|", "\\|")} | ${answer.replaceAll("|", "\\|").replaceAll("\n", " ")}${verified.has(check) ? ` — verified: exit 0 at ${verifiedAt}` : ""} |`).join("\n");
   const declared = (value: string | undefined) => (value !== undefined && value.trim() ? value.trim() : NOT_DECLARED);
   const reviewEvidence = `\n\n## Review evidence\n\n| Acceptance condition | Evidence |\n|---|---|\n${evidenceRows}\n\n### Verification performed\n\n${preparedEvidence.verification}\n\n### Deviations\n\n${declared(declarations.deviations)}\n\n### Observations created\n\n${declared(declarations.observationsCreated)}\n\n### Known concerns\n\n${declared(declarations.knownConcerns)}\n`;
   const destination = join(processPath(root, "tasks"), task.filename);
@@ -436,7 +451,8 @@ export function reviewTask(id: string, evidence: ReviewEvidenceInput, pullReques
   if (canonical.path !== destination) unlinkSync(canonical.path);
   if (legacy && !existsSync(canonicalClaim)) writeFileSync(canonicalClaim, readFileSync(legacyClaim, "utf8"));
   regenerateIndex(root);
-  appendLifecycleEvent(root, id, "review", pullRequest ? `Submitted for review in ${pullRequest}.` : "Submitted for review.");
+  const verificationNote = runnable.length ? ` ${runnable.length} declared check${runnable.length === 1 ? "" : "s"} verified at ${verifiedAt}.` : "";
+  appendLifecycleEvent(root, id, "review", `${pullRequest ? `Submitted for review in ${pullRequest}.` : "Submitted for review."}${verificationNote}`);
   commitControlState(root, `chore(kotta): submit ${id} for review`);
 
   // One-time adoption path for executions started before the control-plane model existed.
