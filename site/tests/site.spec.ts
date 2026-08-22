@@ -21,9 +21,10 @@ test("renders the approved content task in order", async ({ page }) => {
 
   await expect(page.locator("[data-unit]")).toHaveCount(7);
   expect(await page.locator("[data-unit]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-unit")))).toEqual(["hero", "problem", "arrivals", "workflow", "comparison", "quickstart", "trust"]);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Everything we learned about spelling out exactly what we want.");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Your job is to figure out what you want.");
-  await expect(page.getByText("Without the rigidity that kept us from doing it properly. Designed to be executed by AI.")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("The last 10% is the whole job.");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Start there.");
+  await expect(page.getByText("checks that run instead of being narrated")).toBeVisible();
+  await expect(page.getByText("run: npx playwright test — verified: exit 0")).toBeVisible();
   await expect(page.getByRole("heading", { name: "AI can execute more work than you can continuously observe." })).toBeVisible();
   await expect(page.getByRole("heading", { name: "The agreement becomes executable." })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Three ways in." })).toBeVisible();
