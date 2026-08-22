@@ -1,13 +1,18 @@
 ---
 id: F-01m0m0kf1k0h23yb0f9xwfetdk
 title: The oneanda demo generator still writes the pre-v5 legacy shape
-status: new
+status: resolved
 origin: agent
 observation_type: inconsistency
 confidence: high
 severity: medium
 discovered_during: T-01m0jdnshte2ffyzcp3bhf9kh1
 created_at: '2026-08-22'
+disposition: accept-risk
+resolved_at: '2026-08-22T12:03:58.334Z'
+approved_by: cli
+approved_at: '2026-08-22T12:03:58.334Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0m0kf1k0h23yb0f9xwfetdk — The oneanda demo generator still writes the pre-v5 legacy shape
 
