@@ -18,7 +18,7 @@ Mutations are validated before writing and committed to canonical state. Every e
 
 ## Invariants
 
-The id the CLI prints is the id the CLI accepts - short forms resolve on every command. Reads write nothing. A validation failure never produces a defined task. The pre-rename binary name remains an alias of the same entrypoint.
+The id the CLI prints is the id the CLI accepts - short forms resolve on every command. Reads write nothing. A validation failure never produces a defined task. The pre-rename binary name remains an alias of the same entrypoint. Every invocable command is a projection of one operation declaration; the CLI carries no command the declaration does not name.
 
 ## Failures
 

@@ -6,7 +6,7 @@ title: "The MCP tool surface"
 
 ## Purpose
 
-The calling-chat control plane over stdio MCP: workspace status, the gap report, list and show for every entity (with one-version pre-rename aliases), task create/define/validate/brief/start-caller/submit-review, observation create, message recording, and the approval elicitation.
+The calling-chat control plane over stdio MCP: workspace status, the gap report, list and show for every entity, task create/define/validate/brief/start-caller/submit-review, observation create, message recording, and the approval elicitation.
 
 ## Preconditions
 
@@ -18,7 +18,7 @@ Identifiers and paths return as structured data, so the human never relays them.
 
 ## Invariants
 
-Same validation, same services, same refusals as the CLI. Persisted conversation stores exact visible messages only - never hidden reasoning, raw tool output, or streaming deltas.
+Same validation, same services, same refusals as the CLI. Persisted conversation stores exact visible messages only - never hidden reasoning, raw tool output, or streaming deltas. Every tool is a projection of one operation declaration, an entity-parameterised family expanding deterministically over the entities it names; the surface carries no tool the declaration does not name.
 
 ## Failures
 
