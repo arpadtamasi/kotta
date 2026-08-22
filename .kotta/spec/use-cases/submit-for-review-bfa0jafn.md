@@ -18,8 +18,8 @@ The executing agent holds the claim; the execution worktree is clean (everything
 
 ## Main success scenario
 
-The agent maps each acceptance condition to concrete, reproducible evidence - test output, artifacts, measurements - names any deviations, records the pull request reference, and submits. The task moves to review.
+The agent maps each acceptance condition to concrete, reproducible evidence - test output, artifacts, measurements - names any deviations, records the pull request reference, and submits. An evidence entry may declare a runnable check (`run: <command>`); the submission executes it in the execution checkout and records the command, the commit it ran on, and its exit status with the evidence. The task moves to review.
 
 ## Alternatives
 
-Missing evidence mapping is refused. Deviations are declared, never absorbed into a "none" boilerplate. Review acceptance itself stays with the operator - submission never implies acceptance.
+Missing evidence mapping is refused. A declared check that exits non-zero refuses the whole submission by name; the task stays active. Deviations are declared, never absorbed into a "none" boilerplate. Review acceptance itself stays with the operator - submission never implies acceptance.
