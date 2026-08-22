@@ -290,14 +290,15 @@ task
 task
   .command("define <id>")
   .requiredOption("--from <path>", "Markdown definition file")
+  .option("--draft", "Store or amend a backlog capture without the coverage check; the task stays in backlog")
   .option("--json")
-  .action((id: string, options: { from: string; json?: boolean }) => {
+  .action((id: string, options: { from: string; draft?: boolean; json?: boolean }) => {
     const sourcePath = resolve(options.from);
     if (!existsSync(sourcePath)) throw new Error(`Task definition was not found: ${sourcePath}`);
     const definition = readFileSync(sourcePath, "utf8");
     const result = withControlPlaneMutation(findRepositoryRoot(), (root) => {
-      const defined = defineTask(id, definition, root);
-      commitControlState(root, `chore(kotta): define ${id}`);
+      const defined = defineTask(id, definition, root, { draft: Boolean(options.draft) });
+      commitControlState(root, `chore(kotta): ${options.draft ? "draft" : "define"} ${id}`);
       return defined;
     }, { requireClean: false });
     print(result, Boolean(options.json));

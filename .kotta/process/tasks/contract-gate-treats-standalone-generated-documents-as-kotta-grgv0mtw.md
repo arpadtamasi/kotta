@@ -1,7 +1,7 @@
 ---
 id: T-01m00afb9wt2vrbs3qgrgv0mtw
 title: Contract gate treats standalone generated documents as Kotta product work
-status: review
+status: done
 origin: observation
 types:
   - bug
@@ -16,12 +16,20 @@ branch: >-
   fix/T-01m00afb9wt2vrbs3qgrgv0mtw-contract-gate-treats-standalone-generated-documents-as-kotta
 pull_request: null
 created_at: '2026-08-14'
-updated_at: '2026-08-20'
+updated_at: '2026-08-22'
 source_observation: F-01m007x3gsqznhbcnytnjqpfy5
 assigned_agent: codex
 worktree: .worktrees/T-01m00afb9wt2vrbs3qgrgv0mtw
 execution_mode: inherited
 branch_origin: created
+resolution: cancelled
+cancellation_reason: >-
+  The 0.5-based feature branch no longer exists on the remote, and the shipped
+  rule now decides by purpose and effect rather than path or file type, which
+  covers the standalone-document exemption this task carried.
+approved_by: cli
+approved_at: '2026-08-22T12:03:57.612Z'
+approval_basis: 'CLI --approve: task.cancel'
 ---
 # Contract gate treats standalone generated documents as Kotta product work
 

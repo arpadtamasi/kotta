@@ -22,8 +22,7 @@ None.
 
 ## Review
 
-- a-contract-that-proves-incomplete-has-a-way-back-rf5d4tfp
-- contract-gate-treats-standalone-generated-documents-as-kotta-grgv0mtw
+None.
 
 ## Blocked
 
@@ -33,4 +32,3 @@ None.
 
 - F-021-finding-metadata-is-single-valued-in-practice-severity-confi
 - the-defined-operation-registry-contract-pins-its-acceptance--n9k18wbv
-- the-oneanda-demo-generator-still-writes-the-pre-v5-legacy-sh-9xwfetdk
