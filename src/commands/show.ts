@@ -4,7 +4,6 @@ import { controlPlaneRoot } from "../git/control-plane.js";
 import { canonicalEntityId, listEntities, type ListableEntity } from "../filesystem/entities.js";
 import { parseMarkdown } from "../core/markdown.js";
 import { displayId } from "../core/identity.js";
-import { readTaskVocabulary } from "../compatibility/task-v3.js";
 
 export interface ShowResult {
   ok: true;
@@ -25,7 +24,6 @@ export function showCommand(entity: ListableEntity, id: string, repositoryRoot?:
   if (!found) throw new Error(`${entity} ${id} was not found.`);
 
   const parsed = parseMarkdown(readFileSync(found.path, "utf8"));
-  parsed.data = readTaskVocabulary(parsed.data);
   const facts: Record<string, string> = {};
   for (const [key, value] of Object.entries(parsed.data)) {
     if (key === "id" || key === "title" || key === "status") continue;

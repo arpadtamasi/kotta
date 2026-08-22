@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { basename, dirname, join } from "node:path";
+import { basename } from "node:path";
 import { PROFILE_REQUIREMENTS } from "./profiles.js";
 import { TASK_ID, filenameMatchesId } from "./identity.js";
 import { parseMarkdown, sections, subsections } from "./markdown.js";
@@ -9,6 +9,10 @@ export interface ValidationIssue { code: string; message: string; path?: string 
 export interface ValidationReport { valid: boolean; errors: ValidationIssue[] }
 
 const COMMON_SECTIONS = ["Outcome", "Scope", "Non-goals", "Acceptance", "Verification", "Constraints", "Open decisions", "Execution notes"];
+
+// Lifecycle state lives in the frontmatter status field alone, so a value outside the lifecycle
+// means the task is in no state at all — kept in lockstep with TASK_STATES in filesystem/entities.
+const TASK_STATE_VALUES = ["backlog", "defined", "active", "review", "done"];
 
 // F-019: the structured Deviations field stays "None."/"Not declared." while the narrative names deviations.
 const UNDECLARED_DEVIATIONS = /^(?:none|not declared)\.?$/i;
@@ -30,9 +34,8 @@ function validateTask(path: string, expectedState?: string, requireDefinition = 
   if (!TASK_ID.test(id)) errors.push({ code: "INVALID_ID", message: "Task id must be a minted id such as T-01k1n0h5q7zv3m8b4d6xr2ptcw, a sequential T-001, or an imported O-1 identifier.", path });
   if (!filenameMatchesId(basename(path), id)) errors.push({ code: "FILENAME_ID_MISMATCH", message: "Filename must start with the task id, or end with its short id suffix.", path });
   for (const issue of receiptErrors(entity.data)) errors.push({ ...issue, path });
-  const directoryState = basename(dirname(path));
   const state = String(entity.data.status ?? "");
-  if (state !== directoryState) errors.push({ code: "STATE_MISMATCH", message: `status '${state}' does not match directory '${directoryState}'.`, path });
+  if (!TASK_STATE_VALUES.includes(state)) errors.push({ code: "INVALID_STATE", message: `status '${state}' is not a task state (${TASK_STATE_VALUES.join(", ")}).`, path });
   if (expectedState && state !== expectedState) errors.push({ code: "WRONG_STATE", message: `Expected task state '${expectedState}', found '${state}'.`, path });
   const bodySections = sections(entity.content);
   if (state !== "backlog" || requireDefinition) for (const heading of COMMON_SECTIONS) {

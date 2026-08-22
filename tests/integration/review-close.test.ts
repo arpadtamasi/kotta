@@ -1,7 +1,7 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
@@ -26,7 +26,6 @@ describe("review and close", () => {
     git(root, "add", ".gitattributes", ".gitignore"); git(root, "commit", "-m", "initialize Kotta metadata");
     const created = (run(root, ["task", "new", "--title", "Document flow", "--type", "documentation"]) as { data: { id: string; path: string } }).data;
     const id = created.id;
-    const filename = basename(created.path);
     const path = created.path;
     writeFileSync(path, readFileSync(path, "utf8").replace("Describe the observable outcome.", "The flow is documented.").replace("- Define an observable condition.", "- Documentation describes the flow.").replace("- Explain how acceptance will be checked.", "- Read the rendered documentation."));
     run(root, ["task", "sign", id, "--approve"]);
@@ -41,12 +40,14 @@ describe("review and close", () => {
     writeFileSync(pending, "uncommitted\n");
     const refused = spawnSync("node", [cli, "task", "close", id, "--approve", "--json"], { cwd: root, encoding: "utf8" });
     expect(refused.status).toBe(1);
-    expect(existsSync(join(root, ".kotta/process/review", filename))).toBe(true);
+    expect(existsSync(path)).toBe(true);
+    expect(readFileSync(path, "utf8")).toMatch(/^status: review$/m);
     expect(existsSync(join(root, ".kotta/process/claims", `${id}.yaml`))).toBe(true);
     unlinkSync(pending);
     expect(run(root, ["task", "close", id, "--approve"])).toMatchObject({ ok: true, command: "task close" });
 
-    expect(existsSync(join(root, ".kotta/process/done", filename))).toBe(true);
+    expect(existsSync(path)).toBe(true);
+    expect(readFileSync(path, "utf8")).toMatch(/^status: done$/m);
     expect(existsSync(join(root, ".kotta/process/claims", `${id}.yaml`))).toBe(false);
     expect(existsSync(worktree)).toBe(false);
     expect(git(root, "branch", "--list", `docs/${id}-document-flow`).trim()).toBe("");

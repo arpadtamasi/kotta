@@ -8,12 +8,12 @@ description: This skill should be used when the user asks "what needs my decisio
 Perform read-only portfolio analysis over the repository's canonical `.kotta/` workspace. Treat the conversation as the interface: answer the user's actual question instead of proposing a separate dashboard or stopping after an inspection plan.
 
 1. Locate the repository root and `.kotta/config.yaml`. Read `.kotta/process/index.md` for orientation, then inspect the relevant canonical files rather than relying on the index summary alone.
-2. Search every lifecycle directory under `.kotta/process/` for tasks, observations, and batches. Read `.kotta/process/decisions/` to distinguish durable human decisions from still-open decision sections. Include resolved history when it can explain a decision, duplicate, supersession, or dependency.
+2. Search `.kotta/process/tasks/`, `.kotta/process/observations/`, and `.kotta/process/batches/`; each entity's lifecycle state is its frontmatter `status` field. Read `.kotta/process/decisions/` to distinguish durable human decisions from still-open decision sections. Include resolved history when it can explain a decision, duplicate, supersession, or dependency.
    Durable decision records are created only with `kotta decision create --from <draft.md> --approve`; exploration remains read-only and never hand-edits `.kotta/process/decisions/`.
 3. Inspect `.kotta/migration.json` when present. Follow `source_file`, legacy identifiers, split records, and excluded-terminal records when current files do not contain enough evidence.
 4. Compare outcome, scope, evidence, lifecycle state, dependencies, decisions, and batch membership. Never infer a relationship from title similarity alone.
 5. Separate results into the smallest useful groups, such as direct matches, dependencies, overlap or duplicate candidates, adjacent context, resolved history, and items needing a human decision. Omit empty groups.
-6. Render every reported canonical entity as a Markdown link with its exact identifier, such as `[O-97](.kotta/process/backlog/O-97-example.md)`. Link the entity's current canonical file; for migration-only history, link the validated `source_file` when available.
+6. Render every reported canonical entity as a Markdown link with its exact identifier, such as `[O-97](.kotta/process/tasks/O-97-example.md)`. Link the entity's current canonical file; for migration-only history, link the validated `source_file` when available.
 7. Distinguish observed facts from interpretation. Explain the concrete reason for every non-obvious relationship and call out uncertainty.
 8. Return the substantive answer as concise GitHub-Flavored Markdown. Use tables only when comparing repeated fields across several items; otherwise prefer short prose and lists.
 

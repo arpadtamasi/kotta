@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
@@ -51,14 +51,12 @@ describe("dependency-aware batch", () => {
       tasks.push({ id: created.data.id, filename: basename(path) });
     }
     const [parser, command] = tasks;
-    const second = join(root, ".kotta/process/defined", command.filename);
+    const second = join(root, ".kotta/process/tasks", command.filename);
     writeFileSync(second, readFileSync(second, "utf8").replace("depends_on: []", `depends_on:\n  - ${parser.id}`));
     const batchId = (run(root, ["batch", "new", "--title", "Parser slice", "--goal", "Deliver a parser slice"]) as { data: { id: string } }).data.id;
     run(root, ["batch", "add", batchId, parser.id]);
     run(root, ["batch", "add", batchId, command.id]);
-    const blockedBacklog = join(root, ".kotta/process/backlog", command.filename);
-    writeFileSync(blockedBacklog, readFileSync(second, "utf8").replace("status: defined", "status: backlog"));
-    unlinkSync(second);
+    writeFileSync(second, readFileSync(second, "utf8").replace("status: defined", "status: backlog"));
     expect(run(root, ["batch", "sign", batchId, "--approve"])).toMatchObject({ ok: true, command: "batch sign" });
     git(root, "add", "."); git(root, "commit", "-m", "define batch");
 
@@ -109,7 +107,10 @@ const snapshot = (root: string) => ({
   workspace: git(root, "ls-files", ".kotta"),
 });
 
-const batchFile = (root: string, state: string, filename: string) => join(root, ".kotta/process/batches", state, filename);
+const batchFile = (root: string, filename: string) => join(root, ".kotta/process/batches", filename);
+
+/** The lifecycle state, read straight off a stored entity's frontmatter. */
+const status = (path: string) => readFileSync(path, "utf8").match(/^status: (.+)$/m)?.[1];
 
 /**
  * The P-005 shape: a batch still in `backlog` whose tasks reached done outside the batch
@@ -134,16 +135,17 @@ function backlogBatchWithMembers(label: string, members: Array<"done" | "defined
 describe("batch close", () => {
   test("closes a backlog batch whose member tasks are all done", () => {
     const { root, batchId, filename, tasks } = backlogBatchWithMembers("closeable", ["done", "done"]);
-    const tasksBefore = tasks.map((task) => readFileSync(join(root, ".kotta/process/done", task.filename), "utf8"));
+    const tasksBefore = tasks.map((task) => readFileSync(join(root, ".kotta/process/tasks", task.filename), "utf8"));
 
     const closed = run(root, ["batch", "close", batchId, "--approve"]);
     expect(closed).toMatchObject({ ok: true, command: "batch close", data: { id: batchId, status: "done", changed: true } });
-    expect(existsSync(batchFile(root, "backlog", filename))).toBe(false);
-    expect(readFileSync(batchFile(root, "done", filename), "utf8")).toContain("status: done");
+    // The record stays at its stable path; only its status changed.
+    expect(existsSync(batchFile(root, filename))).toBe(true);
+    expect(status(batchFile(root, filename))).toBe("done");
     expect(run(root, ["batch", "status", batchId])).toMatchObject({ ok: true, data: { id: batchId, status: "done" } });
     expect(run(root, ["validate"])).toMatchObject({ ok: true });
     // Closing a batch never touches its tasks.
-    expect(tasks.map((task) => readFileSync(join(root, ".kotta/process/done", task.filename), "utf8"))).toEqual(tasksBefore);
+    expect(tasks.map((task) => readFileSync(join(root, ".kotta/process/tasks", task.filename), "utf8"))).toEqual(tasksBefore);
     expect(git(root, "status", "--porcelain")).toBe("");
 
     // Re-closing a finished batch is a no-op rather than an error.
@@ -155,15 +157,15 @@ describe("batch close", () => {
   test("refuses a batch with a non-terminal member, names it, and changes nothing", () => {
     const { root, batchId, filename, tasks } = backlogBatchWithMembers("mixed", ["done", "defined"]);
     const before = snapshot(root);
-    const batchBefore = readFileSync(batchFile(root, "backlog", filename), "utf8");
+    const batchBefore = readFileSync(batchFile(root, filename), "utf8");
 
     const refusal = attempt(root, ["batch", "close", batchId, "--approve"]);
     expect(refusal.status).toBe(1);
     expect(refusal.stdout + refusal.stderr).toContain(`${tasks[1].id} is defined`);
     expect(snapshot(root)).toEqual(before);
-    expect(readFileSync(batchFile(root, "backlog", filename), "utf8")).toBe(batchBefore);
-    expect(existsSync(batchFile(root, "done", filename))).toBe(false);
-    expect(existsSync(join(root, ".kotta/process/defined", tasks[1].filename))).toBe(true);
+    expect(readFileSync(batchFile(root, filename), "utf8")).toBe(batchBefore);
+    expect(status(batchFile(root, filename))).toBe("backlog");
+    expect(status(join(root, ".kotta/process/tasks", tasks[1].filename))).toBe("defined");
   });
 
   test("requires human approval", () => {
@@ -174,7 +176,7 @@ describe("batch close", () => {
     expect(refusal.status).toBe(1);
     expect(refusal.stdout + refusal.stderr).toContain("Human close approval is required");
     expect(snapshot(root)).toEqual(before);
-    expect(existsSync(batchFile(root, "backlog", filename))).toBe(true);
+    expect(status(batchFile(root, filename))).toBe("backlog");
   });
 
   test("closing the last task completes a batch that never went active", () => {
@@ -194,12 +196,11 @@ describe("batch close", () => {
     git(worktree, "commit", "-m", `feat: ${task.id}`);
     run(worktree, ["task", "review", task.id, "--evidence", "verified", "--deviations", "None."]);
     git(root, "merge", "--no-ff", branch, "-m", `merge ${task.id}`);
-    // The batch was never started; completion used to scan `batches/active` only.
-    expect(existsSync(batchFile(root, "backlog", filename))).toBe(true);
+    // The batch was never started; completion used to consider active batches only.
+    expect(status(batchFile(root, filename))).toBe("backlog");
 
     run(root, ["task", "close", task.id, "--approve"]);
-    expect(existsSync(batchFile(root, "backlog", filename))).toBe(false);
-    expect(readFileSync(batchFile(root, "done", filename), "utf8")).toContain("status: done");
+    expect(status(batchFile(root, filename))).toBe("done");
     expect(run(root, ["batch", "status", batchId])).toMatchObject({ ok: true, data: { id: batchId, status: "done" } });
     expect(run(root, ["validate"])).toMatchObject({ ok: true });
     expect(git(root, "status", "--porcelain")).toBe("");

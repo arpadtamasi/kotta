@@ -1,9 +1,9 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { findRepositoryRoot, regenerateIndex, workspaceDirectoryName, processPath } from "../filesystem/workspace.js";
-import { findTask, resolveEffectiveTask } from "../filesystem/entities.js";
+import { findTask, listEntities, resolveEffectiveTask } from "../filesystem/entities.js";
 import { batchTree, findBatch, openSubtreeMembers, subtreeTasks, type BatchTree } from "../filesystem/batches.js";
-import { BATCH_ID, entityFilename, filenameMatchesId, mintId } from "../core/identity.js";
+import { BATCH_ID, entityFilename, mintId } from "../core/identity.js";
 import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
 import { readWorkspaceConfig } from "../core/config.js";
 import { assertClean, git } from "../git/git.js";
@@ -40,14 +40,10 @@ function isKnownBatch(root: string, id: string): boolean {
 /** Every batch that names this one. More than one is the invariant that makes flattening ambiguous. */
 function parentsOf(root: string, childId: string): string[] {
   const parents: string[] = [];
-  for (const state of ["backlog", "defined", "active", "done"]) {
-    const directory = processPath(root, "batches", state);
-    if (!existsSync(directory)) continue;
-    for (const name of readdirSync(directory).filter((file) => file.endsWith(".md"))) {
-      const data = parseMarkdown(readFileSync(join(directory, name), "utf8")).data;
-      const children = Array.isArray(data.batches) ? data.batches.map(String) : [];
-      if (children.includes(childId) && typeof data.id === "string") parents.push(data.id);
-    }
+  for (const found of listEntities(root, "batch")) {
+    const data = parseMarkdown(readFileSync(found.path, "utf8")).data;
+    const children = Array.isArray(data.batches) ? data.batches.map(String) : [];
+    if (children.includes(childId) && typeof data.id === "string") parents.push(data.id);
   }
   return parents;
 }
@@ -106,7 +102,7 @@ export function newBatch(options: { title: string; goal?: string; parallelism?: 
   if (!Number.isInteger(parallelism) || parallelism < 1) throw new Error("Batch parallelism must be a positive integer.");
   const id = mintId("P");
   const filename = entityFilename(id, slugify(title));
-  const directory = processPath(root, "batches/backlog");
+  const directory = processPath(root, "batches");
   mkdirSync(directory, { recursive: true });
   const now = new Date().toISOString().slice(0, 10);
   const data = {
@@ -195,7 +191,6 @@ export function validateBatch(id: string, repositoryRoot?: string) {
   const warnings = [batchKindWarning(id, entity.data)].filter((warning): warning is string => warning !== undefined);
   warnOnBatchKind(id, entity.data);
   if (String(data.id) !== id) errors.push({ code: "ID_MISMATCH", message: "Batch identifier does not match the requested id." });
-  if (String(data.status) !== batch.state) errors.push({ code: "STATE_MISMATCH", message: `Batch status must match directory '${batch.state}'.` });
   errors.push(...receiptErrors(entity.data));
   const body = sections(entity.content);
   for (const heading of ["Goal", "Completion", "Execution notes"]) if (!body.get(heading.toLowerCase())?.trim()) errors.push({ code: "MISSING_SECTION", message: `Missing or empty section: ${heading}.` });
@@ -237,13 +232,9 @@ export function signBatch(id: string, approved: boolean, repositoryRoot?: string
   if (unsignedFrontier.length) throw new Error(`Every currently executable batch task must be signed: ${unsignedFrontier.join(", ")}.`);
   entity.data.status = "defined";
   entity.data.updated_at = new Date().toISOString().slice(0, 10);
-  const directory = processPath(root, "batches/defined");
-  mkdirSync(directory, { recursive: true });
-  const destination = join(directory, batch.filename);
-  writeFileSync(destination, renderMarkdown(entity.data, entity.content));
-  unlinkSync(batch.path);
+  writeFileSync(batch.path, renderMarkdown(entity.data, entity.content));
   regenerateIndex(root);
-  return { ok: true, command: "batch sign", data: { id, path: destination } };
+  return { ok: true, command: "batch sign", data: { id, path: batch.path } };
 }
 
 /** Resolves the coordinator branch the batch must run on, creating or adopting it when safe. */
@@ -315,13 +306,9 @@ export function startBatch(id: string, agent: string) {
   }
   if (coordinatorAction !== "resumed") data.coordinator = { ...coordinator };
   if (batch.state === "defined" || coordinatorAction !== "resumed") {
-    const activating = batch.state === "defined";
-    if (activating) data.status = "active";
+    if (batch.state === "defined") data.status = "active";
     data.updated_at = new Date().toISOString().slice(0, 10);
-    const directory = processPath(root, "batches", activating ? "active" : batch.state);
-    mkdirSync(directory, { recursive: true });
-    writeFileSync(join(directory, batch.filename), renderMarkdown(data as Record<string, unknown>, entity.content));
-    if (activating) unlinkSync(batch.path);
+    writeFileSync(batch.path, renderMarkdown(data as Record<string, unknown>, entity.content));
     regenerateIndex(root);
     appendLifecycleEvent(root, id, "active", `Batch execution started on ${coordinator.branch}.`);
     commitControlState(root, `chore(kotta): start batch ${id}`);
@@ -447,11 +434,7 @@ export function closeBatch(id: string, approved: boolean, repositoryRoot?: strin
   data.status = "done";
   data.updated_at = new Date().toISOString().slice(0, 10);
   stampReceipt(data, options.receipt ?? cliApprovalReceipt("batch.close"));
-  const directory = processPath(root, "batches/done");
-  mkdirSync(directory, { recursive: true });
-  const destination = join(directory, batch.filename);
-  writeFileSync(destination, renderMarkdown(data as Record<string, unknown>, entity.content));
-  unlinkSync(batch.path);
+  writeFileSync(batch.path, renderMarkdown(data as Record<string, unknown>, entity.content));
   regenerateIndex(root);
   appendLifecycleEvent(root, id, "done", "All member tasks completed; batch closed.");
   if (!options.approvalRecorded) appendCliApprovalAudit(root, id, "batch.close", {}, null);
@@ -459,7 +442,7 @@ export function closeBatch(id: string, approved: boolean, repositoryRoot?: strin
     git(root, ["add", workspaceDirectoryName(root)]);
     git(root, ["commit", "-m", `chore(kotta): close batch ${id}`]);
   }
-  return { ok: true, command: "batch close", data: { id, status: "done", path: destination, changed: true } };
+  return { ok: true, command: "batch close", data: { id, status: "done", path: batch.path, changed: true } };
 }
 
 /** Opt-in, post-integration cleanup. Every precondition is recomputed here; nothing is forced. */

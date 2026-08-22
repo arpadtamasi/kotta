@@ -1,7 +1,7 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
@@ -79,10 +79,8 @@ describe("task cancel", () => {
     const cancelled = run(repository, ["task", "cancel", task.id, "--resolution", "duplicate", "--reason", "The same work is already captured", "--superseded-by", original.id, "--approve"]);
     expect(cancelled).toMatchObject({ ok: true, command: "task cancel", data: { id: task.id, resolution: "duplicate", supersededBy: original.id, claimReleased: false } });
 
-    const done = join(repository, ".kotta/process/done", basename(task.path));
-    expect(existsSync(done)).toBe(true);
-    expect(existsSync(task.path)).toBe(false);
-    const content = readFileSync(done, "utf8");
+    expect(existsSync(task.path)).toBe(true);
+    const content = readFileSync(task.path, "utf8");
     expect(content).toContain("status: done");
     expect(content).toContain("resolution: duplicate");
     expect(content).toContain("cancellation_reason: The same work is already captured");
@@ -99,12 +97,12 @@ describe("task cancel", () => {
     writeFileSync(join(worktree, "route.md"), "# Route\n");
     git(worktree, "add", ".");
     git(worktree, "commit", "-m", "feat: start the move");
-    const branch = readFileSync(join(repository, ".kotta/process/active", basename(task.path)), "utf8").match(/^branch: (.+)$/m)?.[1] ?? "";
+    const branch = readFileSync(task.path, "utf8").match(/^branch: (.+)$/m)?.[1] ?? "";
 
     const cancelled = run(repository, ["task", "cancel", task.id, "--resolution", "obsolete", "--reason", "A decision established the opposite", "--superseded-by", superseding, "--approve"]);
     expect(cancelled).toMatchObject({ ok: true, data: { resolution: "obsolete", supersededBy: superseding, claimReleased: true } });
 
-    expect(existsSync(join(repository, ".kotta/process/done", basename(task.path)))).toBe(true);
+    expect(readFileSync(task.path, "utf8")).toMatch(/^status: done$/m);
     expect(existsSync(join(repository, ".kotta/process/claims", `${task.id}.yaml`))).toBe(false);
     expect(existsSync(worktree)).toBe(false);
     // The branch is the only copy of whatever was built; close deletes a merged branch, cancel never can.
@@ -130,11 +128,11 @@ describe("task cancel", () => {
     git(worktree, "add", ".");
     git(worktree, "commit", "-m", "feat: extend the pipeline");
     run(worktree, ["task", "review", task.id, "--evidence", "The pipeline was extended and inspected"]);
-    expect(existsSync(join(repository, ".kotta/process/review", basename(task.path)))).toBe(true);
+    expect(readFileSync(task.path, "utf8")).toMatch(/^status: review$/m);
 
     const cancelled = run(repository, ["task", "cancel", task.id, "--resolution", "obsolete", "--reason", "The work was thrown away after submission", "--superseded-by", superseding, "--approve"]);
     expect(cancelled).toMatchObject({ ok: true, data: { resolution: "obsolete", claimReleased: true } });
-    expect(existsSync(join(repository, ".kotta/process/done", basename(task.path)))).toBe(true);
+    expect(readFileSync(task.path, "utf8")).toMatch(/^status: done$/m);
     expect(existsSync(join(repository, ".kotta/process/claims", `${task.id}.yaml`))).toBe(false);
     expect(run(repository, ["validate"])).toMatchObject({ ok: true });
   });
@@ -149,7 +147,8 @@ describe("task cancel", () => {
     const refused = fail(repository, ["task", "cancel", task.id, "--resolution", "cancelled", "--reason", "Abandoned", "--approve"]);
     expect(refused.status).not.toBe(0);
     expect(refused.stdout).toContain("contains uncommitted changes");
-    expect(existsSync(join(repository, ".kotta/process/active", basename(task.path)))).toBe(true);
+    expect(existsSync(task.path)).toBe(true);
+    expect(readFileSync(task.path, "utf8")).toMatch(/^status: active$/m);
     expect(existsSync(join(repository, ".kotta/process/claims", `${task.id}.yaml`))).toBe(true);
     expect(existsSync(worktree)).toBe(true);
     expect(existsSync(join(worktree, "draft.md"))).toBe(true);
@@ -202,7 +201,7 @@ describe("task cancel", () => {
     expect(unknown.stdout).toContain("Cancel resolution must be one of");
 
     expect(existsSync(task.path)).toBe(true);
-    expect(existsSync(join(repository, ".kotta/process/done", basename(task.path)))).toBe(false);
+    expect(readFileSync(task.path, "utf8")).not.toMatch(/^status: done$/m);
   });
 
   test("refuses a supersession that is unnamed, dangling, or circular", () => {
@@ -257,7 +256,7 @@ describe("task cancel", () => {
     git(repository, "add", ".");
     git(repository, "commit", "-m", "capture task");
     run(repository, ["task", "cancel", task.id, "--resolution", "cancelled", "--reason", "Abandoned", "--approve"]);
-    const cancelledPath = join(repository, ".kotta/process/done", basename(task.path));
+    const cancelledPath = task.path;
     expect(readFileSync(cancelledPath, "utf8")).not.toContain("## Review evidence");
     expect(run(repository, ["task", "validate", task.id])).toMatchObject({ ok: true, data: { state: "done" } });
 
@@ -266,8 +265,7 @@ describe("task cancel", () => {
       .replace(`id: ${task.id}`, "id: T-901")
       .replace("resolution: cancelled", "resolution: completed")
       .replace(`# ${task.id}`, "# T-901");
-    mkdirSync(join(repository, ".kotta/process/done"), { recursive: true });
-    writeFileSync(join(repository, ".kotta/process/done/T-901-completed-path.md"), completed);
+    writeFileSync(join(repository, ".kotta/process/tasks/T-901-completed-path.md"), completed);
     const report = fail(repository, ["task", "validate", "T-901"]);
     expect(report.status).not.toBe(0);
     expect(report.stdout).toContain("MISSING_REVIEW_EVIDENCE");

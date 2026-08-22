@@ -5,7 +5,7 @@
   "type": "object",
   "required": ["version", "project", "workflow", "git", "batches", "validation"],
   "properties": {
-    "version": { "const": 4 },
+    "version": { "const": 5 },
     "project": {
       "type": "object",
       "required": ["name"],

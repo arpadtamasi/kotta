@@ -88,7 +88,9 @@ describe("a single checkout that is not on the base branch", () => {
     // The session's own checkout and branch survive: Kotta removes only what Kotta created.
     expect(git(root, "rev-parse", "--abbrev-ref", "HEAD").trim()).toBe("claude/harness-branch");
     expect(existsSync(join(root, "delivered.md"))).toBe(true);
-    expect(existsSync(join(root, ".kotta/process/done", basename(created.path)))).toBe(true);
+    const stored = join(root, ".kotta/process/tasks", basename(created.path));
+    expect(existsSync(stored)).toBe(true);
+    expect(readFileSync(stored, "utf8")).toMatch(/^status: done$/m);
     expect(run(root, ["validate"])).toMatchObject({ ok: true });
   });
 

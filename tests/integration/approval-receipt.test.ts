@@ -85,8 +85,13 @@ function fixture(prefix: string): string {
   return repository;
 }
 
-function donePath(repository: string, filename: string): string {
-  return join(repository, ".kotta/process/done", filename);
+function taskPath(repository: string, filename: string): string {
+  return join(repository, ".kotta/process/tasks", filename);
+}
+
+/** The lifecycle state, read straight off a stored entity's frontmatter. */
+function status(path: string): string | undefined {
+  return readFileSync(path, "utf8").match(/^status: (.+)$/m)?.[1];
 }
 
 describe("every approval leaves a receipt", () => {
@@ -96,7 +101,8 @@ describe("every approval leaves a receipt", () => {
     git(repository, "merge", "--no-ff", branch, "-m", `merge ${id}`);
 
     run(repository, ["task", "close", id, "--approve"]);
-    const path = donePath(repository, filename);
+    const path = taskPath(repository, filename);
+    expect(status(path)).toBe("done");
     expectReceipt(path, "task.close");
     // The receipt is visible in show output, on the human-readable surface.
     const shown = text(repository, ["task", "show", id]);
@@ -114,7 +120,8 @@ describe("every approval leaves a receipt", () => {
     git(repository, "commit", "-m", "capture task");
 
     run(repository, ["task", "cancel", task.id, "--resolution", "cancelled", "--reason", "No longer wanted", "--approve"]);
-    expectReceipt(donePath(repository, basename(task.path)), "task.cancel");
+    expect(status(task.path)).toBe("done");
+    expectReceipt(taskPath(repository, basename(task.path)), "task.cancel");
     expect(run(repository, ["validate"])).toMatchObject({ ok: true });
   });
 
@@ -123,8 +130,9 @@ describe("every approval leaves a receipt", () => {
     const { id, filename } = reviewedTask(repository, "Needs another pass");
 
     run(repository, ["task", "reopen", id, "--approve"]);
-    const active = join(repository, ".kotta/process/active", filename);
+    const active = taskPath(repository, filename);
     expect(existsSync(active)).toBe(true);
+    expect(status(active)).toBe("active");
     expectReceipt(active, "task.request-changes");
     expect(run(repository, ["validate"])).toMatchObject({ ok: true });
   });
@@ -165,7 +173,9 @@ describe("every approval leaves a receipt", () => {
     git(repository, "commit", "-m", "define batch");
 
     run(repository, ["batch", "close", batch.data.id, "--approve"]);
-    expectReceipt(join(repository, ".kotta/process/batches/done", basename(batch.data.path)), "batch.close");
+    const batchPath = join(repository, ".kotta/process/batches", basename(batch.data.path));
+    expect(status(batchPath)).toBe("done");
+    expectReceipt(batchPath, "batch.close");
     expect(run(repository, ["validate"])).toMatchObject({ ok: true });
   });
 
@@ -187,7 +197,8 @@ describe("every approval leaves a receipt", () => {
     git(repository, "add", ".");
     git(repository, "commit", "-m", "capture task");
     run(repository, ["task", "cancel", task.id, "--resolution", "cancelled", "--reason", "Abandoned", "--approve"]);
-    const path = donePath(repository, basename(task.path));
+    const path = taskPath(repository, basename(task.path));
+    expect(status(path)).toBe("done");
 
     // Strip the whole receipt: a historical record simply lacks the three fields.
     const stripped = readFileSync(path, "utf8").split(/\r?\n/).filter((line) => !/^(approved_by|approved_at|approval_basis):/.test(line)).join("\n");
@@ -204,9 +215,8 @@ describe("every approval leaves a receipt", () => {
 
 /** The stored path of an observation, resolved or not, without leaning on show's JSON shape. */
 function observationPath(repository: string, id: string): string {
-  for (const state of ["resolved", "new"]) {
-    const directory = join(repository, ".kotta/process/observations", state);
-    if (!existsSync(directory)) continue;
+  const directory = join(repository, ".kotta/process/observations");
+  if (existsSync(directory)) {
     const found = readdirSync(directory).find((name) => name.endsWith(".md") && (name.includes(id.slice(-8)) || name.startsWith(`${id}-`)));
     if (found) return join(directory, found);
   }

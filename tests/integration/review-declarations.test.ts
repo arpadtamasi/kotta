@@ -35,7 +35,7 @@ const setup = () => {
   return { root, worktree, id, filename: basename(path) };
 };
 
-const reviewedTask = (root: string, filename: string) => readFileSync(join(root, ".kotta/process/review", filename), "utf8");
+const reviewedTask = (root: string, filename: string) => readFileSync(join(root, ".kotta/process/tasks", filename), "utf8");
 const reviewEvidenceBlock = (content: string) => content.slice(content.indexOf("## Review evidence"));
 
 describe("review declarations", () => {

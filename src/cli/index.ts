@@ -16,7 +16,6 @@ import { formatShow, showCommand, type ShowResult } from "../commands/show.js";
 import { canonicalEntityId, type ListableEntity } from "../filesystem/entities.js";
 import { resolveWorkspaceLocation, uiCommand } from "../commands/ui.js";
 import { createDecision } from "../commands/decision.js";
-import { dedupeEntity, describeDedupe, type DedupeResult } from "../commands/dedupe.js";
 import { formatMigration, migrateWorkspace } from "../commands/migrate.js";
 import { assertCurrentWorkspaceShape, findRepositoryRoot } from "../filesystem/workspace.js";
 import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
@@ -24,7 +23,6 @@ import { mcpCommand } from "../commands/mcp.js";
 import { integrateCodex } from "../commands/integrate.js";
 import { syncCommand } from "../commands/sync.js";
 import { gapReport } from "../commands/gap.js";
-import { LEGACY_TASK_COMMAND, warnLegacyTaskVocabulary } from "../compatibility/task-v3.js";
 
 const program = new Command();
 const packagePath = fileURLToPath(new URL("../../package.json", import.meta.url));
@@ -62,9 +60,6 @@ function agentsLines(agents: AgentsSummary | undefined, project: ProjectAgentsSu
 function humanize(result: unknown): string {
   if (typeof result === "object" && result && "command" in result) {
     const command = String((result as { command: unknown }).command);
-    if ((command === "task dedupe" || command === "batch dedupe") && "data" in result) {
-      return describeDedupe((result as DedupeResult).data);
-    }
     if (command === "gap report" && "data" in result) {
       return String((result as { data: { report: unknown } }).data.report).trimEnd();
     }
@@ -213,7 +208,6 @@ function normaliseIdArgument(action: { parent?: { name(): string } | null; proce
 }
 
 program.hook("preAction", (_program, action) => {
-  if (process.argv[2] === LEGACY_TASK_COMMAND) warnLegacyTaskVocabulary("the deprecated task command alias");
   const names = [action.name(), action.parent?.name()].filter(Boolean) as string[];
   if (names.some((name) => SHAPE_EXEMPT.has(name))) return;
   try {
@@ -270,7 +264,7 @@ program
   .option("--json")
   .action((options: { linkAgents?: boolean; json?: boolean }) => print(syncCommand({ linkAgents: options.linkAgents }), Boolean(options.json)));
 
-const task = program.command("task").alias(LEGACY_TASK_COMMAND).description("Create and transition tasks");
+const task = program.command("task").description("Create and transition tasks");
 task
   .command("list")
   .description("List tasks with their state and title")
@@ -374,12 +368,6 @@ task
     const summary = `brief ${id}: ~${result.data.tokens} tokens (${result.data.sections.length} sections)${result.data.path ? ` → ${result.data.path}` : ""}`;
     console.error(result.data.warning ? `${summary}\nWARNING: ${result.data.warning}` : summary);
   });
-task
-  .command("dedupe <id>")
-  .description("Resolve a task a merge left in two state directories: keep the furthest-advanced copy")
-  .option("--approve")
-  .option("--json")
-  .action((id: string, options: { approve?: boolean; json?: boolean }) => print(dedupeEntity("task", id, Boolean(options.approve)), Boolean(options.json)));
 task
   .command("reopen <id>")
   .option("--approve")
@@ -496,12 +484,6 @@ batchCommand
   .option("--approve")
   .option("--json")
   .action((id: string, options: { approve?: boolean; json?: boolean }) => print(closeBatch(id, Boolean(options.approve)), Boolean(options.json)));
-batchCommand
-  .command("dedupe <id>")
-  .description("Resolve a batch a merge left in two state directories: keep the furthest-advanced copy")
-  .option("--approve")
-  .option("--json")
-  .action((id: string, options: { approve?: boolean; json?: boolean }) => print(dedupeEntity("batch", id, Boolean(options.approve)), Boolean(options.json)));
 batchCommand
   .command("finalize <id>")
   .description("Clean up the coordinator branch of a done batch after its integration is proven")

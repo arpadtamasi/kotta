@@ -313,7 +313,7 @@ export function readBoard(workspace: Workspace): Board {
     contradictions.push({
       key: `drift:${diagnostic.id}`, kind: "state drift", subject: label(diagnostic.id), subjectId: diagnostic.id,
       title: "A live worktree disagrees with the committed task",
-      leftLabel: "files say", left: [`state: ${stateLabel(task?.status ?? "unknown")}`, `.kotta/${task?.status ?? "?"}/`],
+      leftLabel: "files say", left: [`state: ${stateLabel(task?.status ?? "unknown")}`, `status: ${task?.status ?? "?"}`],
       rightLabel: "git says", right: [diagnostic.worktree, diagnostic.message],
       command: "kotta validate", action: "Open task", view: "tasks",
     });

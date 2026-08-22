@@ -203,21 +203,21 @@ describe("maintainer triage of a submitted issue", () => {
     expect(run(root, ["observation", "validate", observationId])).toMatchObject({ ok: true });
 
     // The issue exists; scheduled work does not follow from that alone.
-    for (const state of ["backlog", "defined", "active", "review", "done"]) {
-      const directory = join(root, ".kotta", state);
-      expect(existsSync(directory) ? readdirSync(directory).filter((name) => name.endsWith(".md")) : []).toEqual([]);
-    }
+    const tasksDirectory = join(root, ".kotta/process/tasks");
+    expect(existsSync(tasksDirectory) ? readdirSync(tasksDirectory).filter((name) => name.endsWith(".md")) : []).toEqual([]);
 
     // Only an explicitly approved disposition may schedule work.
     const unapproved = spawnSync("node", [cli, "observation", "resolve", observationId, "--disposition", "create-task", "--json"], { cwd: root, encoding: "utf8" });
     expect(unapproved.status).not.toBe(0);
     expect(`${unapproved.stdout}${unapproved.stderr}`).toMatch(/approval/i);
-    expect(readdirSync(join(root, ".kotta/process/backlog")).filter((name) => name.endsWith(".md"))).toEqual([]);
+    expect(readdirSync(tasksDirectory).filter((name) => name.endsWith(".md"))).toEqual([]);
 
     const resolved = run(root, ["observation", "resolve", observationId, "--disposition", "create-task", "--approve"]) as { ok: boolean; data: { taskId: string } };
     expect(resolved.ok).toBe(true);
-    const taskFile = readdirSync(join(root, ".kotta/process/backlog")).filter((name) => name.endsWith(".md"));
+    const taskFile = readdirSync(tasksDirectory).filter((name) => name.endsWith(".md"));
     expect(taskFile).toEqual([`kotta-task-brief-fails-without-profiles-${resolved.data.taskId.slice(-8)}.md`]);
-    expect(readFileSync(join(root, ".kotta/process/backlog", taskFile[0]), "utf8")).toContain(`source_observation: ${observationId}`);
+    const createdTask = readFileSync(join(tasksDirectory, taskFile[0]), "utf8");
+    expect(createdTask).toContain(`source_observation: ${observationId}`);
+    expect(createdTask).toMatch(/^status: backlog$/m);
   });
 });

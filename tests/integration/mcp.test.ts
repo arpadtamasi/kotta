@@ -158,8 +158,10 @@ describe("Kotta caller-chat MCP", () => {
       "workspace_status", "gap_report", "task_create", "task_define", "task_validate", "task_start_caller", "approval_request",
       "task_list", "observation_list", "decision_list", "batch_list",
       "task_show", "observation_show", "decision_show", "batch_show",
-      "contract_list", "contract_show",
     ]));
+    // The deprecated contract_* aliases are gone: task_list/task_show are the only vocabulary.
+    expect(tools.tools.map((tool) => tool.name)).not.toContain("contract_list");
+    expect(tools.tools.map((tool) => tool.name)).not.toContain("contract_show");
     expect(tools.tools.find((tool) => tool.name === "workspace_status")?.annotations?.readOnlyHint).toBe(true);
     expect(tools.tools.find((tool) => tool.name === "gap_report")?.annotations?.readOnlyHint).toBe(true);
     const gaps = await connected.client.callTool({ name: "gap_report", arguments: {} });
@@ -171,8 +173,6 @@ describe("Kotta caller-chat MCP", () => {
     }
     const listed = await connected.client.callTool({ name: "task_list", arguments: {} });
     expect((listed.structuredContent as { ok: boolean; data: { entity: string; entities: unknown[] } }).data.entity).toBe("task");
-    const legacyListed = await connected.client.callTool({ name: "contract_list", arguments: {} });
-    expect((legacyListed.structuredContent as { deprecation: string }).deprecation).toContain("kotta migrate");
     const narrowed = await connected.client.callTool({ name: "task_list", arguments: { state: ["review"] } });
     expect((narrowed.structuredContent as { data: { count: number } }).data.count).toBe(0);
 

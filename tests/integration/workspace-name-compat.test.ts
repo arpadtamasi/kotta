@@ -2,6 +2,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, lstatSync, mkdtempSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
+import matter from "gray-matter";
 import { describe, expect, test } from "vitest";
 import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 import { readWorkspace } from "../../src/commands/ui.js";
@@ -51,18 +52,21 @@ function completeTemplate(path: string): void {
     .replace("- Explain how acceptance will be checked.", "- Run the integration test."));
 }
 
-/** backlog → defined, the shortest path that reads, writes, moves files and regenerates the index. */
+/** backlog → defined, the shortest path that reads, writes state in place and regenerates the index. */
 function taskRoundTrip(root: string, directory: string): { id: string; path: string } {
   const created = run(root, ["task", "new", "--title", "Compatibility task", "--type", "feature"]).data as { id: string; path: string };
-  expect(created.path).toContain(`${directory}/process/backlog`);
+  expect(created.path).toContain(`${directory}/process/tasks`);
   completeTemplate(created.path);
   run(root, ["task", "sign", created.id, "--approve"]);
-  expect(existsSync(join(root, directory, "process", "defined", basename(created.path)))).toBe(true);
+  // The transition edits the file in place: the frontmatter status is the state, the file never moves.
+  const path = join(root, directory, "process", "tasks", basename(created.path));
+  expect(existsSync(path)).toBe(true);
+  expect(matter(readFileSync(path, "utf8")).data.status).toBe("defined");
   expect(readFileSync(join(root, directory, "process", "index.md"), "utf8")).toContain(basename(created.path).replace(/\.md$/, ""));
   const status = run(root, ["status"]).data as { definedTasks: string[] };
   expect(status.definedTasks).toContain(created.id);
   expect(run(root, ["validate"])).toMatchObject({ ok: true });
-  return { id: created.id, path: join(root, directory, "process", "defined", basename(created.path)) };
+  return { id: created.id, path };
 }
 
 describe("both binary names", () => {
@@ -126,7 +130,7 @@ describe("a symlink bridges the two directory names", () => {
     const task = taskRoundTrip(root, ".a-team");
     // The link is a link, not a copy: nothing was migrated behind the operator's back.
     expect(lstatSync(join(root, ".kotta")).isSymbolicLink()).toBe(true);
-    expect(readdirSync(join(root, ".kotta/process/defined"))).toEqual(readdirSync(join(root, ".a-team/process/defined")));
+    expect(readdirSync(join(root, ".kotta/process/tasks"))).toEqual(readdirSync(join(root, ".a-team/process/tasks")));
 
     git(root, "add", ".");
     git(root, "commit", "-m", "task");
@@ -146,7 +150,7 @@ describe("a symlink bridges the two directory names", () => {
 
     taskRoundTrip(root, ".kotta");
     expect(lstatSync(join(root, ".a-team")).isSymbolicLink()).toBe(true);
-    expect(readdirSync(join(root, ".a-team/process/defined"))).toEqual(readdirSync(join(root, ".kotta/process/defined")));
+    expect(readdirSync(join(root, ".a-team/process/tasks"))).toEqual(readdirSync(join(root, ".kotta/process/tasks")));
 
     git(root, "add", ".");
     git(root, "commit", "-m", "task");

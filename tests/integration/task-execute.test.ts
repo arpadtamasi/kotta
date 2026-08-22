@@ -401,7 +401,8 @@ describe("task execute (T-035 / D-009)", () => {
     expect(json(result)).toMatchObject({ ok: false, data: { state: "agent-failed", exitCode: 3, taskState: "active" }, errors: [{ code: "AGENT_FAILED" }] });
     expect(existsSync(claimPath(repository, id))).toBe(true);
     expect(existsSync(join(repository, ".worktrees", id))).toBe(true);
-    expect(existsSync(join(repository, ".worktrees", id, ".kotta/process/review"))).toBe(false);
+    const worktreeTasks = join(repository, ".worktrees", id, ".kotta/process/tasks");
+    expect(readdirSync(worktreeTasks).some((name) => /^status: review$/m.test(readFileSync(join(worktreeTasks, name), "utf8")))).toBe(false);
   });
 
   test("an empty agent result is agent-failed", () => {
@@ -553,7 +554,7 @@ describe("task execute (T-035 / D-009)", () => {
     // plane is left clean — no intermediate commit shows an active task with no claim.
     const released = git(repository, "show", "--name-only", "--format=", "HEAD").trim().split("\n");
     expect(released).toContain(`.kotta/process/claims/${id}.yaml`);
-    expect(released.some((path) => path.startsWith(".kotta/process/defined/"))).toBe(true);
+    expect(released.some((path) => path.startsWith(".kotta/process/tasks/"))).toBe(true);
     expect(git(repository, "status", "--porcelain")).toBe("");
 
     // Acceptance 4: release preserved the branch and the worktree, and start reuses that pair

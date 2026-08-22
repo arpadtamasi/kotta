@@ -14,7 +14,6 @@ import { readEvents } from "../core/events.js";
 import { assertCurrentWorkspaceShape, findRepositoryRoot } from "../filesystem/workspace.js";
 import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
 import { gapReport } from "./gap.js";
-import { LEGACY_TASK_COMMAND, legacyTaskMigrationMessage, warnLegacyTaskVocabulary } from "../compatibility/task-v3.js";
 
 type ToolPayload = Record<string, unknown>;
 
@@ -96,16 +95,6 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
       } catch (error) { return toolError(error); }
     };
     server.registerTool(`${entity}_list`, definition, handler);
-    if (entity === "task") server.registerTool(`${LEGACY_TASK_COMMAND}_list`, {
-      ...definition,
-      title: "List Kotta tasks (deprecated alias)",
-      description: `${definition.description} Deprecated compatibility alias; use task_list and migrate the workspace.`,
-    }, async (input: { state?: string[] }) => {
-      warnLegacyTaskVocabulary("the legacy MCP list alias");
-      const result = await handler(input);
-      if (!("isError" in result)) result.structuredContent = { ...result.structuredContent, deprecation: legacyTaskMigrationMessage("This MCP alias") };
-      return result;
-    });
   }
 
   for (const entity of ["task", "observation", "decision", "batch"] as const) {
@@ -122,16 +111,6 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
       } catch (error) { return toolError(error); }
     };
     server.registerTool(`${entity}_show`, definition, handler);
-    if (entity === "task") server.registerTool(`${LEGACY_TASK_COMMAND}_show`, {
-      ...definition,
-      title: "Show one Kotta task (deprecated alias)",
-      description: `${definition.description} Deprecated compatibility alias; use task_show and migrate the workspace.`,
-    }, async ({ id }: { id: string }) => {
-      warnLegacyTaskVocabulary("the legacy MCP show alias");
-      const result = await handler({ id });
-      if (!("isError" in result)) result.structuredContent = { ...result.structuredContent, deprecation: legacyTaskMigrationMessage("This MCP alias") };
-      return result;
-    });
   }
 
   server.registerTool("task_create", {

@@ -179,7 +179,7 @@ describe("a batch that groups other batches", () => {
     run(root, ["batch", "add", first, second]);
 
     // Written by hand, which is exactly the state `kotta validate` exists to catch.
-    const secondPath = join(root, ".kotta/process/batches/backlog", `second-${second.slice(-8)}.md`);
+    const secondPath = join(root, ".kotta/process/batches", `second-${second.slice(-8)}.md`);
     writeFileSync(secondPath, readFileSync(secondPath, "utf8").replace("tasks: []", `tasks: []\nbatches:\n  - ${first}`));
 
     const report = attempt(root, ["validate"]);

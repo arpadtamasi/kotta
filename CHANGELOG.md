@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Breaking
+
+- **State lives in one place: workspace shape v5.** One entity is one stable file —
+  `process/tasks/`, `process/observations/` and `process/batches/` are flat, and lifecycle state
+  lives in the frontmatter `status` field alone. A transition edits that field in place, so two
+  branches transitioning the same entity meet as an ordinary merge conflict on the status line,
+  never as a second copy in a second directory. `kotta migrate` flattens a v4 workspace: it
+  transcribes each state directory's verdict into the file's `status` before removing the
+  directory, keeps every identifier, and refuses — naming both copies — a workspace where a past
+  merge already duplicated an entity across states.
+- **`task dedupe` and `batch dedupe` are removed** with the failure class that justified them;
+  an id collision inside the one flat directory remains a `DUPLICATE_ID` validation error.
+- **The v3 compatibility window closed.** Only schema version 5 is readable; the `contract` CLI
+  alias, the `contract_list`/`contract_show` MCP aliases and the stored-v3-vocabulary readers are
+  gone. `kotta migrate` still carries any older shape — v1 through v4 — forward in one run.
+
 ### Changed
 
 - **The public surfaces say what Kotta is for before how to install it.** The README opens with

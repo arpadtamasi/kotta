@@ -2,7 +2,6 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSyn
 import { join } from "node:path";
 import { ANY_ENTITY_ID_SOURCE, TASK_ID, mintEventId } from "./identity.js";
 import { processPath } from "../filesystem/workspace.js";
-import { readTaskEvent } from "../compatibility/task-v3.js";
 
 export type EventKind = "message" | "turn-failed" | "lifecycle" | "approval";
 export type ApprovalPhase = "proposed" | "approved" | "rejected" | "cancelled" | "applied" | "failed";
@@ -66,7 +65,7 @@ export function readEvents(root: string, entity?: string): KottaEvent[] {
   return entities.flatMap((id) => {
     const directory = eventDirectory(root, id);
     if (!existsSync(directory)) return [];
-    return readdirSync(directory).filter((name) => name.endsWith(".json")).sort().map((name) => readTaskEvent(JSON.parse(readFileSync(join(directory, name), "utf8")) as Record<string, unknown>) as unknown as KottaEvent);
+    return readdirSync(directory).filter((name) => name.endsWith(".json")).sort().map((name) => JSON.parse(readFileSync(join(directory, name), "utf8")) as KottaEvent);
   }).sort((left, right) => left.created_at.localeCompare(right.created_at) || left.id.localeCompare(right.id));
 }
 

@@ -8,12 +8,8 @@ import { parse } from "yaml";
 import { sections } from "../core/markdown.js";
 import { findTask, idFromFilename } from "../filesystem/entities.js";
 import { ENV_PREFIX, readEnv } from "../core/env.js";
-import { PROCESS_DIRECTORY, WORKSPACE_DIRECTORIES, WORKSPACE_SCHEMA_VERSION, flatWorkspaceEntries, hasWorkspace, legacyStateDirectories, workspaceDirectoryName, workspaceSchemaVersion } from "../filesystem/workspace.js";
+import { PROCESS_DIRECTORY, WORKSPACE_DIRECTORIES, WORKSPACE_SCHEMA_VERSION, flatWorkspaceEntries, hasWorkspace, legacyStateDirectories, v4StateDirectories, workspaceDirectoryName, workspaceSchemaVersion } from "../filesystem/workspace.js";
 import type { KottaEvent } from "../core/events.js";
-import { PREVIOUS_WORKSPACE_SCHEMA_VERSION, legacyTaskMigrationMessage, readTaskEvent, readTaskVocabulary, warnLegacyTaskVocabulary } from "../compatibility/task-v3.js";
-
-const TASK_STATES = ["backlog", "defined", "active", "review", "done"];
-const BATCH_STATES = ["backlog", "defined", "active", "done"];
 
 function git(root: string, args: string[]): { ok: boolean; out: string } {
   const result = spawnSync("git", args, { cwd: root, encoding: "utf8", maxBuffer: 256 * 1024 * 1024 });
@@ -121,9 +117,7 @@ export function readWorkspace(workspaceOption: string) {
   if (!existsSync(join(workspace, "config.yaml"))) throw new Error(`No Kotta workspace found at ${workspace}.`);
   const config = parse(readFileSync(join(workspace, "config.yaml"), "utf8")) as { version?: unknown; project?: { name?: string }; git?: { base_branch?: string } };
   const schemaVersion = Number(config.version);
-  const readableTaskVocabulary = schemaVersion === WORKSPACE_SCHEMA_VERSION || schemaVersion === PREVIOUS_WORKSPACE_SCHEMA_VERSION;
-  if (schemaVersion === PREVIOUS_WORKSPACE_SCHEMA_VERSION) warnLegacyTaskVocabulary(projectRoot);
-  const processDirectory = readableTaskVocabulary ? PROCESS_DIRECTORY : "__legacy_workspace_schema__";
+  const processDirectory = schemaVersion === WORKSPACE_SCHEMA_VERSION ? PROCESS_DIRECTORY : "__legacy_workspace_schema__";
   const base = config.git?.base_branch ?? "main";
   // Read from the base ref only when this workspace IS a git repo root with that ref; otherwise (non-git
   // fixtures, example dirs, a nested/uncommitted workspace) fall back to reading the working tree directly.
@@ -151,27 +145,25 @@ export function readWorkspace(workspaceOption: string) {
   const listRefMd = (subpath: string): string[] => refFiles
     ? [...refFiles.keys()].filter((path) => path.startsWith(`${workspaceDirectory}/${subpath}/`) && path.endsWith(".md"))
     : listMdFromRef(projectRoot, base, workspaceDirectory, subpath);
-  const gather = (states: readonly string[], sub: (state: string) => string) => {
-    const entries: Array<{ state: string; repoPath: string; fromRef: boolean }> = [];
+  const gather = (subpath: string) => {
+    const entries: Array<{ repoPath: string; fromRef: boolean }> = [];
     const seen = new Set<string>();
-    for (const state of states) {
-      const subpath = sub(state);
-      if (useBase) {
-        for (const path of listRefMd(subpath)) if (!seen.has(path)) { seen.add(path); entries.push({ state, repoPath: path, fromRef: true }); }
-        for (const path of uncommittedAdds.filter((candidate) => candidate.startsWith(`${workspaceDirectory}/${subpath}/`))) if (!seen.has(path)) { seen.add(path); entries.push({ state, repoPath: path, fromRef: false }); }
-      } else {
-        const dir = join(workspace, subpath);
-        if (existsSync(dir)) for (const name of readdirSync(dir).filter((entry) => entry.endsWith(".md"))) {
-          const path = `${workspaceDirectory}/${subpath}/${name}`;
-          if (!seen.has(path)) { seen.add(path); entries.push({ state, repoPath: path, fromRef: false }); }
-        }
+    if (useBase) {
+      for (const path of listRefMd(subpath)) if (!seen.has(path)) { seen.add(path); entries.push({ repoPath: path, fromRef: true }); }
+      for (const path of uncommittedAdds.filter((candidate) => candidate.startsWith(`${workspaceDirectory}/${subpath}/`))) if (!seen.has(path)) { seen.add(path); entries.push({ repoPath: path, fromRef: false }); }
+    } else {
+      const dir = join(workspace, subpath);
+      if (existsSync(dir)) for (const name of readdirSync(dir).filter((entry) => entry.endsWith(".md"))) {
+        const path = `${workspaceDirectory}/${subpath}/${name}`;
+        if (!seen.has(path)) { seen.add(path); entries.push({ repoPath: path, fromRef: false }); }
       }
     }
     return entries.sort((left, right) => basename(left.repoPath).localeCompare(basename(right.repoPath)));
   };
-  const parseEntity = (entry: { state: string; repoPath: string; fromRef: boolean }): Record<string, unknown> => {
+  // Lifecycle state lives in the frontmatter status field alone; the file's location says nothing.
+  const parseEntity = (entry: { repoPath: string; fromRef: boolean }): Record<string, unknown> => {
     const parsed = matter(readMd(entry.repoPath, entry.fromRef));
-    return { ...readTaskVocabulary(parsed.data as Record<string, unknown>), status: entry.state, filename: basename(entry.repoPath), sections: sectionObject(parsed.content) };
+    return { ...(parsed.data as Record<string, unknown>), filename: basename(entry.repoPath), sections: sectionObject(parsed.content) };
   };
 
   const diagnostics: Array<{ entity: "task"; id: string; worktree: string; message: string }> = [];
@@ -180,7 +172,7 @@ export function readWorkspace(workspaceOption: string) {
   // legacy pre-control-plane shape and remains readable until its next lifecycle mutation adopts it.
   // Identity comes from the frontmatter: a minted entity's filename carries only its short id suffix.
   const taskBase = new Map<string, Record<string, unknown>>();
-  for (const entry of gather(TASK_STATES, (state) => `${processDirectory}/${state}`)) {
+  for (const entry of gather(`${processDirectory}/tasks`)) {
     const parsed = parseEntity(entry);
     const id = String(parsed.id ?? idFromFilename(basename(entry.repoPath)) ?? "");
     if (id && !taskBase.has(id)) taskBase.set(id, parsed);
@@ -194,7 +186,7 @@ export function readWorkspace(workspaceOption: string) {
         if (String(parsed.data.id) !== id) throw new Error(`Task metadata id '${String(parsed.data.id)}' does not match ${id}.`);
         if (String(baseline.status) === "defined" && location.state === "active") {
           diagnostics.push({ entity: "task", id, worktree, message: "Legacy execution state is still stored in the feature worktree; the next lifecycle mutation will adopt it into the control plane." });
-          return { ...readTaskVocabulary(parsed.data as Record<string, unknown>), status: location.state, filename: location.filename, sections: sectionObject(parsed.content), migration: migrationById.get(id) ?? null, worktree };
+          return { ...(parsed.data as Record<string, unknown>), filename: location.filename, sections: sectionObject(parsed.content), migration: migrationById.get(id) ?? null, worktree };
         }
         return { ...baseline, migration: migrationById.get(id) ?? null, worktree };
       } catch (error) {
@@ -203,11 +195,11 @@ export function readWorkspace(workspaceOption: string) {
     }
     return { ...baseline, migration: migrationById.get(id) ?? null };
   });
-  const batches = gather(BATCH_STATES, (state) => `${processDirectory}/batches/${state}`).map(parseEntity);
-  const observations = gather(["new", "resolved"], (state) => `${processDirectory}/observations/${state}`).map(parseEntity);
-  // Decisions are cross-cutting and stateless — one directory, no state dirs — so they carry a date
-  // instead of a status. They come out of the same cached snapshot: no extra subprocess. (T-029)
-  const decisions = gather(["decisions"], () => `${processDirectory}/decisions`).map((entry) => {
+  const batches = gather(`${processDirectory}/batches`).map(parseEntity);
+  const observations = gather(`${processDirectory}/observations`).map(parseEntity);
+  // Decisions are cross-cutting and stateless, so they carry a date instead of a status.
+  // They come out of the same cached snapshot: no extra subprocess. (T-029)
+  const decisions = gather(`${processDirectory}/decisions`).map((entry) => {
     const parsed = matter(readMd(entry.repoPath, entry.fromRef));
     const date = parsed.data.date;
     return {
@@ -231,7 +223,7 @@ export function readWorkspace(workspaceOption: string) {
             : [];
         });
       })();
-  const events = eventPaths.map((path) => readTaskEvent(JSON.parse((useBase ? (refFiles?.get(path) ?? readFileFromRef(projectRoot, base, path)) : readFileSync(join(projectRoot, path), "utf8")) ?? "{}") as Record<string, unknown>) as unknown as KottaEvent)
+  const events = eventPaths.map((path) => JSON.parse((useBase ? (refFiles?.get(path) ?? readFileFromRef(projectRoot, base, path)) : readFileSync(join(projectRoot, path), "utf8")) ?? "{}") as KottaEvent)
     .sort((left, right) => left.created_at.localeCompare(right.created_at) || left.id.localeCompare(right.id));
   const claimPrefix = `${workspaceDirectory}/${processDirectory}/claims/`;
   const claimPaths = useBase
@@ -240,20 +232,22 @@ export function readWorkspace(workspaceOption: string) {
         const directory = join(workspace, processDirectory, "claims");
         return existsSync(directory) ? readdirSync(directory).filter((name) => name.endsWith(".yaml")).map((name) => `${workspaceDirectory}/${processDirectory}/claims/${name}`) : [];
       })();
-  const claims = claimPaths.map((path) => readTaskVocabulary(parse((useBase ? (refFiles?.get(path) ?? readFileFromRef(projectRoot, base, path)) : readFileSync(join(projectRoot, path), "utf8")) ?? "{}") as Record<string, unknown>));
+  const claims = claimPaths.map((path) => parse((useBase ? (refFiles?.get(path) ?? readFileFromRef(projectRoot, base, path)) : readFileSync(join(projectRoot, path), "utf8")) ?? "{}") as Record<string, unknown>);
   const claimByTask = new Map(claims.map((claim) => [String(claim.task ?? ""), claim]));
   const tasksWithClaims = tasks.map((task) => ({ ...task, claim: claimByTask.get(String((task as Record<string, unknown>).id ?? "")) ?? null }));
   const notices = readNotices(projectRoot, workspace, useBase, base, tasks.length + batches.length + observations.length);
   return { workspace, project: migration?.project ?? config.project?.name ?? "Kotta workspace", migration, tasks: tasksWithClaims, batches, observations, decisions, events, claims, diagnostics, notices, generatedAt: new Date().toISOString() };
 }
 
-/** Entity files sitting in the working tree, under either vocabulary — the counterweight to the ref read. */
+/** Entity files sitting in the working tree, under any historical shape — the counterweight to the ref read. */
 function workingTreeEntityCount(workspace: string): number {
+  const taskStates = ["backlog", "defined", "active", "review", "done"];
   const directories = [
-    ...TASK_STATES.map((state) => `${PROCESS_DIRECTORY}/${state}`),
-    ...BATCH_STATES.map((state) => `${PROCESS_DIRECTORY}/batches/${state}`),
+    `${PROCESS_DIRECTORY}/tasks`, `${PROCESS_DIRECTORY}/batches`, `${PROCESS_DIRECTORY}/observations`,
+    ...taskStates.map((state) => `${PROCESS_DIRECTORY}/${state}`),
+    ...["backlog", "defined", "active", "done"].map((state) => `${PROCESS_DIRECTORY}/batches/${state}`),
     `${PROCESS_DIRECTORY}/observations/new`, `${PROCESS_DIRECTORY}/observations/resolved`,
-    ...TASK_STATES, "ready",
+    ...taskStates, "ready",
     "observations/new", "observations/resolved", "findings/new", "findings/resolved",
     ...["backlog", "ready", "defined", "active", "done"].flatMap((state) => [`batches/${state}`, `packages/${state}`]),
   ];
@@ -275,13 +269,13 @@ export function readNotices(projectRoot: string, workspace: string, useBase: boo
   const notices: string[] = [];
   const legacy = legacyStateDirectories(projectRoot);
   const flat = flatWorkspaceEntries(projectRoot);
+  const stateDirs = v4StateDirectories(projectRoot).map((name) => `${PROCESS_DIRECTORY}/${name}`);
   const version = workspaceSchemaVersion(projectRoot);
-  const readableVersion = version === WORKSPACE_SCHEMA_VERSION || version === PREVIOUS_WORKSPACE_SCHEMA_VERSION;
-  const obsolete = [...new Set([...legacy, ...flat, ...(readableVersion ? [] : [`config schema ${Number.isFinite(version) ? version : "unreadable"}`])])];
+  const readableVersion = version === WORKSPACE_SCHEMA_VERSION;
+  const obsolete = [...new Set([...legacy, ...flat, ...stateDirs, ...(readableVersion ? [] : [`config schema ${Number.isFinite(version) ? version : "unreadable"}`])])];
   if (obsolete.length) {
-    notices.push(`This workspace still uses the legacy flat shape (${obsolete.map((name) => name.startsWith("config schema ") ? name : `${name}${name.includes(".") ? "" : "/"}`).join(", ")}). The board does not read it. Run 'kotta migrate --dry-run', then 'kotta migrate'.`);
+    notices.push(`This workspace still uses a legacy shape (${obsolete.map((name) => name.startsWith("config schema ") ? name : `${name}${name.includes(".") ? "" : "/"}`).join(", ")}). The board does not read it. Run 'kotta migrate --dry-run', then 'kotta migrate'.`);
   }
-  if (!obsolete.length && version === PREVIOUS_WORKSPACE_SCHEMA_VERSION) notices.push(legacyTaskMigrationMessage("This workspace"));
   // Only when the shape is current: an old-shape workspace reads as empty for the reason above, and
   // saying "the ref has no entities" about it would be wrong — the ref has them, under the old names.
   if (!obsolete.length && useBase && fromRef === 0) {
