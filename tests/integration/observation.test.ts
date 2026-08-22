@@ -64,7 +64,7 @@ describe("a standalone observation", () => {
     expect(status()).toBe("");
     expect(execFileSync("git", ["log", "-1", "--format=%s"], { cwd: root, encoding: "utf8" }).trim()).toBe(`chore(kotta): capture ${created.data.id}`);
     expect(execFileSync("git", ["show", "--name-only", "--format=", "HEAD"], { cwd: root, encoding: "utf8" }).trim().split("\n").sort())
-      .toEqual([".kotta/process/index.md", `.kotta/process/observations/new/${basename(created.data.path)}`].sort());
+      .toEqual([".kotta/process/index.md", `.kotta/process/observations/${basename(created.data.path)}`].sort());
 
     // 'task cancel' refuses a dirty control plane, and it is one of the two commands the
     // report saw fail immediately after a successful 'observation new'.
@@ -90,8 +90,11 @@ describe("observation disposition", () => {
     expect(resolved.ok).toBe(true);
     const taskId = resolved.data.taskId;
     expect(taskId).toMatch(/^T-[0-9a-hjkmnp-tv-z]{26}$/);
-    expect(existsSync(join(root, ".kotta/process/observations/resolved", basename(created.data.path)))).toBe(true);
-    const task = join(root, ".kotta/process/backlog", `divergent-permission-checks-${taskId.slice(-8)}.md`);
+    // Files never move: resolution edits the record in place and the frontmatter status is the state.
+    const observationFile = join(root, ".kotta/process/observations", basename(created.data.path));
+    expect(existsSync(observationFile)).toBe(true);
+    expect(matter(readFileSync(observationFile, "utf8")).data.status).toBe("resolved");
+    const task = join(root, ".kotta/process/tasks", `divergent-permission-checks-${taskId.slice(-8)}.md`);
     expect(readFileSync(task, "utf8")).toContain(`source_observation: ${observationId}`);
     expect(execFileSync("git", ["status", "--porcelain", "--", ".kotta"], { cwd: root, encoding: "utf8" })).toBe("");
     expect(execFileSync("git", ["log", "-1", "--format=%s"], { cwd: root, encoding: "utf8" }).trim()).toBe(`chore(kotta): resolve ${observationId}`);
@@ -116,7 +119,7 @@ describe("the amend-spec disposition", () => {
     expect(resolved.data.spec).toEqual([specId]);
     expect(resolved.data.taskId).toBeUndefined();
 
-    const record = matter(readFileSync(join(root, ".kotta/process/observations/resolved", `the-lifecycle-glossary-is-silent-on-amend-spec-${observationId.slice(-8)}.md`), "utf8")).data;
+    const record = matter(readFileSync(join(root, ".kotta/process/observations", `the-lifecycle-glossary-is-silent-on-amend-spec-${observationId.slice(-8)}.md`), "utf8")).data;
     expect(record.status).toBe("resolved");
     expect(record.disposition).toBe("amend-spec");
     expect(record.spec).toEqual([specId]);
@@ -137,7 +140,9 @@ describe("the amend-spec disposition", () => {
     const refused = attempt(root, ["observation", "resolve", observationId, "--disposition", "amend-spec", "--spec", specId]);
     expect(refused.status).not.toBe(0);
     expect(`${refused.stdout}${refused.stderr}`).toContain("Human approval is required");
-    expect(existsSync(join(root, ".kotta/process/observations/new", `the-lifecycle-glossary-is-silent-on-amend-spec-${observationId.slice(-8)}.md`))).toBe(true);
+    const untouched = join(root, ".kotta/process/observations", `the-lifecycle-glossary-is-silent-on-amend-spec-${observationId.slice(-8)}.md`);
+    expect(existsSync(untouched)).toBe(true);
+    expect(matter(readFileSync(untouched, "utf8")).data.status).toBe("new");
   });
 
   test("refuses amend-spec that names no specification node", () => {

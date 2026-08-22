@@ -53,7 +53,9 @@ describe("review evidence mapping", () => {
     expect(result.stdout).toContain(SECOND);
     expect(result.stdout).toContain("Evidence answers its own check");
     expect(findTask(root, id).state).toBe("active");
-    expect(existsSync(join(root, ".kotta/process/review", filename))).toBe(false);
+    const stable = join(root, ".kotta/process/tasks", filename);
+    expect(existsSync(stable)).toBe(true);
+    expect(readFileSync(stable, "utf8")).toMatch(/^status: active$/m);
   });
 
   test("submits distinct named evidence into its own rows", () => {
@@ -64,7 +66,8 @@ describe("review evidence mapping", () => {
       "--evidence", `${SECOND}=rendered page inspected at 320px and 1440px`,
     ]);
 
-    const reviewed = readFileSync(join(root, ".kotta/process/review", filename), "utf8");
+    const reviewed = readFileSync(join(root, ".kotta/process/tasks", filename), "utf8");
+    expect(reviewed).toMatch(/^status: review$/m);
     expect(reviewed).toContain(`| ${FIRST} | docs/flow.md inspected against the written steps |`);
     expect(reviewed).toContain(`| ${SECOND} | rendered page inspected at 320px and 1440px |`);
   });

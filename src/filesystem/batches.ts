@@ -3,15 +3,16 @@ import { join } from "node:path";
 import { filenameMatchesId } from "../core/identity.js";
 import { parseMarkdown } from "../core/markdown.js";
 import { processPath } from "./workspace.js";
-import { resolveEffectiveTask } from "./entities.js";
-import { readTaskVocabulary } from "../compatibility/task-v3.js";
+import { resolveEffectiveTask, stateFromEntityFile } from "./entities.js";
 
 export function findBatch(root: string, id: string) {
-  for (const state of ["backlog", "defined", "active", "done"]) {
-    const directory = processPath(root, "batches", state);
-    if (!existsSync(directory)) continue;
+  const directory = processPath(root, "batches");
+  if (existsSync(directory)) {
     const filename = readdirSync(directory).find((name) => name.endsWith(".md") && filenameMatchesId(name, id));
-    if (filename) return { state, filename, path: join(directory, filename) };
+    if (filename) {
+      const path = join(directory, filename);
+      return { state: stateFromEntityFile(path), filename, path };
+    }
   }
   throw new Error(`Batch ${id} was not found.`);
 }
@@ -31,7 +32,7 @@ export interface BatchTree {
 
 function batchMembers(root: string, id: string): { tasks: string[]; batches: string[]; title: string; state: string } {
   const batch = findBatch(root, id);
-  const data = readTaskVocabulary(parseMarkdown(readFileSync(batch.path, "utf8")).data);
+  const data = parseMarkdown(readFileSync(batch.path, "utf8")).data;
   return {
     tasks: Array.isArray(data.tasks) ? data.tasks.map(String) : [],
     batches: Array.isArray(data.batches) ? data.batches.map(String) : [],

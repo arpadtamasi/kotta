@@ -148,11 +148,11 @@ describe("short ids resolve to one entity", () => {
     initializeWorkspace({ root });
     const first = "T-01kzaaaaaaaaaaaaaacdefgh23";
     const second = "T-01kzbbbbbbbbbbbbbbcdefgh23";
-    const backlog = join(root, ".kotta", "process", "backlog");
+    const tasks = join(root, ".kotta", "process", "tasks");
     // entityFilename derives the filename from the short id, so these two would collide
     // there too; the id in the frontmatter is what identifies the entity.
     for (const [slug, id] of [["colliding-one", first], ["colliding-two", second]] as const) {
-      writeFileSync(join(backlog, `${slug}-${id.slice(-8)}.md`), `---\nid: ${id}\ntitle: Colliding\nstatus: backlog\n---\n# ${id}\n`);
+      writeFileSync(join(tasks, `${slug}-${id.slice(-8)}.md`), `---\nid: ${id}\ntitle: Colliding\nstatus: backlog\n---\n# ${id}\n`);
     }
 
     expect(() => canonicalEntityId(root, "task", "T-cdefgh23")).toThrow(/ambiguous/);

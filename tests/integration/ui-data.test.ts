@@ -58,16 +58,16 @@ The effective state is visible.
   // Legacy-name fixture on purpose (T-020): the board must read a `.a-team/` workspace unchanged.
   function workspaceFixture() {
     const root = mkdtempSync(join(tmpdir(), "kotta-ui-data-"));
-    mkdirSync(join(root, ".a-team/process/defined"), { recursive: true });
-    writeFileSync(join(root, ".a-team/config.yaml"), "version: 3\nproject:\n  name: fixture\n");
-    writeFileSync(join(root, ".a-team/process/defined/T-008-effective-task.md"), task("T-008", "defined"));
+    mkdirSync(join(root, ".a-team/process/tasks"), { recursive: true });
+    writeFileSync(join(root, ".a-team/config.yaml"), "version: 5\nproject:\n  name: fixture\n");
+    writeFileSync(join(root, ".a-team/process/tasks/T-008-effective-task.md"), task("T-008", "defined"));
     return root;
   }
 
   test("uses the active worktree task once with its execution metadata", () => {
     const root = workspaceFixture();
-    mkdirSync(join(root, ".worktrees/T-008/.a-team/process/active"), { recursive: true });
-    writeFileSync(join(root, ".worktrees/T-008/.a-team/process/active/T-008-effective-task.md"), task(
+    mkdirSync(join(root, ".worktrees/T-008/.a-team/process/tasks"), { recursive: true });
+    writeFileSync(join(root, ".worktrees/T-008/.a-team/process/tasks/T-008-effective-task.md"), task(
       "T-008",
       "active",
       "branch: fix/T-008-effective-task\nassigned_agent: codex\n",
@@ -95,7 +95,7 @@ The effective state is visible.
 
   test("falls back without duplication when the task worktree is stale", () => {
     const root = workspaceFixture();
-    mkdirSync(join(root, ".worktrees/T-008/.a-team/process/active"), { recursive: true });
+    mkdirSync(join(root, ".worktrees/T-008/.a-team/process/tasks"), { recursive: true });
 
     const workspace = readWorkspace(root);
 
@@ -107,8 +107,8 @@ The effective state is visible.
 
   test("falls back when worktree task metadata is malformed", () => {
     const root = workspaceFixture();
-    mkdirSync(join(root, ".worktrees/T-008/.a-team/process/active"), { recursive: true });
-    writeFileSync(join(root, ".worktrees/T-008/.a-team/process/active/T-008-effective-task.md"), task("T-999", "active"));
+    mkdirSync(join(root, ".worktrees/T-008/.a-team/process/tasks"), { recursive: true });
+    writeFileSync(join(root, ".worktrees/T-008/.a-team/process/tasks/T-008-effective-task.md"), task("T-999", "active"));
 
     const workspace = readWorkspace(root);
 

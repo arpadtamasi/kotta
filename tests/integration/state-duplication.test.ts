@@ -1,15 +1,19 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdtempSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync, realpathSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
 /**
- * T-036 — directory-as-state duplication (second root of F-008).
+ * State lives in one place (T-01m0jdnshte2ffyzcp3bhf9kh1, successor of T-036).
  *
- * Every fixture here is a real Git merge: two branches carry one entity into different state
- * directories, and the merge keeps both copies. Only the resolution differs between them.
+ * The old shape stored lifecycle state twice — in the frontmatter and in the directory the file
+ * sat in — and a Git merge could keep both copies of one entity. The flat v5 shape stores state in
+ * the frontmatter alone, so the same disagreement now lands where Git can show it: as a merge
+ * conflict on the status line of one stable file, never as a second copy. These tests pin both
+ * halves: the migration that flattens a v4 workspace (refusing the duplicated-state damage rather
+ * than resolving it), and the conflict shape two concurrent transitions produce afterwards.
  */
 
 const cli = resolve("dist/cli/index.js");
@@ -22,200 +26,153 @@ const run = (cwd: string, args: string[]) => {
   return JSON.parse(result.stdout) as { ok: boolean; data: Record<string, unknown> };
 };
 
-interface Report {
-  ok: boolean;
-  errors: Array<{ code: string; message: string; path?: string }>;
-}
-
-function repository(label: string, options: { detectRenames?: boolean } = {}): string {
+function repository(label: string): string {
   // realpath: on macOS the temp directory is a symlink, and the CLI reports resolved paths.
-  const root = realpathSync(mkdtempSync(join(tmpdir(), `kotta-duplicate-${label}-`)));
+  const root = realpathSync(mkdtempSync(join(tmpdir(), `kotta-state-${label}-`)));
   git(root, "init", "-b", "main");
   git(root, "config", "user.name", "Kotta Test");
   git(root, "config", "user.email", "test@example.com");
-  // A merge only pairs a cross-directory move as delete+add while rename detection is on; a large
-  // merge (or `merge.renames=false`) drops it, and then both copies survive. Both shapes are real.
-  if (options.detectRenames === false) git(root, "config", "merge.renames", "false");
-  run(root, ["init"]);
-  retainLegacySignGate(root);
-  git(root, "add", "-A");
-  git(root, "commit", "-m", "init kotta");
   return root;
 }
 
-/** Finish a conflicted merge the way a hurried human does: keep both sides' files verbatim. */
-function keepBothSides(root: string, files: Array<{ branch: string; path: string }>): void {
-  for (const file of files) git(root, "checkout", file.branch, "--", file.path);
-  git(root, "add", "-A");
-  git(root, "commit", "-m", "merge: kept both copies");
+const V4_CONFIG = `version: 4
+project:
+  name: fixture
+workflow:
+  require_human_sign_approval: false
+  require_human_done_approval: true
+git:
+  base_branch: main
+`;
+
+function taskFile(id: string, title: string, status: string): string {
+  return `---\nid: ${id}\ntitle: ${title}\nstatus: ${status}\ntypes:\n  - feature\ncreated_at: "2026-01-01"\nupdated_at: "2026-01-01"\n---\n# ${id} — ${title}\n`;
 }
 
-describe("one entity in two state directories (T-036)", () => {
-  test("validate names both places after a merge, and dedupe keeps the furthest-advanced copy", () => {
-    const root = repository("task");
-    const task = run(root, ["task", "new", "--title", "Merge me", "--type", "feature"]).data as { id: string; path: string };
-    const filename = basename(task.path);
+/** A hand-built v4 workspace: state directories under process/, frontmatter mirroring them. */
+function v4Workspace(root: string): string {
+  const workspace = join(root, ".kotta");
+  writeFileSync(join(mkdirs(workspace), "config.yaml"), V4_CONFIG);
+  const process = join(workspace, "process");
+  for (const directory of ["backlog", "defined", "done", "observations/new", "observations/resolved", "batches/backlog", "claims", "decisions", "events", "profiles"]) {
+    mkdirSync(join(process, directory), { recursive: true });
+  }
+  writeFileSync(join(process, "backlog", "T-001-first.md"), taskFile("T-001", "First", "backlog"));
+  writeFileSync(join(process, "defined", "T-002-second.md"), taskFile("T-002", "Second", "defined"));
+  writeFileSync(join(process, "done", "T-003-third.md"), taskFile("T-003", "Third", "done").replace("---\n#", "resolution: completed\n---\n#"));
+  writeFileSync(join(process, "observations", "new", "F-001-noticed.md"), `---\nid: F-001\ntitle: Noticed\nstatus: new\n---\n# F-001\n`);
+  writeFileSync(join(process, "batches", "backlog", "P-001-wave.md"), `---\nid: P-001\ntitle: Wave\nstatus: backlog\ntasks: []\n---\n# P-001\n`);
+  return workspace;
+}
+
+function mkdirs(path: string): string {
+  mkdirSync(path, { recursive: true });
+  return path;
+}
+
+const status = (path: string): string => /^status: (.+)$/m.exec(readFileSync(path, "utf8"))?.[1] ?? "";
+
+describe("state lives in one place", () => {
+  test("kotta migrate flattens a v4 workspace: files move once, states land in the frontmatter, ids survive", () => {
+    const root = repository("migrate");
+    v4Workspace(root);
     git(root, "add", "-A");
-    git(root, "commit", "-m", "capture task");
+    git(root, "commit", "-m", "v4 workspace");
 
-    // Build the historical split while main remains the checked-out control plane. Modern Kotta
-    // no longer creates this shape, but dedupe must still repair repositories that already have it.
-    const commonBase = git(root, "rev-parse", "HEAD");
-    run(root, ["task", "sign", task.id, "--approve"]);
-    git(root, "branch", "branch-defined");
-    git(root, "reset", "--hard", commonBase);
-    run(root, ["task", "cancel", task.id, "--resolution", "cancelled", "--reason", "Retired to produce the duplicated state", "--approve"]);
+    // Dry run plans the flatten and writes nothing.
+    const dry = run(root, ["migrate", "--dry-run"]).data as { current: boolean; changes: Array<{ kind: string; from?: string; to?: string }>; ids: string[] };
+    expect(dry.current).toBe(false);
+    expect(dry.changes.some((change) => change.kind === "move" && change.to === ".kotta/process/tasks/T-001-first.md")).toBe(true);
+    expect(dry.changes.some((change) => change.kind === "remove")).toBe(true);
+    expect(existsSync(join(root, ".kotta/process/backlog/T-001-first.md"))).toBe(true);
 
-    const merge = spawnSync("git", ["merge", "--no-ff", "branch-defined", "-m", "merge"], { cwd: root, encoding: "utf8" });
-    expect(`${merge.stdout}${merge.stderr}`).toContain("CONFLICT (rename/rename)");
-    keepBothSides(root, [
-      { branch: "branch-defined", path: `.kotta/process/defined/${filename}` },
-      { branch: "main", path: `.kotta/process/done/${filename}` },
-    ]);
-    const defined = join(root, ".kotta/process/defined", filename);
-    const done = join(root, ".kotta/process/done", filename);
-    expect(existsSync(defined) && existsSync(done)).toBe(true);
+    const applied = run(root, ["migrate"]).data as { ids: string[] };
+    expect(applied.ids).toEqual(["F-001", "P-001", "T-001", "T-002", "T-003"]);
 
-    // Acceptance 1: the duplicate is its own error case and names both places.
-    const validation = attempt(root, ["validate"]);
-    expect(validation.status).toBe(1);
-    const report = JSON.parse(validation.stdout) as Report;
-    const duplicate = report.errors.find((error) => error.code === "DUPLICATE_STATE");
-    expect(duplicate).toBeDefined();
-    expect(duplicate?.message).toContain(defined);
-    expect(duplicate?.message).toContain(done);
-    expect(report.errors.some((error) => error.code === "DUPLICATE_ID")).toBe(false);
-
-    // Acceptance 5: without approval nothing is removed.
-    const unapproved = attempt(root, ["task", "dedupe", task.id]);
-    expect(unapproved.status).toBe(1);
-    expect(unapproved.stdout).toContain("Human approval is required");
-    expect(existsSync(defined) && existsSync(done)).toBe(true);
-
-    // Acceptance 2: the later lifecycle state wins and the discarded copy is named — here in the
-    // human-readable output; the batch test below asserts the same in the structured result.
-    const resolved = spawnSync("node", [cli, "task", "dedupe", task.id, "--approve"], { cwd: root, encoding: "utf8" });
-    expect(resolved.status).toBe(0);
-    expect(resolved.stdout).toContain(`Kept ${task.id} at ${done} (done)`);
-    expect(resolved.stdout).toContain(`dropped ${defined} (defined`);
-    expect(existsSync(defined)).toBe(false);
-    expect(existsSync(done)).toBe(true);
-    expect(run(root, ["validate"])).toMatchObject({ ok: true });
-
-    // Re-running finds a single copy and refuses rather than silently doing nothing.
-    const again = attempt(root, ["task", "dedupe", task.id, "--approve"]);
-    expect(again.status).toBe(1);
-    expect(again.stdout).toContain("nothing to resolve");
+    const tasks = join(root, ".kotta/process/tasks");
+    expect(readdirSync(tasks).sort()).toEqual(["T-001-first.md", "T-002-second.md", "T-003-third.md"]);
+    expect(status(join(tasks, "T-001-first.md"))).toBe("backlog");
+    expect(status(join(tasks, "T-002-second.md"))).toBe("defined");
+    expect(status(join(tasks, "T-003-third.md"))).toBe("done");
+    expect(status(join(root, ".kotta/process/observations/F-001-noticed.md"))).toBe("new");
+    expect(status(join(root, ".kotta/process/batches/P-001-wave.md"))).toBe("backlog");
+    // The state directories are gone; version says v5; a second run has nothing to do.
+    for (const directory of ["backlog", "defined", "done", "observations/new", "batches/backlog"]) {
+      expect(existsSync(join(root, ".kotta/process", directory))).toBe(false);
+    }
+    expect(readFileSync(join(root, ".kotta/config.yaml"), "utf8")).toContain("version: 5");
+    expect((run(root, ["migrate", "--dry-run"]).data as { current: boolean }).current).toBe(true);
   });
 
-  test("a batch duplicated across batches/backlog and batches/defined resolves the same way", () => {
-    const root = repository("batch", { detectRenames: false });
-    const first = run(root, ["task", "new", "--title", "First slice", "--type", "feature"]).data as { id: string };
-    const second = run(root, ["task", "new", "--title", "Second slice", "--type", "feature"]).data as { id: string };
-    run(root, ["task", "sign", first.id, "--approve"]);
-    const batch = run(root, ["batch", "new", "--title", "Batch one", "--goal", "Ship the slices"]).data as { id: string; path: string };
-    run(root, ["batch", "add", batch.id, first.id]);
-    const filename = basename(batch.path);
+  test("the directory's verdict wins over a drifted frontmatter, and the transcription is named", () => {
+    const root = repository("drift");
+    const workspace = v4Workspace(root);
+    // In v4 every reader trusted the directory; a drifted status field was the lie.
+    writeFileSync(join(workspace, "process", "defined", "T-002-second.md"), taskFile("T-002", "Second", "backlog"));
     git(root, "add", "-A");
-    git(root, "commit", "-m", "capture batch");
+    git(root, "commit", "-m", "v4 workspace with drift");
 
-    // Reconstruct the pre-control-plane P-015 shape without checking main out elsewhere.
-    const commonBase = git(root, "rev-parse", "HEAD");
-    run(root, ["batch", "sign", batch.id, "--approve"]);
-    git(root, "add", "-A");
-    git(root, "commit", "-m", "defined batch");
-    git(root, "branch", "branch-defined");
-    git(root, "reset", "--hard", commonBase);
-    run(root, ["batch", "add", batch.id, second.id]);
-    git(root, "add", "-A");
-    git(root, "commit", "-m", "add second task");
+    const dry = run(root, ["migrate", "--dry-run"]).data as { changes: Array<{ kind: string; path?: string; fields?: string[] }> };
+    const rewrite = dry.changes.find((change) => change.kind === "rewrite" && change.path?.endsWith("T-002-second.md"));
+    expect(rewrite?.fields?.some((field) => field.includes("backlog → defined"))).toBe(true);
 
-    // Newer git honors the fixture's merge.renames=false and reports CONFLICT (modify/delete);
-    // git 2.43's ort strategy ignores the setting and pairs the move as a rename. The duplicated
-    // shape this test exists for is reconstructed from the two sides either way.
-    const mainBefore = git(root, "rev-parse", "HEAD");
-    spawnSync("git", ["merge", "--no-ff", "branch-defined", "-m", "merge"], { cwd: root, encoding: "utf8" });
-    git(root, "checkout", "branch-defined", "--", `.kotta/process/batches/defined/${filename}`);
-    git(root, "checkout", mainBefore, "--", `.kotta/process/batches/backlog/${filename}`);
-    git(root, "add", "-A");
-    git(root, "commit", "-m", "merge: kept both copies");
-    const backlog = join(root, ".kotta/process/batches/backlog", filename);
-    const defined = join(root, ".kotta/process/batches/defined", filename);
-    expect(existsSync(backlog) && existsSync(defined)).toBe(true);
-
-    const validation = attempt(root, ["validate"]);
-    expect(validation.status).toBe(1);
-    const duplicate = (JSON.parse(validation.stdout) as Report).errors.find((error) => error.code === "DUPLICATE_STATE");
-    expect(duplicate?.message).toContain(backlog);
-    expect(duplicate?.message).toContain(defined);
-    expect(duplicate?.message).toContain(`kotta batch dedupe ${batch.id} --approve`);
-
-    expect(attempt(root, ["batch", "dedupe", batch.id]).status).toBe(1);
-    expect(existsSync(backlog)).toBe(true);
-
-    const resolved = run(root, ["batch", "dedupe", batch.id, "--approve"]).data as {
-      kept: { state: string; path: string };
-      dropped: Array<{ state: string; path: string; differing_fields: string[] }>;
-    };
-    expect(resolved.kept).toEqual({ state: "defined", path: defined });
-    // The dropped copy carried a different membership list; the resolution says so instead of hiding it.
-    expect(resolved.dropped).toEqual([{ state: "backlog", path: backlog, differing_fields: ["tasks"] }]);
-    expect(existsSync(backlog)).toBe(false);
+    run(root, ["migrate"]);
+    expect(status(join(root, ".kotta/process/tasks/T-002-second.md"))).toBe("defined");
   });
 
-  test("dedupe stops when the two copies have different bodies", () => {
-    const root = repository("diverged", { detectRenames: false });
+  test("migrate refuses the duplicated-state damage, naming both copies, and writes nothing", () => {
+    const root = repository("duplicate");
+    const workspace = v4Workspace(root);
+    // The old T-036 shape: a merge kept one entity in two state directories.
+    writeFileSync(join(workspace, "process", "done", "T-002-second.md"), taskFile("T-002", "Second", "done"));
+    git(root, "add", "-A");
+    git(root, "commit", "-m", "duplicated state");
+
+    for (const args of [["migrate", "--dry-run"], ["migrate"]]) {
+      const refused = attempt(root, args);
+      expect(refused.status).toBe(1);
+      const output = `${refused.stdout}${refused.stderr}`;
+      expect(output).toContain("multiple sources");
+      expect(output).toContain(join(workspace, "process/defined/T-002-second.md"));
+      expect(output).toContain(join(workspace, "process/done/T-002-second.md"));
+      expect(output).toContain("Nothing was written");
+    }
+    expect(existsSync(join(workspace, "process/defined/T-002-second.md"))).toBe(true);
+    expect(existsSync(join(workspace, "process/done/T-002-second.md"))).toBe(true);
+    expect(existsSync(join(workspace, "process/tasks"))).toBe(false);
+  });
+
+  test("two concurrent transitions meet as a merge conflict on the status line of one file, never as a second copy", () => {
+    const root = repository("conflict");
+    run(root, ["init"]);
+    retainLegacySignGate(root);
+    git(root, "add", "-A");
+    git(root, "commit", "-m", "init kotta");
     const task = run(root, ["task", "new", "--title", "Contested", "--type", "feature"]).data as { id: string; path: string };
     const filename = basename(task.path);
     git(root, "add", "-A");
     git(root, "commit", "-m", "capture task");
+    const base = git(root, "rev-parse", "HEAD");
 
-    const commonBase = git(root, "rev-parse", "HEAD");
+    // One side approves the task for execution; the other retires it.
     run(root, ["task", "sign", task.id, "--approve"]);
-    git(root, "branch", "branch-defined");
-    git(root, "reset", "--hard", commonBase);
+    git(root, "branch", "branch-signed");
+    git(root, "reset", "--hard", base);
+    run(root, ["task", "cancel", task.id, "--resolution", "cancelled", "--reason", "Retired on the other side", "--approve"]);
 
-    // Main rewrites the task body in place while the other branch moves it to defined.
-    const definition = join(root, "definition.md");
-    const body = ["Outcome", "Scope", "Non-goals", "Acceptance", "Verification", "Constraints", "Open decisions", "Execution notes"]
-      .map((heading) => `## ${heading}\n\n${heading === "Open decisions" ? "None." : `Rewritten ${heading.toLowerCase()} that the other branch never saw.`}`)
-      .join("\n\n");
-    writeFileSync(definition, `---\ntypes:\n  - feature\n---\n${body}\n`);
-    run(root, ["task", "define", task.id, "--from", definition]);
-    git(root, "add", "-A");
-    git(root, "commit", "-m", "rewrite body");
+    const merge = spawnSync("git", ["merge", "--no-ff", "branch-signed", "-m", "merge"], { cwd: root, encoding: "utf8" });
+    expect(merge.status).not.toBe(0);
+    expect(`${merge.stdout}${merge.stderr}`).toContain("CONFLICT");
 
-    // Same git-version split as above: reconstruct both copies whatever the merge reported.
-    const mainBefore = git(root, "rev-parse", "HEAD");
-    spawnSync("git", ["merge", "--no-ff", "branch-defined", "-m", "merge"], { cwd: root, encoding: "utf8" });
-    git(root, "checkout", "branch-defined", "--", `.kotta/process/defined/${filename}`);
-    git(root, "checkout", mainBefore, "--", `.kotta/process/backlog/${filename}`);
-    git(root, "add", "-A");
-    git(root, "commit", "-m", "merge: kept both copies");
-    const backlog = join(root, ".kotta/process/backlog", filename);
-    const defined = join(root, ".kotta/process/defined", filename);
-    expect(existsSync(backlog) && existsSync(defined)).toBe(true);
-
-    // Acceptance 3: divergent bodies are not a machine decision.
-    const refused = attempt(root, ["task", "dedupe", task.id, "--approve"]);
-    expect(refused.status).toBe(1);
-    expect(refused.stdout).toContain("different bodies");
-    expect(refused.stdout).toContain(backlog);
-    expect(refused.stdout).toContain(defined);
-    expect(existsSync(backlog) && existsSync(defined)).toBe(true);
-    expect((JSON.parse(attempt(root, ["validate"]).stdout) as Report).errors.some((error) => error.code === "DUPLICATE_STATE")).toBe(true);
-  });
-
-  test("dedupe refuses an identifier collision inside one state directory", () => {
-    const root = repository("collision");
-    const task = run(root, ["task", "new", "--title", "Shared identity", "--type", "feature"]).data as { id: string; path: string };
-    const twin = join(root, ".kotta/process/backlog", `other-${basename(task.path)}`);
-    copyFileSync(task.path, twin);
-    writeFileSync(twin, readFileSync(twin, "utf8").replace("title: Shared identity", "title: A different entity"));
-
-    const refused = attempt(root, ["task", "dedupe", task.id, "--approve"]);
-    expect(refused.status).toBe(1);
-    expect(refused.stdout).toContain("identifier collision");
-    expect(existsSync(twin)).toBe(true);
+    // The disagreement is visible in the one stable file — both status lines, conflict markers —
+    // and nowhere does a second copy of the entity appear.
+    const stable = join(root, ".kotta/process/tasks", filename);
+    const conflicted = readFileSync(stable, "utf8");
+    expect(conflicted).toContain("<<<<<<<");
+    expect(conflicted).toContain("status: done");
+    expect(conflicted).toContain("status: defined");
+    // During an unresolved merge ls-files repeats the one path per stage; the set is the claim.
+    const copies = [...new Set(git(root, "ls-files", "--", ".kotta").split("\n").filter((line) => line.endsWith(filename)))];
+    expect(copies).toEqual([`.kotta/process/tasks/${filename}`]);
   });
 });

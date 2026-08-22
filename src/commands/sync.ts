@@ -5,7 +5,15 @@ import { fileURLToPath } from "node:url";
 import { readEnv } from "../core/env.js";
 import { findRepositoryRoot, hasWorkspace, syncWorkspaceForms } from "../filesystem/workspace.js";
 import { linkProjectAgents, pointerLine, syncWorkspaceAgents } from "./agents.js";
-import { LEGACY_TASK_SKILL_RENAMES } from "../compatibility/task-v3.js";
+
+/** Skill directories the v3 `contract` vocabulary named; sync removes an owned leftover once its rename is installed. */
+const LEGACY_TASK_SKILL_RENAMES: Readonly<Record<string, string>> = {
+  "close-contract": "close-task",
+  "define-contract": "define-task",
+  "design-by-contract": "design-by-task",
+  "execute-contract": "execute-task",
+  "start-contract": "start-task",
+};
 
 /**
  * Kotta ships its skills inside the package, but nothing has ever installed them — so the

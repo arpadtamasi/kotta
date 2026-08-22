@@ -216,10 +216,11 @@ describe("kotta migrate", () => {
     expect(report).toContain("Nothing was written.");
     for (const line of [
       ".a-team → .kotta",
-      ".a-team/ready → .kotta/process/defined",
-      ".a-team/findings → .kotta/process/observations",
-      ".a-team/packages → .kotta/process/batches",
-      ".a-team/packages/ready → .kotta/process/batches/defined",
+      ".a-team/ready/T-002-export-job-api.md → .kotta/process/tasks/T-002-export-job-api.md",
+      ".a-team/findings/new/F-001-divergent-checks.md → .kotta/process/observations/F-001-divergent-checks.md",
+      ".a-team/packages/ready/P-001-export-slice.md → .kotta/process/batches/P-001-export-slice.md",
+      "remove     .a-team/ready",
+      "remove     .a-team/packages",
     ]) expect(report).toContain(line);
     expect(report).toContain("package → batch");
     expect(report).toContain("source_finding → source_observation");
@@ -241,26 +242,26 @@ describe("kotta migrate", () => {
     expect(migrated.workspace).toBe(join(root, ".kotta"));
 
     expect(existsSync(join(root, ".a-team"))).toBe(false);
-    expect(existsSync(join(root, ".kotta/process/defined/T-002-export-job-api.md"))).toBe(true);
-    expect(existsSync(join(root, ".kotta/process/observations/new/F-001-divergent-checks.md"))).toBe(true);
-    expect(existsSync(join(root, ".kotta/process/batches/defined/P-001-export-slice.md"))).toBe(true);
+    expect(existsSync(join(root, ".kotta/process/tasks/T-002-export-job-api.md"))).toBe(true);
+    expect(existsSync(join(root, ".kotta/process/observations/F-001-divergent-checks.md"))).toBe(true);
+    expect(existsSync(join(root, ".kotta/process/batches/P-001-export-slice.md"))).toBe(true);
 
     expect(run(root, ["validate"])).toMatchObject({ ok: true, errors: [] });
 
-    const task = matter(readFileSync(join(root, ".kotta/process/defined/T-002-export-job-api.md"), "utf8"));
+    const task = matter(readFileSync(join(root, ".kotta/process/tasks/T-002-export-job-api.md"), "utf8"));
     expect(task.data).toMatchObject({ id: "T-002", status: "defined", batch: "P-001", depends_on: ["T-001"] });
     expect(task.data.package).toBeUndefined();
 
-    const backlog = matter(readFileSync(join(root, ".kotta/process/backlog/T-001-shape-the-export.md"), "utf8"));
+    const backlog = matter(readFileSync(join(root, ".kotta/process/tasks/T-001-shape-the-export.md"), "utf8"));
     expect(backlog.data).toMatchObject({ origin: "observation", source_observation: "F-001", batch: "P-001" });
 
-    const batch = matter(readFileSync(join(root, ".kotta/process/batches/defined/P-001-export-slice.md"), "utf8"));
+    const batch = matter(readFileSync(join(root, ".kotta/process/batches/P-001-export-slice.md"), "utf8"));
     expect(batch.data).toMatchObject({ status: "defined", tasks: ["T-001", "T-002"] });
     expect(batch.data.kind).toBeUndefined();
     expect(batch.data.tickets).toBeUndefined();
     expect(batch.data.authority).toEqual({ create_observations: true, create_subtasks: false, reorder_independent_tasks: false, change_scope: false });
 
-    const resolved = matter(readFileSync(join(root, ".kotta/process/observations/resolved/F-002-duplicate-read.md"), "utf8"));
+    const resolved = matter(readFileSync(join(root, ".kotta/process/observations/F-002-duplicate-read.md"), "utf8"));
     expect(resolved.data).toMatchObject({ observation_type: "performance", disposition: "create-task", task: "T-001", related_task: "T-001" });
 
     const claim = readFileSync(join(root, ".kotta/process/claims/T-003.yaml"), "utf8");
@@ -268,7 +269,7 @@ describe("kotta migrate", () => {
     expect(claim).not.toContain("ticket: T-003");
 
     const config = readFileSync(join(root, ".kotta/config.yaml"), "utf8");
-    expect(config).toContain("version: 4");
+    expect(config).toContain("version: 5");
     expect(config).toContain("batches:");
     expect(config).toContain("require_human_sign_approval");
     expect(config).toContain("allow_agent_observations");
@@ -346,7 +347,7 @@ describe("flat v2 namespace migration", () => {
     for (const change of [
       ".kotta/forms → .kotta/spec/forms",
       ".kotta/custom-nodes → .kotta/spec/custom-nodes",
-      ".kotta/backlog → .kotta/process/backlog",
+      "remove     .kotta/backlog",
       ".kotta/index.md → .kotta/process/index.md",
       ".kotta/process/index.md merge=union",
     ]) expect(dry.stdout).toContain(change);
@@ -354,7 +355,7 @@ describe("flat v2 namespace migration", () => {
     run(root, ["migrate"]);
     expect(readFileSync(join(root, ".kotta/spec/forms/custom.yaml"), "utf8")).toContain("directory: custom-nodes");
     expect(readFileSync(join(root, ".kotta/spec/custom-nodes/example-cv000001.md"), "utf8")).toBe(CUSTOM_NODE);
-    expect(readFileSync(join(root, ".kotta/config.yaml"), "utf8")).toContain("version: 4");
+    expect(readFileSync(join(root, ".kotta/config.yaml"), "utf8")).toContain("version: 5");
     expect(readFileSync(join(root, ".gitattributes"), "utf8")).toBe(".kotta/process/index.md merge=union\n");
     expect(run(root, ["validate"])).toMatchObject({ ok: true, errors: [] });
     const after = snapshot(root);
@@ -438,7 +439,7 @@ describe("the old shape outside the migration command", () => {
     const root = legacyRepository("board-notice");
     const board = readWorkspace(root);
     expect(board.tasks).toEqual([]);
-    expect(board.notices.join("\n")).toContain("legacy flat shape");
+    expect(board.notices.join("\n")).toContain("legacy shape");
     expect(board.notices.join("\n")).toContain("kotta migrate");
   });
 
@@ -557,8 +558,8 @@ describe("a workspace the size of a real one", () => {
     expect(result.ids).toHaveLength(before.length);
     expect(idsOnDisk(root)).toEqual(before);
     expect(run(root, ["validate"])).toMatchObject({ ok: true, errors: [] });
-    expect(readdirSync(join(root, ".kotta/process/observations/new"))).toHaveLength(105);
-    expect(readdirSync(join(root, ".kotta/process/batches/backlog"))).toHaveLength(21);
+    expect(readdirSync(join(root, ".kotta/process/observations"))).toHaveLength(105);
+    expect(readdirSync(join(root, ".kotta/process/batches"))).toHaveLength(21);
     expect(run(root, ["migrate"]).data).toMatchObject({ current: true });
   }, 120_000);
 });

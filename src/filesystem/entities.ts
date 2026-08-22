@@ -9,36 +9,6 @@ export const BATCH_STATES = ["backlog", "defined", "active", "done"] as const;
 
 export type EntityKind = "task" | "batch";
 
-export interface EntityCopy {
-  state: string;
-  path: string;
-  filename: string;
-}
-
-/** State directories of an entity kind, in lifecycle order — the later entry is the further-advanced state. */
-export function stateDirectories(kind: EntityKind): Array<{ state: string; directory: string }> {
-  return kind === "task"
-    ? TASK_STATES.map((state) => ({ state, directory: state }))
-    : BATCH_STATES.map((state) => ({ state, directory: `batches/${state}` }));
-}
-
-/**
- * Every file claiming `id`, in lifecycle order. State is encoded by the directory, and Git does not
- * pair a cross-directory move as delete+add, so a merge can leave one entity in several of them (T-036).
- */
-export function entityCopies(root: string, kind: EntityKind, id: string): EntityCopy[] {
-  const copies: EntityCopy[] = [];
-  for (const { state, directory } of stateDirectories(kind)) {
-    const path = processPath(root, directory);
-    if (!existsSync(path)) continue;
-    for (const filename of readdirSync(path).filter((name) => name.endsWith(".md")).sort()) {
-      const file = join(path, filename);
-      if (idFromEntityFile(file, filename) === id) copies.push({ state, path: file, filename });
-    }
-  }
-  return copies;
-}
-
 export interface TaskLocation {
   path: string;
   state: string;
@@ -68,12 +38,24 @@ export function idFromEntityFile(path: string, filename: string): string | null 
   return idFromFilename(filename);
 }
 
+/** Lifecycle state of an entity file: the frontmatter status is the single authority. */
+export function stateFromEntityFile(path: string): string {
+  try {
+    return String(parseMarkdown(readFileSync(path, "utf8")).data.status ?? "").trim();
+  } catch {
+    // Malformed frontmatter is reported by validation; an unreadable state stays empty.
+    return "";
+  }
+}
+
 export function findTask(root: string, id: string): TaskLocation {
-  for (const state of TASK_STATES) {
-    const directory = processPath(root, state);
-    if (!existsSync(directory)) continue;
+  const directory = processPath(root, "tasks");
+  if (existsSync(directory)) {
     const filename = readdirSync(directory).find((name) => name.endsWith(".md") && filenameMatchesId(name, id));
-    if (filename) return { path: join(directory, filename), state, filename };
+    if (filename) {
+      const path = join(directory, filename);
+      return { path, state: stateFromEntityFile(path), filename };
+    }
   }
   throw new Error(`Task ${id} was not found.`);
 }
@@ -107,22 +89,26 @@ export const OBSERVATION_STATES = ["new", "resolved"] as const;
 export type ListableEntity = "task" | "observation" | "batch" | "decision";
 
 /**
- * Where an entity kind keeps its files, paired with the state each directory means.
- * One source for the mapping: `status`, the index, `listIds` and `list` all read it,
- * so a new state cannot appear in one of them and be missing from the rest.
+ * Where an entity kind keeps its files. One stable directory per kind: lifecycle state lives in
+ * the frontmatter status field alone, so a transition never moves a file.
  */
-export function entityStateDirectories(entity: ListableEntity): Array<{ state: string; directory: string }> {
+export function entityDirectory(entity: ListableEntity): string {
   switch (entity) {
-    case "task": return TASK_STATES.map((state) => ({ state, directory: state }));
-    case "batch": return BATCH_STATES.map((state) => ({ state, directory: `batches/${state}` }));
-    case "observation": return OBSERVATION_STATES.map((state) => ({ state, directory: `observations/${state}` }));
-    case "decision": return [{ state: "recorded", directory: "decisions" }];
+    case "task": return "tasks";
+    case "batch": return "batches";
+    case "observation": return "observations";
+    case "decision": return "decisions";
   }
 }
 
 /** The states an entity kind can be narrowed to, for the option that does the narrowing. */
 export function entityStates(entity: ListableEntity): string[] {
-  return entityStateDirectories(entity).map(({ state }) => state);
+  switch (entity) {
+    case "task": return [...TASK_STATES];
+    case "batch": return [...BATCH_STATES];
+    case "observation": return [...OBSERVATION_STATES];
+    case "decision": return ["recorded"];
+  }
 }
 
 export function listIds(root: string, entity: "task" | "observation" | "batch"): string[] {
@@ -137,28 +123,28 @@ export interface ListedEntity {
 }
 
 /**
- * Every entity of a kind, with the title a human reads first. Lifecycle order across
- * directories, then filename order inside one, so the same workspace always lists the
- * same bytes. A file whose title cannot be read is listed with an empty one rather
- * than omitted: a listing that silently drops entities is worse than an ugly row.
+ * Every entity of a kind, with the title a human reads first. Lifecycle order first, filename
+ * order inside one state, so the same workspace always lists the same bytes. A file whose title
+ * cannot be read is listed with an empty one rather than omitted: a listing that silently drops
+ * entities is worse than an ugly row.
  */
 export function listEntities(root: string, entity: ListableEntity, states?: string[]): ListedEntity[] {
-  const workspace = processPath(root);
+  const directory = join(processPath(root), entityDirectory(entity));
+  if (!existsSync(directory)) return [];
   const wanted = states?.length ? new Set(states) : null;
-  return entityStateDirectories(entity)
+  const order = new Map(entityStates(entity).map((state, index) => [state, index]));
+  return readdirSync(directory)
+    .filter((name) => name.endsWith(".md"))
+    .sort()
+    .flatMap((name) => {
+      const file = join(directory, name);
+      const id = idFromEntityFile(file, name);
+      if (id === null) return [];
+      const state = entity === "decision" ? "recorded" : stateFromEntityFile(file);
+      return [{ id, state, title: entityTitle(file), path: file }];
+    })
     .filter(({ state }) => !wanted || wanted.has(state))
-    .flatMap(({ state, directory }) => {
-      const path = join(workspace, directory);
-      if (!existsSync(path)) return [];
-      return readdirSync(path)
-        .filter((name) => name.endsWith(".md"))
-        .sort()
-        .flatMap((name) => {
-          const file = join(path, name);
-          const id = idFromEntityFile(file, name);
-          return id === null ? [] : [{ id, state, title: entityTitle(file), path: file }];
-        });
-    });
+    .sort((a, b) => (order.get(a.state) ?? order.size) - (order.get(b.state) ?? order.size) || a.path.localeCompare(b.path));
 }
 
 /**
@@ -167,9 +153,7 @@ export function listEntities(root: string, entity: ListableEntity, states?: stri
  * refused — every listing invited a name the next command would not accept.
  *
  * Ambiguity is refused rather than resolved: two entities behind one short form is a
- * question for the operator, and silently picking one is the worse failure. One id
- * living in two state directories is not ambiguity — a merge can leave it there, and
- * the readers already handle it in lifecycle order.
+ * question for the operator, and silently picking one is the worse failure.
  */
 export function canonicalEntityId(root: string, entity: ListableEntity, id: string): string {
   const trimmed = id.trim();

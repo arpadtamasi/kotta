@@ -2,9 +2,24 @@ import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSy
 import { basename, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse, stringify } from "yaml";
-import { PREVIOUS_WORKSPACE_SCHEMA_VERSION, warnLegacyTaskVocabulary } from "../compatibility/task-v3.js";
+
 
 export const PROCESS_DIRECTORIES = [
+  "tasks",
+  "observations",
+  "batches",
+  "profiles",
+  "claims",
+  "decisions",
+  "events",
+] as const;
+
+/**
+ * The version-4 lifecycle-state directories. Their presence *is* the pre-flat shape: state was
+ * encoded by the directory a file sat in, so no v5 reader understands them and every command
+ * refuses a workspace that still has one, naming the migrate command that flattens it.
+ */
+export const V4_STATE_DIRECTORIES = [
   "backlog",
   "defined",
   "active",
@@ -16,13 +31,9 @@ export const PROCESS_DIRECTORIES = [
   "batches/defined",
   "batches/active",
   "batches/done",
-  "profiles",
-  "claims",
-  "decisions",
-  "events",
 ] as const;
 
-export const WORKSPACE_SCHEMA_VERSION = 4;
+export const WORKSPACE_SCHEMA_VERSION = 5;
 export const SPEC_DIRECTORY = "spec";
 export const PROCESS_DIRECTORY = "process";
 
@@ -140,12 +151,19 @@ export function legacyStateDirectories(root: string): string[] {
   return legacy;
 }
 
+/** The version-4 state directories still present under process/. Empty means flat. */
+export function v4StateDirectories(root: string): string[] {
+  if (!hasWorkspace(root)) return [];
+  return V4_STATE_DIRECTORIES.filter((entry) => isWorkspaceDirectory(processPath(root, entry))).map(String);
+}
+
 /** Flat-v2 process/spec directories that must be migrated rather than partially read. */
 export function flatWorkspaceEntries(root: string): string[] {
   if (!hasWorkspace(root)) return [];
   const workspace = workspacePath(root);
   const known = [
     ...PROCESS_DIRECTORIES,
+    ...V4_STATE_DIRECTORIES,
     "forms",
     "index.md",
     ...LEGACY_STATE_DIRECTORIES.map(({ from }) => from),
@@ -177,17 +195,15 @@ export function assertCurrentWorkspaceShape(root: string): void {
   if (!hasWorkspace(root)) return;
   const legacy = legacyStateDirectories(root);
   const flat = flatWorkspaceEntries(root);
+  const stateDirs = v4StateDirectories(root);
   const version = workspaceSchemaVersion(root);
-  if (!legacy.length && !flat.length && version === WORKSPACE_SCHEMA_VERSION) return;
-  if (!legacy.length && !flat.length && version === PREVIOUS_WORKSPACE_SCHEMA_VERSION) {
-    warnLegacyTaskVocabulary(root);
-    return;
-  }
+  if (!legacy.length && !flat.length && !stateDirs.length && version === WORKSPACE_SCHEMA_VERSION) return;
   const directory = workspaceDirectoryName(root);
-  const entries = [...new Set([...legacy, ...flat])].map((name) => `${directory}/${name}${name.includes(".") ? "" : "/"}`);
+  const entries = [...new Set([...legacy, ...flat, ...stateDirs.map((name) => `${PROCESS_DIRECTORY}/${name}`)])]
+    .map((name) => `${directory}/${name}${name.includes(".") ? "" : "/"}`);
   if (version !== WORKSPACE_SCHEMA_VERSION) entries.push(`${directory}/config.yaml (schema version ${Number.isFinite(version) ? version : "unreadable"}; expected ${WORKSPACE_SCHEMA_VERSION})`);
   throw new Error(
-    `${root} uses a legacy Kotta workspace shape: ${entries.join(", ")} must move into the spec/ and process/ namespaces. `
+    `${root} uses a legacy Kotta workspace shape: ${entries.join(", ")} predates the flat process layout (state lives in the frontmatter status field alone). `
     + "Run 'kotta migrate --dry-run' to see exactly what would change, then 'kotta migrate'. No other command reads or writes the legacy shape.",
   );
 }
@@ -372,19 +388,30 @@ export function renderEmptyIndex(): string {
 export function regenerateIndex(root: string): void {
   const process = processPath(root);
   if (!existsSync(process)) return;
-  const entries = (directory: string) => {
+  // State lives in the frontmatter alone, so the index groups by the status each file declares.
+  const entries = (directory: string, status: string) => {
     const path = join(process, directory);
     if (!existsSync(path)) return [];
-    return readdirSync(path).filter((name) => name.endsWith(".md")).sort().map((name) => `- ${name.replace(/\.md$/, "")}`);
+    return readdirSync(path)
+      .filter((name) => name.endsWith(".md"))
+      .sort()
+      .filter((name) => {
+        try {
+          return /^status:\s*(["']?)([a-z-]+)\1\s*$/m.exec(readFileSync(join(path, name), "utf8").slice(0, 2000))?.[2] === status;
+        } catch {
+          return false;
+        }
+      })
+      .map((name) => `- ${name.replace(/\.md$/, "")}`);
   };
   const section = (title: string, lines: string[]) => `## ${title}\n\n${lines.length ? lines.join("\n") : "None."}`;
   writeFileSync(join(process, "index.md"), `# Kotta Status\n\n> Generated file. Do not edit manually.\n\n${[
-    section("Defined batches", entries("batches/defined")),
-    section("Active batches", entries("batches/active")),
-    section("Defined tasks", entries("defined")),
-    section("Active tasks", entries("active")),
-    section("Review", entries("review")),
+    section("Defined batches", entries("batches", "defined")),
+    section("Active batches", entries("batches", "active")),
+    section("Defined tasks", entries("tasks", "defined")),
+    section("Active tasks", entries("tasks", "active")),
+    section("Review", entries("tasks", "review")),
     section("Blocked", []),
-    section("New observations", entries("observations/new")),
+    section("New observations", entries("observations", "new")),
   ].join("\n\n")}\n`);
 }

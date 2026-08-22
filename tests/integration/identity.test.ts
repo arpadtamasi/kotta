@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { copyFileSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
@@ -42,7 +42,7 @@ function writeSequentialTask(root: string, id: string, slug: string, extra: Reco
   const body = ["Outcome", "Scope", "Non-goals", "Acceptance", "Verification", "Constraints", "Open decisions", "Execution notes"]
     .map((heading) => `## ${heading}\n\n${heading === "Open decisions" ? "None." : "Preserved."}`)
     .join("\n\n");
-  const path = join(root, ".kotta/process/backlog", `${id}-${slug}.md`);
+  const path = join(root, ".kotta/process/tasks", `${id}-${slug}.md`);
   writeFileSync(path, `---\n${frontmatter}\n---\n# ${id} — ${slug}\n\n${body}\n`);
   return path;
 }
@@ -87,7 +87,7 @@ describe("coordination-free identity (D-003, narrowed by D-010)", () => {
 
     const validation = run(root, ["validate"]);
     expect(validation).toMatchObject({ ok: true });
-    expect(readdirSync(join(root, ".kotta/process/backlog")).filter((name) => name.endsWith(".md"))).toHaveLength(2);
+    expect(readdirSync(join(root, ".kotta/process/tasks")).filter((name) => name.endsWith(".md"))).toHaveLength(2);
 
     for (const { path } of worktrees) git(root, "worktree", "remove", path, "--force");
   });
@@ -110,7 +110,9 @@ describe("coordination-free identity (D-003, narrowed by D-010)", () => {
 
     // The legacy task still moves through the workflow under its own id and filename.
     expect(run(root, ["task", "sign", "T-001", "--approve"])).toMatchObject({ ok: true });
-    expect(readdirSync(join(root, ".kotta/process/defined"))).toEqual(["T-001-legacy-work.md"]);
+    const legacyAfterSign = join(root, ".kotta/process/tasks", "T-001-legacy-work.md");
+    expect(existsSync(legacyAfterSign)).toBe(true);
+    expect(readFileSync(legacyAfterSign, "utf8")).toMatch(/^status: defined$/m);
   });
 
   test("validate reports DUPLICATE_ID when two entities share one id, in either form", () => {
@@ -119,10 +121,9 @@ describe("coordination-free identity (D-003, narrowed by D-010)", () => {
       const source = duplicate
         ? writeSequentialTask(root, duplicate, "shared-identity")
         : (run(root, ["task", "new", "--title", "Shared identity", "--type", "feature"]).data as { path: string }).path;
-      // Two distinct entities claiming one id inside a single state directory. One entity left in two
-      // state directories is a different failure with a deterministic resolution (T-036).
+      // Two distinct entities claiming one id inside the same flat directory.
       const twin = duplicate ? `${duplicate}-second-entity.md` : `second-entity-${basename(source).split("-").pop()}`;
-      copyFileSync(source, join(root, ".kotta/process/backlog", twin));
+      copyFileSync(source, join(root, ".kotta/process/tasks", twin));
 
       const report = attempt(root, ["validate"]);
       expect(report.status).toBe(1);
@@ -131,7 +132,6 @@ describe("coordination-free identity (D-003, narrowed by D-010)", () => {
         ok: false,
         errors: expect.arrayContaining([expect.objectContaining({ code: "DUPLICATE_ID" })]),
       });
-      expect(parsed.errors.some((error) => error.code === "DUPLICATE_STATE")).toBe(false);
     }
   });
 });

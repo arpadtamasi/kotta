@@ -44,7 +44,7 @@ function dependencyBatch(label: string) {
 
   const predecessor = defineTask(root, "Build predecessor");
   const dependent = defineTask(root, "Build dependent");
-  const dependentPath = join(root, ".kotta", "process", "defined", dependent.filename);
+  const dependentPath = join(root, ".kotta", "process", "tasks", dependent.filename);
   writeFileSync(dependentPath, readFileSync(dependentPath, "utf8")
     .replace("depends_on: []", `depends_on:\n  - ${predecessor.id}`));
 
@@ -94,7 +94,7 @@ describe("dependency-aware batch waves", () => {
       `start_commit: ${coordinatorCommit}`,
       `dependency_integration_target: ${coordinatorBranch}`,
     ].join("\n"));
-    expect(existsSync(join(root, ".kotta", "process", "review", predecessor.filename))).toBe(true);
+    expect(readFileSync(join(root, ".kotta", "process", "tasks", predecessor.filename), "utf8")).toMatch(/^status: review$/m);
     expect(run(root, ["batch", "status", batchId]).data).toMatchObject({ status: "active" });
     const closeWithoutApproval = attempt(root, ["task", "close", predecessor.id]);
     expect(closeWithoutApproval.status).toBe(1);
@@ -139,7 +139,8 @@ describe("dependency-aware batch waves", () => {
     expect(existsSync(join(root, ".worktrees", dependent.id))).toBe(false);
     expect(existsSync(join(root, ".kotta", "process", "claims", `${dependent.id}.yaml`))).toBe(false);
     expect(git(root, "branch", "--list", `feat/${dependent.id}-build-dependent`)).toBe("");
-    expect(existsSync(join(root, ".kotta", "process", "defined", dependent.filename))).toBe(true);
-    expect(existsSync(join(root, ".kotta", "process", "active", dependent.filename))).toBe(false);
+    const stable = join(root, ".kotta", "process", "tasks", dependent.filename);
+    expect(existsSync(stable)).toBe(true);
+    expect(readFileSync(stable, "utf8")).toMatch(/^status: defined$/m);
   });
 });

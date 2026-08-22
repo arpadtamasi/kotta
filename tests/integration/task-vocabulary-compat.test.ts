@@ -53,7 +53,7 @@ function previousWorkspace(): { root: string; task: string; batch: string; obser
   writeFileSync(eventPath, `${JSON.stringify({ id: eventId, entity: task, contract: task, kind: "lifecycle", created_at: "2026-08-20T10:00:00.000Z", state: "backlog", summary: "Legacy task captured." }, null, 2)}\n`);
   const config = join(root, ".kotta/config.yaml");
   writeFileSync(config, readFileSync(config, "utf8")
-    .replace("version: 4", "version: 3")
+    .replace("version: 5", "version: 3")
     .replace("allow_agent_defined_tasks:", "allow_agent_defined_contracts:"));
   git(root, "add", ".");
   git(root, "commit", "-m", "previous vocabulary workspace");
@@ -61,23 +61,19 @@ function previousWorkspace(): { root: string; task: string; batch: string; obser
 }
 
 describe("task vocabulary compatibility", () => {
-  test("reads a v3 workspace and old CLI alias with a migration warning", () => {
-    const { root, task, batch, observation } = previousWorkspace();
-    const canonical = invoke(root, ["task", "list", "--json"]);
-    const legacy = invoke(root, ["contract", "list", "--json"]);
+  test("a v3 workspace is refused by name, and the contract alias is gone", () => {
+    const { root } = previousWorkspace();
+    // The compatibility window is one schema version: v5 readers refuse anything older and name
+    // the command that carries it forward, instead of half-understanding the stored vocabulary.
+    const refused = invoke(root, ["task", "list", "--json"]);
+    expect(refused.status).toBe(1);
+    expect(`${refused.stdout}${refused.stderr}`).toContain("kotta migrate");
 
-    expect(canonical.status, canonical.stderr).toBe(0);
-    expect(legacy.status, legacy.stderr).toBe(0);
-    expect(JSON.parse(canonical.stdout).data.entities[0].id).toBe(task);
-    expect(JSON.parse(legacy.stdout).data).toEqual(JSON.parse(canonical.stdout).data);
-    expect(canonical.stderr).toContain("kotta migrate");
-    expect(legacy.stderr).toContain("kotta migrate");
+    const alias = invoke(root, ["contract", "list", "--json"]);
+    expect(alias.status).not.toBe(0);
 
     const board = readWorkspace(root);
-    expect(board.batches.find((entry) => entry.id === batch)?.tasks).toEqual([task]);
-    expect(board.observations.find((entry) => entry.id === observation)?.task).toBe(task);
-    expect(board.claims[0].task).toBe(task);
-    expect(board.events[0].task).toBe(task);
+    expect(board.tasks).toEqual([]);
     expect(board.notices.join("\n")).toContain("kotta migrate");
   });
 
@@ -90,13 +86,16 @@ describe("task vocabulary compatibility", () => {
     }
 
     run(root, ["migrate"]);
+    // The board reads the base ref, so the migrated bytes have to land on it first.
+    git(root, "add", "-A");
+    git(root, "commit", "-m", "migrate");
     const board = readWorkspace(root);
     expect(board.tasks.map((entry) => entry.id)).toContain(task);
     expect(board.batches.find((entry) => entry.id === batch)?.tasks).toEqual([task]);
     expect(board.observations.find((entry) => entry.id === observation)?.task).toBe(task);
     expect(board.claims[0].task).toBe(task);
     expect(board.events[0].task).toBe(task);
-    expect(readFileSync(join(root, ".kotta/config.yaml"), "utf8")).toContain("version: 4");
+    expect(readFileSync(join(root, ".kotta/config.yaml"), "utf8")).toContain("version: 5");
     expect(run(root, ["validate"])).toMatchObject({ ok: true });
   });
 });

@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
@@ -157,7 +157,7 @@ None.
     const created = run(repository, ["task", "new", "--title", "Shpi the exporter", "--type", "feature"]) as { data: { id: string; path: string } };
     run(repository, ["task", "sign", created.data.id, "--approve"]);
 
-    const oldPath = join(repository, ".kotta/process/defined", basename(created.data.path));
+    const oldPath = created.data.path;
     writeFileSync(oldPath, readFileSync(oldPath, "utf8").replace(/updated_at: .+/, "updated_at: 2020-01-01"));
     const history = readEvents(repository, created.data.id).map((event) => event.id);
     const definition = join(repository, "amended-definition.md");
@@ -230,12 +230,9 @@ None.
     retainLegacySignGate(repository);
     const created = run(repository, ["task", "new", "--title", `Immutable ${state}`, "--type", "feature"]) as { data: { id: string; path: string } };
     run(repository, ["task", "sign", created.data.id, "--approve"]);
-    const defined = join(repository, ".kotta/process/defined", basename(created.data.path));
-    const targetDirectory = join(repository, ".kotta/process", state);
-    const target = join(targetDirectory, basename(created.data.path));
-    const snapshot = readFileSync(defined, "utf8").replace("status: defined", `status: ${state}`);
+    const target = created.data.path;
+    const snapshot = readFileSync(target, "utf8").replace("status: defined", `status: ${state}`);
     writeFileSync(target, snapshot);
-    rmSync(defined);
     const definition = join(repository, "refused-definition.md");
     writeFileSync(definition, `# ${created.data.id} — Changed too late\n\n## Outcome\n\nMust not be applied.\n`);
 
@@ -319,15 +316,16 @@ None.
     ).replace("- Define an observable condition.", "- A filtered export file is produced.")
       .replace("- Explain how acceptance will be checked.", "- Run the export integration test."));
 
-    rmSync(join(repository, ".kotta/process/defined"), { recursive: true });
     expect(run(repository, ["task", "sign", id, "--approve"])).toMatchObject({ ok: true, command: "task sign" });
-    expect(existsSync(join(repository, ".kotta/process/defined", basename(task)))).toBe(true);
+    expect(existsSync(task)).toBe(true);
+    expect(readFileSync(task, "utf8")).toMatch(/^status: defined$/m);
 
     const started = run(repository, ["task", "start", id, "--agent", "codex"]);
     expect(started).toMatchObject({ ok: true, command: "task start", data: { branch: `feat/${id}-ship-export` } });
     const worktree = join(repository, ".worktrees", id);
-    expect(existsSync(join(repository, ".kotta/process/active", basename(task)))).toBe(true);
-    expect(existsSync(join(worktree, ".kotta/process/active", basename(task)))).toBe(false);
+    expect(readFileSync(task, "utf8")).toMatch(/^status: active$/m);
+    // The worktree holds the baseline snapshot from the start commit: the same stable path, still defined.
+    expect(readFileSync(join(worktree, ".kotta/process/tasks", basename(task)), "utf8")).toMatch(/^status: defined$/m);
     expect(readFileSync(join(repository, ".kotta/process/claims", `${id}.yaml`), "utf8")).toContain("agent: codex");
     expect(run(worktree, ["status"])).toMatchObject({ ok: true, data: { activeTasks: [id] } });
     expect(run(repository, ["claim", "list"])).toMatchObject({ ok: true, data: { claims: [{ task: id, agent: "codex" }] } });

@@ -1,7 +1,7 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { findRepositoryRoot, regenerateIndex, processPath } from "../filesystem/workspace.js";
-import { findTask } from "../filesystem/entities.js";
+import { findTask, listEntities, stateFromEntityFile } from "../filesystem/entities.js";
 import { entityFilename, filenameMatchesId, mintId } from "../core/identity.js";
 import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
 import { newTask } from "./task.js";
@@ -33,11 +33,13 @@ function slugify(value: string): string {
 }
 
 export function findObservation(root: string, id: string) {
-  for (const state of ["new", "resolved"]) {
-    const directory = processPath(root, "observations", state);
-    if (!existsSync(directory)) continue;
+  const directory = processPath(root, "observations");
+  if (existsSync(directory)) {
     const filename = readdirSync(directory).find((name) => name.endsWith(".md") && filenameMatchesId(name, id));
-    if (filename) return { state, filename, path: join(directory, filename) };
+    if (filename) {
+      const path = join(directory, filename);
+      return { state: stateFromEntityFile(path), filename, path };
+    }
   }
   throw new Error(`Observation ${id} was not found.`);
 }
@@ -68,7 +70,7 @@ export function newObservation(options: { title: string; type: string; evidence:
 function writeObservation(root: string, options: { title: string; type: string; evidence: string; discoveredDuring?: string }) {
   const id = mintId("F");
   const filename = entityFilename(id, slugify(options.title));
-  const directory = processPath(root, "observations/new");
+  const directory = processPath(root, "observations");
   mkdirSync(directory, { recursive: true });
   const data = { id, title: options.title, status: "new", origin: "agent", observation_type: options.type, confidence: "high", severity: "medium", discovered_during: options.discoveredDuring ?? null, created_at: new Date().toISOString().slice(0, 10) };
   const content = `# ${id} — ${options.title}\n\n## Observation\n\n${options.title}.\n\n## Evidence\n\n${options.evidence}\n\n## Impact hypothesis\n\nThis may cause incorrect or inconsistent behaviour.\n\n## Confidence\n\nHigh: the evidence is directly observable.\n\n## Suggested disposition\n\nInvestigate and create the smallest appropriate task after human approval.\n`;
@@ -87,23 +89,13 @@ export function validateObservation(id: string, repositoryRoot?: string) {
   const errors = required.filter((heading) => !body.get(heading.toLowerCase())?.trim()).map((heading) => ({ code: "MISSING_SECTION", message: `Missing or empty section: ${heading}.` }));
   errors.push(...receiptErrors(entity.data));
   const title = String(entity.data.title ?? "").trim().toLowerCase();
-  const duplicates: string[] = [];
-  for (const state of ["new", "resolved"]) {
-    const directory = processPath(root, "observations", state);
-    if (!existsSync(directory)) continue;
-    for (const filename of readdirSync(directory).filter((name) => name.endsWith(".md") && !filenameMatchesId(name, id))) {
-      const candidate = parseMarkdown(readFileSync(join(directory, filename), "utf8"));
-      if (String(candidate.data.title ?? "").trim().toLowerCase() === title) duplicates.push(String(candidate.data.id));
-    }
-  }
-  for (const state of ["backlog", "defined", "active", "review", "done"]) {
-    const directory = processPath(root, state);
-    if (!existsSync(directory)) continue;
-    for (const filename of readdirSync(directory).filter((name) => name.endsWith(".md"))) {
-      const candidate = parseMarkdown(readFileSync(join(directory, filename), "utf8"));
-      if (String(candidate.data.title ?? "").trim().toLowerCase() === title) duplicates.push(String(candidate.data.id));
-    }
-  }
+  const observationId = String(entity.data.id ?? id);
+  const duplicates = ([
+    ...listEntities(root, "observation").filter((found) => found.id !== observationId),
+    ...listEntities(root, "task"),
+  ])
+    .filter((found) => found.title.trim().toLowerCase() === title)
+    .map((found) => found.id);
   return { ok: errors.length === 0, command: "observation validate", data: { id, state: observation.state, duplicates }, errors };
 }
 
@@ -147,11 +139,7 @@ export function resolveObservation(id: string, disposition: string, approved: bo
     stampReceipt(entity.data, options.receipt ?? cliApprovalReceipt("observation.resolve"));
     if (taskId) entity.data.task = taskId;
     if (disposition === "amend-spec") entity.data.spec = spec;
-    const directory = processPath(root, "observations/resolved");
-    mkdirSync(directory, { recursive: true });
-    const destination = join(directory, observation.filename);
-    writeFileSync(destination, renderMarkdown(entity.data, entity.content));
-    unlinkSync(observation.path);
+    writeFileSync(observation.path, renderMarkdown(entity.data, entity.content));
     regenerateIndex(root);
     appendLifecycleEvent(root, id, "resolved", `Observation resolved with disposition ${disposition}.`, typeof entity.data.discovered_during === "string" ? entity.data.discovered_during : null);
     if (!options.approvalRecorded) appendCliApprovalAudit(root, id, "observation.resolve", {

@@ -1,7 +1,7 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
@@ -38,7 +38,7 @@ describe("mutation safety", () => {
     expect(result.status).toBe(1);
     expect(JSON.parse(result.stdout)).toMatchObject({ ok: false });
     expect(existsSync(backlog)).toBe(true);
-    expect(existsSync(join(root, ".kotta/process/defined", basename(backlog)))).toBe(false);
+    expect(readFileSync(backlog, "utf8")).toMatch(/^status: backlog$/m);
   });
 
   test("dirty repositories and duplicate starts are rejected without reusing a worktree", () => {

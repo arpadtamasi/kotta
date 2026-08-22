@@ -62,9 +62,8 @@ function workspaceWithBatch(label: string, options: { tasks?: number } = {}) {
 
 function findBatchFile(root: string, batchId: string): string {
   const suffix = `-${batchId.slice(-8)}.md`;
-  for (const state of ["backlog", "defined", "active", "done"]) {
-    const directory = join(root, ".kotta/process/batches", state);
-    if (!existsSync(directory)) continue;
+  const directory = join(root, ".kotta/process/batches");
+  if (existsSync(directory)) {
     const match = readdirSync(directory).find((name) => name.endsWith(suffix));
     if (match) return join(directory, match);
   }
@@ -250,9 +249,6 @@ describe("batch finalize", () => {
     // Force the batch into done while the second task is still claimed and checked out.
     const active = findBatchFile(root, batchId);
     writeFileSync(active, readFileSync(active, "utf8").replace("status: active", "status: done"));
-    const doneDirectory = join(root, ".kotta/process/batches/done");
-    execFileSync("mkdir", ["-p", doneDirectory]);
-    execFileSync("git", ["mv", active, join(doneDirectory, basename(active))], { cwd: root });
     git(root, "add", "-A");
     git(root, "commit", "-m", "force batch done");
     git(root, "switch", "main");
@@ -412,6 +408,10 @@ describe("cleanup never touches unrelated resources", () => {
     attempt(root, ["batch", "finalize", batchId]);
     expect(readFileSync(findBatchFile(root, batchId), "utf8")).toBe(batchBefore);
     expect(git(root, "ls-remote", "origin")).toBe(remoteBefore);
-    for (const task of tasks) expect(existsSync(join(root, ".kotta/process/done", task.filename))).toBe(true);
+    for (const task of tasks) {
+      const path = join(root, ".kotta/process/tasks", task.filename);
+      expect(existsSync(path)).toBe(true);
+      expect(readFileSync(path, "utf8")).toMatch(/^status: done$/m);
+    }
   });
 });

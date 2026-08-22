@@ -304,14 +304,19 @@ Kotta keeps two sibling namespaces beneath `.kotta/`:
     forms/
     <form directory>/
   process/    # Kotta-owned lifecycle and execution records
-    backlog/  defined/  active/  review/  done/
-    observations/  batches/  profiles/  claims/  events/  decisions/
+    tasks/  observations/  batches/
+    profiles/  claims/  events/  decisions/
     index.md
 ```
 
 A form's `directory` is relative to `spec/`: `directory: goals` means
 `.kotta/spec/goals/`. Projects may add forms and edit specification nodes without changing
 TypeScript. Lifecycle mutations under `process/` still go through the CLI or MCP services.
+
+One entity is one stable file. Lifecycle state lives in the frontmatter `status` field alone, so
+a transition is a one-line edit in place — a file never moves between directories, and two
+branches that transition the same entity meet as an ordinary merge conflict on the status line,
+never as a second copy.
 
 A task is required when work executes a human-accepted product or deliverable commitment with
 checkable acceptance conditions. Shaping, exploration, and specification can happen without a
@@ -610,7 +615,7 @@ What moves:
 | `.a-team/` | `.kotta/` |
 | flat lifecycle directories | `.kotta/process/` |
 | `.kotta/forms/` and registered node directories | `.kotta/spec/` |
-| `ready/`, `findings/`, `packages/` | `process/defined/`, `process/observations/`, `process/batches/` |
+| `ready/`, `findings/`, `packages/` | `process/tasks/`, `process/observations/`, `process/batches/` |
 | `.kotta/index.md` | `.kotta/process/index.md` |
 | `status: ready` | `status: defined` |
 | a task's `package:`, `source_finding:` | `batch:`, `source_observation:` |
@@ -621,13 +626,17 @@ What moves:
 | a batch's `contracts:` and task-oriented authority fields | `tasks:` and task-oriented authority fields |
 | an observation's or claim's `contract:`; an event's `contract:` / `contract.*` action | `task:` / `task.*` |
 | `workflow.allow_agent_defined_contracts`, config version 3 | `workflow.allow_agent_defined_tasks`, version 4 |
+| state directories under `process/` (`backlog/` … `done/`, `observations/new|resolved/`, `batches/<state>/`) | one flat directory per kind (`process/tasks/`, `process/observations/`, `process/batches/`), state in the frontmatter `status` field, `version: 5` |
 
-Version 4 is the work-unit vocabulary migration. New automation uses `kotta task …` and the
-`task_*` MCP tools. For one compatibility version, the old CLI group and read-only MCP list/show
-aliases still resolve and a version-3 workspace is readable; each emits a deprecation warning that
-names `kotta migrate`. New writes, generated rules, installed skills, schemas and board data use
-`task` only. `kotta sync` also removes legacy task-skill directories only when its ownership
-manifest proves Kotta installed them and their renamed replacement is present.
+Version 4 was the work-unit vocabulary migration; version 5 is the state unification: one entity,
+one stable file, lifecycle state in the frontmatter alone. The directory a file sat in was the
+old shape's state authority, so the migration transcribes that verdict into each file's `status`
+before the directory disappears, and it refuses — naming both copies — a workspace where a past
+merge left one entity in two state directories at once. The compatibility window is one schema
+version: the v3 `contract` vocabulary readers and CLI/MCP aliases are gone, and `task dedupe` /
+`batch dedupe` are gone with the failure mode that justified them. `kotta sync` still removes
+legacy task-skill directories only when its ownership manifest proves Kotta installed them and
+their renamed replacement is present.
 
 **Identifiers never move.** No id, no filename and no reference *value* changes — this is vocabulary,
 not identity (D-010). The command compares the id set before and after and refuses to lose one.

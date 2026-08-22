@@ -1,4 +1,4 @@
-import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, rmdirSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { parseMarkdown, renderMarkdown } from "../core/markdown.js";
@@ -41,6 +41,7 @@ import { TASK_STATES } from "../filesystem/entities.js";
 export type MigrationChange =
   | { kind: "move"; from: string; to: string }
   | { kind: "create"; path: string }
+  | { kind: "remove"; path: string }
   | { kind: "rewrite"; path: string; fields: string[] }
   | { kind: "regenerate"; path: string };
 
@@ -135,7 +136,7 @@ function markdownFiles(directory: string): string[] {
   return readdirSync(directory).filter((name) => name.endsWith(".md")).sort().map((name) => join(directory, name));
 }
 
-function planEntity(path: string, entity: "task" | "batch" | "observation"): Rewrite {
+function planEntity(path: string, entity: "task" | "batch" | "observation", directoryState?: string): Rewrite {
   const parsed = parseMarkdown(readFileSync(path, "utf8"));
   const data = parsed.data;
   const fields: string[] = [];
@@ -157,6 +158,13 @@ function planEntity(path: string, entity: "task" | "batch" | "observation"): Rew
     fields.push(...renameKeys(data, OBSERVATION_KEYS));
     const disposition = typeof data.disposition === "string" ? OBSERVATION_DISPOSITIONS[data.disposition] : undefined;
     if (disposition) { fields.push(`disposition: ${String(data.disposition)} → ${disposition}`); data.disposition = disposition; }
+  }
+
+  // In the pre-flat shapes the directory a file sat in was the state authority, so its verdict is
+  // transcribed into the frontmatter before the directory disappears under it.
+  if (directoryState && String(data.status ?? "") !== directoryState) {
+    fields.push(`status: ${String(data.status ?? "(none)")} → ${directoryState} (the state directory was the authority)`);
+    data.status = directoryState;
   }
 
   // Only a file that is being rewritten anyway gets its dates normalised; nothing is touched for it alone.
@@ -210,8 +218,9 @@ function moveDirectory(from: string, to: string): void {
   renameSync(from, to);
 }
 
-/** Every entity directory an id can live in, under either vocabulary. Used for the id-stability proof. */
+/** Every entity directory an id can live in, under any historical shape. Used for the id-stability proof. */
 const ID_DIRECTORIES = [
+  "tasks", "observations", "batches",
   ...TASK_STATES.map(String), "ready",
   "observations/new", "observations/resolved", "findings/new", "findings/resolved",
   ...["backlog", "ready", "defined", "active", "done"].flatMap((state) => [`batches/${state}`, `packages/${state}`]),
@@ -280,6 +289,7 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
   }
   const reservedRoots = new Set([
     ...PROCESS_DIRECTORIES.map((directory) => directory.split("/")[0]),
+    ...TASK_STATES.map(String),
     ...["ready", "findings", "packages", SPEC_DIRECTORY, PROCESS_DIRECTORY, "forms"],
   ]);
   for (const directory of specDirectories) {
@@ -333,31 +343,66 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
 
   // 3. Plan every path move. Every destination is checked now, before the first mutation.
   const moves: Array<{ from: string; to: string }> = [];
-  const move = (from: string, to: string, virtual = false, reportedFrom = from) => {
-    if (!virtual && !existsSync(join(workspace, from))) return;
-    if (moves.some((entry) => entry.to === to)) {
-      throw new Error(`Migration has multiple sources for ${join(workspace, to)}. Nothing was written.`);
+  const move = (from: string, to: string) => {
+    if (!existsSync(join(workspace, from))) return;
+    const duplicate = moves.find((entry) => entry.to === to);
+    if (duplicate) {
+      throw new Error(`Migration has multiple sources for ${join(workspace, to)}: ${join(workspace, duplicate.from)} and ${join(workspace, from)}. One entity, one file — reconcile the copies first. Nothing was written.`);
     }
     if (existsSync(join(workspace, to))) {
       throw new Error(`Migration destination already exists: ${join(workspace, to)}. Nothing was written.`);
     }
     moves.push({ from, to });
-    changes.push({ kind: "move", from: `${label}/${reportedFrom}`, to: `${WORKSPACE_DIRECTORY}/${to}` });
+    changes.push({ kind: "move", from: `${label}/${from}`, to: `${WORKSPACE_DIRECTORY}/${to}` });
   };
 
-  for (const state of TASK_STATES) move(state, `${PROCESS_DIRECTORY}/${state}`);
-  move("ready", `${PROCESS_DIRECTORY}/defined`);
-  move("findings", `${PROCESS_DIRECTORY}/observations`);
-  move("observations", `${PROCESS_DIRECTORY}/observations`);
-
-  const batchSource = existsSync(join(workspace, "packages")) ? "packages" : existsSync(join(workspace, "batches")) ? "batches" : null;
-  if (batchSource) {
-    const ready = existsSync(join(workspace, batchSource, "ready"));
-    if (ready && existsSync(join(workspace, batchSource, "defined"))) {
-      throw new Error(`Migration cannot merge ${join(workspace, batchSource, "ready")} with ${join(workspace, batchSource, "defined")}. Nothing was written.`);
+  // 3a. Lifecycle state directories flatten per file: one entity, one stable file, state in the
+  // frontmatter alone. Two states holding the same filename is the duplicated-state damage the old
+  // shape allowed — refused by `move`, never resolved by overwriting. The emptied directory is
+  // removed afterwards; its state is transcribed into each file's frontmatter below (3b plans it),
+  // because in the old shapes the directory, not the frontmatter, was the authority.
+  const removals: string[] = [];
+  const flattened: Array<{ source: string; state: string; entity: "task" | "batch" | "observation" }> = [];
+  const flatten = (source: string, target: string, state: string, entity: "task" | "batch" | "observation") => {
+    const directory = join(workspace, source);
+    if (!existsSync(directory)) return;
+    const entries = readdirSync(directory);
+    const stray = entries.filter((name) => !name.endsWith(".md"));
+    if (stray.length) {
+      throw new Error(`Migration cannot flatten ${directory}: unexpected entr${stray.length === 1 ? "y" : "ies"} ${stray.join(", ")}. Nothing was written.`);
     }
-    move(batchSource, `${PROCESS_DIRECTORY}/batches`);
-    if (ready) move(`${PROCESS_DIRECTORY}/batches/ready`, `${PROCESS_DIRECTORY}/batches/defined`, true, `${batchSource}/ready`);
+    for (const name of entries.filter((entry) => entry.endsWith(".md")).sort()) move(`${source}/${name}`, `${target}/${name}`);
+    removals.push(source);
+    changes.push({ kind: "remove", path: `${label}/${source}` });
+    flattened.push({ source, state, entity });
+  };
+  const removeEmptiedContainer = (container: string, knownStates: string[]) => {
+    if (!existsSync(join(workspace, container))) return;
+    const leftover = readdirSync(join(workspace, container)).filter((name) => !knownStates.includes(name));
+    if (leftover.length) {
+      throw new Error(`Migration cannot flatten ${join(workspace, container)}: unexpected entr${leftover.length === 1 ? "y" : "ies"} ${leftover.join(", ")}. Nothing was written.`);
+    }
+    removals.push(container);
+    changes.push({ kind: "remove", path: `${label}/${container}` });
+  };
+
+  const TASK_STATE_SOURCES = [...TASK_STATES.map(String), "ready"];
+  const BATCH_STATE_SOURCES = ["backlog", "ready", "defined", "active", "done"];
+  const canonical = (state: string) => (state === "ready" ? "defined" : state);
+  for (const prefix of ["", PROCESS_DIRECTORY]) {
+    for (const state of TASK_STATE_SOURCES) {
+      flatten(prefix ? `${prefix}/${state}` : state, `${PROCESS_DIRECTORY}/tasks`, canonical(state), "task");
+    }
+    for (const container of ["batches", "packages"]) {
+      const containerPath = prefix ? `${prefix}/${container}` : container;
+      for (const state of BATCH_STATE_SOURCES) flatten(`${containerPath}/${state}`, `${PROCESS_DIRECTORY}/batches`, canonical(state), "batch");
+      if (containerPath !== `${PROCESS_DIRECTORY}/batches`) removeEmptiedContainer(containerPath, BATCH_STATE_SOURCES);
+    }
+    for (const container of ["observations", "findings"]) {
+      const containerPath = prefix ? `${prefix}/${container}` : container;
+      for (const state of ["new", "resolved"]) flatten(`${containerPath}/${state}`, `${PROCESS_DIRECTORY}/observations`, state, "observation");
+      if (containerPath !== `${PROCESS_DIRECTORY}/observations`) removeEmptiedContainer(containerPath, ["new", "resolved"]);
+    }
   }
   for (const directory of ["profiles", "claims", "events", "decisions"]) move(directory, `${PROCESS_DIRECTORY}/${directory}`);
   move("forms", `${SPEC_DIRECTORY}/forms`);
@@ -374,22 +419,13 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
     changes.push({ kind: "rewrite", path: relativePath, fields: rewrite.fields });
   };
 
-  for (const prefix of ["", PROCESS_DIRECTORY]) {
-    for (const state of [...TASK_STATES.map(String), "ready"]) {
-      for (const path of markdownFiles(join(workspace, prefix, state))) plan(path, (file) => planEntity(file, "task"));
-    }
+  // Files being flattened get the directory's state verdict transcribed; files already flat get
+  // the vocabulary pass alone, so a re-run on a current workspace rewrites nothing.
+  for (const { source, state, entity } of flattened) {
+    for (const path of markdownFiles(join(workspace, source))) plan(path, (file) => planEntity(file, entity, state));
   }
-  for (const prefix of ["", PROCESS_DIRECTORY]) {
-    for (const directory of ["batches", "packages"]) {
-      for (const state of ["backlog", "ready", "defined", "active", "done"]) {
-        for (const path of markdownFiles(join(workspace, prefix, directory, state))) plan(path, (file) => planEntity(file, "batch"));
-      }
-    }
-    for (const directory of ["observations", "findings"]) {
-      for (const state of ["new", "resolved"]) {
-        for (const path of markdownFiles(join(workspace, prefix, directory, state))) plan(path, (file) => planEntity(file, "observation"));
-      }
-    }
+  for (const [directory, entity] of [["tasks", "task"], ["batches", "batch"], ["observations", "observation"]] as const) {
+    for (const path of markdownFiles(join(workspace, PROCESS_DIRECTORY, directory))) plan(path, (file) => planEntity(file, entity));
   }
   for (const claims of [join(workspace, "claims"), join(workspace, PROCESS_DIRECTORY, "claims")]) {
     if (existsSync(claims)) {
@@ -417,7 +453,8 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
   const futurePathExists = (path: string): boolean => {
     if (existsSync(join(workspace, path))) return true;
     return moves.some((entry) => {
-      if (path === entry.to) return true;
+      // A move landing at or inside `path` materialises the directory on its way in.
+      if (path === entry.to || entry.to.startsWith(`${path}/`)) return true;
       if (!path.startsWith(`${entry.to}/`)) return false;
       const suffix = path.slice(entry.to.length + 1);
       return existsSync(join(workspace, entry.from, suffix));
@@ -448,6 +485,11 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
     for (const entry of moves) moveDirectory(join(applied, entry.from), join(applied, entry.to));
     for (const entry of rewrites) entry.rewrite.write(join(applied, remap(entry.relativePath, moves)));
     for (const path of creates) mkdirSync(join(applied, path), { recursive: true });
+    // Deepest first, so an emptied state directory leaves before its emptied container.
+    for (const path of [...removals].sort((left, right) => right.length - left.length)) {
+      const target = join(applied, path);
+      if (existsSync(target)) rmdirSync(target);
+    }
     syncWorkspaceForms(root);
     ensureIndexMergeAttribute(root);
     regenerateIndex(root);
@@ -491,6 +533,7 @@ export function formatMigration(result: MigrateResult): string {
   for (const change of data.changes) {
     if (change.kind === "move") lines.push(`  move       ${change.from} → ${change.to}`);
     else if (change.kind === "create") lines.push(`  create     ${change.path}`);
+    else if (change.kind === "remove") lines.push(`  remove     ${change.path} (emptied state directory)`);
     else if (change.kind === "rewrite") lines.push(`  rewrite    ${change.path}: ${change.fields.join(", ")}`);
     else lines.push(`  regenerate ${change.path}`);
   }

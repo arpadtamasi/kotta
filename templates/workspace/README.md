@@ -2,12 +2,12 @@
 
 This directory is the repository's canonical work record. It has two ownership boundaries:
 project-owned specification knowledge under `spec/`, and Kotta-owned execution and lifecycle state
-under `process/`. Keep tasks and batches in the process directory that represents their current
-lifecycle state; their frontmatter `status` must match that directory.
+under `process/`. One entity is one stable file: lifecycle state lives in the frontmatter `status`
+field alone, and a transition edits that field in place — a file never moves between directories.
 
 - `spec/forms/` contains the data-driven form registry; every form's `directory` is relative to
   `spec/`, so nodes live in paths such as `spec/goals/`, `spec/user-stories/`, and `spec/entities/`.
-- `process/backlog/`, `process/defined/`, `process/active/`, `process/review/`, and `process/done/` contain tasks.
+- `process/tasks/` contains every task, whatever its state.
 - `process/observations/`, `process/batches/`, and `process/profiles/` contain the remaining durable process records.
 - `process/claims/` contains temporary execution locks. Do not edit or remove an active claim casually.
 - `process/events/` contains immutable visible chat, lifecycle and scoped approval events.

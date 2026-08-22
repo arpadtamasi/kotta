@@ -44,8 +44,8 @@ export function newTask(options: { title: string; type: string; profiles: string
   const root = controlPlaneRoot(repositoryRoot ?? findRepositoryRoot());
   const id = mintId("T");
   const filename = entityFilename(id, slugify(options.title));
-  const directory = processPath(root, "backlog");
-  // An empty state directory is not carried into a fresh worktree by Git; intake must still work there.
+  const directory = processPath(root, "tasks");
+  // An empty directory is not carried into a fresh worktree by Git; intake must still work there.
   mkdirSync(directory, { recursive: true });
   const path = join(directory, filename);
   const now = new Date().toISOString().slice(0, 10);
@@ -112,8 +112,7 @@ export function defineTask(id: string, definition: string, repositoryRoot?: stri
   current.data.status = targetState;
   current.data.updated_at = new Date().toISOString().slice(0, 10);
   const filename = entityFilename(id, slugify(String(current.data.title)));
-  mkdirSync(processPath(root, targetState), { recursive: true });
-  const destination = join(processPath(root, targetState), filename);
+  const destination = join(processPath(root, "tasks"), filename);
   if (destination !== task.path && existsSync(destination)) {
     throw new Error(`Task ${id} cannot be retitled because ${destination} already exists.`);
   }
@@ -203,21 +202,20 @@ export function signTask(id: string, approved: boolean, repositoryRoot?: string,
     entity.data.status = "defined";
     entity.data.updated_at = new Date().toISOString().slice(0, 10);
     stampReceipt(entity.data, options.receipt ?? cliApprovalReceipt("task.sign"));
-    mkdirSync(processPath(root, "defined"), { recursive: true });
-    const destination = processPath(root, "defined", task.filename);
-    writeFileSync(destination, renderMarkdown(entity.data, entity.content));
+    const candidate = `${task.path}.sign-${process.pid}.tmp`;
+    writeFileSync(candidate, renderMarkdown(entity.data, entity.content));
     try {
-      assertValid(validateTaskFile(destination, "defined"));
+      assertValid(validateTaskFile(candidate, "defined"));
+      renameSync(candidate, task.path);
     } catch (error) {
-      unlinkSync(destination);
+      if (existsSync(candidate)) unlinkSync(candidate);
       throw error;
     }
-    unlinkSync(task.path);
     regenerateIndex(root);
     appendLifecycleEvent(root, id, "defined", "Task approved for execution.");
     if (!options.approvalRecorded) appendCliApprovalAudit(root, id, "task.sign");
     if (options.commit !== false) commitControlState(root, `chore(kotta): sign ${id}`);
-    return { ok: true, command: "task sign", data: { id, path: destination } };
+    return { ok: true, command: "task sign", data: { id, path: task.path } };
   };
   return options.locked ? sign(requestedRoot) : withControlPlaneMutation(requestedRoot, sign, { requireClean: false });
 }
@@ -322,7 +320,6 @@ export function startTask(
 
     let createdWorktree = false;
     let lifecyclePath: string | null = null;
-    const active = processPath(root, "active", task.filename);
     try {
       if (!adopting && !resuming) {
         git(root, ["worktree", "add", worktree, "-b", branch, startCommit]);
@@ -332,7 +329,6 @@ export function startTask(
         createdWorktree = true;
       }
       if (readEnv("TEST_FAIL_START_AT") === "after-worktree") throw new Error("Injected start failure after worktree creation.");
-      mkdirSync(processPath(root, "active"), { recursive: true });
       mkdirSync(processPath(root, "claims"), { recursive: true });
       entity.data.status = "active";
       entity.data.branch = branch;
@@ -344,8 +340,7 @@ export function startTask(
       entity.data.start_commit = startCommit;
       if (dependencyIntegrationTarget) entity.data.dependency_integration_target = dependencyIntegrationTarget;
       entity.data.updated_at = new Date().toISOString().slice(0, 10);
-      writeFileSync(active, renderMarkdown(entity.data, entity.content));
-      unlinkSync(task.path);
+      writeFileSync(task.path, renderMarkdown(entity.data, entity.content));
       if (readEnv("TEST_FAIL_START_AT") === "after-active") throw new Error("Injected start failure after control-plane activation.");
       const claim = {
         task: id, agent, branch, worktree: worktreeRelative, execution_mode: executionMode,
@@ -355,15 +350,14 @@ export function startTask(
       };
       writeFileSync(claimInControl, stringify(claim));
       if (readEnv("TEST_FAIL_START_AT") === "after-claim") throw new Error("Injected start failure after claim creation.");
-      assertValid(validateTaskFile(active, "active"));
+      assertValid(validateTaskFile(task.path, "active"));
       regenerateIndex(root);
       lifecyclePath = appendLifecycleEvent(root, id, "active", `Execution started on ${branch} with ${agent} from ${startRef} at ${startCommit}${adopting ? ", adopting the only checkout; Kotta created no branch and no worktree." : resuming ? ", resuming the branch and worktree a released claim left behind." : "."}`).path;
       commitControlState(root, `chore(kotta): start ${id}`);
     } catch (error) {
       if (lifecyclePath && existsSync(lifecyclePath)) unlinkSync(lifecyclePath);
-      if (existsSync(active)) unlinkSync(active);
       if (existsSync(claimInControl)) unlinkSync(claimInControl);
-      if (!existsSync(task.path)) writeFileSync(task.path, definedSnapshot);
+      writeFileSync(task.path, definedSnapshot);
       regenerateIndex(root);
       if (createdWorktree) {
         try { git(root, ["worktree", "remove", worktree]); } catch { /* preserve the original failure */ }
@@ -437,11 +431,9 @@ export function reviewTask(id: string, evidence: ReviewEvidenceInput, pullReques
     `| ${check.replaceAll("|", "\\|")} | ${answer.replaceAll("|", "\\|").replaceAll("\n", " ")} |`).join("\n");
   const declared = (value: string | undefined) => (value !== undefined && value.trim() ? value.trim() : NOT_DECLARED);
   const reviewEvidence = `\n\n## Review evidence\n\n| Acceptance condition | Evidence |\n|---|---|\n${evidenceRows}\n\n### Verification performed\n\n${preparedEvidence.verification}\n\n### Deviations\n\n${declared(declarations.deviations)}\n\n### Observations created\n\n${declared(declarations.observationsCreated)}\n\n### Known concerns\n\n${declared(declarations.knownConcerns)}\n`;
-  const destinationDirectory = processPath(root, "review");
-  mkdirSync(destinationDirectory, { recursive: true });
-  const destination = join(destinationDirectory, task.filename);
+  const destination = join(processPath(root, "tasks"), task.filename);
   writeFileSync(destination, renderMarkdown(entity.data, `${entity.content.trimEnd()}${reviewEvidence}`));
-  unlinkSync(canonical.path);
+  if (canonical.path !== destination) unlinkSync(canonical.path);
   if (legacy && !existsSync(canonicalClaim)) writeFileSync(canonicalClaim, readFileSync(legacyClaim, "utf8"));
   regenerateIndex(root);
   appendLifecycleEvent(root, id, "review", pullRequest ? `Submitted for review in ${pullRequest}.` : "Submitted for review.");
@@ -450,10 +442,11 @@ export function reviewTask(id: string, evidence: ReviewEvidenceInput, pullReques
   // One-time adoption path for executions started before the control-plane model existed.
   // Restore the feature branch's original defined snapshot so its net diff contains code, not lifecycle state.
   if (legacy) {
-    const legacyDefinedDirectory = processPath(executionRoot, "defined");
-    mkdirSync(legacyDefinedDirectory, { recursive: true });
-    writeFileSync(join(legacyDefinedDirectory, canonical.filename), canonicalSnapshot);
-    if (existsSync(task.path)) unlinkSync(task.path);
+    const legacyDirectory = processPath(executionRoot, "tasks");
+    mkdirSync(legacyDirectory, { recursive: true });
+    const restored = join(legacyDirectory, canonical.filename);
+    writeFileSync(restored, canonicalSnapshot);
+    if (task.path !== restored && existsSync(task.path)) unlinkSync(task.path);
     if (existsSync(legacyClaim)) unlinkSync(legacyClaim);
     regenerateIndex(executionRoot);
     git(executionRoot, ["add", workspaceDirectoryName(executionRoot)]);
@@ -484,11 +477,7 @@ export function closeTask(id: string, approved: boolean, repositoryRoot?: string
   entity.data.resolution = "completed";
   entity.data.updated_at = new Date().toISOString().slice(0, 10);
   stampReceipt(entity.data, options.receipt ?? cliApprovalReceipt("task.close"));
-  const doneDirectory = processPath(root, "done");
-  mkdirSync(doneDirectory, { recursive: true });
-  const destination = join(doneDirectory, task.filename);
-  writeFileSync(destination, renderMarkdown(entity.data, entity.content));
-  unlinkSync(task.path);
+  writeFileSync(task.path, renderMarkdown(entity.data, entity.content));
   const claimPath = processPath(root, "claims", `${id}.yaml`);
   if (existsSync(claimPath)) unlinkSync(claimPath);
   updateContainingBatch(root, id);
@@ -592,19 +581,15 @@ export function cancelTask(
   if (superseding) entity.data.superseded_by = superseding;
   entity.data.updated_at = new Date().toISOString().slice(0, 10);
   stampReceipt(entity.data, options.receipt ?? cliApprovalReceipt("task.cancel"));
-  const doneDirectory = processPath(root, "done");
-  mkdirSync(doneDirectory, { recursive: true });
-  const destination = join(doneDirectory, task.filename);
-  const candidate = `${destination}.cancel-${process.pid}.tmp`;
+  const candidate = `${task.path}.cancel-${process.pid}.tmp`;
   writeFileSync(candidate, renderMarkdown(entity.data, entity.content));
   try {
     assertValid(validateTaskFile(candidate, "done"));
-    renameSync(candidate, destination);
+    renameSync(candidate, task.path);
   } catch (error) {
     if (existsSync(candidate)) unlinkSync(candidate);
     throw error;
   }
-  unlinkSync(task.path);
   const claimPath = processPath(root, "claims", `${canonicalId}.yaml`);
   const claimReleased = existsSync(claimPath);
   if (claimReleased) unlinkSync(claimPath);
@@ -623,7 +608,7 @@ export function cancelTask(
   if (!options.approvalRecorded) appendCliApprovalAudit(root, canonicalId, "task.cancel", { resolution, reason: stated, superseded_by: superseding });
   if (!adopted && existsSync(worktree)) git(root, ["worktree", "remove", worktree]);
   if (options.commit !== false) commitControlState(root, `chore(kotta): cancel ${canonicalId} (${resolution})`);
-  return { ok: true, command: "task cancel", data: { id: canonicalId, resolution, reason: stated, supersededBy: superseding, path: destination, claimReleased, branch, adopted, dependents } };
+  return { ok: true, command: "task cancel", data: { id: canonicalId, resolution, reason: stated, supersededBy: superseding, path: task.path, claimReleased, branch, adopted, dependents } };
   };
   return options.locked ? cancel(callerRoot) : withControlPlaneMutation(callerRoot, cancel);
 }
@@ -647,12 +632,8 @@ export function reopenTask(id: string, approved: boolean, repositoryRoot?: strin
   entity.data.pull_request = null;
   entity.data.updated_at = new Date().toISOString().slice(0, 10);
   stampReceipt(entity.data, options.receipt ?? cliApprovalReceipt(changesRequested ? "task.request-changes" : "task.reopen"));
-  const directory = processPath(root, changesRequested ? "active" : "backlog");
-  mkdirSync(directory, { recursive: true });
-  const destination = join(directory, task.filename);
   const content = changesRequested ? entity.content.replace(/\n\n## Review evidence[\s\S]*$/, "\n") : entity.content;
-  writeFileSync(destination, renderMarkdown(entity.data, content));
-  unlinkSync(task.path);
+  writeFileSync(task.path, renderMarkdown(entity.data, content));
   regenerateIndex(root);
   appendLifecycleEvent(root, id, changesRequested ? "active" : "backlog", changesRequested ? "Review changes requested; execution resumed." : "Terminal task reopened in backlog.");
   if (!options.approvalRecorded) appendCliApprovalAudit(root, id, changesRequested ? "task.request-changes" : "task.reopen");
@@ -810,34 +791,30 @@ const OPEN_BATCH_STATES = ["backlog", "defined", "active"] as const;
  * A task reaching a terminal state can finish the batch that holds it, and finishing that batch
  * can in turn finish the parent grouping it. So every open batch carrying this task anywhere in
  * its subtree is reconsidered, and reconsidered again until a pass changes nothing: a batch reads
- * its children's state from where their files sit, so a parent can only be judged after its child
- * has moved. The completeness test is the one `batch close` asks, so the automatic path and the
+ * its children's frontmatter status, so a parent can only be judged after its child's status has
+ * been written. The completeness test is the one `batch close` asks, so the automatic path and the
  * explicit path cannot drift apart (F-01m0f1mqaydrtkx3x2nbck58ke).
  */
 function updateContainingBatch(root: string, taskId: string): void {
   let changed = true;
   while (changed) {
     changed = false;
-    for (const state of OPEN_BATCH_STATES) {
-      const directory = processPath(root, "batches", state);
-      if (!existsSync(directory)) continue;
-      for (const filename of readdirSync(directory).filter((name) => name.endsWith(".md"))) {
-        const path = join(directory, filename);
-        const entity = parseMarkdown(readFileSync(path, "utf8"));
-        const id = String(entity.data.id);
-        if (!subtreeTasks(batchTree(root, id)).includes(taskId)) continue;
-        entity.data.updated_at = new Date().toISOString().slice(0, 10);
-        if (batchSubtreeComplete(root, id)) {
-          entity.data.status = "done";
-          const done = processPath(root, "batches/done");
-          mkdirSync(done, { recursive: true });
-          writeFileSync(join(done, filename), renderMarkdown(entity.data, entity.content));
-          unlinkSync(path);
-          appendLifecycleEvent(root, id, "done", "Every task and child batch underneath completed; batch closed.", null);
-          changed = true;
-        } else {
-          writeFileSync(path, renderMarkdown(entity.data, entity.content));
-        }
+    const directory = processPath(root, "batches");
+    if (!existsSync(directory)) return;
+    for (const filename of readdirSync(directory).filter((name) => name.endsWith(".md"))) {
+      const path = join(directory, filename);
+      const entity = parseMarkdown(readFileSync(path, "utf8"));
+      if (!OPEN_BATCH_STATES.includes(String(entity.data.status) as (typeof OPEN_BATCH_STATES)[number])) continue;
+      const id = String(entity.data.id);
+      if (!subtreeTasks(batchTree(root, id)).includes(taskId)) continue;
+      entity.data.updated_at = new Date().toISOString().slice(0, 10);
+      if (batchSubtreeComplete(root, id)) {
+        entity.data.status = "done";
+        writeFileSync(path, renderMarkdown(entity.data, entity.content));
+        appendLifecycleEvent(root, id, "done", "Every task and child batch underneath completed; batch closed.", null);
+        changed = true;
+      } else {
+        writeFileSync(path, renderMarkdown(entity.data, entity.content));
       }
     }
   }
