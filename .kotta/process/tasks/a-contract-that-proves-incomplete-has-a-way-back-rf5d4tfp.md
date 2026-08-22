@@ -1,7 +1,7 @@
 ---
 id: T-01kzhnsncw8znqdn14rf5d4tfp
 title: A contract that proves incomplete has a way back
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -16,10 +16,19 @@ branch: >-
   feat/T-01kzhnsncw8znqdn14rf5d4tfp-a-contract-that-proves-incomplete-has-a-way-back
 pull_request: null
 created_at: '2026-08-08'
-updated_at: '2026-08-20'
+updated_at: '2026-08-22'
 assigned_agent: claude
 worktree: .worktrees/T-01kzhnsncw8znqdn14rf5d4tfp
 execution_mode: inherited
+resolution: obsolete
+cancellation_reason: >-
+  The feature branch predates two workspace-shape generations and no longer
+  exists on the remote; the repair path is reimplemented on the current codebase
+  by the superseding task.
+superseded_by: T-01m0jdntgw2z8qpy6wqz1z519k
+approved_by: cli
+approved_at: '2026-08-22T12:03:41.420Z'
+approval_basis: 'CLI --approve: task.cancel'
 ---
 # T-01kzhnsncw8znqdn14rf5d4tfp — A contract that proves incomplete has a way back
 
