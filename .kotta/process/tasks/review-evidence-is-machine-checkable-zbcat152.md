@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdnswngt3tcdtbzbcat152
 title: Review evidence is machine-checkable
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -15,7 +15,7 @@ spec:
   - BR-01m0m33yxt2vqxb3jvqc186ssy
   - EX-01m0m33yxvyppm683xrd5tk8f3
   - UC-01m0f0wn89dy38s6whbfa0jafn
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-21'
 updated_at: '2026-08-22'
@@ -28,6 +28,12 @@ coverage:
     - EX-01m0m33yxvyppm683xrd5tk8f3
   'Prose evidence entries submit exactly as before, and declared and prose entries mix freely in one submission.':
     - BR-01m0m33yxt2vqxb3jvqc186ssy
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 58507dd5eb6bbc0d824cbbbeeaad809f8bb135b5
 ---
 ## Outcome
 
