@@ -1,0 +1,17 @@
+{
+  "entity": "T-01kz1g2w1fs2qx0bs72e9pkmg4",
+  "task": "T-01kz1g2w1fs2qx0bs72e9pkmg4",
+  "kind": "approval",
+  "approval_id": "E-01m0m2j1vqyk6wpryk9h9n0rdt",
+  "phase": "applied",
+  "action": "task.cancel",
+  "payload": {
+    "resolution": "obsolete",
+    "reason": "The directory-as-state duplication it describes ceased to exist: state now lives in the frontmatter status field alone, and the flat v5 shape ships in the superseding task.",
+    "superseded_by": "T-01m0jdnshte2ffyzcp3bhf9kh1",
+    "surface": "cli"
+  },
+  "source_message": "E-01m0m2j1vrac36edtm0ggm95hz",
+  "id": "E-01m0m2j1vrm7v5fzdy7ft840b5",
+  "created_at": "2026-08-22T06:29:32.664Z"
+}

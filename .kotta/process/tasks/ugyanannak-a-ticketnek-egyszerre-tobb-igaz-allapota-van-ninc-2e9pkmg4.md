@@ -3,7 +3,7 @@ id: T-01kz1g2w1fs2qx0bs72e9pkmg4
 title: >-
   Ugyanannak a ticketnek egyszerre tobb igaz allapota van — nincs kimondott
   olvasasi szabaly a git-kontextusok folott
-status: backlog
+status: done
 origin: observation
 types:
   - bug
@@ -16,8 +16,17 @@ blocks: []
 branch: null
 pull_request: null
 created_at: '2026-08-02'
-updated_at: '2026-08-02'
+updated_at: '2026-08-22'
 source_observation: F-028
+resolution: obsolete
+cancellation_reason: >-
+  The directory-as-state duplication it describes ceased to exist: state now
+  lives in the frontmatter status field alone, and the flat v5 shape ships in
+  the superseding task.
+superseded_by: T-01m0jdnshte2ffyzcp3bhf9kh1
+approved_by: cli
+approved_at: '2026-08-22T06:29:32.595Z'
+approval_basis: 'CLI --approve: task.cancel'
 ---
 # T-01kz1g2w1fs2qx0bs72e9pkmg4 — Kanonikus olvasat a git-kontextusok fölött
 
