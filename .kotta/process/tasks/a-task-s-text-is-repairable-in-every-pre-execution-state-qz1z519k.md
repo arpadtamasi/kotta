@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdntgw2z8qpy6wqz1z519k
 title: A task's text is repairable in every pre-execution state
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -14,7 +14,7 @@ blocks: []
 spec:
   - SM-01m0f0wn89gjy6dbk1j6fjpv6j
   - EX-01m0mzvcvdvxzpr59p8v7387n3
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-21'
 updated_at: '2026-08-22'
@@ -27,6 +27,12 @@ coverage:
     - EX-01m0mzvcvdvxzpr59p8v7387n3
   A changed title in a draft renames the stored file within process/tasks/.:
     - EX-01m0mzvcvdvxzpr59p8v7387n3
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 9b088c20a1c62a197718e0f30e18b7a774c9726f
 ---
 ## Outcome
 
