@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdnshte2ffyzcp3bhf9kh1
 title: State lives in one place
-status: review
+status: done
 origin: human
 types:
   - refactor
@@ -36,6 +36,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: ae041a72939b9a3639a979d5e5f97faa3300e0ba
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-22T06:29:25.438Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
