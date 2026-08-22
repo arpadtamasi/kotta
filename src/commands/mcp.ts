@@ -135,17 +135,18 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
 
   server.registerTool("task_define", {
     title: "Define a Kotta task",
-    description: "Apply a complete Markdown definition before execution. Every acceptance condition must explicitly map to a referenced accepted spec node; valid coverage moves the task to defined unless the workspace retains the compatibility sign gate.",
+    description: "Apply a complete Markdown definition before execution. Every acceptance condition must explicitly map to a referenced accepted spec node; valid coverage moves the task to defined unless the workspace retains the compatibility sign gate. With draft=true a backlog capture is stored or amended with its structure validated and no coverage check, and stays in backlog.",
     inputSchema: {
       id: z.string().min(1),
       definition: z.string().min(1),
+      draft: z.boolean().optional(),
     },
     annotations: localWrite,
-  }, async ({ id, definition }) => {
+  }, async ({ id, definition, draft }) => {
     try {
       const result = withControlPlaneMutation(root, (controlRoot) => {
-        const defined = defineTask(id, definition, controlRoot);
-        commitControlState(controlRoot, `chore(kotta): define ${id}`);
+        const defined = defineTask(id, definition, controlRoot, { draft: Boolean(draft) });
+        commitControlState(controlRoot, `chore(kotta): ${draft ? "draft" : "define"} ${id}`);
         return defined;
       }, { requireClean: false });
       return toolResult(result as unknown as ToolPayload, `Updated ${id}; it is ${result.data.state}. ${result.data.nextStep}`);

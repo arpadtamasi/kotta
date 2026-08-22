@@ -85,11 +85,17 @@ function assertSpecReferences(root: string, id: string, value: unknown): void {
   }
 }
 
-export function defineTask(id: string, definition: string, repositoryRoot?: string) {
+export function defineTask(id: string, definition: string, repositoryRoot?: string, options: { draft?: boolean } = {}) {
   const root = controlPlaneRoot(repositoryRoot ?? findRepositoryRoot());
   const task = findTask(root, id);
   if (!["backlog", "defined"].includes(task.state)) {
     throw new Error(`Task ${id} can only be defined before execution, while it is in backlog or defined; it is ${task.state}.`);
+  }
+  // A draft iterates a capture in place (SM-01m0f0wn89gjy6dbk1j6fjpv6j): structure validated,
+  // no coverage demanded, the task stays in backlog. Anything that already left backlog is
+  // amended only at full definition strength — the coverage gate guards the defined boundary.
+  if (options.draft && task.state !== "backlog") {
+    throw new Error(`--draft amends a captured task; ${id} is ${task.state}. Amend it with a full definition instead.`);
   }
   const original = readFileSync(task.path, "utf8");
   const current = parseMarkdown(original);
@@ -109,7 +115,7 @@ export function defineTask(id: string, definition: string, repositoryRoot?: stri
     for (const reference of references) findTask(root, reference);
   }
   assertSpecReferences(root, id, current.data.spec);
-  const targetState = task.state === "defined" || !readWorkspaceConfig(root).requireHumanSignApproval ? "defined" : "backlog";
+  const targetState = options.draft ? "backlog" : task.state === "defined" || !readWorkspaceConfig(root).requireHumanSignApproval ? "defined" : "backlog";
   current.data.status = targetState;
   current.data.updated_at = new Date().toISOString().slice(0, 10);
   const filename = entityFilename(id, slugify(String(current.data.title)));
@@ -123,19 +129,23 @@ export function defineTask(id: string, definition: string, repositoryRoot?: stri
     assertValid(targetState === "backlog"
       ? validateTaskDefinitionFile(candidate)
       : validateTaskFile(candidate, targetState));
-    const coverageErrors = validateTaskCoverage(root, current.data, draft.content, candidate);
-    assertValid({ valid: coverageErrors.length === 0, errors: coverageErrors });
+    if (!options.draft) {
+      const coverageErrors = validateTaskCoverage(root, current.data, draft.content, candidate);
+      assertValid({ valid: coverageErrors.length === 0, errors: coverageErrors });
+    }
     renameSync(candidate, destination);
     if (destination !== task.path) unlinkSync(task.path);
   } catch (error) {
     if (existsSync(candidate)) unlinkSync(candidate);
     throw error;
   }
-  appendLifecycleEvent(root, id, targetState, task.state === "defined"
-    ? "Task definition amended before execution."
-    : targetState === "defined"
-      ? "Task definition validated for accepted-spec coverage; no separate sign gate required."
-      : "Task definition validated and awaits the workspace's opt-in sign gate.");
+  appendLifecycleEvent(root, id, targetState, options.draft
+    ? "Task draft amended in backlog; coverage is checked when it is defined."
+    : task.state === "defined"
+      ? "Task definition amended before execution."
+      : targetState === "defined"
+        ? "Task definition validated for accepted-spec coverage; no separate sign gate required."
+        : "Task definition validated and awaits the workspace's opt-in sign gate.");
   regenerateIndex(root);
   return {
     ok: true,
@@ -144,7 +154,9 @@ export function defineTask(id: string, definition: string, repositoryRoot?: stri
       id,
       path: destination,
       state: targetState,
-      nextStep: targetState === "backlog" ? `kotta task sign ${id}` : `kotta task start ${id} --agent <agent>`,
+      nextStep: options.draft
+        ? `kotta task define ${id} --from <file>`
+        : targetState === "backlog" ? `kotta task sign ${id}` : `kotta task start ${id} --agent <agent>`,
     },
   };
 }

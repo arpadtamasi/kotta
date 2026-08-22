@@ -411,7 +411,8 @@ kotta validate
 kotta status
 
 kotta task new --title "Add filtered export" --type feature --profile ui workflow
-kotta task define T-014 --from /tmp/T-014-definition.md
+kotta task define T-014 --from /tmp/T-014-draft.md --draft   # iterate a capture in backlog; no coverage yet
+kotta task define T-014 --from /tmp/T-014-definition.md      # coverage-checked; valid coverage moves it to defined
 kotta task validate T-014
 kotta task start T-014 --agent codex
 kotta task start T-014 --agent codex --caller

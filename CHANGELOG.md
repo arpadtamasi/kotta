@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **A capture is drafted in place.** `kotta task define --draft` (and `task_define` with
+  `draft: true`) stores or amends a backlog task's text with its structure validated and no
+  coverage demanded — the task stays in backlog, a changed title renames the stable file, and
+  hand-editing the stored capture stops being the only way to iterate it. Coverage keeps
+  guarding the boundary where executability begins: backlog → defined. A draft on a task that
+  already left backlog is refused; defined tasks are amended only at full definition strength.
+
 - **A declared check is run, not transcribed.** A review evidence value may start with
   `run: <command>`: the submission executes it in the task's execution checkout before anything
   is written, refuses the whole submission by name when it exits non-zero, and records the
