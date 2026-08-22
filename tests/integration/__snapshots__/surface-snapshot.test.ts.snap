@@ -1,0 +1,1098 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`the surfaces Kotta exposes > the CLI surface, read from the built binary 1`] = `
+"### kotta 
+Usage: kotta [options] [command]
+
+Repository-native human-AI development workflow
+
+Options:
+  -V, --version               output the version number
+  -h, --help                  display help for command
+
+Commands:
+  migrate [options]           Carry a legacy or flat workspace into the spec/
+                              and process/ namespaces
+  init [options]              Create a .kotta workspace
+  validate [options]          Validate the Kotta workspace
+  status [options]            Show canonical workspace status
+  gap [options]               Report accepted spec promises without repository
+                              evidence and enforcement without a spec trace
+  sync [options]              Install the skills Kotta ships and refresh the
+                              workspace rules file
+  task                        Create and transition tasks
+  observation                 Capture and disposition observations
+  decision                    Record durable human decisions
+  batch                       Validate and execute coordinated batches
+  claim                       Inspect and recover execution claims
+  integrate [options] <host>  Connect Kotta to a calling agent host
+  mcp [options]               Serve Kotta tools to the calling chat over stdio
+                              MCP
+  ui [options]                Serve the local filesystem-backed Kotta board
+  help [command]              display help for command
+
+### kotta migrate
+Usage: kotta migrate [options]
+
+Carry a legacy or flat workspace into the spec/ and process/ namespaces
+
+Options:
+  --workspace <path>  Repository root or workspace directory; omitted uses the
+                      repository around the cwd
+  --dry-run           Report every change without writing anything
+  --json
+  -h, --help          display help for command
+
+### kotta init
+Usage: kotta init [options]
+
+Create a .kotta workspace
+
+Options:
+  --project-name <name>
+  --link-agents          Link the project's AGENTS.md to the workspace rules,
+                         migrating a recognized legacy Kotta prelude after the
+                         human said yes
+  --json
+  -h, --help             display help for command
+
+### kotta validate
+Usage: kotta validate [options]
+
+Validate the Kotta workspace
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta status
+Usage: kotta status [options]
+
+Show canonical workspace status
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta gap
+Usage: kotta gap [options]
+
+Report accepted spec promises without repository evidence and enforcement
+without a spec trace
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta sync
+Usage: kotta sync [options]
+
+Install the skills Kotta ships and refresh the workspace rules file
+
+Options:
+  --link-agents  Link the project's AGENTS.md to the workspace rules, migrating
+                 a recognized legacy Kotta prelude after the human said yes
+  --json
+  -h, --help     display help for command
+
+### kotta task
+Usage: kotta task [options] [command]
+
+Create and transition tasks
+
+Options:
+  -h, --help               display help for command
+
+Commands:
+  list [options]           List tasks with their state and title
+  show [options] <id>      Show one task: its state, its set facts and its body
+  new [options]
+  validate [options] <id>
+  define [options] <id>
+  sign [options] <id>      Opt-in compatibility gate: sign a covered backlog
+                           task, moving it to defined
+  start [options] <id>
+  execute [options] <id>   Run a defined task in a fresh agent context: start,
+                           brief and agent launch in one command (D-009)
+  review [options] <id>
+  close [options] <id>
+  cancel [options] <id>    Retire a live task into done with a non-completed
+                           resolution, from any state before done
+  brief [options] <id>     Assemble the minimal execution context for a task
+                           (D-009)
+  reopen [options] <id>
+  help [command]           display help for command
+
+### kotta task list
+Usage: kotta task list [options]
+
+List tasks with their state and title
+
+Options:
+  --state <state...>  Narrow to one or more states
+  --json
+  -h, --help          display help for command
+
+### kotta task show
+Usage: kotta task show [options] <id>
+
+Show one task: its state, its set facts and its body
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta task new
+Usage: kotta task new [options]
+
+Options:
+  --title <title>
+  --type <type>
+  --profile <profile...>  Requirement profiles (default: [])
+  --json
+  -h, --help              display help for command
+
+### kotta task validate
+Usage: kotta task validate [options] <id>
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta task define
+Usage: kotta task define [options] <id>
+
+Options:
+  --from <path>  Markdown definition file
+  --draft        Store or amend a backlog capture without the coverage check;
+                 the task stays in backlog
+  --json
+  -h, --help     display help for command
+
+### kotta task sign
+Usage: kotta task sign [options] <id>
+
+Opt-in compatibility gate: sign a covered backlog task, moving it to defined
+
+Options:
+  --approve
+  --json
+  -h, --help  display help for command
+
+### kotta task start
+Usage: kotta task start [options] <id>
+
+Options:
+  --agent <agent>
+  --caller         Let the current caller execute inside the new worktree with
+                   inherited context
+  --json
+  -h, --help       display help for command
+
+### kotta task execute
+Usage: kotta task execute [options] <id>
+
+Run a defined task in a fresh agent context: start, brief and agent launch in
+one command (D-009)
+
+Options:
+  --agent <agent>             Agent to launch; required unless --resume reuses
+                              the claim's agent
+  --resume                    Reuse the existing execution context instead of
+                              creating a second one
+  --inherit-context <reason>  Explicit, logged exception to the fresh-context
+                              default; a reason is required
+  --json
+  -h, --help                  display help for command
+
+### kotta task review
+Usage: kotta task review [options] <id>
+
+Options:
+  --evidence <evidence>          Evidence text, or repeat '<exact
+                                 check>=<evidence>' for a named mapping
+                                 (default: [])
+  --pull-request <identifier>
+  --deviations <text>            Declared deviations from the task; omitted
+                                 means 'Not declared.'
+  --observations-created <text>  Observations created during execution; omitted
+                                 means 'Not declared.'
+  --known-concerns <text>        Known concerns left open; omitted means 'Not
+                                 declared.'
+  --json
+  -h, --help                     display help for command
+
+### kotta task close
+Usage: kotta task close [options] <id>
+
+Options:
+  --approve
+  --json
+  -h, --help  display help for command
+
+### kotta task cancel
+Usage: kotta task cancel [options] <id>
+
+Retire a live task into done with a non-completed resolution, from any state
+before done
+
+Options:
+  --resolution <resolution>  duplicate | obsolete | cancelled
+  --reason <reason>          Why this work is being retired
+  --superseded-by <id>       The task or decision that took this work's place;
+                             required for duplicate and obsolete
+  --approve
+  --json
+  -h, --help                 display help for command
+
+### kotta task brief
+Usage: kotta task brief [options] <id>
+
+Assemble the minimal execution context for a task (D-009)
+
+Options:
+  --out <path>           Write the brief to a file instead of stdout
+  --warn-tokens <count>  Warn above this approximate token count (default:
+                         12000)
+  --json
+  -h, --help             display help for command
+
+### kotta task reopen
+Usage: kotta task reopen [options] <id>
+
+Options:
+  --approve
+  --json
+  -h, --help  display help for command
+
+### kotta observation
+Usage: kotta observation [options] [command]
+
+Capture and disposition observations
+
+Options:
+  -h, --help               display help for command
+
+Commands:
+  list [options]           List observations with their state and title
+  show [options] <id>      Show one observation: its state, its set facts and
+                           its body
+  new [options]
+  validate [options] <id>
+  resolve [options] <id>
+  help [command]           display help for command
+
+### kotta observation list
+Usage: kotta observation list [options]
+
+List observations with their state and title
+
+Options:
+  --state <state...>  Narrow to one or more states
+  --json
+  -h, --help          display help for command
+
+### kotta observation show
+Usage: kotta observation show [options] <id>
+
+Show one observation: its state, its set facts and its body
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta observation new
+Usage: kotta observation new [options]
+
+Options:
+  --title <title>
+  --type <type>
+  --evidence <evidence>
+  --discovered-during <task>
+  --json
+  -h, --help                  display help for command
+
+### kotta observation validate
+Usage: kotta observation validate [options] <id>
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta observation resolve
+Usage: kotta observation resolve [options] <id>
+
+Options:
+  --disposition <disposition>
+  --spec <spec...>             Specification nodes the amendment touched
+                               (amend-spec only)
+  --approve
+  --json
+  -h, --help                   display help for command
+
+### kotta decision
+Usage: kotta decision [options] [command]
+
+Record durable human decisions
+
+Options:
+  -h, --help           display help for command
+
+Commands:
+  list [options]       List decisions with their state and title
+  show [options] <id>  Show one decision: its state, its set facts and its body
+  create [options]     Validate and atomically record a durable decision
+  help [command]       display help for command
+
+### kotta decision list
+Usage: kotta decision list [options]
+
+List decisions with their state and title
+
+Options:
+  --state <state...>  Not applicable to decisions; refused with the reason
+  --json
+  -h, --help          display help for command
+
+### kotta decision show
+Usage: kotta decision show [options] <id>
+
+Show one decision: its state, its set facts and its body
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta decision create
+Usage: kotta decision create [options]
+
+Validate and atomically record a durable decision
+
+Options:
+  --from <path>  Markdown decision source
+  --id <id>      Stable decision identifier (for example D-001)
+  --approve      Confirm the human-owned decision and consequences
+  --json
+  -h, --help     display help for command
+
+### kotta batch
+Usage: kotta batch [options] [command]
+
+Validate and execute coordinated batches
+
+Options:
+  -h, --help                               display help for command
+
+Commands:
+  list [options]                           List batches with their state and title
+  show [options] <id>                      Show one batch: its state, its set facts and its body
+  new [options]
+  add [options] <batch-id> <member-id>     Add a task, or another batch to group under this one
+  remove [options] <batch-id> <member-id>  Remove a member task, or a grouped child batch
+  validate [options] <id>
+  sign [options] <id>                      Human gate: sign a validated backlog batch, moving it to defined
+  start [options] <id>
+  status [options] <id>
+  close [options] <id>                     Complete a batch whose member tasks have all reached done, from any batch state
+  finalize [options] <id>                  Clean up the coordinator branch of a done batch after its integration is proven
+  help [command]                           display help for command
+
+### kotta batch list
+Usage: kotta batch list [options]
+
+List batches with their state and title
+
+Options:
+  --state <state...>  Narrow to one or more states
+  --json
+  -h, --help          display help for command
+
+### kotta batch show
+Usage: kotta batch show [options] <id>
+
+Show one batch: its state, its set facts and its body
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta batch new
+Usage: kotta batch new [options]
+
+Options:
+  --title <title>
+  --goal <goal>
+  --parallelism <count>  Maximum concurrent tasks (default: 2)
+  --json
+  -h, --help             display help for command
+
+### kotta batch add
+Usage: kotta batch add [options] <batch-id> <member-id>
+
+Add a task, or another batch to group under this one
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta batch remove
+Usage: kotta batch remove [options] <batch-id> <member-id>
+
+Remove a member task, or a grouped child batch
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta batch validate
+Usage: kotta batch validate [options] <id>
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta batch sign
+Usage: kotta batch sign [options] <id>
+
+Human gate: sign a validated backlog batch, moving it to defined
+
+Options:
+  --approve
+  --json
+  -h, --help  display help for command
+
+### kotta batch start
+Usage: kotta batch start [options] <id>
+
+Options:
+  --agent <agent>
+  --json
+  -h, --help       display help for command
+
+### kotta batch status
+Usage: kotta batch status [options] <id>
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta batch close
+Usage: kotta batch close [options] <id>
+
+Complete a batch whose member tasks have all reached done, from any batch state
+
+Options:
+  --approve
+  --json
+  -h, --help  display help for command
+
+### kotta batch finalize
+Usage: kotta batch finalize [options] <id>
+
+Clean up the coordinator branch of a done batch after its integration is proven
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta claim
+Usage: kotta claim [options] [command]
+
+Inspect and recover execution claims
+
+Options:
+  -h, --help              display help for command
+
+Commands:
+  list [options]
+  release [options] <id>
+  help [command]          display help for command
+
+### kotta claim list
+Usage: kotta claim list [options]
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta claim release
+Usage: kotta claim release [options] <id>
+
+Options:
+  --force
+  --json
+  -h, --help  display help for command
+
+### kotta integrate
+Usage: kotta integrate [options] <host>
+
+Connect Kotta to a calling agent host
+
+Arguments:
+  host        Supported host: codex
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta mcp
+Usage: kotta mcp [options]
+
+Serve Kotta tools to the calling chat over stdio MCP
+
+Options:
+  --workspace <path>  Repository root or linked worktree (default: ".")
+  -h, --help          display help for command
+
+### kotta ui
+Usage: kotta ui [options]
+
+Serve the local filesystem-backed Kotta board
+
+Options:
+  --workspace <path>  Repository root or workspace directory (default: ".")
+  --port <port>       Local port; omitted starts at 4311 and advances to the
+                      next free port
+  --host <host>       Bind host (default: "127.0.0.1")
+  --no-open           Print the URL without opening it in the default browser
+  --json
+  -h, --help          display help for command"
+`;
+
+exports[`the surfaces Kotta exposes > the MCP tool surface, read from a live server 1`] = `
+[
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "action": {
+          "enum": [
+            "task.sign",
+            "observation.resolve",
+            "task.close",
+            "task.cancel",
+            "task.request-changes",
+            "batch.close",
+          ],
+          "type": "string",
+        },
+        "clientRequestId": {
+          "type": "string",
+        },
+        "entity": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "payload": {
+          "additionalProperties": {},
+          "default": {},
+          "propertyNames": {
+            "type": "string",
+          },
+          "type": "object",
+        },
+      },
+      "required": [
+        "entity",
+        "action",
+      ],
+      "type": "object",
+    },
+    "name": "approval_request",
+    "title": "Request an exact Kotta approval",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "state": {
+          "items": {
+            "enum": [
+              "backlog",
+              "defined",
+              "active",
+              "done",
+            ],
+            "type": "string",
+          },
+          "type": "array",
+        },
+      },
+      "type": "object",
+    },
+    "name": "batch_list",
+    "title": "List Kotta batches",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "id",
+      ],
+      "type": "object",
+    },
+    "name": "batch_show",
+    "title": "Show one Kotta batch",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {},
+      "type": "object",
+    },
+    "name": "decision_list",
+    "title": "List Kotta decisions",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "id",
+      ],
+      "type": "object",
+    },
+    "name": "decision_show",
+    "title": "Show one Kotta decision",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {},
+      "type": "object",
+    },
+    "name": "gap_report",
+    "title": "Read the implementation gap",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "discoveredDuring": {
+          "type": "string",
+        },
+        "evidence": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "title": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "type": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "title",
+        "type",
+        "evidence",
+      ],
+      "type": "object",
+    },
+    "name": "observation_create",
+    "title": "Capture a Kotta observation",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "state": {
+          "items": {
+            "enum": [
+              "new",
+              "resolved",
+            ],
+            "type": "string",
+          },
+          "type": "array",
+        },
+      },
+      "type": "object",
+    },
+    "name": "observation_list",
+    "title": "List Kotta observations",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "id",
+      ],
+      "type": "object",
+    },
+    "name": "observation_show",
+    "title": "Show one Kotta observation",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "id",
+      ],
+      "type": "object",
+    },
+    "name": "task_brief",
+    "title": "Read a Kotta execution brief",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "profiles": {
+          "default": [],
+          "items": {
+            "minLength": 1,
+            "type": "string",
+          },
+          "type": "array",
+        },
+        "title": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "type": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "title",
+        "type",
+      ],
+      "type": "object",
+    },
+    "name": "task_create",
+    "title": "Create a Kotta task",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "definition": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "draft": {
+          "type": "boolean",
+        },
+        "id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "id",
+        "definition",
+      ],
+      "type": "object",
+    },
+    "name": "task_define",
+    "title": "Define a Kotta task",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "state": {
+          "items": {
+            "enum": [
+              "backlog",
+              "defined",
+              "active",
+              "review",
+              "done",
+            ],
+            "type": "string",
+          },
+          "type": "array",
+        },
+      },
+      "type": "object",
+    },
+    "name": "task_list",
+    "title": "List Kotta tasks",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "clientEventId": {
+          "type": "string",
+        },
+        "role": {
+          "enum": [
+            "human",
+            "assistant",
+          ],
+          "type": "string",
+        },
+        "task": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "text": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "threadId": {
+          "type": "string",
+        },
+      },
+      "required": [
+        "task",
+        "role",
+        "text",
+      ],
+      "type": "object",
+    },
+    "name": "task_message_record",
+    "title": "Record visible task conversation",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "id",
+      ],
+      "type": "object",
+    },
+    "name": "task_show",
+    "title": "Show one Kotta task",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "agent": {
+          "default": "codex",
+          "minLength": 1,
+          "type": "string",
+        },
+        "id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "id",
+      ],
+      "type": "object",
+    },
+    "name": "task_start_caller",
+    "title": "Start task for the calling agent",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "deviations": {
+          "type": "string",
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string",
+            },
+            {
+              "additionalProperties": {
+                "minLength": 1,
+                "type": "string",
+              },
+              "propertyNames": {
+                "type": "string",
+              },
+              "type": "object",
+            },
+          ],
+        },
+        "id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "knownConcerns": {
+          "type": "string",
+        },
+        "observationsCreated": {
+          "type": "string",
+        },
+        "pullRequest": {
+          "type": "string",
+        },
+      },
+      "required": [
+        "id",
+        "evidence",
+      ],
+      "type": "object",
+    },
+    "name": "task_submit_review",
+    "title": "Submit task for review",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "id",
+      ],
+      "type": "object",
+    },
+    "name": "task_validate",
+    "title": "Validate a Kotta task",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {},
+      "type": "object",
+    },
+    "name": "workspace_status",
+    "title": "Read Kotta workspace status",
+  },
+]
+`;
