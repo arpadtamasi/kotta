@@ -147,7 +147,10 @@ describe("Kotta caller-chat MCP", () => {
     const content = readFileSync(config, "utf8");
     expect(content).toContain('model = "gpt-5"');
     expect(content.match(/\[mcp_servers\.kotta\]/g)).toHaveLength(1);
-    expect(content).toContain('args = ["mcp", "--workspace", "."]');
+    // The invocation is proved from the running process, not written as a bare name
+    // (BR-01m0qyxvz954ay2rbm00bazrd5), so the interpreter and entry point are whatever is running.
+    expect(content).toContain(`command = "${process.execPath}"`);
+    expect(content).toMatch(/^args = \["\/.*index\.js", "mcp", "--workspace", "\."\]$/m);
   });
 
   test("returns stable ids and applies one exact human-approved transition", async () => {

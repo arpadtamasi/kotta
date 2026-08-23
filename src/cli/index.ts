@@ -178,9 +178,18 @@ function renderBatchStatus(result: unknown): string {
 }
 
 function renderIntegrate(result: unknown): string {
-      const data = (result as { data: { path: unknown; changed: unknown } }).data;
-      return data.changed ? `Connected Kotta caller-chat tools in ${String(data.path)}.` : `Kotta caller-chat tools are already configured in ${String(data.path)}.`;
-    }
+  const data = (result as { data: { path: unknown; changed: unknown; recorded: string | null; resolves: boolean; replacement: string | null } }).data;
+  if (data.changed) return `Connected Kotta caller-chat tools in ${String(data.path)}.`;
+  // A configuration naming a command that is gone is not a configured host, and saying so is the
+  // point of looking (BR-01m0qyxvz954ay2rbm00bazrd5).
+  if (data.replacement) {
+    return [
+      `Kotta caller-chat tools are configured in ${String(data.path)}, but the command they name is gone: ${data.recorded}`,
+      `This Kotta runs as ${data.replacement}. Point the [mcp_servers.kotta] block at it, or remove the block and run 'kotta integrate codex' again.`,
+    ].join("\n");
+  }
+  return `Kotta caller-chat tools are already configured in ${String(data.path)}.`;
+}
 
 const renderers = new Map<string, (result: unknown) => string>();
 

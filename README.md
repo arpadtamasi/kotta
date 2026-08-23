@@ -277,7 +277,10 @@ The calling agent host is the primary human approval surface. `kotta mcp` expose
 approve/reject/cancel form, records the visible human response, and only then calls the same
 validated mutation service as the CLI. A failed application is durable and never masquerades as a
 successful transition. `kotta integrate codex` adds the project-scoped MCP configuration
-idempotently. The CLI remains the human-operated recovery and terminal-first fallback.
+idempotently, recording the interpreter and entry point that are running rather than a bare command
+name — a host spawns Kotta from a non-interactive shell, which loads no version manager and would
+not find it on PATH. When a configuration already names a command that has since vanished, Kotta
+says so and names the one that would work instead of reporting the host as configured. The CLI remains the human-operated recovery and terminal-first fallback.
 
 The caller can persist exact visible human and assistant messages through the MCP conversation tool;
 Kotta never stores hidden reasoning, raw tool output or transient streaming deltas. Restarting
