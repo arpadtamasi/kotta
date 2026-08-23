@@ -29,5 +29,4 @@ None.
 ## New observations
 
 - F-021-finding-metadata-is-single-valued-in-practice-severity-confi
-- a-cancelled-task-reads-as-done-everywhere-so-abandoned-work--v70cfc6d
 - the-mcp-server-reports-version-0-5-0-while-the-package-is-0--sjzf28q5
