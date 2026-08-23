@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- what-the-terminal-says-is-what-the-result-carries-2kv7gttz
+None.
 
 ## Review
 
-None.
+- what-the-terminal-says-is-what-the-result-carries-2kv7gttz
 
 ## Blocked
 

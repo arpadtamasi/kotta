@@ -1,7 +1,7 @@
 ---
 id: T-01m0pz1ade6qc34aty2kv7gttz
 title: What the terminal says is what the result carries
-status: active
+status: review
 origin: human
 types:
   - defect
@@ -92,3 +92,31 @@ For the resolution display, `renderEntityList` and `renderEntityShow` are the tw
 - `run: npx vitest run tests/integration/rendering-fidelity.test.ts` — the new suite: a failing result renders its failure, the two renderings agree, a retired task reads as retired, a retired batch reads as retired.
 - `run: npm test` — the full suite, since the rendering change touches every command's output and the existing surface snapshot.
 - Manual read-back on this workspace: `kotta task list` distinguishes the twelve tasks retired on 2026-08-23 from the delivered ones, and `kotta batch status P-001` says its members were retired.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A failing result prints what failed. Running a command whose result did not succeed names the failure in the human output and exits non-zero; no line reports that the command completed. `kotta validate` on a workspace with invalid nodes names each violated rule and the file holding it. | run: npx vitest run tests/integration/rendering-fidelity.test.ts -t 'a failed validation is not printed as completed' — verified: exit 0 at 7bd48fc |
+| The two renderings never disagree about outcome. For every command, the human output and `--json` report the same success or failure, proven by a test that drives both and compares. | run: npx vitest run tests/integration/rendering-fidelity.test.ts -t 'the human rendering and --json never disagree about the outcome' — verified: exit 0 at 7bd48fc |
+| A retired task is named by its resolution. Wherever a task is listed or shown — `task list`, `task show`, and the board — a task that ended at `done` with resolution cancelled, duplicate or obsolete is displayed as that resolution, not as `done`. | run: npx vitest run tests/integration/rendering-fidelity.test.ts -t 'a retired task is named by its resolution' — verified: exit 0 at 7bd48fc |
+| A batch of retired work does not read as built. `batch status` reports each member's resolution, so a batch whose members were all cancelled is distinguishable from one whose members were completed. | run: npx vitest run tests/integration/rendering-fidelity.test.ts -t 'a batch of retired work does not read as a batch that was built' — verified: exit 0 at 7bd48fc |
+
+### Verification performed
+
+A failing result prints what failed. Running a command whose result did not succeed names the failure in the human output and exits non-zero; no line reports that the command completed. `kotta validate` on a workspace with invalid nodes names each violated rule and the file holding it.: run: npx vitest run tests/integration/rendering-fidelity.test.ts -t 'a failed validation is not printed as completed'
+The two renderings never disagree about outcome. For every command, the human output and `--json` report the same success or failure, proven by a test that drives both and compares.: run: npx vitest run tests/integration/rendering-fidelity.test.ts -t 'the human rendering and --json never disagree about the outcome'
+A retired task is named by its resolution. Wherever a task is listed or shown — `task list`, `task show`, and the board — a task that ended at `done` with resolution cancelled, duplicate or obsolete is displayed as that resolution, not as `done`.: run: npx vitest run tests/integration/rendering-fidelity.test.ts -t 'a retired task is named by its resolution'
+A batch of retired work does not read as built. `batch status` reports each member's resolution, so a batch whose members were all cancelled is distinguishable from one whose members were completed.: run: npx vitest run tests/integration/rendering-fidelity.test.ts -t 'a batch of retired work does not read as a batch that was built'
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
