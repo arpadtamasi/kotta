@@ -13,6 +13,7 @@ None.
 ## Defined tasks
 
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
+- what-the-terminal-says-is-what-the-result-carries-2kv7gttz
 
 ## Active tasks
 
