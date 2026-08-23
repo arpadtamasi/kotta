@@ -51,6 +51,8 @@ async function mcpTools(): Promise<string[]> {
 }
 
 describe("the operation registry is total", () => {
+  // EX-01m0psa97ffhvt91tgbanbt8mz — a surface name without a declaration fails the build — is what
+  // the two set comparisons below demonstrate, in both directions.
   test("every CLI command traces to a declaration, and every declared command exists", () => {
   // Roughly sixty process spawns against the built binary at ~0.4s each; the default 15s timeout
   // was always marginal for that and tipped over as the surface grew. The walk is the point of the

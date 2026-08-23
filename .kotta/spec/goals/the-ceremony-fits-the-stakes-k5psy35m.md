@@ -5,6 +5,9 @@ title: "The ceremony fits the stakes"
 measured_by:
   - QA-01m0fp2hdkq55yrx9qr5t8pweh
   - EX-01m0fp2hdk8wcpthyhhevvhsa3
+accepted:
+  - >-
+    implementation: Inherited on 2026-08-23, when kotta gap began refusing a promise that is neither evidenced nor admitted (BR-01m0qtshfqhcrrqtz051zm9svr). This node predates that rule and no code, test or command definition names its id. It was admitted in bulk with the other 107 and was not examined individually, so this line records that nobody has looked yet — not a decision that it should stay unimplemented.
 ---
 
 ## Outcome

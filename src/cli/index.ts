@@ -209,10 +209,15 @@ function renderFailure(command: string, result: unknown): string {
 function humanize(result: unknown): string {
   if (typeof result === "object" && result && "command" in result) {
     const command = String((result as { command: unknown }).command);
-    // The failure branch precedes every renderer: a rendering never reports an outcome its own
-    // result denies, and no per-command renderer may opt out of that.
-    if ((result as { ok?: unknown }).ok === false) return renderFailure(command, result);
     const render = renderers.get(command);
+    // A rendering never reports an outcome its own result denies, and no per-command renderer may
+    // opt out of that (BR-01m0pw5bc7b1rkg5dct5qgdkmb). A renderer still runs on a failed result —
+    // `kotta gap` refuses while its report is the whole point of running it — but the named failure
+    // is appended either way, so the reader cannot reach the end without meeting it.
+    if ((result as { ok?: unknown }).ok === false) {
+      const failure = renderFailure(command, result);
+      return render ? `${render(result)}\n\n${failure}` : failure;
+    }
     return render ? render(result) : `kotta ${command} completed.`;
   }
   return String(result);
