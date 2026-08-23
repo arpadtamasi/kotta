@@ -1,0 +1,17 @@
+{
+  "entity": "T-01kzh5ta34v0b4q5mxatnxppcm",
+  "task": "T-01kzh5ta34v0b4q5mxatnxppcm",
+  "kind": "approval",
+  "approval_id": "E-01m0pvr9serdxdgzjpy0tzbt2e",
+  "phase": "applied",
+  "action": "task.cancel",
+  "payload": {
+    "resolution": "obsolete",
+    "reason": "Delivered under a different filename. 'kotta sync' writes the rules file into the workspace as .kotta/AGENTS.md and linkProjectAgents appends the one pointer line to the project's own AGENTS.md after a human yes (src/commands/sync.ts:160-182); this repository's AGENTS.md carries that line today. Only the name 'rules.md' differs from what this task asked for.",
+    "superseded_by": "T-01kzgn32keps18769dp5rstcgt",
+    "surface": "cli"
+  },
+  "source_message": "E-01m0pvr9sfjz3wha0a8kgmvgsq",
+  "id": "E-01m0pvr9sfv266c0t419b9zv35",
+  "created_at": "2026-08-23T08:28:20.655Z"
+}

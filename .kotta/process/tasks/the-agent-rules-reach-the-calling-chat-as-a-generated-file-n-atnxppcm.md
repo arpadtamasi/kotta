@@ -3,7 +3,7 @@ id: T-01kzh5ta34v0b4q5mxatnxppcm
 title: >-
   The agent rules reach the calling chat as a generated file, not a hand-copied
   one
-status: defined
+status: done
 origin: human
 types:
   - bug
@@ -17,7 +17,18 @@ blocks: []
 branch: null
 pull_request: null
 created_at: '2026-08-08'
-updated_at: '2026-08-08'
+updated_at: '2026-08-23'
+resolution: obsolete
+cancellation_reason: >-
+  Delivered under a different filename. 'kotta sync' writes the rules file into
+  the workspace as .kotta/AGENTS.md and linkProjectAgents appends the one
+  pointer line to the project's own AGENTS.md after a human yes
+  (src/commands/sync.ts:160-182); this repository's AGENTS.md carries that line
+  today. Only the name 'rules.md' differs from what this task asked for.
+superseded_by: T-01kzgn32keps18769dp5rstcgt
+approved_by: cli
+approved_at: '2026-08-23T08:28:20.589Z'
+approval_basis: 'CLI --approve: task.cancel'
 ---
 # T-01kzh5ta34v0b4q5mxatnxppcm — The agent rules reach the calling chat as a generated file, not a hand-copied one
 

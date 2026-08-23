@@ -13,7 +13,6 @@ None.
 ## Defined tasks
 
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
-- the-agent-rules-reach-the-calling-chat-as-a-generated-file-n-atnxppcm
 
 ## Active tasks
 
