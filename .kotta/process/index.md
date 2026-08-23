@@ -21,7 +21,7 @@ None.
 
 ## Review
 
-- one-operation-registry-derives-both-the-cli-and-the-mcp-surf-06fw8n0g
+None.
 
 ## Blocked
 

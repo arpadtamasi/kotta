@@ -1,7 +1,7 @@
 ---
 id: T-01kzda6nj9hd2z45tt06fw8n0g
 title: One operation registry derives both the CLI and the MCP surface
-status: review
+status: done
 origin: human
 types:
   - refactor
@@ -40,6 +40,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 7813c6fa33394ecb950b0689563cad0e279cf9e2
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-23T06:36:59.913Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
