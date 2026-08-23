@@ -20,7 +20,7 @@ None.
 
 ## Review
 
-- every-accepted-promise-is-kept-or-admitted-vrd02tyb
+None.
 
 ## Blocked
 

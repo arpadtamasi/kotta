@@ -1,7 +1,7 @@
 ---
 id: T-01m0qwh1jpyc8wbkpbvrd02tyb
 title: Every accepted promise is kept or admitted
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -38,6 +38,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 1d1bdcbcc91ba91474631175bdb206abfa37c2f3
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-23T18:39:14.246Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
