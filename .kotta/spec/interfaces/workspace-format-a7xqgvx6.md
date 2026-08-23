@@ -22,4 +22,4 @@ Plain text, mergeable, diffable; the index carries a union merge rule. Identifie
 
 ## Failures
 
-Workspace validation names the malformed file and the violated rule. Two real workspace directories side by side produce a warning naming the ignored one - a state to merge, not to live in. Two files claiming one identifier inside an entity directory are reported as an identifier collision; a conflicting transition surfaces as an ordinary merge conflict on the status line, resolved like any other conflict - never as a second copy.
+Workspace validation names the malformed file and the violated rule. A workspace recording a shape version this Kotta does not implement is refused in the direction it differs: an older one names migrate, a newer one names the upgrade and is never migrated backwards. Two real workspace directories side by side produce a warning naming the ignored one - a state to merge, not to live in. Two files claiming one identifier inside an entity directory are reported as an identifier collision; a conflicting transition surfaces as an ordinary merge conflict on the status line, resolved like any other conflict - never as a second copy.
