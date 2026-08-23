@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- **Both surfaces are derived from one operation declaration.** `src/core/operations.ts` names
+  every operation once with an identity that belongs to neither surface, and states per surface
+  either the name that carries it or the reason it does not — in both directions, since two
+  operations live only in chat. The MCP server and the CLI now build their tables and let the
+  declaration register them, refusing at startup if a surface carries something undeclared or
+  misses something declared, and the MCP instruction sentence derives its gated-action list from
+  `APPROVAL_ACTIONS` instead of restating it. Per-operation output moved from a switch onto the
+  command that owns it. No command, tool, schema, flag or help text changed: two surface snapshots
+  prove it. Totality is asserted as a set comparison, never as a count.
+
 ### Added
 
 - **A capture is drafted in place.** `kotta task define --draft` (and `task_define` with
