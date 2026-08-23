@@ -14,10 +14,19 @@ function git(root: string, ...args: string[]): string {
   return execFileSync("git", args, { cwd: root, encoding: "utf8" });
 }
 
-function run(root: string): { stdout: string; json: { data: Record<string, unknown> } } {
+/**
+ * These fixtures hold unadmitted promises on purpose — that is what the report is being read for —
+ * so `gap` refuses them (BR-01m0qtshfqhcrrqtz051zm9svr) and a non-zero exit is the expected outcome,
+ * not a failure to surface. The refusal is asserted to match the report rather than ignored.
+ */
+function run(root: string): { stdout: string; json: { ok: boolean; data: Record<string, unknown> } } {
   const result = spawnSync("node", [cli, "gap", "--json"], { cwd: root, encoding: "utf8" });
-  if (result.status !== 0) throw new Error(`${result.stdout}\n${result.stderr}`);
-  return { stdout: result.stdout, json: JSON.parse(result.stdout) };
+  if (!result.stdout.trim()) throw new Error(`${result.stdout}\n${result.stderr}`);
+  const json = JSON.parse(result.stdout) as { ok: boolean; data: { promises: unknown[] } };
+  const unadmitted = json.data.promises.length > 0;
+  if (json.ok === unadmitted) throw new Error(`gap reported ok: ${json.ok} with ${json.data.promises.length} unadmitted promises.`);
+  if ((result.status !== 0) !== unadmitted) throw new Error(`gap exited ${result.status} with ${json.data.promises.length} unadmitted promises.`);
+  return { stdout: result.stdout, json };
 }
 
 function node(root: string, id: string, title: string, accepted?: string): void {

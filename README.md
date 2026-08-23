@@ -176,6 +176,18 @@ kotta status
 kotta gap
 ```
 
+`kotta gap` is the one read that refuses. An accepted specification node either has evidence — code,
+a test or a command definition naming its id — or its frontmatter admits an implementation gap and
+says why. A node that is neither makes the command name it and exit non-zero, so a promise cannot
+stay unaccounted for by nobody having looked. The report still prints in full when it refuses; that
+is why the command is run. Admitting a gap does not dispose of a promise, and the wording is the
+whole value: it records that the promise stands and is not yet kept.
+
+```yaml
+accepted:
+  - "implementation: the exporter ships after the policy workshop; nothing implements this yet"
+```
+
 Every command that creates an entity prints its identifier. New identifiers are minted
 without coordination — `T-` plus a time-sortable ULID — so two agents on two branches can
 never mint the same one, and their branches merge without renumbering. Identifiers created

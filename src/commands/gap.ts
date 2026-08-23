@@ -37,7 +37,7 @@ export interface ReverseGap {
 }
 
 export interface GapReportResult {
-  ok: true;
+  ok: boolean;
   command: "gap report";
   data: {
     baseBranch: string;
@@ -50,6 +50,8 @@ export interface GapReportResult {
     reverse: ReverseGap[];
     report: string;
   };
+  /** One per promise that is neither evidenced nor admitted; empty when the workspace passes. */
+  errors: Array<{ code: string; message: string; path: string }>;
 }
 
 interface AcceptedNode {
@@ -243,5 +245,13 @@ export function gapReport(repositoryRoot: string): GapReportResult {
     report: "",
   };
   data.report = formatGapReport(data);
-  return { ok: true, command: "gap report", data };
+  // Every accepted promise is kept or admitted (BR-01m0qtshfqhcrrqtz051zm9svr). A promise with no
+  // evidence and no stated reason is the one thing this read refuses over: the count of unaccounted
+  // promises could otherwise only grow, because nothing in the workflow ever had to look at it.
+  const errors = promises.map((node) => ({
+    code: "UNADMITTED_PROMISE",
+    message: `${node.title} (${node.form}) has no evidence and admits no implementation gap. Looked for ${node.evidenceSought}. Implement it, or record why it stands unimplemented in its frontmatter: accepted: ["implementation: <reason>"].`,
+    path: node.path,
+  }));
+  return { ok: errors.length === 0, command: "gap report", data, errors };
 }
