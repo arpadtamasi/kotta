@@ -24,4 +24,4 @@ A dry run lists every change without writing. The migration renames directories,
 
 ## Alternatives
 
-The migration is interrupted: every step derives from disk, so running it again finishes the job. Every other command refuses a pre-migration workspace by naming the migrate command - there is deliberately no compatibility layer behind that refusal.
+The migration is interrupted: every step derives from disk, so running it again finishes the job. Every other command refuses a pre-migration workspace by naming the migrate command - there is deliberately no compatibility layer behind that refusal. A workspace newer than this Kotta is not this use case at all: migrate refuses it like every other command rather than planning a downgrade.
