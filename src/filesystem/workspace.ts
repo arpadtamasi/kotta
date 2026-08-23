@@ -186,13 +186,76 @@ export function workspaceSchemaVersion(root: string): number | null {
 }
 
 /**
+ * A workspace this build will not read, in either direction. The CLI's preAction hook has to tell
+ * its own refusal from an unrelated throw, and it used to do that by looking for the words "kotta
+ * migrate" in the message — so the first refusal that correctly did not name migrate was swallowed
+ * and the command ran anyway. A type says what a substring only guessed at.
+ */
+export class WorkspaceShapeError extends Error {
+  readonly standing: ShapeStanding;
+  constructor(standing: ShapeStanding, message: string) {
+    super(message);
+    this.name = "WorkspaceShapeError";
+    this.standing = standing;
+  }
+}
+
+/**
+ * Which side of this Kotta's compatibility window a workspace sits on
+ * (BR-01m0q89b16xcfasfj1z8mc2hgg). `current` is the only side that may be read.
+ */
+export type ShapeStanding = "current" | "older" | "newer" | "unreadable";
+
+/**
+ * Where a workspace stands against the shape version this Kotta implements. An absent version is
+ * `older`: every workspace predating the stamp is one this Kotta can carry forward. `NaN` means the
+ * config was there and could not be parsed, which is neither direction and must not be guessed at.
+ */
+export function workspaceShapeStanding(root: string): ShapeStanding {
+  const version = workspaceSchemaVersion(root);
+  if (version === WORKSPACE_SCHEMA_VERSION) return "current";
+  if (version === null) return "older";
+  if (Number.isNaN(version)) return "unreadable";
+  return version > WORKSPACE_SCHEMA_VERSION ? "newer" : "older";
+}
+
+/**
+ * The refusal a newer workspace gets, wherever it is met. It exists apart from
+ * `assertCurrentWorkspaceShape` because `migrate` is exempt from that check — deliberately, so it can
+ * read old workspaces at all — and the exemption must not extend to this direction: migrating a newer
+ * workspace means rewriting it into an older shape, which destroys what the newer Kotta wrote. That
+ * was not hypothetical. A Kotta implementing version 5, meeting a version 6 workspace, called it
+ * legacy, named `kotta migrate`, and the plan that came back was `version: 6 → 5`.
+ */
+export function assertNotNewerWorkspace(root: string): void {
+  if (!hasWorkspace(root)) return;
+  const standing = workspaceShapeStanding(root);
+  if (standing !== "newer" && standing !== "unreadable") return;
+  const config = `${workspaceDirectoryName(root)}/config.yaml`;
+  if (standing === "unreadable") {
+    throw new WorkspaceShapeError(standing,
+      `${root}: ${config} does not record a readable workspace shape version, so Kotta cannot tell whether it is older or newer than the version ${WORKSPACE_SCHEMA_VERSION} this build implements. `
+      + "Repair that file before running anything else; no command guesses at an unreadable version, and migrate will not either.",
+    );
+  }
+  throw new WorkspaceShapeError(standing,
+    `${root} was written by a newer Kotta: ${config} records workspace shape version ${workspaceSchemaVersion(root)}, and this build implements version ${WORKSPACE_SCHEMA_VERSION}. `
+    + "Upgrade Kotta to read it. Migration only ever carries a workspace forward, so it will not rewrite this one to the older shape.",
+  );
+}
+
+/**
  * The refusal every ordinary command makes on a pre-vocabulary workspace. There is no compatibility
  * layer behind it on purpose: four workspaces exist in the world and all four are migrated by running
  * the command this message names, so a silent fallback would be insurance for nobody — and a reader
  * that half-understands the old shape is worse than one that refuses it.
+ *
+ * A workspace on the far side of the window is not this refusal's business: it is neither legacy nor
+ * migratable, and saying so with this message would send the reader to the command that damages it.
  */
 export function assertCurrentWorkspaceShape(root: string): void {
   if (!hasWorkspace(root)) return;
+  assertNotNewerWorkspace(root);
   const legacy = legacyStateDirectories(root);
   const flat = flatWorkspaceEntries(root);
   const stateDirs = v4StateDirectories(root);
@@ -202,7 +265,7 @@ export function assertCurrentWorkspaceShape(root: string): void {
   const entries = [...new Set([...legacy, ...flat, ...stateDirs.map((name) => `${PROCESS_DIRECTORY}/${name}`)])]
     .map((name) => `${directory}/${name}${name.includes(".") ? "" : "/"}`);
   if (version !== WORKSPACE_SCHEMA_VERSION) entries.push(`${directory}/config.yaml (schema version ${Number.isFinite(version) ? version : "unreadable"}; expected ${WORKSPACE_SCHEMA_VERSION})`);
-  throw new Error(
+  throw new WorkspaceShapeError("older",
     `${root} uses a legacy Kotta workspace shape: ${entries.join(", ")} predates the flat process layout (state lives in the frontmatter status field alone). `
     + "Run 'kotta migrate --dry-run' to see exactly what would change, then 'kotta migrate'. No other command reads or writes the legacy shape.",
   );

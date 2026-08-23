@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **A newer workspace is refused, not downgraded.** A Kotta meeting a workspace whose recorded
+  shape version is higher than the one it implements now names both versions and says to upgrade
+  Kotta. Before this it called the workspace legacy and prescribed `kotta migrate`, which — being
+  exempt from the shape check so it can read old workspaces at all — planned `version: 6 → 5` and
+  would have rewritten the newer workspace backwards. `migrate` loses that exemption in the newer
+  direction only; the older direction keeps its wording, its exemption and its plan exactly. An
+  unreadable version is refused as neither direction. The board's notice follows the same split,
+  and the CLI now recognises its own shape refusal by type rather than by looking for the words
+  "kotta migrate" in the message — which had swallowed the first refusal that correctly omitted
+  them.
+
 - **What the terminal says is what the result carries.** A command whose result did not succeed
   now names the failure in its human output instead of printing a completed line: `kotta validate`
   reported `kotta validate completed.` while exiting 1, so its errors reached only `--json` and the

@@ -3,24 +3,7 @@ import { basename, dirname, join, relative } from "node:path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { parseMarkdown, renderMarkdown } from "../core/markdown.js";
 import { readWorkspaceConfig } from "../core/config.js";
-import {
-  LEGACY_WORKSPACE_DIRECTORY,
-  PROCESS_DIRECTORIES,
-  PROCESS_DIRECTORY,
-  SPEC_DIRECTORY,
-  WORKSPACE_DIRECTORIES,
-  WORKSPACE_SCHEMA_VERSION,
-  WORKSPACE_DIRECTORY,
-  bundledFormsDirectory,
-  ensureIndexMergeAttribute,
-  findRepositoryRoot,
-  indexMergeAttribute,
-  registeredSpecDirectories,
-  regenerateIndex,
-  syncWorkspaceForms,
-  validateSpecDirectory,
-  workspaceDirectoryName,
-} from "../filesystem/workspace.js";
+import { LEGACY_WORKSPACE_DIRECTORY, PROCESS_DIRECTORIES, PROCESS_DIRECTORY, SPEC_DIRECTORY, WORKSPACE_DIRECTORIES, WORKSPACE_DIRECTORY, WORKSPACE_SCHEMA_VERSION, assertNotNewerWorkspace, bundledFormsDirectory, ensureIndexMergeAttribute, findRepositoryRoot, indexMergeAttribute, regenerateIndex, registeredSpecDirectories, syncWorkspaceForms, validateSpecDirectory, workspaceDirectoryName } from "../filesystem/workspace.js";
 import { TASK_STATES } from "../filesystem/entities.js";
 
 /**
@@ -265,6 +248,10 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
   const movesWorkspace = isRealDirectory(legacyWorkspace) && !isRealDirectory(targetWorkspace);
   const workspace = movesWorkspace ? legacyWorkspace : join(root, workspaceDirectoryName(root));
   if (!existsSync(workspace)) throw new Error(`No Kotta workspace exists at ${root}. Run 'kotta init' first.`);
+  // Migration only ever carries a workspace forward (BR-01m0q89b16xcfasfj1z8mc2hgg). The CLI exempts
+  // this command from the shape check so it can read old workspaces at all, so the newer direction is
+  // refused here instead — before any change is planned, which is what --dry-run would have printed.
+  assertNotNewerWorkspace(root);
   if (movesWorkspace) changes.push({ kind: "move", from: LEGACY_WORKSPACE_DIRECTORY, to: WORKSPACE_DIRECTORY });
   const idsBefore = workspaceIds(workspace);
 

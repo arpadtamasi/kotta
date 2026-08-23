@@ -643,6 +643,13 @@ version: the v3 `contract` vocabulary readers and CLI/MCP aliases are gone, and 
 legacy task-skill directories only when its ownership manifest proves Kotta installed them and
 their renamed replacement is present.
 
+The window has two sides, and Kotta answers them differently. A workspace older than the Kotta
+reading it is named as older and answered by `kotta migrate`. A workspace *newer* than the Kotta
+reading it — the ordinary result of upgrading one checkout before another — is named as newer, with
+both versions stated, and answered by upgrading Kotta: migration only ever carries a workspace
+forward, so `kotta migrate` refuses that direction instead of rewriting it back. A version that
+cannot be read is refused as neither.
+
 **Identifiers never move.** No id, no filename and no reference *value* changes — this is vocabulary,
 not identity (D-010). The command compares the id set before and after and refuses to lose one.
 

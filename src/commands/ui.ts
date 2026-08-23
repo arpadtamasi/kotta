@@ -8,7 +8,7 @@ import { parse } from "yaml";
 import { sections } from "../core/markdown.js";
 import { findTask, idFromFilename } from "../filesystem/entities.js";
 import { ENV_PREFIX, readEnv } from "../core/env.js";
-import { PROCESS_DIRECTORY, WORKSPACE_DIRECTORIES, WORKSPACE_SCHEMA_VERSION, flatWorkspaceEntries, hasWorkspace, legacyStateDirectories, v4StateDirectories, workspaceDirectoryName, workspaceSchemaVersion } from "../filesystem/workspace.js";
+import { PROCESS_DIRECTORY, WORKSPACE_DIRECTORIES, WORKSPACE_SCHEMA_VERSION, flatWorkspaceEntries, hasWorkspace, legacyStateDirectories, v4StateDirectories, workspaceDirectoryName, workspaceSchemaVersion, workspaceShapeStanding } from "../filesystem/workspace.js";
 import type { KottaEvent } from "../core/events.js";
 
 function git(root: string, args: string[]): { ok: boolean; out: string } {
@@ -271,6 +271,17 @@ export function readNotices(projectRoot: string, workspace: string, useBase: boo
   const flat = flatWorkspaceEntries(projectRoot);
   const stateDirs = v4StateDirectories(projectRoot).map((name) => `${PROCESS_DIRECTORY}/${name}`);
   const version = workspaceSchemaVersion(projectRoot);
+  const standing = workspaceShapeStanding(projectRoot);
+  // The board explains rather than refuses, but it must not explain in the wrong direction: telling a
+  // reader of a newer workspace to migrate would send them to the command that rewrites it backwards
+  // (BR-01m0q89b16xcfasfj1z8mc2hgg). The far side of the window is its own notice, and it is the only
+  // one shown, because no legacy directory finding is meaningful in a shape this build cannot read.
+  if (standing === "newer" || standing === "unreadable") {
+    notices.push(standing === "newer"
+      ? `This workspace was written by a newer Kotta: its config records shape version ${version}, and this build implements version ${WORKSPACE_SCHEMA_VERSION}. The board does not read it. Upgrade Kotta; migration only carries a workspace forward and will not rewrite this one backwards.`
+      : `This workspace does not record a readable shape version, so the board cannot tell whether it is older or newer than the version ${WORKSPACE_SCHEMA_VERSION} this build implements. Repair its config.yaml.`);
+    return notices;
+  }
   const readableVersion = version === WORKSPACE_SCHEMA_VERSION;
   const obsolete = [...new Set([...legacy, ...flat, ...stateDirs, ...(readableVersion ? [] : [`config schema ${Number.isFinite(version) ? version : "unreadable"}`])])];
   if (obsolete.length) {
