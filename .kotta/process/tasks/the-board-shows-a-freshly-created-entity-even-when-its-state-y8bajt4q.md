@@ -3,7 +3,7 @@ id: T-01m0fkxgv28zs00mnyy8bajt4q
 title: >-
   The board shows a freshly created entity even when its state directory has
   never been committed
-status: backlog
+status: done
 origin: human
 types:
   - bug
@@ -18,7 +18,18 @@ spec: []
 branch: null
 pull_request: null
 created_at: '2026-08-20'
-updated_at: '2026-08-20'
+updated_at: '2026-08-23'
+resolution: obsolete
+cancellation_reason: >-
+  The premise is gone. This task described an entity created in a state
+  directory git had never tracked; the v5 shape has no state directories, so
+  that case cannot arise. The residual question — the base ref empty while the
+  working tree holds entities — is answered by name on the board at
+  src/commands/ui.ts:283.
+superseded_by: T-01m0jdnshte2ffyzcp3bhf9kh1
+approved_by: cli
+approved_at: '2026-08-23T08:28:51.973Z'
+approval_basis: 'CLI --approve: task.cancel'
 ---
 # T-01m0fkxgv28zs00mnyy8bajt4q — The board shows a freshly created entity even when its state directory has never been committed
 

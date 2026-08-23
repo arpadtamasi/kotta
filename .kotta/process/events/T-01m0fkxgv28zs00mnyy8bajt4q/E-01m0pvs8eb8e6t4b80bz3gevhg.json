@@ -1,0 +1,9 @@
+{
+  "entity": "T-01m0fkxgv28zs00mnyy8bajt4q",
+  "task": "T-01m0fkxgv28zs00mnyy8bajt4q",
+  "kind": "lifecycle",
+  "state": "done",
+  "summary": "Task cancelled from backlog with resolution obsolete. Reason: The premise is gone. This task described an entity created in a state directory git had never tracked; the v5 shape has no state directories, so that case cannot arise. The residual question — the base ref empty while the working tree holds entities — is answered by name on the board at src/commands/ui.ts:283. Superseded by T-01m0jdnshte2ffyzcp3bhf9kh1.",
+  "id": "E-01m0pvs8eb8e6t4b80bz3gevhg",
+  "created_at": "2026-08-23T08:28:52.043Z"
+}
