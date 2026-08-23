@@ -13,6 +13,7 @@ None.
 ## Defined tasks
 
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
+- the-invocation-kotta-writes-for-a-host-does-not-depend-on-pa-ykj5sba8
 
 ## Active tasks
 
