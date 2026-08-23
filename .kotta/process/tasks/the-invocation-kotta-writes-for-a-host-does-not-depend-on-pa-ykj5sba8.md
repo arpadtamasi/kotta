@@ -1,7 +1,7 @@
 ---
 id: T-01m0qz128k7h6vtnhnykj5sba8
 title: The invocation Kotta writes for a host does not depend on PATH
-status: review
+status: done
 origin: human
 types:
   - bug
@@ -38,6 +38,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: a384bae6713f1597873d6f199d4d9ff3a026925e
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-23T19:17:55.733Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
