@@ -1,7 +1,7 @@
 ---
 id: T-01m0qz128k7h6vtnhnykj5sba8
 title: The invocation Kotta writes for a host does not depend on PATH
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -15,7 +15,7 @@ spec:
   - BR-01m0qyxvz954ay2rbm00bazrd5
   - EX-01m0qyxvz926gdbvzm4bfxzn2w
   - IF-01m0f0wn8994dzf9z1sdygxa04
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-23'
 updated_at: '2026-08-23'
@@ -32,6 +32,12 @@ coverage:
     - IF-01m0f0wn8994dzf9z1sdygxa04
   'Nothing else Kotta prints changes. The prose that tells a human to run `kotta task close <id>` keeps the bare name, because that is what a person types.':
     - BR-01m0qyxvz954ay2rbm00bazrd5
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: a384bae6713f1597873d6f199d4d9ff3a026925e
 ---
 ## Outcome
 
