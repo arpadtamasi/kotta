@@ -22,4 +22,4 @@ The operator asks for the gap. The analysis walks the accepted spec nodes and re
 
 ## Alternatives
 
-A node deliberately unimplemented is listed with its recorded reason as an accepted gap, not as a defect. No gap: the report says exactly that. The analysis never creates tasks or observations by itself - what it finds waits for the human line.
+A node deliberately unimplemented is listed with its recorded reason as an accepted gap, not as a defect. A node that is neither evidenced nor admitted is the one case the analysis refuses over: it names each, and exits non-zero, so a promise cannot stay unaccounted for by nobody having looked. No gap: the report says exactly that. The analysis never creates tasks or observations by itself - what it finds waits for the human line.
