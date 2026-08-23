@@ -1,0 +1,17 @@
+{
+  "entity": "T-005",
+  "task": "T-005",
+  "kind": "approval",
+  "approval_id": "E-01m0pvsrdqxthdke0p87mxmdyf",
+  "phase": "applied",
+  "action": "task.cancel",
+  "payload": {
+    "resolution": "cancelled",
+    "reason": "The shaping line, captured 2026-07-21 for the a-team era, was never started and the system has since answered its question differently. It specified 'a-team shape preview' and 'shape apply' — a typed shape-plan with canonical hashes, a previewed plan_hash, a journaled transactional apply and multi-finding provenance — so that a reviewed finding selection could become tickets in one recoverable operation. None of it exists, and observation triage today runs one observation at a time through 'observation validate' and a human-gated 'observation resolve', in the conversation rather than through a plan file. Its one durable part, the shared mutation lock (T-002), was built and is cancelled separately as delivered. Reviving the batch model would be a new proposal against today's vocabulary, not this task.",
+    "superseded_by": null,
+    "surface": "cli"
+  },
+  "source_message": "E-01m0pvsrdq3msep454ptnxwqhr",
+  "id": "E-01m0pvsrdqwfgyf1whmzdcf9d3",
+  "created_at": "2026-08-23T08:29:08.407Z"
+}
