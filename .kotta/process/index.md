@@ -12,12 +12,11 @@ None.
 
 ## Defined tasks
 
-- an-older-kotta-refuses-a-newer-workspace-instead-of-downgrad-30dhd1yh
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
 
 ## Active tasks
 
-None.
+- an-older-kotta-refuses-a-newer-workspace-instead-of-downgrad-30dhd1yh
 
 ## Review
 

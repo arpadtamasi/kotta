@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdnw5e2b43bngn30dhd1yh
 title: An older Kotta refuses a newer workspace instead of downgrading it
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -16,7 +16,7 @@ spec:
   - EX-01m0q89b1693yvwzx0j8tr5zjp
   - IF-01m0f0wn897newtcbva7xqgvx6
   - UC-01m0f0wn89x00jkpqpqc2esx9h
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-21'
 updated_at: '2026-08-23'
@@ -35,6 +35,12 @@ coverage:
   'An unreadable version is refused on its own terms, as neither older nor newer, naming the file that could not be read.':
     - BR-01m0q89b16xcfasfj1z8mc2hgg
     - IF-01m0f0wn897newtcbva7xqgvx6
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 29e9ba9a290e49b71b5f1532b98e1082b662bc2c
 ---
 ## Outcome
 
