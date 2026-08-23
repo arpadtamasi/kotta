@@ -1,0 +1,9 @@
+{
+  "entity": "P-001",
+  "task": null,
+  "kind": "lifecycle",
+  "state": "done",
+  "summary": "Every task and child batch underneath completed; batch closed.",
+  "id": "E-01m0pvsvy3j22x7q0nw2s8xvkf",
+  "created_at": "2026-08-23T08:29:12.004Z"
+}
