@@ -13,11 +13,10 @@ None.
 ## Defined tasks
 
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
-- every-accepted-promise-is-kept-or-admitted-vrd02tyb
 
 ## Active tasks
 
-None.
+- every-accepted-promise-is-kept-or-admitted-vrd02tyb
 
 ## Review
 

@@ -1,7 +1,7 @@
 ---
 id: T-01m0qwh1jpyc8wbkpbvrd02tyb
 title: Every accepted promise is kept or admitted
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -15,7 +15,7 @@ spec:
   - BR-01m0qtshfqhcrrqtz051zm9svr
   - EX-01m0qtshfq4gx91qt7zhfg56b2
   - UC-01m0fpqfxjvet99wbz0v1ag64q
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-23'
 updated_at: '2026-08-23'
@@ -32,6 +32,12 @@ coverage:
     - UC-01m0fpqfxjvet99wbz0v1ag64q
   'An inherited admission says it is inherited. Each admission written for a node that predates this rule states that it was not examined individually, so no reader mistakes the bulk admission for a judgement about that node.':
     - BR-01m0qtshfqhcrrqtz051zm9svr
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 1d1bdcbcc91ba91474631175bdb206abfa37c2f3
 ---
 ## Outcome
 
