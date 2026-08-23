@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdnw5e2b43bngn30dhd1yh
 title: An older Kotta refuses a newer workspace instead of downgrading it
-status: review
+status: done
 origin: human
 types:
   - bug
@@ -41,6 +41,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 29e9ba9a290e49b71b5f1532b98e1082b662bc2c
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-23T12:38:26.020Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
