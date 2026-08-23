@@ -20,6 +20,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **The invocation Kotta writes for a host does not depend on PATH.** `kotta integrate` recorded
+  `command = "kotta"`, a name resolved against a PATH Kotta cannot see — and a non-interactive
+  shell, which is what hosts and agent worktrees run in, loads no version manager, so a Kotta
+  installed through one is absent there. It now records the interpreter running Kotta and the
+  absolute path of Kotta's own entry point, both facts the running process holds; the written
+  invocation starts the server with an empty environment. A configuration whose recorded command
+  has since vanished is reported by name, with the invocation that would work, instead of being
+  reported as already configured — and is never rewritten under a human who may have edited it.
+
 - **A newer workspace is refused, not downgraded.** A Kotta meeting a workspace whose recorded
   shape version is higher than the one it implements now names both versions and says to upgrade
   Kotta. Before this it called the workspace legacy and prescribed `kotta migrate`, which — being
