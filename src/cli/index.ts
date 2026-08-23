@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { initCommand } from "../commands/init.js";
+import { expandOperations } from "../core/operations.js";
 import { briefTask, cancelTask, closeTask, defineTask, newTask, signTask, reopenTask, reviewTask, startTask, validateTask } from "../commands/task.js";
 import { executeTask, formatExecution } from "../commands/execute.js";
 import { statusCommand } from "../commands/status.js";
@@ -219,8 +220,60 @@ program.hook("preAction", (_program, action) => {
   normaliseIdArgument(action as unknown as Parameters<typeof normaliseIdArgument>[0]);
 });
 
-program
-  .command("migrate")
+/**
+ * One operation, one declaration (BR-01m0nsyasfnjc9s4073r8zb33j): every command below is built
+ * here and attached by the declaration, so the terminal cannot carry a command no operation names,
+ * and cannot silently drop one it does. Groups are containers, not operations: each takes the
+ * position of its first declared member, which is what keeps `--help` in its published order.
+ */
+const GROUP_DESCRIPTIONS: Record<string, string> = {
+  task: "Create and transition tasks",
+  observation: "Capture and disposition observations",
+  decision: "Record durable human decisions",
+  batch: "Validate and execute coordinated batches",
+  claim: "Inspect and recover execution claims",
+};
+
+const builtCommands = new Map<string, Command>();
+
+/** Builds one command under `group`, from the same signature commander took before. */
+function defineCommand(group: string | null, signature: string): Command {
+  const [name, ...args] = signature.split(" ");
+  const path = [...(group ? [group] : []), name].join(" ");
+  if (builtCommands.has(path)) throw new Error(`CLI command '${path}' is built twice.`);
+  const command = new Command(name);
+  if (args.length) command.arguments(args.join(" "));
+  builtCommands.set(path, command);
+  return command;
+}
+
+/** Attaches every built command where the declaration says it belongs. */
+function attachDeclaredCommands(): void {
+  const attachedGroups = new Map<string, Command>();
+  for (const operation of expandOperations()) {
+    if (!operation.cli) continue;
+    const path = operation.cli.join(" ");
+    const command = builtCommands.get(path);
+    if (!command) throw new Error(`Operation ${operation.id} declares the CLI command '${path}', which this binary does not build.`);
+    builtCommands.delete(path);
+    if (operation.cli.length === 1) {
+      program.addCommand(command);
+      continue;
+    }
+    const [groupName] = operation.cli;
+    let group = attachedGroups.get(groupName);
+    if (!group) {
+      const description = GROUP_DESCRIPTIONS[groupName];
+      if (!description) throw new Error(`CLI group '${groupName}' has no description.`);
+      group = program.command(groupName).description(description);
+      attachedGroups.set(groupName, group);
+    }
+    group.addCommand(command);
+  }
+  if (builtCommands.size) throw new Error(`This binary builds CLI commands no operation declares: ${[...builtCommands.keys()].sort().join(", ")}.`);
+}
+
+defineCommand(null, "migrate")
   .description("Carry a legacy or flat workspace into the spec/ and process/ namespaces")
   .option("--workspace <path>", "Repository root or workspace directory; omitted uses the repository around the cwd")
   .option("--dry-run", "Report every change without writing anything")
@@ -231,64 +284,53 @@ program
     process.stdout.write(options.json ? `${JSON.stringify(result)}\n` : `${formatMigration(result)}\n`);
   });
 
-program
-  .command("init")
+defineCommand(null, "init")
   .description("Create a .kotta workspace")
   .option("--project-name <name>")
   .option("--link-agents", "Link the project's AGENTS.md to the workspace rules, migrating a recognized legacy Kotta prelude after the human said yes")
   .option("--json")
   .action((options: { projectName?: string; linkAgents?: boolean; json?: boolean }) => print(initCommand(options.projectName, { linkAgents: options.linkAgents }), Boolean(options.json)));
 
-program
-  .command("validate")
+defineCommand(null, "validate")
   .description("Validate the Kotta workspace")
   .option("--json")
   .action((options: { json?: boolean }) => print(validateWorkspace(), Boolean(options.json)));
 
-program
-  .command("status")
+defineCommand(null, "status")
   .description("Show canonical workspace status")
   .option("--json")
   .action((options: { json?: boolean }) => print(statusCommand(), Boolean(options.json)));
 
-program
-  .command("gap")
+defineCommand(null, "gap")
   .description("Report accepted spec promises without repository evidence and enforcement without a spec trace")
   .option("--json")
   .action((options: { json?: boolean }) => print(gapReport(findRepositoryRoot()), Boolean(options.json)));
 
-program
-  .command("sync")
+defineCommand(null, "sync")
   .description("Install the skills Kotta ships and refresh the workspace rules file")
   .option("--link-agents", "Link the project's AGENTS.md to the workspace rules, migrating a recognized legacy Kotta prelude after the human said yes")
   .option("--json")
   .action((options: { linkAgents?: boolean; json?: boolean }) => print(syncCommand({ linkAgents: options.linkAgents }), Boolean(options.json)));
 
-const task = program.command("task").description("Create and transition tasks");
-task
-  .command("list")
+defineCommand("task", "list")
   .description("List tasks with their state and title")
   .option("--state <state...>", "Narrow to one or more states")
   .option("--json")
   .action((options: { state?: string[]; json?: boolean }) => print(listCommand("task", { state: options.state }), Boolean(options.json)));
-task
-  .command("show <id>")
+defineCommand("task", "show <id>")
   .description("Show one task: its state, its set facts and its body")
   .option("--json")
   .action((id: string, options: { json?: boolean }) => print(showCommand("task", id), Boolean(options.json)));
-task
-  .command("new")
+defineCommand("task", "new")
   .requiredOption("--title <title>")
   .requiredOption("--type <type>")
   .option("--profile <profile...>", "Requirement profiles", [])
   .option("--json")
   .action((options: { title: string; type: string; profile: string[]; json?: boolean }) => print(newTask({ title: options.title, type: options.type, profiles: options.profile }), Boolean(options.json)));
-task
-  .command("validate <id>")
+defineCommand("task", "validate <id>")
   .option("--json")
   .action((id: string, options: { json?: boolean }) => print(validateTask(id), Boolean(options.json)));
-task
-  .command("define <id>")
+defineCommand("task", "define <id>")
   .requiredOption("--from <path>", "Markdown definition file")
   .option("--draft", "Store or amend a backlog capture without the coverage check; the task stays in backlog")
   .option("--json")
@@ -303,22 +345,19 @@ task
     }, { requireClean: false });
     print(result, Boolean(options.json));
   });
-task
-  // Accepted-spec coverage normally makes define the backlog -> defined transition. This command
-  // remains only for workspaces that deliberately retain the compatibility gate.
-  .command("sign <id>")
+// Accepted-spec coverage normally makes define the backlog -> defined transition. This command
+// remains only for workspaces that deliberately retain the compatibility gate.
+defineCommand("task", "sign <id>")
   .description("Opt-in compatibility gate: sign a covered backlog task, moving it to defined")
   .option("--approve")
   .option("--json")
   .action((id: string, options: { approve?: boolean; json?: boolean }) => print(signTask(id, Boolean(options.approve)), Boolean(options.json)));
-task
-  .command("start <id>")
+defineCommand("task", "start <id>")
   .requiredOption("--agent <agent>")
   .option("--caller", "Let the current caller execute inside the new worktree with inherited context")
   .option("--json")
   .action((id: string, options: { agent: string; caller?: boolean; json?: boolean }) => print(startTask(id, options.agent, options.caller ? "inherited" : "fresh"), Boolean(options.json)));
-task
-  .command("execute <id>")
+defineCommand("task", "execute <id>")
   .description("Run a defined task in a fresh agent context: start, brief and agent launch in one command (D-009)")
   .option("--agent <agent>", "Agent to launch; required unless --resume reuses the claim's agent")
   .option("--resume", "Reuse the existing execution context instead of creating a second one")
@@ -329,8 +368,7 @@ task
     process.stdout.write(options.json ? `${JSON.stringify(result)}\n` : `${formatExecution(result)}\n`);
     if (!result.ok) process.exitCode = 1;
   });
-task
-  .command("review <id>")
+defineCommand("task", "review <id>")
   .requiredOption("--evidence <evidence>", "Evidence text, or repeat '<exact check>=<evidence>' for a named mapping", (value: string, previous: string[]) => [...previous, value], [])
   .option("--pull-request <identifier>")
   .option("--deviations <text>", "Declared deviations from the task; omitted means 'Not declared.'")
@@ -338,13 +376,11 @@ task
   .option("--known-concerns <text>", "Known concerns left open; omitted means 'Not declared.'")
   .option("--json")
   .action((id: string, options: { evidence: string[]; pullRequest?: string; deviations?: string; observationsCreated?: string; knownConcerns?: string; json?: boolean }) => print(reviewTask(id, options.evidence, options.pullRequest, { deviations: options.deviations, observationsCreated: options.observationsCreated, knownConcerns: options.knownConcerns }), Boolean(options.json)));
-task
-  .command("close <id>")
+defineCommand("task", "close <id>")
   .option("--approve")
   .option("--json")
   .action((id: string, options: { approve?: boolean; json?: boolean }) => print(closeTask(id, Boolean(options.approve)), Boolean(options.json)));
-task
-  .command("cancel <id>")
+defineCommand("task", "cancel <id>")
   .description("Retire a live task into done with a non-completed resolution, from any state before done")
   .requiredOption("--resolution <resolution>", "duplicate | obsolete | cancelled")
   .requiredOption("--reason <reason>", "Why this work is being retired")
@@ -353,8 +389,7 @@ task
   .option("--json")
   .action((id: string, options: { resolution: string; reason: string; supersededBy?: string; approve?: boolean; json?: boolean }) =>
     print(cancelTask(id, options.resolution, options.reason, Boolean(options.approve), undefined, { supersededBy: options.supersededBy }), Boolean(options.json)));
-task
-  .command("brief <id>")
+defineCommand("task", "brief <id>")
   .description("Assemble the minimal execution context for a task (D-009)")
   .option("--out <path>", "Write the brief to a file instead of stdout")
   .option("--warn-tokens <count>", "Warn above this approximate token count", (value) => Number(value), 12000)
@@ -369,60 +404,49 @@ task
     const summary = `brief ${id}: ~${result.data.tokens} tokens (${result.data.sections.length} sections)${result.data.path ? ` → ${result.data.path}` : ""}`;
     console.error(result.data.warning ? `${summary}\nWARNING: ${result.data.warning}` : summary);
   });
-task
-  .command("reopen <id>")
+defineCommand("task", "reopen <id>")
   .option("--approve")
   .option("--json")
   .action((id: string, options: { approve?: boolean; json?: boolean }) => print(reopenTask(id, Boolean(options.approve)), Boolean(options.json)));
 
-const observation = program.command("observation").description("Capture and disposition observations");
-observation
-  .command("list")
+defineCommand("observation", "list")
   .description("List observations with their state and title")
   .option("--state <state...>", "Narrow to one or more states")
   .option("--json")
   .action((options: { state?: string[]; json?: boolean }) => print(listCommand("observation", { state: options.state }), Boolean(options.json)));
-observation
-  .command("show <id>")
+defineCommand("observation", "show <id>")
   .description("Show one observation: its state, its set facts and its body")
   .option("--json")
   .action((id: string, options: { json?: boolean }) => print(showCommand("observation", id), Boolean(options.json)));
-observation
-  .command("new")
+defineCommand("observation", "new")
   .requiredOption("--title <title>")
   .requiredOption("--type <type>")
   .requiredOption("--evidence <evidence>")
   .option("--discovered-during <task>")
   .option("--json")
   .action((options: { title: string; type: string; evidence: string; discoveredDuring?: string; json?: boolean }) => print(newObservation(options), Boolean(options.json)));
-observation
-  .command("validate <id>")
+defineCommand("observation", "validate <id>")
   .option("--json")
   .action((id: string, options: { json?: boolean }) => print(validateObservation(id), Boolean(options.json)));
-observation
-  .command("resolve <id>")
+defineCommand("observation", "resolve <id>")
   .requiredOption("--disposition <disposition>")
   .option("--spec <spec...>", "Specification nodes the amendment touched (amend-spec only)")
   .option("--approve")
   .option("--json")
   .action((id: string, options: { disposition: string; spec?: string[]; approve?: boolean; json?: boolean }) => print(resolveObservation(id, options.disposition, Boolean(options.approve), undefined, { spec: options.spec }), Boolean(options.json)));
 
-const decision = program.command("decision").description("Record durable human decisions");
-decision
-  .command("list")
+defineCommand("decision", "list")
   .description("List decisions with their state and title")
   // Accepted so the refusal can say why decisions have no states, rather than
   // commander answering "unknown option" and leaving the reason unstated.
   .option("--state <state...>", "Not applicable to decisions; refused with the reason")
   .option("--json")
   .action((options: { state?: string[]; json?: boolean }) => print(listCommand("decision", { state: options.state }), Boolean(options.json)));
-decision
-  .command("show <id>")
+defineCommand("decision", "show <id>")
   .description("Show one decision: its state, its set facts and its body")
   .option("--json")
   .action((id: string, options: { json?: boolean }) => print(showCommand("decision", id), Boolean(options.json)));
-decision
-  .command("create")
+defineCommand("decision", "create")
   .description("Validate and atomically record a durable decision")
   .requiredOption("--from <path>", "Markdown decision source")
   .option("--id <id>", "Stable decision identifier (for example D-001)")
@@ -431,79 +455,63 @@ decision
   .action((options: { from: string; id?: string; approve?: boolean; json?: boolean }) =>
     print(createDecision({ from: options.from, id: options.id, approved: Boolean(options.approve) }), Boolean(options.json)));
 
-const batchCommand = program.command("batch").description("Validate and execute coordinated batches");
-batchCommand
-  .command("list")
+defineCommand("batch", "list")
   .description("List batches with their state and title")
   .option("--state <state...>", "Narrow to one or more states")
   .option("--json")
   .action((options: { state?: string[]; json?: boolean }) => print(listCommand("batch", { state: options.state }), Boolean(options.json)));
-batchCommand
-  .command("show <id>")
+defineCommand("batch", "show <id>")
   .description("Show one batch: its state, its set facts and its body")
   .option("--json")
   .action((id: string, options: { json?: boolean }) => print(showCommand("batch", id), Boolean(options.json)));
-batchCommand
-  .command("new")
+defineCommand("batch", "new")
   .requiredOption("--title <title>")
   .option("--goal <goal>")
   .option("--parallelism <count>", "Maximum concurrent tasks", (value) => Number(value), 2)
   .option("--json")
   .action((options: { title: string; goal?: string; parallelism: number; json?: boolean }) => print(newBatch(options), Boolean(options.json)));
-batchCommand
-  .command("add <batch-id> <member-id>")
+defineCommand("batch", "add <batch-id> <member-id>")
   .description("Add a task, or another batch to group under this one")
   .option("--json")
   .action((batchId: string, memberId: string, options: { json?: boolean }) => print(updateBatchTasks(batchId, memberId, "add"), Boolean(options.json)));
-batchCommand
-  .command("remove <batch-id> <member-id>")
+defineCommand("batch", "remove <batch-id> <member-id>")
   .description("Remove a member task, or a grouped child batch")
   .option("--json")
   .action((batchId: string, memberId: string, options: { json?: boolean }) => print(updateBatchTasks(batchId, memberId, "remove"), Boolean(options.json)));
-batchCommand
-  .command("validate <id>")
+defineCommand("batch", "validate <id>")
   .option("--json")
   .action((id: string, options: { json?: boolean }) => print(validateBatch(id), Boolean(options.json)));
-batchCommand
-  .command("sign <id>")
+defineCommand("batch", "sign <id>")
   .description("Human gate: sign a validated backlog batch, moving it to defined")
   .option("--approve")
   .option("--json")
   .action((id: string, options: { approve?: boolean; json?: boolean }) => print(signBatch(id, Boolean(options.approve)), Boolean(options.json)));
-batchCommand
-  .command("start <id>")
+defineCommand("batch", "start <id>")
   .requiredOption("--agent <agent>")
   .option("--json")
   .action((id: string, options: { agent: string; json?: boolean }) => print(startBatch(id, options.agent), Boolean(options.json)));
-batchCommand
-  .command("status <id>")
+defineCommand("batch", "status <id>")
   .option("--json")
   .action((id: string, options: { json?: boolean }) => print(batchStatus(id), Boolean(options.json)));
-batchCommand
-  .command("close <id>")
+defineCommand("batch", "close <id>")
   .description("Complete a batch whose member tasks have all reached done, from any batch state")
   .option("--approve")
   .option("--json")
   .action((id: string, options: { approve?: boolean; json?: boolean }) => print(closeBatch(id, Boolean(options.approve)), Boolean(options.json)));
-batchCommand
-  .command("finalize <id>")
+defineCommand("batch", "finalize <id>")
   .description("Clean up the coordinator branch of a done batch after its integration is proven")
   .option("--json")
   .action((id: string, options: { json?: boolean }) => print(finalizeBatch(id), Boolean(options.json)));
 
-const claim = program.command("claim").description("Inspect and recover execution claims");
-claim
-  .command("list")
+defineCommand("claim", "list")
   .option("--json")
   .action((options: { json?: boolean }) => print(listClaims(), Boolean(options.json)));
-claim
-  .command("release <id>")
+defineCommand("claim", "release <id>")
   .option("--force")
   .option("--json")
   .action((id: string, options: { force?: boolean; json?: boolean }) => print(releaseClaim(id, Boolean(options.force)), Boolean(options.json)));
 
-program
-  .command("integrate")
+defineCommand(null, "integrate")
   .description("Connect Kotta to a calling agent host")
   .argument("<host>", "Supported host: codex")
   .option("--json")
@@ -512,16 +520,14 @@ program
     print(integrateCodex(), Boolean(options.json));
   });
 
-program
-  .command("mcp")
+defineCommand(null, "mcp")
   .description("Serve Kotta tools to the calling chat over stdio MCP")
   .option("--workspace <path>", "Repository root or linked worktree", ".")
   .action(async (options: { workspace: string }) => {
     await mcpCommand(options.workspace);
   });
 
-program
-  .command("ui")
+defineCommand(null, "ui")
   .description("Serve the local filesystem-backed Kotta board")
   .option("--workspace <path>", "Repository root or workspace directory", ".")
   .option("--port <port>", "Local port; omitted starts at 4311 and advances to the next free port")
@@ -531,6 +537,8 @@ program
   .action(async (options: { workspace: string; port?: string; host: string; open: boolean; json?: boolean }) => {
     await uiCommand({ workspace: options.workspace, port: options.port === undefined ? undefined : Number(options.port), host: options.host, json: options.json, open: options.open });
   });
+
+attachDeclaredCommands();
 
 program.configureOutput({ outputError: (message) => process.stderr.write(message) });
 

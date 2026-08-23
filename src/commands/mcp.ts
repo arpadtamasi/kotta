@@ -14,6 +14,7 @@ import { readEvents } from "../core/events.js";
 import { assertCurrentWorkspaceShape, findRepositoryRoot } from "../filesystem/workspace.js";
 import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
 import { gapReport } from "./gap.js";
+import { expandOperations } from "../core/operations.js";
 
 type ToolPayload = Record<string, unknown>;
 
@@ -52,7 +53,18 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     },
   );
 
-  server.registerTool("workspace_status", {
+  // One operation, one declaration (BR-01m0nsyasfnjc9s4073r8zb33j): the tools below are built
+  // here but registered by the declaration below, so this server cannot carry a tool no operation
+  // names, and cannot silently omit one it does.
+  const built = new Map<string, { definition: unknown; handler: unknown }>();
+  // Same signature as registerTool, so every definition below keeps inferring its handler's
+  // arguments from its own input schema; only the storage is deferred.
+  const define = ((name: string, definition: unknown, handler: unknown) => {
+    if (built.has(name)) throw new Error(`MCP tool '${name}' is built twice.`);
+    built.set(name, { definition, handler });
+  }) as unknown as McpServer["registerTool"];
+
+  define("workspace_status", {
     title: "Read Kotta workspace status",
     description: "Read canonical task and observation state before deciding what Kotta action is needed.",
     inputSchema: {},
@@ -64,7 +76,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     } catch (error) { return toolError(error); }
   });
 
-  server.registerTool("gap_report", {
+  define("gap_report", {
     title: "Read the implementation gap",
     description: "Read the accepted specification on the configured base branch and report promises without explicit code/test/command evidence plus enforced behavior without a specification trace. Deterministic and read-only; creates no tasks or observations.",
     inputSchema: {},
@@ -94,7 +106,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
         return toolResult(result as unknown as ToolPayload, `${result.data.count} ${entity === "batch" && result.data.count !== 1 ? "batches" : `${entity}${result.data.count === 1 ? "" : "s"}`}.`);
       } catch (error) { return toolError(error); }
     };
-    server.registerTool(`${entity}_list`, definition, handler);
+    define(`${entity}_list`, definition, handler);
   }
 
   for (const entity of ["task", "observation", "decision", "batch"] as const) {
@@ -110,10 +122,10 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
         return toolResult(result as unknown as ToolPayload, `${result.data.title || result.data.id} is ${result.data.state}.`);
       } catch (error) { return toolError(error); }
     };
-    server.registerTool(`${entity}_show`, definition, handler);
+    define(`${entity}_show`, definition, handler);
   }
 
-  server.registerTool("task_create", {
+  define("task_create", {
     title: "Create a Kotta task",
     description: "Create a backlog task from explicit user intent and return its stable id and canonical path. Never ask the user to relay the id.",
     inputSchema: {
@@ -133,7 +145,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     } catch (error) { return toolError(error); }
   });
 
-  server.registerTool("task_define", {
+  define("task_define", {
     title: "Define a Kotta task",
     description: "Apply a complete Markdown definition before execution. Every acceptance condition must explicitly map to a referenced accepted spec node; valid coverage moves the task to defined unless the workspace retains the compatibility sign gate. With draft=true a backlog capture is stored or amended with its structure validated and no coverage check, and stays in backlog.",
     inputSchema: {
@@ -153,7 +165,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     } catch (error) { return toolError(error); }
   });
 
-  server.registerTool("task_validate", {
+  define("task_validate", {
     title: "Validate a Kotta task",
     description: "Validate one task definition and return structured rule violations without changing state.",
     inputSchema: { id: z.string().min(1) },
@@ -165,7 +177,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     } catch (error) { return toolError(error); }
   });
 
-  server.registerTool("task_brief", {
+  define("task_brief", {
     title: "Read a Kotta execution brief",
     description: "Read the deterministic, bounded execution brief for one task without including unrelated chat or workspace history.",
     inputSchema: { id: z.string().min(1) },
@@ -177,7 +189,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     } catch (error) { return toolError(error); }
   });
 
-  server.registerTool("task_start_caller", {
+  define("task_start_caller", {
     title: "Start task for the calling agent",
     description: "Claim a defined task and return its isolated feature branch and worktree to the current caller, preserving inherited chat context explicitly.",
     inputSchema: { id: z.string().min(1), agent: z.string().min(1).default("codex") },
@@ -189,7 +201,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     } catch (error) { return toolError(error); }
   });
 
-  server.registerTool("task_submit_review", {
+  define("task_submit_review", {
     title: "Submit task for review",
     description: "Submit an active task with acceptance evidence after implementation and verification are complete. An evidence value starting with 'run: <command>' declares a runnable check: it is executed in the execution checkout, a non-zero exit refuses the submission, and a success is recorded next to the evidence as command, commit and exit 0.",
     inputSchema: {
@@ -208,7 +220,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     } catch (error) { return toolError(error); }
   });
 
-  server.registerTool("observation_create", {
+  define("observation_create", {
     title: "Capture a Kotta observation",
     description: "Capture evidence-backed out-of-scope work without silently widening the active task.",
     inputSchema: {
@@ -231,7 +243,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     } catch (error) { return toolError(error); }
   });
 
-  server.registerTool("task_message_record", {
+  define("task_message_record", {
     title: "Record visible task conversation",
     description: "Persist an exact user-visible human or assistant task message on the canonical control branch. Never store hidden reasoning or raw tool output.",
     inputSchema: {
@@ -249,7 +261,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     } catch (error) { return toolError(error); }
   });
 
-  server.registerTool("approval_request", {
+  define("approval_request", {
     title: "Request an exact Kotta approval",
     description: "Present one exact pending Kotta transition in the current host chat. Apply it only after the human explicitly approves the elicitation; rejection and cancellation are durable.",
     inputSchema: {
@@ -308,6 +320,17 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
       return toolResult(result as unknown as ToolPayload, decision === "approved" ? `Approved and applied ${description}.` : `${description} was ${decision}.`);
     } catch (error) { return toolError(error); }
   });
+
+  for (const operation of expandOperations()) {
+    if (!operation.mcp) continue;
+    const tool = built.get(operation.mcp);
+    if (!tool) throw new Error(`Operation ${operation.id} declares the MCP tool '${operation.mcp}', which this server does not build.`);
+    built.delete(operation.mcp);
+    // The map erased the per-tool schema types; the declaration decides what is registered, and
+    // the surface snapshot proves each tool kept its schema and annotations.
+    (server.registerTool as (name: string, definition: unknown, handler: unknown) => unknown)(operation.mcp, tool.definition, tool.handler);
+  }
+  if (built.size) throw new Error(`This server builds MCP tools no operation declares: ${[...built.keys()].sort().join(", ")}.`);
 
   return server;
 }
