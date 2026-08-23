@@ -3,13 +3,18 @@ id: F-01m0pvvh2f951cdfwyv70cfc6d
 title: >-
   A cancelled task reads as done everywhere, so abandoned work is
   indistinguishable from delivered work
-status: new
+status: resolved
 origin: agent
 observation_type: defect
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-23'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-23T23:51:28.105Z'
+approved_by: cli
+approved_at: '2026-08-23T23:51:28.105Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0pvvh2f951cdfwyv70cfc6d — A cancelled task reads as done everywhere, so abandoned work is indistinguishable from delivered work
 

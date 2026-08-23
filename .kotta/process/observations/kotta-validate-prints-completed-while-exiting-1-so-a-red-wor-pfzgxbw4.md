@@ -3,13 +3,18 @@ id: F-01m0psb5eaj8trtxcgpfzgxbw4
 title: >-
   kotta validate prints 'completed' while exiting 1, so a red workspace reads as
   green
-status: new
+status: resolved
 origin: agent
 observation_type: defect
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-23'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-23T23:51:26.337Z'
+approved_by: cli
+approved_at: '2026-08-23T23:51:26.337Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0psb5eaj8trtxcgpfzgxbw4 — kotta validate prints 'completed' while exiting 1, so a red workspace reads as green
 
