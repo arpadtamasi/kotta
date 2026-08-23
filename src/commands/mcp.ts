@@ -2,7 +2,7 @@ import { join, resolve } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { approvalDescription, decideApproval, failApproval, proposeApproval, type ApprovalAction, type ApprovalDecision } from "./approval.js";
+import { APPROVAL_ACTIONS, approvalDescription, decideApproval, failApproval, proposeApproval, type ApprovalAction, type ApprovalDecision } from "./approval.js";
 import { recordTaskMessage } from "./conversation.js";
 import { briefTask, defineTask, newTask, reviewTask, startTask, validateTask } from "./task.js";
 import { newObservation } from "./observation.js";
@@ -47,7 +47,9 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
         "Kotta is the canonical task control plane for this repository.",
         "Use these structured tools instead of asking the human to copy ids or run lifecycle commands.",
         "Caller execution uses task_start_caller; fresh context remains available through the CLI for automation.",
-        "For close, cancel, request-changes, observation disposition, batch close, or a workspace-configured compatibility sign gate, call approval_request: it elicits the exact human decision in the host chat and records the receipt before applying.",
+        // Derived, not retyped: this sentence was a fourth copy of the gating knowledge, and it
+        // said five actions while APPROVAL_ACTIONS held six.
+        `For ${APPROVAL_ACTIONS.join(", ")}, call approval_request: it elicits the exact human decision in the host chat and records the receipt before applying.`,
         "The Kotta board is read-only. Record only visible user/assistant task messages; never hidden reasoning or raw tool output.",
       ].join(" "),
     },
