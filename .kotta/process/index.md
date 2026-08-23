@@ -17,11 +17,11 @@ None.
 
 ## Active tasks
 
-- one-operation-registry-derives-both-the-cli-and-the-mcp-surf-06fw8n0g
+None.
 
 ## Review
 
-None.
+- one-operation-registry-derives-both-the-cli-and-the-mcp-surf-06fw8n0g
 
 ## Blocked
 
