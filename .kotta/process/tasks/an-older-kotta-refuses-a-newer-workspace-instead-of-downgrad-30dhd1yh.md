@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdnw5e2b43bngn30dhd1yh
 title: An older Kotta refuses a newer workspace instead of downgrading it
-status: active
+status: review
 origin: human
 types:
   - bug
@@ -88,3 +88,31 @@ The exemption lives in `SHAPE_EXEMPT` in `src/cli/index.ts`, which skips `assert
 
 - `run: npx vitest run tests/integration/version-boundary.test.ts` — the new suite: a newer workspace refused by every reading command and by both migrate forms, the wording assertions, and an older workspace still migrating unchanged.
 - `run: npm test` — the full suite, since the refusal sits on the path every command takes.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A newer workspace is refused by name. Every command that reads a workspace whose recorded shape version is higher than the one this Kotta implements refuses, naming both versions and saying the workspace was written by a newer Kotta; the remedy it names is upgrading Kotta. | run: npx vitest run tests/integration/version-boundary.test.ts -t 'a newer workspace is refused by every reading command' — verified: exit 0 at 2951176 |
+| The newer refusal never says legacy and never names migrate, because neither is true of that direction. | run: npx vitest run tests/integration/version-boundary.test.ts -t 'the newer refusal never says legacy and never names migrate' — verified: exit 0 at 2951176 |
+| `migrate` loses its exemption in the newer direction only. `kotta migrate` and `kotta migrate --dry-run` refuse a newer workspace and print no plan; both still read and carry an older workspace exactly as before. | run: npx vitest run tests/integration/version-boundary.test.ts -t 'migrate refuses a newer workspace and plans nothing' && npx vitest run tests/integration/version-boundary.test.ts -t 'an older workspace still refuses the way it always did' — verified: exit 0 at 2951176 |
+| An unreadable version is refused on its own terms, as neither older nor newer, naming the file that could not be read. | run: npx vitest run tests/integration/version-boundary.test.ts -t 'an unreadable version is refused as neither direction' — verified: exit 0 at 2951176 |
+
+### Verification performed
+
+A newer workspace is refused by name. Every command that reads a workspace whose recorded shape version is higher than the one this Kotta implements refuses, naming both versions and saying the workspace was written by a newer Kotta; the remedy it names is upgrading Kotta.: run: npx vitest run tests/integration/version-boundary.test.ts -t 'a newer workspace is refused by every reading command'
+The newer refusal never says legacy and never names migrate, because neither is true of that direction.: run: npx vitest run tests/integration/version-boundary.test.ts -t 'the newer refusal never says legacy and never names migrate'
+`migrate` loses its exemption in the newer direction only. `kotta migrate` and `kotta migrate --dry-run` refuse a newer workspace and print no plan; both still read and carry an older workspace exactly as before.: run: npx vitest run tests/integration/version-boundary.test.ts -t 'migrate refuses a newer workspace and plans nothing' && npx vitest run tests/integration/version-boundary.test.ts -t 'an older workspace still refuses the way it always did'
+An unreadable version is refused on its own terms, as neither older nor newer, naming the file that could not be read.: run: npx vitest run tests/integration/version-boundary.test.ts -t 'an unreadable version is refused as neither direction'
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
