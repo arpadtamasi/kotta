@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- the-invocation-kotta-writes-for-a-host-does-not-depend-on-pa-ykj5sba8
+None.
 
 ## Review
 
-None.
+- the-invocation-kotta-writes-for-a-host-does-not-depend-on-pa-ykj5sba8
 
 ## Blocked
 

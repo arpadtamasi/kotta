@@ -1,7 +1,7 @@
 ---
 id: T-01m0qz128k7h6vtnhnykj5sba8
 title: The invocation Kotta writes for a host does not depend on PATH
-status: active
+status: review
 origin: human
 types:
   - bug
@@ -85,3 +85,31 @@ The existing-block detection is the regex at `src/commands/integrate.ts:22`; the
 
 - `run: npx vitest run tests/integration/integrate-invocation.test.ts` — the new suite, including spawning the recorded invocation with an empty PATH and reading the MCP server's handshake.
 - `run: npm test` — the full suite.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| The written invocation resolves without a PATH. `kotta integrate` records the interpreter running Kotta and the absolute path of Kotta's own entry point, and a host spawning that invocation with an empty PATH starts the MCP server. | run: npx vitest run tests/integration/integrate-invocation.test.ts -t 'the recorded invocation starts Kotta with no PATH at all' — verified: exit 0 at 42b914d |
+| A stale recorded invocation is named, not passed over. Running integrate against a configuration whose recorded command no longer exists reports that command by name instead of reporting the host as already configured. | run: npx vitest run tests/integration/integrate-invocation.test.ts -t 'a recorded command that is gone is named, not passed over' — verified: exit 0 at 42b914d |
+| A recorded invocation that still resolves is left alone, and integrate says it is already configured without rewriting the file. | run: npx vitest run tests/integration/integrate-invocation.test.ts -t 'a second run changes no bytes' — verified: exit 0 at 42b914d |
+| Nothing else Kotta prints changes. The prose that tells a human to run `kotta task close <id>` keeps the bare name, because that is what a person types. | The diff at 42b914d touches src/commands/integrate.ts and one renderer in src/cli/index.ts; no message string elsewhere changed, and the surface snapshot in tests/integration/surface-snapshot.test.ts is unmoved, which the full suite proves. |
+
+### Verification performed
+
+The written invocation resolves without a PATH. `kotta integrate` records the interpreter running Kotta and the absolute path of Kotta's own entry point, and a host spawning that invocation with an empty PATH starts the MCP server.: run: npx vitest run tests/integration/integrate-invocation.test.ts -t 'the recorded invocation starts Kotta with no PATH at all'
+A stale recorded invocation is named, not passed over. Running integrate against a configuration whose recorded command no longer exists reports that command by name instead of reporting the host as already configured.: run: npx vitest run tests/integration/integrate-invocation.test.ts -t 'a recorded command that is gone is named, not passed over'
+A recorded invocation that still resolves is left alone, and integrate says it is already configured without rewriting the file.: run: npx vitest run tests/integration/integrate-invocation.test.ts -t 'a second run changes no bytes'
+Nothing else Kotta prints changes. The prose that tells a human to run `kotta task close <id>` keeps the bare name, because that is what a person types.: The diff at 42b914d touches src/commands/integrate.ts and one renderer in src/cli/index.ts; no message string elsewhere changed, and the surface snapshot in tests/integration/surface-snapshot.test.ts is unmoved, which the full suite proves.
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
