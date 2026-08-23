@@ -85,7 +85,13 @@ the forms at the missing end. Examples include:
 accepted:
   - "evidence: discovery story; examples start after the policy workshop"
   - "state-machine: the v1 entity has no lifecycle"
+  - "implementation: the exporter ships after the policy workshop; nothing implements this yet"
 ```
+
+The `implementation` key (and its `implementation-gap` and `verification` synonyms) is the one
+`kotta gap` reads, and it is not optional bookkeeping: a node with no evidence and no such entry
+makes `kotta gap` refuse (BR-01m0qtshfqhcrrqtz051zm9svr). Write the reason for a reader who will
+meet it a year from now, and delete it when the promise is kept.
 
 When an accepted entry matches a missing required edge, remove the question from the work list and
 place the entry under **Accepted gaps** with its reason. Also list well-formed accepted entries for

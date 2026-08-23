@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **Every accepted promise is kept or admitted.** `kotta gap` no longer only reports: it refuses a
+  workspace holding a specification node that has neither evidence naming its id nor an admitted
+  implementation gap in its own frontmatter, naming each and exiting non-zero. The report still
+  prints in full when it refuses — it is why the command is run — with the failure named beside it.
+  Coverage bound only the front of the lifecycle, so the number of promises with no evidence could
+  only grow; it stood at 108 of 119 nodes. The rule does not ask for that number to fall, which
+  would reward writing ids into comments. It asks for every promise to sit in one of two columns by
+  someone's decision. The 108 that predate the rule carry an admission saying exactly that: they
+  were admitted in bulk and not examined individually.
+
 ### Fixed
 
 - **A newer workspace is refused, not downgraded.** A Kotta meeting a workspace whose recorded
