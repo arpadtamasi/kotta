@@ -1,0 +1,17 @@
+{
+  "entity": "T-01kz23pvzscenqavzx4tg62x1b",
+  "task": "T-01kz23pvzscenqavzx4tg62x1b",
+  "kind": "approval",
+  "approval_id": "E-01m0pvs4h5t1t0a1hygsh3mdh8",
+  "phase": "applied",
+  "action": "task.cancel",
+  "payload": {
+    "resolution": "obsolete",
+    "reason": "Delivered. The executor captures the agent's stdout rather than discarding it (src/commands/execute.ts:114-136), and the execution record is derived from what the run actually did, including the no-change comparison. The observation behind this task, F-e3z74k41, is resolved.",
+    "superseded_by": "T-01kzdhtqw01nbgdg5dd9cw3zpr",
+    "surface": "cli"
+  },
+  "source_message": "E-01m0pvs4h5pnykqnnp6c9appa3",
+  "id": "E-01m0pvs4h6k7r22xmp11vgg311",
+  "created_at": "2026-08-23T08:28:48.038Z"
+}

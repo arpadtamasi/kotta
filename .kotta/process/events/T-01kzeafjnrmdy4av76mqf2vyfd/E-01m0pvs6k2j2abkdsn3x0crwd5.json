@@ -1,0 +1,9 @@
+{
+  "entity": "T-01kzeafjnrmdy4av76mqf2vyfd",
+  "task": "T-01kzeafjnrmdy4av76mqf2vyfd",
+  "kind": "lifecycle",
+  "state": "done",
+  "summary": "Task cancelled from backlog with resolution duplicate. Reason: The same intent, written again fourteen days later and better: entities are named to a human by title, with an identifier only where a title is absent or genuinely collides. Keeping both would split one change across two tasks. Superseded by T-01m0jdnv5fjechrfqwphvrrgqx.",
+  "id": "E-01m0pvs6k2j2abkdsn3x0crwd5",
+  "created_at": "2026-08-23T08:28:50.146Z"
+}

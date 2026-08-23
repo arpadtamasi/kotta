@@ -1,0 +1,9 @@
+{
+  "entity": "T-005",
+  "task": "T-005",
+  "kind": "lifecycle",
+  "state": "done",
+  "summary": "Task cancelled from backlog with resolution cancelled. Reason: The shaping line, captured 2026-07-21 for the a-team era, was never started and the system has since answered its question differently. It specified 'a-team shape preview' and 'shape apply' — a typed shape-plan with canonical hashes, a previewed plan_hash, a journaled transactional apply and multi-finding provenance — so that a reviewed finding selection could become tickets in one recoverable operation. None of it exists, and observation triage today runs one observation at a time through 'observation validate' and a human-gated 'observation resolve', in the conversation rather than through a plan file. Its one durable part, the shared mutation lock (T-002), was built and is cancelled separately as delivered. Reviving the batch model would be a new proposal against today's vocabulary, not this task.",
+  "id": "E-01m0pvsrdnnhpv1637c14y7vxg",
+  "created_at": "2026-08-23T08:29:08.406Z"
+}

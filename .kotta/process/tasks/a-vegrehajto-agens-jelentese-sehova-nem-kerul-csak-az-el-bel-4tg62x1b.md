@@ -1,7 +1,7 @@
 ---
 id: T-01kz23pvzscenqavzx4tg62x1b
 title: A vegrehajto agens jelentese automatikusan a ticketbe kerul
-status: backlog
+status: done
 origin: observation
 types:
   - feature
@@ -16,8 +16,18 @@ blocks: []
 branch: null
 pull_request: null
 created_at: '2026-08-02'
-updated_at: '2026-08-02'
+updated_at: '2026-08-23'
 source_observation: F-01kz23nj69srgr2w13htpyyahh
+resolution: obsolete
+cancellation_reason: >-
+  Delivered. The executor captures the agent's stdout rather than discarding it
+  (src/commands/execute.ts:114-136), and the execution record is derived from
+  what the run actually did, including the no-change comparison. The observation
+  behind this task, F-e3z74k41, is resolved.
+superseded_by: T-01kzdhtqw01nbgdg5dd9cw3zpr
+approved_by: cli
+approved_at: '2026-08-23T08:28:47.968Z'
+approval_basis: 'CLI --approve: task.cancel'
 ---
 # T-01kz23pvzscenqavzx4tg62x1b — A végrehajtó ágens jelentése automatikusan a ticketbe kerül
 

@@ -1,7 +1,7 @@
 ---
 id: T-002
 title: Introduce a shared mutation lock for every canonical A-Team writer
-status: backlog
+status: done
 origin: human
 types:
   - refactor
@@ -16,7 +16,17 @@ blocks: []
 branch: null
 pull_request: null
 created_at: '2026-07-21'
-updated_at: '2026-07-21'
+updated_at: '2026-08-23'
+resolution: obsolete
+cancellation_reason: >-
+  Delivered. src/git/control-plane.ts:94-125 holds a repository-scoped exclusive
+  mutation lock with an owner.json record, dead-process detection and stale
+  recovery, and it serializes writers from every linked worktree — the protocol
+  this task specified, built under the live control plane task.
+superseded_by: T-01kz8tk2t53jbax6mrseka50v9
+approved_by: cli
+approved_at: '2026-08-23T08:28:17.881Z'
+approval_basis: 'CLI --approve: task.cancel'
 ---
 # T-002 — Introduce a shared mutation lock for every canonical A-Team writer
 

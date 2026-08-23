@@ -14,7 +14,7 @@ An initialized workspace with its state committed to the configured base ref; a 
 
 ## Postconditions
 
-GET serves state and the event timeline; the selected URL is printed and opened. Restarting reconstructs the same timeline from the stored events.
+GET serves state and the event timeline; the selected URL is printed and opened. Restarting reconstructs the same timeline from the stored events. A task that ended at done is shown with the resolution that ended it, so retired work does not read as delivered work.
 
 ## Invariants
 

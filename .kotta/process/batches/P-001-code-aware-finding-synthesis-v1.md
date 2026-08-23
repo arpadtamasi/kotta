@@ -1,7 +1,7 @@
 ---
 id: P-001
 title: Code-aware finding synthesis V1
-status: backlog
+status: done
 tasks:
   - T-001
   - T-002
@@ -20,7 +20,7 @@ authority:
   may_close_tickets: false
   may_close_package: false
 created_at: '2026-07-21'
-updated_at: '2026-07-21'
+updated_at: '2026-08-23'
 ---
 # P-001 — Code-aware finding synthesis V1
 

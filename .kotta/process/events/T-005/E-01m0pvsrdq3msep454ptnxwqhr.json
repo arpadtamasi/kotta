@@ -1,0 +1,9 @@
+{
+  "entity": "T-005",
+  "task": "T-005",
+  "kind": "message",
+  "role": "human",
+  "text": "Approved in CLI: task.cancel",
+  "id": "E-01m0pvsrdq3msep454ptnxwqhr",
+  "created_at": "2026-08-23T08:29:08.407Z"
+}
