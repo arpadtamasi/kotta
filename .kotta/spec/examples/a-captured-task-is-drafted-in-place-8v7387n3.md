@@ -3,7 +3,7 @@ id: EX-01m0mzvcvdvxzpr59p8v7387n3
 form: example
 title: "A captured task is drafted in place"
 subjects:
-  - SM-01m0f0wn89gjy6dbk1j6fjpv6j
+  - UC-01m0f0wn89tta6w4w3a7zw45xr
 ---
 
 ## Given
