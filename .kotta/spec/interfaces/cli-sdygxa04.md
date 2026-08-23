@@ -17,7 +17,7 @@ Node.js 20+, a Git repository; an initialized workspace for everything except in
 
 ## Postconditions
 
-Mutations are validated before writing and committed to canonical state. Every entity-creating command prints the identifier it minted. Exit codes reflect the outcome. The human rendering of a result carries what its JSON carries: a non-zero exit is explained in the printed output rather than left to the exit code alone.
+Mutations are validated before writing and committed to canonical state. Every entity-creating command prints the identifier it minted. Exit codes reflect the outcome. The human rendering of a result carries what its JSON carries: a non-zero exit is explained in the printed output rather than left to the exit code alone. An invocation of Kotta written into another program's configuration is proved from the running process, never left to that program's PATH.
 
 ## Invariants
 
