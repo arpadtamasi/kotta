@@ -18,7 +18,7 @@ import { canonicalEntityId, type ListableEntity } from "../filesystem/entities.j
 import { resolveWorkspaceLocation, uiCommand } from "../commands/ui.js";
 import { createDecision } from "../commands/decision.js";
 import { formatMigration, migrateWorkspace } from "../commands/migrate.js";
-import { assertCurrentWorkspaceShape, findRepositoryRoot } from "../filesystem/workspace.js";
+import { WorkspaceShapeError, assertCurrentWorkspaceShape, findRepositoryRoot } from "../filesystem/workspace.js";
 import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
 import { mcpCommand } from "../commands/mcp.js";
 import { integrateCodex } from "../commands/integrate.js";
@@ -279,7 +279,10 @@ program.hook("preAction", (_program, action) => {
   try {
     assertCurrentWorkspaceShape(shapeJudgementRoot(findRepositoryRoot()));
   } catch (error) {
-    if (!(error instanceof Error) || !error.message.includes("kotta migrate")) return; // no repository, no workspace: not our refusal
+    // Ours by type, never by wording: matching the words "kotta migrate" swallowed the first refusal
+    // that correctly did not name it (BR-01m0q89b16xcfasfj1z8mc2hgg). Anything else thrown here —
+    // no repository, no workspace — is not this hook's business and stays swallowed.
+    if (!(error instanceof WorkspaceShapeError)) return;
     throw error;
   }
   normaliseIdArgument(action as unknown as Parameters<typeof normaliseIdArgument>[0]);
