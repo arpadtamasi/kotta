@@ -1,7 +1,7 @@
 ---
 id: T-01kzeafjnrmdy4av76mqf2vyfd
 title: The skills and the board name entities the way D-003 already decided
-status: backlog
+status: done
 origin: human
 types:
   - bug
@@ -15,7 +15,16 @@ blocks: []
 branch: null
 pull_request: null
 created_at: '2026-08-07'
-updated_at: '2026-08-07'
+updated_at: '2026-08-23'
+resolution: duplicate
+cancellation_reason: >-
+  The same intent, written again fourteen days later and better: entities are
+  named to a human by title, with an identifier only where a title is absent or
+  genuinely collides. Keeping both would split one change across two tasks.
+superseded_by: T-01m0jdnv5fjechrfqwphvrrgqx
+approved_by: cli
+approved_at: '2026-08-23T08:28:50.074Z'
+approval_basis: 'CLI --approve: task.cancel'
 ---
 # T-01kzeafjnrmdy4av76mqf2vyfd — The skills and the board name entities the way D-003 already decided
 
