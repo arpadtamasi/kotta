@@ -1,7 +1,7 @@
 ---
 id: T-006
 title: Add a read-only VS Code shaping workflow for code-aware finding clustering
-status: backlog
+status: done
 origin: human
 types:
   - feature
@@ -17,7 +17,23 @@ blocks: []
 branch: null
 pull_request: null
 created_at: '2026-07-21'
-updated_at: '2026-07-21'
+updated_at: '2026-08-23'
+resolution: cancelled
+cancellation_reason: >-
+  The shaping line, captured 2026-07-21 for the a-team era, was never started
+  and the system has since answered its question differently. It specified
+  'a-team shape preview' and 'shape apply' — a typed shape-plan with canonical
+  hashes, a previewed plan_hash, a journaled transactional apply and
+  multi-finding provenance — so that a reviewed finding selection could become
+  tickets in one recoverable operation. None of it exists, and observation
+  triage today runs one observation at a time through 'observation validate' and
+  a human-gated 'observation resolve', in the conversation rather than through a
+  plan file. Its one durable part, the shared mutation lock (T-002), was built
+  and is cancelled separately as delivered. Reviving the batch model would be a
+  new proposal against today's vocabulary, not this task.
+approved_by: cli
+approved_at: '2026-08-23T08:29:10.133Z'
+approval_basis: 'CLI --approve: task.cancel'
 ---
 # T-006 — Add a read-only VS Code shaping workflow for code-aware finding clustering
 
