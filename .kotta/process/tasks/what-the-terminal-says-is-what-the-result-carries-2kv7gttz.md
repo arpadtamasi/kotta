@@ -1,7 +1,7 @@
 ---
 id: T-01m0pz1ade6qc34aty2kv7gttz
 title: What the terminal says is what the result carries
-status: defined
+status: active
 origin: human
 types:
   - defect
@@ -17,7 +17,7 @@ spec:
   - EX-01m0pw5bc7qdenh5j2pefb13ed
   - IF-01m0f0wn8994dzf9z1sdygxa04
   - IF-01m0f0wn898ggsdxa0kh6t6tnw
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-23'
 updated_at: '2026-08-23'
@@ -36,6 +36,12 @@ coverage:
   'A batch of retired work does not read as built. `batch status` reports each member''s resolution, so a batch whose members were all cancelled is distinguishable from one whose members were completed.':
     - BR-01m0pw5bc7b1rkg5dct5qgdkmb
     - EX-01m0pw5bc7qdenh5j2pefb13ed
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 60bc76e557dd3988b7e712f79604fd403513c0d5
 ---
 ## Outcome
 
