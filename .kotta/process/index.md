@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- every-accepted-promise-is-kept-or-admitted-vrd02tyb
+None.
 
 ## Review
 
-None.
+- every-accepted-promise-is-kept-or-admitted-vrd02tyb
 
 ## Blocked
 

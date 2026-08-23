@@ -1,7 +1,7 @@
 ---
 id: T-01m0qwh1jpyc8wbkpbvrd02tyb
 title: Every accepted promise is kept or admitted
-status: active
+status: review
 origin: human
 types:
   - feature
@@ -88,3 +88,31 @@ The mechanism already exists and is unused: `acceptedImplementationReason` in `s
 - `run: npx vitest run tests/integration/gap-ratchet.test.ts` — the new suite: refusal on an unadmitted node, a pass for an evidenced one and for an admitted one, and the report keeping the two columns apart.
 - `run: npm test` — the full suite.
 - `run: node dist/cli/index.js gap` — this workspace against its own rule, exiting zero.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| `kotta gap` refuses an unadmitted promise. A workspace holding a node with neither evidence nor an admitted implementation gap makes the command name each such node, say where evidence was sought, and exit non-zero. | run: npx vitest run tests/integration/gap-ratchet.test.ts -t 'gap refuses the node that is neither evidenced nor admitted' — verified: exit 0 at 96ef301 |
+| Evidence and an admission both satisfy it, and neither is counted as the other. A node a test names by id passes as evidenced; a node whose frontmatter admits the gap with a reason passes as admitted and is reported with that reason; adding the missing admission is enough to turn a refusal into a pass. | run: npx vitest run tests/integration/gap-ratchet.test.ts -t 'an evidenced node and an admitted node both pass' — verified: exit 0 at 96ef301 |
+| This workspace passes its own check. Every accepted node in `.kotta/spec/` is evidenced or admitted, so `kotta gap` exits zero here, and the report separates the two columns rather than reporting an empty gap. | run: npx vitest run tests/integration/gap-ratchet.test.ts -t 'this workspace passes its own rule' — verified: exit 0 at 96ef301 |
+| An inherited admission says it is inherited. Each admission written for a node that predates this rule states that it was not examined individually, so no reader mistakes the bulk admission for a judgement about that node. | Each of the 107 admissions reads: 'Inherited on 2026-08-23, when kotta gap began refusing a promise that is neither evidenced nor admitted (BR-01m0qtshfqhcrrqtz051zm9svr). This node predates that rule and no code, test or command definition names its id. It was admitted in bulk with the other 107 and was not examined individually, so this line records that nobody has looked yet — not a decision that it should stay unimplemented.' Verified by reading .kotta/spec/**/*.md at 96ef301. |
+
+### Verification performed
+
+`kotta gap` refuses an unadmitted promise. A workspace holding a node with neither evidence nor an admitted implementation gap makes the command name each such node, say where evidence was sought, and exit non-zero.: run: npx vitest run tests/integration/gap-ratchet.test.ts -t 'gap refuses the node that is neither evidenced nor admitted'
+Evidence and an admission both satisfy it, and neither is counted as the other. A node a test names by id passes as evidenced; a node whose frontmatter admits the gap with a reason passes as admitted and is reported with that reason; adding the missing admission is enough to turn a refusal into a pass.: run: npx vitest run tests/integration/gap-ratchet.test.ts -t 'an evidenced node and an admitted node both pass'
+This workspace passes its own check. Every accepted node in `.kotta/spec/` is evidenced or admitted, so `kotta gap` exits zero here, and the report separates the two columns rather than reporting an empty gap.: run: npx vitest run tests/integration/gap-ratchet.test.ts -t 'this workspace passes its own rule'
+An inherited admission says it is inherited. Each admission written for a node that predates this rule states that it was not examined individually, so no reader mistakes the bulk admission for a judgement about that node.: Each of the 107 admissions reads: 'Inherited on 2026-08-23, when kotta gap began refusing a promise that is neither evidenced nor admitted (BR-01m0qtshfqhcrrqtz051zm9svr). This node predates that rule and no code, test or command definition names its id. It was admitted in bulk with the other 107 and was not examined individually, so this line records that nobody has looked yet — not a decision that it should stay unimplemented.' Verified by reading .kotta/spec/**/*.md at 96ef301.
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
