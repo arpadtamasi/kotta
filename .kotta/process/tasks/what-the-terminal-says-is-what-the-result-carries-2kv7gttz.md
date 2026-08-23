@@ -1,7 +1,7 @@
 ---
 id: T-01m0pz1ade6qc34aty2kv7gttz
 title: What the terminal says is what the result carries
-status: review
+status: done
 origin: human
 types:
   - defect
@@ -42,6 +42,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 60bc76e557dd3988b7e712f79604fd403513c0d5
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-23T11:56:10.908Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 

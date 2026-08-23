@@ -20,7 +20,7 @@ None.
 
 ## Review
 
-- what-the-terminal-says-is-what-the-result-carries-2kv7gttz
+None.
 
 ## Blocked
 
