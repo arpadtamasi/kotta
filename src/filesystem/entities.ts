@@ -38,6 +38,20 @@ export function idFromEntityFile(path: string, filename: string): string | null 
   return idFromFilename(filename);
 }
 
+/**
+ * How a terminal state was reached. `done` alone does not say whether work was delivered or
+ * retired, and the two must not read alike (BR-01m0pw5bc7b1rkg5dct5qgdkmb) — so every reader that
+ * shows a state can ask for the qualifier beside it. Absent on a live entity, which has not ended.
+ */
+export function resolutionFromEntityFile(path: string): string | null {
+  try {
+    const resolution = String(parseMarkdown(readFileSync(path, "utf8")).data.resolution ?? "").trim();
+    return resolution || null;
+  } catch {
+    return null;
+  }
+}
+
 /** Lifecycle state of an entity file: the frontmatter status is the single authority. */
 export function stateFromEntityFile(path: string): string {
   try {
@@ -120,6 +134,8 @@ export interface ListedEntity {
   state: string;
   title: string;
   path: string;
+  /** How a terminal state was reached, when that changes what the state means; null otherwise. */
+  resolution: string | null;
 }
 
 /**
@@ -141,7 +157,7 @@ export function listEntities(root: string, entity: ListableEntity, states?: stri
       const id = idFromEntityFile(file, name);
       if (id === null) return [];
       const state = entity === "decision" ? "recorded" : stateFromEntityFile(file);
-      return [{ id, state, title: entityTitle(file), path: file }];
+      return [{ id, state, title: entityTitle(file), path: file, resolution: entity === "decision" ? null : resolutionFromEntityFile(file) }];
     })
     .filter(({ state }) => !wanted || wanted.has(state))
     .sort((a, b) => (order.get(a.state) ?? order.size) - (order.get(b.state) ?? order.size) || a.path.localeCompare(b.path));

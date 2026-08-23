@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- **What the terminal says is what the result carries.** A command whose result did not succeed
+  now names the failure in its human output instead of printing a completed line: `kotta validate`
+  reported `kotta validate completed.` while exiting 1, so its errors reached only `--json` and the
+  exit code. The fix is in the shared rendering path, so it covers every command at once. And a
+  task retired by `task cancel` is displayed by its resolution — in `task list`, `task show`,
+  `batch status` and on the board — rather than as `done`, which had made abandoned work
+  indistinguishable from delivered work. `batch status` gained a human rendering it never had, and
+  reports how each member ended. Nothing stored changed: `status` and `resolution` remain separate
+  fields, and a cancelled task still ends at `done`.
+
 ### Changed
 
 - **Both surfaces are derived from one operation declaration.** `src/core/operations.ts` names

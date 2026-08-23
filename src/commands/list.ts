@@ -44,11 +44,21 @@ export function formatList(result: ListResult): string {
     const narrowed = states.length === entityStates(entity).length ? "" : ` in ${states.join(", ")}`;
     return `No ${plural(entity)}${narrowed}.`;
   }
-  const width = Math.max(...entities.map(({ state }) => state.length));
+  const shown = entities.map((listed) => ({ ...listed, label: stateLabel(listed) }));
+  const width = Math.max(...shown.map(({ label }) => label.length));
   // displayId, not shortId: a sequential id has no short form, and printing `null`
   // beside a title is worse than printing the id it already has.
-  const lines = entities.map(({ state, id, title }) => `  ${state.padEnd(width)}  ${title || "(untitled)"}  ${displayId(id)}`);
+  const lines = shown.map(({ label, id, title }) => `  ${label.padEnd(width)}  ${title || "(untitled)"}  ${displayId(id)}`);
   return [...lines, `${count} ${count === 1 ? entity : plural(entity)}.`].join("\n");
+}
+
+/**
+ * What the state column says. A terminal state whose resolution changes its meaning is named by
+ * that resolution, because `done` beside retired work reads as delivered work
+ * (BR-01m0pw5bc7b1rkg5dct5qgdkmb). `completed` adds nothing to `done` and is not repeated.
+ */
+export function stateLabel({ state, resolution }: Pick<ListedEntity, "state" | "resolution">): string {
+  return resolution && resolution !== "completed" ? resolution : state;
 }
 
 function plural(entity: ListableEntity): string {

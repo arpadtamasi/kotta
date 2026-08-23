@@ -379,6 +379,13 @@ export function readBoard(workspace: Workspace): Board {
 /* ── Small presentational bits ───────────────────────── */
 /* The stored status is the label: the vocabulary rename removed the translation layer (T-023). */
 export const stateLabel = (s: string) => s;
+/**
+ * What a task's state tag says. `done` alone does not distinguish work that was delivered from
+ * work that was retired (BR-01m0pw5bc7b1rkg5dct5qgdkmb), so a terminal task whose resolution
+ * changes its meaning is tagged by that resolution. `completed` adds nothing and is not repeated.
+ */
+export const taskStateTag = (task: { status: string; resolution?: string; blocked?: boolean }): string =>
+  task.blocked ? "blocked" : task.resolution && task.resolution !== "completed" ? task.resolution : task.status;
 function StateTag({ state }: { state: string }) {
   return <span className={`tag state state-${state}`}>{stateLabel(state)}</span>;
 }
@@ -753,7 +760,7 @@ export function TasksView({ board, filter, sort, onFilter, onSort, query, onQuer
     {rows.length === 0 && <p className="view__empty">No task matches this filter{needle ? " and search" : ""}.</p>}
     {rows.map((task) => <EntityButton key={task.id} id={task.id} className="ctr" onOpen={onOpen}>
       <span className="ctr__title">{task.title}<Tail id={task.id} /></span>
-      <span className="ctr__state"><StateTag state={task.blocked ? "blocked" : task.status} /><span className="ctr__priority">{task.priority}</span></span>
+      <span className="ctr__state"><StateTag state={taskStateTag(task)} /><span className="ctr__priority">{task.priority}</span></span>
       <span className="ctr__age">{entityAge(task.created_at, task.updated_at)}</span>
       <span className="ctr__execution">{task.status === "active"
         ? <><ClaimDot agent={task.assigned_agent} />running {elapsedSince(task.claim?.started_at, now)}</>
@@ -904,7 +911,7 @@ export function DerivationPanel({ id, board, onOpen }: { id: string; board: Boar
               const sibling = board.taskById.get(member);
               return sibling
                 ? <EntityButton key={member} id={member} className="deriv__sibling" onOpen={onOpen}>
-                  <span>{sibling.title}</span><StateTag state={sibling.status} />
+                  <span>{sibling.title}</span><StateTag state={taskStateTag(sibling)} />
                 </EntityButton>
                 : <div key={member} className="deriv__sibling"><Dangling field="tasks" id={member} /></div>;
             })}
@@ -945,7 +952,7 @@ export function DerivationPanel({ id, board, onOpen }: { id: string; board: Boar
         const sibling = board.taskById.get(member);
         return sibling
           ? <EntityButton key={member} id={member} className="deriv__sibling" onOpen={onOpen}>
-            <span>{sibling.title}</span><StateTag state={sibling.status} />
+            <span>{sibling.title}</span><StateTag state={taskStateTag(sibling)} />
           </EntityButton>
           : <div key={member} className="deriv__sibling"><Dangling field="tasks" id={member} /></div>;
       })}
@@ -1079,7 +1086,7 @@ function TaskTabs({ task, workspace, board, onOpen }: { task: Task; workspace: W
 
   return <>
     <dl className="task-metrics" aria-label="Task status and age">
-      <div><dt>State</dt><dd><StateTag state={task.blocked ? "blocked" : task.status} /></dd></div>
+      <div><dt>State</dt><dd><StateTag state={taskStateTag(task)} /></dd></div>
       <div><dt>Age</dt><dd>{entityAge(task.created_at, task.updated_at)}</dd></div>
       <div><dt>Current run</dt><dd>{task.status === "active" ? `Running ${elapsedSince(task.claim?.started_at, now)}` : "Not running"}</dd></div>
       <div><dt>Last execution</dt><dd>{latest?.durationMs === null || !latest ? "Not recorded" : formatDuration(latest.durationMs)}</dd></div>
@@ -1211,7 +1218,7 @@ export function computeRunWaves(input: Workspace["tasks"]): RunWaves {
 
 type RunCardState = Status | "blocked" | "inconsistent";
 const runCardState = (task: Task): RunCardState => task.blocked ? "blocked" : task.status === "backlog" ? "inconsistent" : task.status;
-const runCardLabel = (task: Task) => task.blocked ? "blocked" : task.status;
+const runCardLabel = (task: Task) => taskStateTag(task);
 
 function runComposition(tasks: Task[]): string {
   const order: Array<[RunCardState, string]> = [
@@ -1320,7 +1327,7 @@ function BatchHierarchy({ batch, board, onOpen, sort, path = new Set<string>() }
         const subtree = board.subtreeTasks(child);
         return <div key={id} className="batch-hierarchy__branch">
           <button type="button" className="batch-hierarchy__node" onClick={() => onOpen(child.id)} title={entityLabel(child.id)}>
-            <span><StateTag state={child.status} /><strong>{child.title}</strong><Tail id={child.id} /></span>
+            <span><StateTag state={taskStateTag(child)} /><strong>{child.title}</strong><Tail id={child.id} /></span>
             <small>{child.tasks.length} direct · {subtree.length} total task{subtree.length === 1 ? "" : "s"}</small>
           </button>
           <BatchHierarchy batch={child} board={board} onOpen={onOpen} sort={sort} path={nextPath} />
@@ -1416,7 +1423,7 @@ export function RunOverlay({ board, onClose, onOpen }: { board: Board; onClose: 
           <div className="run__loose-head"><h3>Outside every batch</h3><span>Loose work</span></div>
           {board.running.filter((t) => !t.batch).map((task) => <EntityButton key={task.id} id={task.id} className="run__row" onOpen={onOpen}>
             <span className="run__row-title">{task.title}</span>
-            <StateTag state={task.status} />
+            <StateTag state={taskStateTag(task)} />
             <span className="run__row-claim"><ClaimDot agent={task.assigned_agent} />{task.assigned_agent ?? "no claim"} · {task.branch ?? "no branch"}</span>
             <span className="run__row-act">running {elapsedSince(task.claim?.started_at, now)}</span>
           </EntityButton>)}

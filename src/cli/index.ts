@@ -24,6 +24,7 @@ import { mcpCommand } from "../commands/mcp.js";
 import { integrateCodex } from "../commands/integrate.js";
 import { syncCommand } from "../commands/sync.js";
 import { gapReport } from "../commands/gap.js";
+import { displayId } from "../core/identity.js";
 
 const program = new Command();
 const packagePath = fileURLToPath(new URL("../../package.json", import.meta.url));
@@ -157,6 +158,25 @@ function renderInit(result: unknown): string {
       ].join("\n");
     }
 
+/**
+ * The batch subtree, in dependency order, with how each member ended. Without this the whole
+ * report was invisible in the terminal — `batch status` printed a completed line and kept its
+ * answer in `--json` — and a batch whose members were all cancelled read as one that was built.
+ */
+function renderBatchStatus(result: unknown): string {
+  const data = (result as { data: { id: unknown; status: unknown; tasks: Array<{ id: string; state: string; resolution: string | null }>; children: Array<{ id: string; title: string; state: string }>; coordinator: { state: unknown; branch: unknown; blockers?: unknown[] } } }).data;
+  const retired = data.tasks.filter(({ resolution }) => resolution && resolution !== "completed");
+  const label = (task: { state: string; resolution: string | null }) => (task.resolution && task.resolution !== "completed" ? task.resolution : task.state);
+  const width = data.tasks.length ? Math.max(...data.tasks.map((task) => label(task).length)) : 0;
+  return [
+    `Batch ${String(data.id)} is ${String(data.status)}${retired.length ? `, and ${retired.length} of its ${data.tasks.length} tasks were retired rather than completed` : ""}.`,
+    ...data.tasks.map((task) => `  ${label(task).padEnd(width)}  ${displayId(task.id)}`),
+    ...(data.children.length ? ["", "Child batches", ...data.children.map((child) => `  ${child.state}  ${child.title}  ${displayId(child.id)}`)] : []),
+    `Coordinator: ${String(data.coordinator.state)}${data.coordinator.branch ? ` on ${String(data.coordinator.branch)}` : ""}.`,
+    ...((data.coordinator.blockers ?? []) as string[]).map((blocker) => `  ${blocker}`),
+  ].join("\n");
+}
+
 function renderIntegrate(result: unknown): string {
       const data = (result as { data: { path: unknown; changed: unknown } }).data;
       return data.changed ? `Connected Kotta caller-chat tools in ${String(data.path)}.` : `Kotta caller-chat tools are already configured in ${String(data.path)}.`;
@@ -164,9 +184,34 @@ function renderIntegrate(result: unknown): string {
 
 const renderers = new Map<string, (result: unknown) => string>();
 
+/**
+ * What failed, named, for any command at all (BR-01m0pw5bc7b1rkg5dct5qgdkmb).
+ *
+ * The generic path is the one that lied: a result carrying errors but no registered renderer was
+ * printed as a completed line, so `kotta validate` reported success while exiting 1 and two
+ * specification errors stayed red across three review submissions that cited it. Deriving the
+ * failure from the result's own errors fixes every command at once, including the ones not yet
+ * written, which is why this belongs here rather than in a per-command renderer.
+ */
+function renderFailure(command: string, result: unknown): string {
+  const errors = (result as { errors?: unknown }).errors;
+  const listed = Array.isArray(errors) ? errors : [];
+  if (!listed.length) return `kotta ${command} failed.`;
+  const lines = listed.map((entry) => {
+    const error = (entry ?? {}) as { code?: unknown; message?: unknown; path?: unknown };
+    const code = error.code ? `${String(error.code)}: ` : "";
+    const where = error.path ? `\n      ${String(error.path)}` : "";
+    return `  ${code}${String(error.message ?? "")}${where}`;
+  });
+  return [`kotta ${command} failed with ${listed.length === 1 ? "1 error" : `${listed.length} errors`}:`, ...lines].join("\n");
+}
+
 function humanize(result: unknown): string {
   if (typeof result === "object" && result && "command" in result) {
     const command = String((result as { command: unknown }).command);
+    // The failure branch precedes every renderer: a rendering never reports an outcome its own
+    // result denies, and no per-command renderer may opt out of that.
+    if ((result as { ok?: unknown }).ok === false) return renderFailure(command, result);
     const render = renderers.get(command);
     return render ? render(result) : `kotta ${command} completed.`;
   }
@@ -517,7 +562,7 @@ defineCommand("batch", "start <id>", renderBatchStart)
   .requiredOption("--agent <agent>")
   .option("--json")
   .action((id: string, options: { agent: string; json?: boolean }) => print(startBatch(id, options.agent), Boolean(options.json)));
-defineCommand("batch", "status <id>")
+defineCommand("batch", "status <id>", renderBatchStatus)
   .option("--json")
   .action((id: string, options: { json?: boolean }) => print(batchStatus(id), Boolean(options.json)));
 defineCommand("batch", "close <id>")

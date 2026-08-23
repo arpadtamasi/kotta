@@ -393,7 +393,10 @@ export function batchStatus(id: string) {
     const task = findTask(root, taskId);
     const entity = parseMarkdown(readFileSync(task.path, "utf8"));
     const recordedWorktree = typeof entity.data.worktree === "string" ? resolve(root, entity.data.worktree) : null;
-    return { id: taskId, state: effective.value, ...(recordedWorktree || effective.worktree ? { worktree: recordedWorktree ?? effective.worktree } : {}) };
+    // `done` alone would report a batch of retired tasks as a batch that was built
+    // (BR-01m0pw5bc7b1rkg5dct5qgdkmb), so how each member ended travels with its state.
+    const resolution = typeof entity.data.resolution === "string" ? entity.data.resolution.trim() || null : null;
+    return { id: taskId, state: effective.value, resolution, ...(recordedWorktree || effective.worktree ? { worktree: recordedWorktree ?? effective.worktree } : {}) };
   });
   const inspection = inspectCoordinator(root, id, batch.state, data);
   return {
