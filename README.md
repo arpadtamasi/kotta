@@ -232,7 +232,8 @@ backlog → defined → active → review → done
   another task, or abandoned. `duplicate` and `obsolete` also require `--superseded-by <id>`
   naming the task or decision that took its place, so the record says what killed the work and
   not only that it ended. Cancelling releases the claim and removes the execution worktree; the
-  branch is preserved, because a cancelled branch was never merged.
+  branch is preserved, because a cancelled branch was never merged. A retired task is displayed by
+  its resolution everywhere it is listed or shown, so abandoned work never reads as delivered work.
 - Profiles add work-specific requirements for bugs, UI, performance, workflows, metrics, refactors, and discovery.
 - Batches coordinate sprints, milestones, batches, or missions with sequential, parallel, or dependency-aware execution.
 - A batch may also group other batches, so a large product has a level above the task. That

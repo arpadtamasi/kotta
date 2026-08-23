@@ -48,9 +48,12 @@ function walk(path: string[] = []): Array<{ path: string[]; text: string }> {
 
 describe("the surfaces Kotta exposes", () => {
   test("the CLI surface, read from the built binary", () => {
+  // Roughly sixty process spawns against the built binary at ~0.4s each; the default 15s timeout
+  // was always marginal for that and tipped over as the surface grew. The walk is the point of the
+  // test, so the budget moves rather than the coverage.
     const surface = walk().map(({ path, text }) => `### kotta ${path.join(" ")}\n${text}`).join("\n\n");
     expect(surface).toMatchSnapshot();
-  });
+  }, 120_000);
 
   test("the MCP tool surface, read from a live server", async () => {
     const server = createKottaMcpServer(process.cwd());

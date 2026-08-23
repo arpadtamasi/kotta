@@ -52,8 +52,11 @@ async function mcpTools(): Promise<string[]> {
 
 describe("the operation registry is total", () => {
   test("every CLI command traces to a declaration, and every declared command exists", () => {
+  // Roughly sixty process spawns against the built binary at ~0.4s each; the default 15s timeout
+  // was always marginal for that and tipped over as the surface grew. The walk is the point of the
+  // test, so the budget moves rather than the coverage.
     expect(cliCommands().sort()).toEqual(declaredCliCommands());
-  });
+  }, 120_000);
 
   test("every MCP tool traces to a declaration, and every declared tool exists", async () => {
     expect(await mcpTools()).toEqual(declaredMcpTools());
