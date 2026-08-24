@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- an-admission-says-which-kind-it-is-k7fppjk0
+None.
 
 ## Review
 
-None.
+- an-admission-says-which-kind-it-is-k7fppjk0
 
 ## Blocked
 

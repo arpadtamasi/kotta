@@ -1,7 +1,7 @@
 ---
 id: T-01m0t28mkgg06jbgd7k7fppjk0
 title: An admission says which kind it is
-status: active
+status: review
 origin: human
 types:
   - feature
@@ -86,3 +86,31 @@ The nine structural forms, from the triage: use-case, glossary-term, entity, qua
 
 - `run: npx vitest run tests/integration/gap-kinds.test.ts` — the new suite.
 - `run: npm test` — the full suite.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| An admission names its kind, and one that does not is refused. `kotta gap` accepts `structural:`, `unexamined:` and `unimplemented:` entries, and fails on an `accepted` entry that names none of them, saying which kinds it may choose from. | run: npx vitest run tests/integration/gap-kinds.test.ts -t 'an admission that names no kind is refused' — verified: exit 0 at 4417287 |
+| The report counts the three apart. The summary line carries a count per kind rather than one total, and each admission is listed under its own kind with its reason. | run: npx vitest run tests/integration/gap-kinds.test.ts -t 'the three kinds are counted apart' — verified: exit 0 at 4417287 |
+| This workspace's inherited admissions carry a kind, and the bulk assignment says it was made by form. Every node admitted on 2026-08-23 is `structural` or `unexamined`, none is `unimplemented`, and the structural reasons state that the kind follows from the node's form rather than from examining that node. | run: npx vitest run tests/integration/gap-kinds.test.ts -t "this workspace's inherited admissions all carry a kind" — verified: exit 0 at 4417287 |
+| The ratchet keeps its force. A node with neither evidence nor an admission still fails the command, unchanged by the kinds. | run: npx vitest run tests/integration/gap-kinds.test.ts -t 'the ratchet keeps its force' — verified: exit 0 at 4417287 |
+
+### Verification performed
+
+An admission names its kind, and one that does not is refused. `kotta gap` accepts `structural:`, `unexamined:` and `unimplemented:` entries, and fails on an `accepted` entry that names none of them, saying which kinds it may choose from.: run: npx vitest run tests/integration/gap-kinds.test.ts -t 'an admission that names no kind is refused'
+The report counts the three apart. The summary line carries a count per kind rather than one total, and each admission is listed under its own kind with its reason.: run: npx vitest run tests/integration/gap-kinds.test.ts -t 'the three kinds are counted apart'
+This workspace's inherited admissions carry a kind, and the bulk assignment says it was made by form. Every node admitted on 2026-08-23 is `structural` or `unexamined`, none is `unimplemented`, and the structural reasons state that the kind follows from the node's form rather than from examining that node.: run: npx vitest run tests/integration/gap-kinds.test.ts -t "this workspace's inherited admissions all carry a kind"
+The ratchet keeps its force. A node with neither evidence nor an admission still fails the command, unchanged by the kinds.: run: npx vitest run tests/integration/gap-kinds.test.ts -t 'the ratchet keeps its force'
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
