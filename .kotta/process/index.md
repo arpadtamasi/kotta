@@ -12,12 +12,11 @@ None.
 
 ## Defined tasks
 
-- an-admission-says-which-kind-it-is-k7fppjk0
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
 
 ## Active tasks
 
-None.
+- an-admission-says-which-kind-it-is-k7fppjk0
 
 ## Review
 

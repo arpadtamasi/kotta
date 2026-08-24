@@ -1,7 +1,7 @@
 ---
 id: T-01m0t28mkgg06jbgd7k7fppjk0
 title: An admission says which kind it is
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -15,7 +15,7 @@ spec:
   - BR-01m0swjgrreeby1pyfdzf4mf7d
   - EX-01m0swjgrrnzqgx83v95t855xe
   - UC-01m0fpqfxjvet99wbz0v1ag64q
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-24'
 updated_at: '2026-08-24'
@@ -32,6 +32,12 @@ coverage:
   'The ratchet keeps its force. A node with neither evidence nor an admission still fails the command, unchanged by the kinds.':
     - BR-01m0swjgrreeby1pyfdzf4mf7d
     - UC-01m0fpqfxjvet99wbz0v1ag64q
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 00dd4a04f5541b752e4fefc3a02b98e63ad55e8f
 ---
 ## Outcome
 
