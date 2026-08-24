@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, unlinkSync, writeFileSync } from
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
-import { retainLegacySignGate } from "../helpers/legacy-sign.js";
+import { acceptFixtureSpec, coveredDefinition } from "../helpers/covered-task.js";
 
 const cli = resolve("dist/cli/index.js");
 const invoke = (cwd: string, args: string[]) => spawnSync("node", [cli, ...args, "--json"], { cwd, encoding: "utf8" });
@@ -19,13 +19,13 @@ function repository(): string {
   git(root, "init", "-b", "main"); git(root, "config", "user.name", "Kotta Test"); git(root, "config", "user.email", "test@example.com");
   writeFileSync(join(root, "README.md"), "fixture\n"); git(root, "add", "."); git(root, "commit", "-m", "initial");
   run(root, ["init"]);
-  retainLegacySignGate(root);
+  acceptFixtureSpec(root);
   git(root, "add", ".gitattributes", ".gitignore"); git(root, "commit", "-m", "initialize Kotta metadata");
   return root;
 }
 
-function completeTemplate(root: string, path: string): void {
-  writeFileSync(path, readFileSync(path, "utf8").replace("Describe the observable outcome.", "The result is observable.").replace("- Define an observable condition.", "- The result exists.").replace("- Explain how acceptance will be checked.", "- Run the integration test."));
+function definition(path: string): string {
+  return coveredDefinition(path, { outcome: "The result is observable.", acceptance: ["The result exists."], verification: "Run the integration test." });
 }
 
 describe("mutation safety", () => {
@@ -33,8 +33,7 @@ describe("mutation safety", () => {
     const root = repository();
     const created = (run(root, ["task", "new", "--title", "Unsafe task", "--type", "feature", "--profile", "invented"]) as { data: { id: string; path: string } }).data;
     const backlog = created.path;
-    completeTemplate(root, backlog);
-    const result = invoke(root, ["task", "sign", created.id, "--approve"]);
+    const result = invoke(root, ["task", "define", created.id, "--from", definition(backlog)]);
     expect(result.status).toBe(1);
     expect(JSON.parse(result.stdout)).toMatchObject({ ok: false });
     expect(existsSync(backlog)).toBe(true);
@@ -44,8 +43,7 @@ describe("mutation safety", () => {
   test("dirty repositories and duplicate starts are rejected without reusing a worktree", () => {
     const root = repository();
     const created = (run(root, ["task", "new", "--title", "Safe start", "--type", "feature"]) as { data: { id: string; path: string } }).data;
-    completeTemplate(root, created.path);
-    run(root, ["task", "sign", created.id, "--approve"]);
+    run(root, ["task", "define", created.id, "--from", definition(created.path)]);
     writeFileSync(join(root, "dirty.txt"), "pending\n");
     expect(invoke(root, ["task", "start", created.id, "--agent", "codex"]).status).toBe(1);
     expect(existsSync(join(root, ".worktrees", created.id))).toBe(false);

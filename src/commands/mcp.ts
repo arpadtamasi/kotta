@@ -154,7 +154,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
 
   define("task_define", {
     title: "Define a Kotta task",
-    description: "Apply a complete Markdown definition before execution. Every acceptance condition must explicitly map to a referenced accepted spec node; valid coverage moves the task to defined unless the workspace retains the compatibility sign gate. With draft=true a backlog capture is stored or amended with its structure validated and no coverage check, and stays in backlog.",
+    description: "Apply a complete Markdown definition before execution. Every acceptance condition must explicitly map to a referenced accepted spec node; valid coverage moves the task to defined. With draft=true a backlog capture is stored or amended with its structure validated and no coverage check, and stays in backlog.",
     inputSchema: {
       id: z.string().min(1),
       definition: z.string().min(1),
@@ -273,7 +273,9 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     description: "Present one exact pending Kotta transition in the current host chat. Apply it only after the human explicitly approves the elicitation; rejection and cancellation are durable.",
     inputSchema: {
       entity: z.string().min(1),
-      action: z.enum(["task.sign", "observation.resolve", "task.close", "task.cancel", "task.request-changes", "batch.close"]),
+      // Derived, not restated: a hand-kept copy of this list is how a retired action survives in
+      // one surface after leaving the other (BR-01m0nsyasfnjc9s4073r8zb33j).
+      action: z.enum(APPROVAL_ACTIONS),
       payload: z.record(z.string(), z.unknown()).default({}),
       clientRequestId: z.string().optional(),
     },

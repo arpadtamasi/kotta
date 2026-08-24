@@ -116,7 +116,7 @@ export function defineTask(id: string, definition: string, repositoryRoot?: stri
     for (const reference of references) findTask(root, reference);
   }
   assertSpecReferences(root, id, current.data.spec);
-  const targetState = options.draft ? "backlog" : task.state === "defined" || !readWorkspaceConfig(root).requireHumanSignApproval ? "defined" : "backlog";
+  const targetState = options.draft ? "backlog" : "defined";
   current.data.status = targetState;
   current.data.updated_at = new Date().toISOString().slice(0, 10);
   const filename = entityFilename(id, slugify(String(current.data.title)));
@@ -144,9 +144,7 @@ export function defineTask(id: string, definition: string, repositoryRoot?: stri
     ? "Task draft amended in backlog; coverage is checked when it is defined."
     : task.state === "defined"
       ? "Task definition amended before execution."
-      : targetState === "defined"
-        ? "Task definition validated for accepted-spec coverage; no separate sign gate required."
-        : "Task definition validated and awaits the workspace's opt-in sign gate.");
+      : "Task definition validated for accepted-spec coverage; the task is defined.");
   regenerateIndex(root);
   return {
     ok: true,
@@ -155,9 +153,8 @@ export function defineTask(id: string, definition: string, repositoryRoot?: stri
       id,
       path: destination,
       state: targetState,
-      nextStep: options.draft
-        ? `kotta task define ${id} --from <file>`
-        : targetState === "backlog" ? `kotta task sign ${id}` : `kotta task start ${id} --agent <agent>`,
+      // A definition that validates is defined; there is no gate between here and starting.
+      nextStep: options.draft ? `kotta task define ${id} --from <file>` : `kotta task start ${id} --agent <agent>`,
     },
   };
 }
@@ -187,51 +184,11 @@ export function validateTask(id: string, repositoryRoot?: string) {
     }
   }
   const cancelled = task.state === "done" && ["cancelled", "duplicate", "obsolete"].includes(String(entity.data.resolution));
-  const legacyOptIn = readWorkspaceConfig(root).requireHumanSignApproval && specReferences(entity.data).length === 0;
-  // Backlog capture and terminal retirement are not executable promises. Existing opt-in
-  // workspaces may also finish pre-coverage tasks; every newly defined task still goes through the
-  // coverage check in defineTask.
-  if (task.state !== "backlog" && !cancelled && !legacyOptIn) {
+  // Backlog capture and terminal retirement are not executable promises; everything between them is.
+  if (task.state !== "backlog" && !cancelled) {
     errors.push(...validateTaskCoverage(root, entity.data, entity.content, task.path));
   }
   return { ok: errors.length === 0, command: "task validate", data: { id, state: task.state }, errors };
-}
-
-export function signTask(id: string, approved: boolean, repositoryRoot?: string, options: { approvalRecorded?: boolean; locked?: boolean; commit?: boolean; receipt?: ApprovalReceipt } = {}) {
-  const requestedRoot = repositoryRoot ?? findRepositoryRoot();
-  const sign = (root: string) => {
-    const task = findTask(root, id);
-    if (task.state !== "backlog") throw new Error(`Task ${id} must be in backlog before it can be signed.`);
-    if (!approved) throw new Error("Human sign-off is required. Re-run with --approve after reviewing intent and trade-offs.");
-    const entity = parseMarkdown(readFileSync(task.path, "utf8"));
-    if (!readWorkspaceConfig(root).requireHumanSignApproval) {
-      throw new Error(`The sign gate is retired in this workspace. Define ${id} with complete accepted-spec coverage; a valid definition becomes defined without a separate approval.`);
-    }
-    if (specReferences(entity.data).length) {
-      const coverageErrors = validateTaskCoverage(root, entity.data, entity.content, task.path);
-      assertValid({ valid: coverageErrors.length === 0, errors: coverageErrors });
-    }
-    const dependencies = Array.isArray(entity.data.depends_on) ? entity.data.depends_on.map(String) : [];
-    for (const dependency of dependencies) findTask(root, dependency);
-    entity.data.status = "defined";
-    entity.data.updated_at = new Date().toISOString().slice(0, 10);
-    stampReceipt(entity.data, options.receipt ?? cliApprovalReceipt("task.sign"));
-    const candidate = `${task.path}.sign-${process.pid}.tmp`;
-    writeFileSync(candidate, renderMarkdown(entity.data, entity.content));
-    try {
-      assertValid(validateTaskFile(candidate, "defined"));
-      renameSync(candidate, task.path);
-    } catch (error) {
-      if (existsSync(candidate)) unlinkSync(candidate);
-      throw error;
-    }
-    regenerateIndex(root);
-    appendLifecycleEvent(root, id, "defined", "Task approved for execution.");
-    if (!options.approvalRecorded) appendCliApprovalAudit(root, id, "task.sign");
-    if (options.commit !== false) commitControlState(root, `chore(kotta): sign ${id}`);
-    return { ok: true, command: "task sign", data: { id, path: task.path } };
-  };
-  return options.locked ? sign(requestedRoot) : withControlPlaneMutation(requestedRoot, sign, { requireClean: false });
 }
 
 export interface StartTaskOptions {
@@ -283,11 +240,8 @@ export function startTask(
     const definedSnapshot = readFileSync(task.path, "utf8");
     const entity = parseMarkdown(definedSnapshot);
     const config = readWorkspaceConfig(root);
-    const legacyOptIn = config.requireHumanSignApproval && specReferences(entity.data).length === 0;
-    if (!legacyOptIn) {
-      const coverageErrors = validateTaskCoverage(root, entity.data, entity.content, task.path);
-      assertValid({ valid: coverageErrors.length === 0, errors: coverageErrors });
-    }
+    const coverageErrors = validateTaskCoverage(root, entity.data, entity.content, task.path);
+    assertValid({ valid: coverageErrors.length === 0, errors: coverageErrors });
     const dependencies = Array.isArray(entity.data.depends_on) ? entity.data.depends_on.map(String) : [];
     const startRef = options.startRef ?? "HEAD";
     const startCommit = resolveCommit(root, startRef, "Start ref");

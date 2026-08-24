@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
-import { retainLegacySignGate } from "../helpers/legacy-sign.js";
+import { acceptFixtureSpec, coveredDefinition } from "../helpers/covered-task.js";
 import { findTask } from "../../src/filesystem/entities.js";
 
 /**
@@ -32,15 +32,11 @@ function fixture() {
   execFileSync("git", ["add", "."], { cwd: root });
   execFileSync("git", ["commit", "-m", "initial"], { cwd: root });
   run(root, ["init"]);
-  retainLegacySignGate(root);
+  acceptFixtureSpec(root);
   execFileSync("git", ["add", ".gitattributes", ".gitignore"], { cwd: root });
   execFileSync("git", ["commit", "-m", "initialize Kotta metadata"], { cwd: root });
   const created = (run(root, ["task", "new", "--title", "Document flow", "--type", "documentation"]) as { data: { id: string; path: string } }).data;
-  writeFileSync(created.path, readFileSync(created.path, "utf8")
-    .replace("Describe the observable outcome.", "The flow is documented.")
-    .replace("- Define an observable condition.", `- ${FIRST}\n- ${SECOND}`)
-    .replace("- Explain how acceptance will be checked.", "- Inspect the rendered documentation."));
-  run(root, ["task", "sign", created.id, "--approve"]);
+  run(root, ["task", "define", created.id, "--from", coveredDefinition(created.path, { outcome: "The flow is documented.", acceptance: [FIRST, SECOND], verification: "Inspect the rendered documentation." })]);
   run(root, ["task", "start", created.id, "--agent", "codex"]);
   return { root, worktree: join(root, ".worktrees", created.id), id: created.id, filename: basename(created.path) };
 }

@@ -120,8 +120,6 @@ Commands:
   new [options]
   validate [options] <id>
   define [options] <id>
-  sign [options] <id>      Opt-in compatibility gate: sign a covered backlog
-                           task, moving it to defined
   start [options] <id>
   execute [options] <id>   Run a defined task in a fresh agent context: start,
                            brief and agent launch in one command (D-009)
@@ -179,16 +177,6 @@ Options:
                  the task stays in backlog
   --json
   -h, --help     display help for command
-
-### kotta task sign
-Usage: kotta task sign [options] <id>
-
-Opt-in compatibility gate: sign a covered backlog task, moving it to defined
-
-Options:
-  --approve
-  --json
-  -h, --help  display help for command
 
 ### kotta task start
 Usage: kotta task start [options] <id>
@@ -401,7 +389,6 @@ Commands:
   add [options] <batch-id> <member-id>     Add a task, or another batch to group under this one
   remove [options] <batch-id> <member-id>  Remove a member task, or a grouped child batch
   validate [options] <id>
-  sign [options] <id>                      Human gate: sign a validated backlog batch, moving it to defined
   start [options] <id>
   status [options] <id>
   close [options] <id>                     Complete a batch whose member tasks have all reached done, from any batch state
@@ -459,16 +446,6 @@ Options:
 Usage: kotta batch validate [options] <id>
 
 Options:
-  --json
-  -h, --help  display help for command
-
-### kotta batch sign
-Usage: kotta batch sign [options] <id>
-
-Human gate: sign a validated backlog batch, moving it to defined
-
-Options:
-  --approve
   --json
   -h, --help  display help for command
 
@@ -584,7 +561,6 @@ exports[`the surfaces Kotta exposes > the MCP tool surface, read from a live ser
       "properties": {
         "action": {
           "enum": [
-            "task.sign",
             "observation.resolve",
             "task.close",
             "task.cancel",

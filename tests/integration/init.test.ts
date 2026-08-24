@@ -21,7 +21,7 @@ describe("kotta init", () => {
       "base_branch: main",
     );
     expect(readFileSync(join(repository, ".kotta/config.yaml"), "utf8")).toContain("version: 5");
-    expect(readFileSync(join(repository, ".kotta/config.yaml"), "utf8")).toContain("require_human_sign_approval: false");
+    expect(readFileSync(join(repository, ".kotta/config.yaml"), "utf8")).not.toContain("require_human_sign_approval");
     expect(readFileSync(join(repository, ".kotta/process/index.md"), "utf8")).toContain(
       "Generated file. Do not edit manually.",
     );

@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import matter from "gray-matter";
 import { describe, expect, test } from "vitest";
-import { retainLegacySignGate } from "../helpers/legacy-sign.js";
+import { acceptFixtureSpec, coveredDefinition } from "../helpers/covered-task.js";
 import { readWorkspace } from "../../src/commands/ui.js";
 import { duplicateWorkspaceWarning, hasWorkspace, workspaceDirectoryName } from "../../src/filesystem/workspace.js";
 
@@ -37,7 +37,7 @@ function repository(label: string, directory = ".kotta"): string {
   git(root, "config", "user.email", "test@example.com");
   writeFileSync(join(root, "README.md"), "fixture\n");
   run(root, ["init"]);
-  retainLegacySignGate(root);
+  acceptFixtureSpec(root);
   // An existing workspace predates the rename: it is the `.a-team` directory `init` no longer writes.
   if (directory !== ".kotta") renameSync(join(root, ".kotta"), join(root, directory));
   git(root, "add", ".");
@@ -45,19 +45,15 @@ function repository(label: string, directory = ".kotta"): string {
   return root;
 }
 
-function completeTemplate(path: string): void {
-  writeFileSync(path, readFileSync(path, "utf8")
-    .replace("Describe the observable outcome.", "The result is observable.")
-    .replace("- Define an observable condition.", "- The result exists.")
-    .replace("- Explain how acceptance will be checked.", "- Run the integration test."));
-}
-
 /** backlog → defined, the shortest path that reads, writes state in place and regenerates the index. */
 function taskRoundTrip(root: string, directory: string): { id: string; path: string } {
   const created = run(root, ["task", "new", "--title", "Compatibility task", "--type", "feature"]).data as { id: string; path: string };
   expect(created.path).toContain(`${directory}/process/tasks`);
-  completeTemplate(created.path);
-  run(root, ["task", "sign", created.id, "--approve"]);
+  run(root, ["task", "define", created.id, "--from", coveredDefinition(created.path, {
+    outcome: "The result is observable.",
+    acceptance: ["The result exists."],
+    verification: "Run the integration test.",
+  })]);
   // The transition edits the file in place: the frontmatter status is the state, the file never moves.
   const path = join(root, directory, "process", "tasks", basename(created.path));
   expect(existsSync(path)).toBe(true);

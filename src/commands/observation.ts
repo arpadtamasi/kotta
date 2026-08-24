@@ -58,7 +58,7 @@ export function newObservation(options: { title: string; type: string; evidence:
   // A standalone observation has no task to attribute a lifecycle event to, but it is still
   // canonical state Kotta owns: written without a commit it leaves the control plane dirty, and the
   // next command that requires a clean one is refused. It takes the same lock and the same commit as
-  // the attributed path, and tolerates a dirty tree the way 'observation resolve' and 'task sign'
+  // the attributed path, and tolerates a dirty tree the way 'observation resolve' and 'task close'
   // do — where a single checkout is also the control plane, it carries the work being observed.
   return withControlPlaneMutation(requestedRoot, (root) => {
     const result = writeObservation(root, options);

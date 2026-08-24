@@ -154,8 +154,7 @@ kotta integrate codex
 After that, create, define, validate, start and review tasks by asking in the calling chat.
 Kotta returns identifiers as structured tool results. A covered definition becomes executable
 without re-asking the agreement already accepted in the spec; close and change-request decisions
-remain scoped host-chat prompts. Workspaces that explicitly retain the compatibility sign gate get
-the same prompt and durable receipt there. The human does not relay ids or run lifecycle commands.
+remain scoped host-chat prompts. The human does not relay ids or run lifecycle commands.
 
 Then open an existing Git repository in the supported host and run:
 
@@ -239,9 +238,8 @@ backlog → defined → active → review → done
 
 - Tasks define an observable outcome, bounded scope, acceptance conditions, and verification.
 - Every acceptance condition explicitly maps to a referenced spec node that has landed on the
-  control branch. A valid covered
-  definition moves from backlog to defined; there is no separate sign gate by default. Set
-  `workflow.require_human_sign_approval: true` only to retain that compatibility gate.
+  control branch. A valid covered definition moves from backlog to defined; there is no separate
+  sign gate, and no workspace setting adds one.
 - A review that does not satisfy you is rejected through `kotta task reopen <id> --approve`: its
   own decision with its own receipt, the evidence section is cleared, and the task returns to
   `active` to come back through review.
@@ -453,7 +451,6 @@ kotta task close T-014 --approve
 kotta task reopen T-014 --approve
 
 kotta batch validate P-012
-kotta batch sign P-012 --approve
 kotta batch start P-012 --agent codex
 kotta batch status P-012
 kotta batch close P-012 --approve
@@ -494,9 +491,7 @@ Before a task can be defined, its `Open decisions` section must say that no deci
 Kotta accepts `None`, `None.`, `N/A`, `N/A.`, `No open decisions` and `No open decisions.`
 case-insensitively; real unresolved choices still keep the task in backlog. Every acceptance
 bullet must also name a referenced spec id or have an exact-text entry in frontmatter `coverage`.
-If no accepted node covers it, create an observation and amend the spec first. The legacy
-`task sign` step exists only when `workflow.require_human_sign_approval: true`; it leaves an
-approval receipt.
+If no accepted node covers it, create an observation and amend the spec first.
 
 **Small contexts by default.** Each task executes in a fresh agent context whose intent input is `kotta task brief <id>` — the task body, its referenced decisions, its profiles and its claim, nothing else. The brief is deterministic and reports an approximate token count; above a threshold (`--warn-tokens`, default 12000) it warns that the task is probably too large or under-referenced. This is a quality gauge, not a thrift trick: if a task cannot be executed from its brief plus the code in the worktree, the task is incomplete — record the gap instead of widening the context.
 

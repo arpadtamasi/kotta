@@ -271,7 +271,10 @@ describe("kotta migrate", () => {
     const config = readFileSync(join(root, ".kotta/config.yaml"), "utf8");
     expect(config).toContain("version: 5");
     expect(config).toContain("batches:");
-    expect(config).toContain("require_human_sign_approval");
+    // The sign gate is retired, so migration neither renames the pre-coverage approval key into it
+    // nor deletes it: the inert line survives untouched, and nothing reads it.
+    expect(config).not.toContain("require_human_sign_approval");
+    expect(config).toContain("require_human_ready_approval: true");
     expect(config).toContain("allow_agent_observations");
     expect(config).toContain("allow_agent_defined_tasks");
     expect(config).toContain("require_verification_for_defined");

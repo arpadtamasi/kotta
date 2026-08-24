@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
-import { retainLegacySignGate } from "../helpers/legacy-sign.js";
+import { acceptFixtureSpec, coveredDefinition } from "../helpers/covered-task.js";
 
 /**
  * A capture is drafted in place (SM-01m0f0wn89gjy6dbk1j6fjpv6j, EX-01m0mzvcvdvxzpr59p8v7387n3):
@@ -32,7 +32,7 @@ const BODY = (condition: string) => [
   "## Execution notes", "", "None.", "",
 ].join("\n");
 
-function fixture(label: string, options: { legacyGate?: boolean } = {}) {
+function fixture(label: string) {
   const root = mkdtempSync(join(tmpdir(), `kotta-draft-${label}-`));
   execFileSync("git", ["init", "-b", "main"], { cwd: root });
   execFileSync("git", ["config", "user.name", "Kotta Test"], { cwd: root });
@@ -41,7 +41,7 @@ function fixture(label: string, options: { legacyGate?: boolean } = {}) {
   execFileSync("git", ["add", "."], { cwd: root });
   execFileSync("git", ["commit", "-m", "initial"], { cwd: root });
   run(root, ["init"]);
-  if (options.legacyGate) retainLegacySignGate(root);
+  acceptFixtureSpec(root);
   const created = (run(root, ["task", "new", "--title", "Draft me", "--type", "feature"]) as { data: { id: string; path: string } }).data;
   return { root, id: created.id, path: created.path };
 }
@@ -76,12 +76,12 @@ describe("a capture is drafted in place", () => {
   });
 
   test("--draft on a task that left backlog is refused by name", () => {
-    const { root, id, path } = fixture("defined", { legacyGate: true });
-    writeFileSync(path, readFileSync(path, "utf8")
-      .replace("Describe the observable outcome.", "The outcome is observable.")
-      .replace("- Define an observable condition.", "- The signed condition holds.")
-      .replace("- Explain how acceptance will be checked.", "- Inspect it."));
-    run(root, ["task", "sign", id, "--approve"]);
+    const { root, id, path } = fixture("defined");
+    run(root, ["task", "define", id, "--from", coveredDefinition(path, {
+      outcome: "The outcome is observable.",
+      acceptance: ["The defined condition holds."],
+      verification: "Inspect it.",
+    })]);
 
     const definition = join(root, "draft.md");
     writeFileSync(definition, `---\ntypes:\n  - feature\n---\n${BODY("A late correction.")}\n`);

@@ -22,7 +22,7 @@ function git(root: string, ...args: string[]): string {
   return execFileSync("git", args, { cwd: root, encoding: "utf8" });
 }
 
-function fixture(optInSign = false): string {
+function fixture(retiredOptIn = false): string {
   const root = mkdtempSync(join(tmpdir(), "kotta-coverage-"));
   git(root, "init", "-b", "main");
   git(root, "config", "user.name", "Kotta Test");
@@ -37,9 +37,10 @@ function fixture(optInSign = false): string {
     "## Usage", "A covered task names this node.", "",
     "## Non-examples", "An unreferenced acceptance condition.", "",
   ].join("\n"));
-  if (optInSign) {
+  if (retiredOptIn) {
+    // A workspace written before the gate retired still carries the key; nothing reads it now.
     const config = join(root, ".kotta/config.yaml");
-    writeFileSync(config, readFileSync(config, "utf8").replace("require_human_sign_approval: false", "require_human_sign_approval: true"));
+    writeFileSync(config, readFileSync(config, "utf8").replace("workflow:\n", "workflow:\n  require_human_sign_approval: true\n"));
   }
   git(root, "add", ".");
   git(root, "commit", "-m", "accept specification");
@@ -88,18 +89,16 @@ describe("accepted-spec coverage defines executable tasks", () => {
     expect(run(root, ["task", "show", id]).data.state).toBe("backlog");
   });
 
-  test("an opt-in workspace keeps the sign gate and the approval leaves a receipt", () => {
+  test("a workspace still carrying the retired sign opt-in is not held back by it", () => {
     const root = fixture(true);
     const id = create(root);
     const defined = run(root, ["task", "define", id, "--from", definition(root, id)]);
-    expect(defined.data.state).toBe("backlog");
 
-    const refused = invoke(root, ["task", "sign", id]);
-    expect(refused.status).not.toBe(0);
-    expect(refused.stdout).toContain("Human sign-off is required");
-    run(root, ["task", "sign", id, "--approve"]);
-    const shown = run(root, ["task", "show", id]).data as { state: string; frontmatter: Record<string, unknown> };
-    expect(shown.state).toBe("defined");
-    expect(JSON.stringify(shown)).toContain("task.sign");
+    // The key is inert: a covered definition reaches defined, and nothing asks for a sign-off.
+    expect(defined.data).toMatchObject({ id, state: "defined" });
+    expect(String(defined.data.nextStep)).toBe(`kotta task start ${id} --agent <agent>`);
+    expect(run(root, ["task", "validate", id])).toMatchObject({ ok: true, data: { state: "defined" } });
+    expect(run(root, ["validate"])).toMatchObject({ ok: true });
+    expect(invoke(root, ["task", "sign", id, "--approve"]).stderr).toContain("unknown command 'sign'");
   });
 });

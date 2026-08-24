@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
-import { retainLegacySignGate } from "../helpers/legacy-sign.js";
+import { acceptFixtureSpec, coveredDefinition } from "../helpers/covered-task.js";
 import { readWorkspace } from "../../src/commands/ui.js";
 
 const cli = resolve("dist/cli/index.js");
@@ -21,7 +21,7 @@ describe("dependency-aware batch", () => {
     git(root, "init", "-b", "main");
     writeFileSync(join(root, "README.md"), "fixture\n");
     run(root, ["init"]);
-    retainLegacySignGate(root);
+    acceptFixtureSpec(root);
     const batch = (run(root, ["batch", "new", "--title", "Launch batch", "--goal", "Ship the first slice", "--parallelism", "1"]) as { ok: boolean; data: { id: string; path: string } });
     expect(batch.ok).toBe(true);
     expect(batch.data.id).toMatch(/^P-[0-9a-hjkmnp-tv-z]{26}$/);
@@ -41,13 +41,12 @@ describe("dependency-aware batch", () => {
     git(root, "init", "-b", "main"); git(root, "config", "user.name", "Kotta Test"); git(root, "config", "user.email", "test@example.com");
     writeFileSync(join(root, "README.md"), "fixture\n"); git(root, "add", "."); git(root, "commit", "-m", "initial");
     run(root, ["init"]);
-    retainLegacySignGate(root);
+    acceptFixtureSpec(root);
     const tasks: Array<{ id: string; filename: string }> = [];
     for (const title of ["Build parser", "Expose command"]) {
       const created = run(root, ["task", "new", "--title", title, "--type", "feature"]) as { data: { id: string; path: string } };
       const path = created.data.path;
-      writeFileSync(path, readFileSync(path, "utf8").replace("Describe the observable outcome.", `${title} works.`).replace("- Define an observable condition.", `- ${title} is observable.`).replace("- Explain how acceptance will be checked.", "- Run integration tests."));
-      run(root, ["task", "sign", created.data.id, "--approve"]);
+      run(root, ["task", "define", created.data.id, "--from", coveredDefinition(path, { outcome: `${title} works.`, acceptance: [`${title} is observable.`], verification: "Run integration tests." })]);
       tasks.push({ id: created.data.id, filename: basename(path) });
     }
     const [parser, command] = tasks;
@@ -57,7 +56,7 @@ describe("dependency-aware batch", () => {
     run(root, ["batch", "add", batchId, parser.id]);
     run(root, ["batch", "add", batchId, command.id]);
     writeFileSync(second, readFileSync(second, "utf8").replace("status: defined", "status: backlog"));
-    expect(run(root, ["batch", "sign", batchId, "--approve"])).toMatchObject({ ok: true, command: "batch sign" });
+    expect(run(root, ["batch", "validate", batchId])).toMatchObject({ ok: true, command: "batch validate" });
     git(root, "add", "."); git(root, "commit", "-m", "define batch");
 
     expect(run(root, ["batch", "validate", batchId])).toMatchObject({ ok: true, data: { waves: [[parser.id], [command.id]] } });
@@ -85,18 +84,14 @@ function workspaceRepository(label: string): string {
   git(root, "add", ".");
   git(root, "commit", "-m", "initial");
   run(root, ["init"]);
-  retainLegacySignGate(root);
+  acceptFixtureSpec(root);
   return root;
 }
 
 function definedTask(root: string, title: string) {
   const created = run(root, ["task", "new", "--title", title, "--type", "feature"]) as { data: { id: string; path: string } };
   const { id, path } = created.data;
-  writeFileSync(path, readFileSync(path, "utf8")
-    .replace("Describe the observable outcome.", `${title} works.`)
-    .replace("- Define an observable condition.", `- ${title} is observable.`)
-    .replace("- Explain how acceptance will be checked.", "- Run integration tests."));
-  run(root, ["task", "sign", id, "--approve"]);
+  run(root, ["task", "define", id, "--from", coveredDefinition(path, { outcome: `${title} works.`, acceptance: [`${title} is observable.`], verification: "Run integration tests." })]);
   return { id, filename: basename(path) };
 }
 

@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } fro
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
-import { retainLegacySignGate } from "../helpers/legacy-sign.js";
+import { acceptFixtureSpec, coveredDefinition } from "../helpers/covered-task.js";
 import { classifyBaseUpdate, classifyIntegration, coordinatorBranchName, linkedWorktrees } from "../../src/git/coordinator.js";
 import { readWorkspaceConfig } from "../../src/core/config.js";
 
@@ -27,11 +27,7 @@ const snapshot = (root: string) => ({
 function definedTask(root: string, title: string) {
   const created = run(root, ["task", "new", "--title", title, "--type", "feature"]);
   const { id, path } = created.data as { id: string; path: string };
-  writeFileSync(path, readFileSync(path, "utf8")
-    .replace("Describe the observable outcome.", `${title} works.`)
-    .replace("- Define an observable condition.", `- ${title} is observable.`)
-    .replace("- Explain how acceptance will be checked.", "- Run integration tests."));
-  run(root, ["task", "sign", id, "--approve"]);
+  run(root, ["task", "define", id, "--from", coveredDefinition(path, { outcome: `${title} works.`, acceptance: [`${title} is observable.`], verification: "Run integration tests." })]);
   return { id, filename: basename(path) };
 }
 
@@ -47,12 +43,12 @@ function workspaceWithBatch(label: string, options: { tasks?: number } = {}) {
   git(root, "add", ".");
   git(root, "commit", "-m", "initial");
   run(root, ["init"]);
-  retainLegacySignGate(root);
+  acceptFixtureSpec(root);
   const tasks = Array.from({ length: options.tasks ?? 1 }, (_unused, index) => definedTask(root, `Deliver slice ${index + 1}`));
   const ids = tasks.map((task) => task.id);
   const batchId = (run(root, ["batch", "new", "--title", `Coordinated ${label}`, "--goal", "Ship the slice"]).data as { id: string }).id;
   for (const id of ids) run(root, ["batch", "add", batchId, id]);
-  run(root, ["batch", "sign", batchId, "--approve"]);
+  run(root, ["batch", "validate", batchId]);
   git(root, "add", ".");
   git(root, "commit", "-m", "define batch");
   git(root, "remote", "add", "origin", remote);
