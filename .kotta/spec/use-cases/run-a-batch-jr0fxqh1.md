@@ -17,7 +17,7 @@ Coordinate related tasks as one dependency-aware run without weakening any per-t
 
 ## Preconditions
 
-A validated, signed leaf batch of defined tasks; the control checkout on the base branch.
+A validated leaf batch of defined tasks; the control checkout on the base branch.
 
 ## Main success scenario
 
