@@ -13,11 +13,10 @@ None.
 ## Defined tasks
 
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
-- the-sign-gate-is-removed-gxm1dq6q
 
 ## Active tasks
 
-None.
+- the-sign-gate-is-removed-gxm1dq6q
 
 ## Review
 

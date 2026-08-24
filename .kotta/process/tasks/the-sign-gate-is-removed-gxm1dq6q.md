@@ -1,7 +1,7 @@
 ---
 id: T-01m0tjx38y6mdbpyzhgxm1dq6q
 title: The sign gate is removed
-status: defined
+status: active
 origin: human
 types:
   - refactor
@@ -16,7 +16,7 @@ spec:
   - SM-01m0f0wn89gjy6dbk1j6fjpv6j
   - UC-01m0f0wn89jebbfp6rjr0fxqh1
   - IF-01m0f0wn8994dzf9z1sdygxa04
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-24'
 updated_at: '2026-08-24'
@@ -32,6 +32,12 @@ coverage:
     - IF-01m0f0wn8994dzf9z1sdygxa04
   'Nothing was covered only by the retired gate. Every test that reached a state through signing reaches it through defining instead, and the suite''s count does not fall.':
     - SM-01m0f0wn89gjy6dbk1j6fjpv6j
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 05c485e58927c0f700cc7a13c6c7feadb41bfafe
 ---
 ## Outcome
 
