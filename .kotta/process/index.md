@@ -13,11 +13,10 @@ None.
 ## Defined tasks
 
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
-- the-gap-report-is-readable-at-a-hundred-admissions-qfanyvza
 
 ## Active tasks
 
-None.
+- the-gap-report-is-readable-at-a-hundred-admissions-qfanyvza
 
 ## Review
 
