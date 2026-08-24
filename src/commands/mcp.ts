@@ -1,7 +1,12 @@
+import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+
+/** The server reports the version it actually is: a literal here said 0.5.0 for two releases. */
+const packageVersion = String((JSON.parse(readFileSync(fileURLToPath(new URL("../../package.json", import.meta.url)), "utf8")) as { version: unknown }).version);
 import { APPROVAL_ACTIONS, approvalDescription, decideApproval, failApproval, proposeApproval, type ApprovalAction, type ApprovalDecision } from "./approval.js";
 import { recordTaskMessage } from "./conversation.js";
 import { briefTask, defineTask, newTask, reviewTask, startTask, validateTask } from "./task.js";
@@ -41,7 +46,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
   const root = findRepositoryRoot(repositoryRoot ? resolve(repositoryRoot) : process.cwd());
   assertCurrentWorkspaceShape(root);
   const server = new McpServer(
-    { name: "kotta", version: "0.5.0" },
+    { name: "kotta", version: packageVersion },
     {
       instructions: [
         "Kotta is the canonical task control plane for this repository.",
