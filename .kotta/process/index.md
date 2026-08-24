@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- the-brief-tells-the-agent-how-to-reach-kotta-g5a5tek7
+None.
 
 ## Review
 
-None.
+- the-brief-tells-the-agent-how-to-reach-kotta-g5a5tek7
 
 ## Blocked
 

@@ -1,7 +1,7 @@
 ---
 id: T-01m0sdzjpwx5kafvp1g5a5tek7
 title: The brief tells the agent how to reach Kotta
-status: active
+status: review
 origin: human
 types:
   - bug
@@ -86,3 +86,31 @@ The diagnostic needs no new resolution logic: it compares `kottaInvocation()` ag
 
 - `run: npx vitest run tests/integration/brief-reachability.test.ts` — the new suite, including spawning what the brief names with an empty environment.
 - `run: npm test` — the full suite.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| The brief states the invocation. Every execution brief carries one line naming the interpreter and entry point that produced it, so an agent reading only the brief knows how to reach Kotta from where it is. | run: npx vitest run tests/integration/brief-reachability.test.ts -t 'every brief states the invocation' — verified: exit 0 at 28cdf62 |
+| The stated invocation works from a shell with no PATH. Spawning exactly what the brief names, with an empty environment, runs a Kotta command and returns its result. | run: npx vitest run tests/integration/brief-reachability.test.ts -t 'what the brief names runs a Kotta command with no PATH at all' — verified: exit 0 at 28cdf62 |
+| A diagnostic answers the reachability question on demand, reporting whether the bare name `kotta` resolves and naming the working invocation when it does not. | run: npx vitest run tests/integration/brief-reachability.test.ts -t 'doctor answers the reachability question in both directions' — verified: exit 0 at 28cdf62 |
+| Skills and messages are untouched. The shipped skills still read `kotta task close <id>`, and no message string gains an absolute path. | run: npx vitest run tests/integration/brief-reachability.test.ts -t 'the shipped skills still read as prose' — verified: exit 0 at 28cdf62 |
+
+### Verification performed
+
+The brief states the invocation. Every execution brief carries one line naming the interpreter and entry point that produced it, so an agent reading only the brief knows how to reach Kotta from where it is.: run: npx vitest run tests/integration/brief-reachability.test.ts -t 'every brief states the invocation'
+The stated invocation works from a shell with no PATH. Spawning exactly what the brief names, with an empty environment, runs a Kotta command and returns its result.: run: npx vitest run tests/integration/brief-reachability.test.ts -t 'what the brief names runs a Kotta command with no PATH at all'
+A diagnostic answers the reachability question on demand, reporting whether the bare name `kotta` resolves and naming the working invocation when it does not.: run: npx vitest run tests/integration/brief-reachability.test.ts -t 'doctor answers the reachability question in both directions'
+Skills and messages are untouched. The shipped skills still read `kotta task close <id>`, and no message string gains an absolute path.: run: npx vitest run tests/integration/brief-reachability.test.ts -t 'the shipped skills still read as prose'
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
