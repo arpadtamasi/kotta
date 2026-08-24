@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdnwfg647qh8j2673emy85
 title: The published schemas are enforced
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -15,7 +15,7 @@ spec:
   - BR-01m0sj2f8mxydc7zxz6y8xn6b1
   - EX-01m0sj2f8m02k71b0d5ph3d9qf
   - IF-01m0f0wn897newtcbva7xqgvx6
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-21'
 updated_at: '2026-08-24'
@@ -32,6 +32,12 @@ coverage:
   'A schema nobody holds to is not left published. Any schema, or field of one, that no code enforces is either given an enforcing constant or removed, and the outcome is stated per schema rather than left to the reader to infer.':
     - BR-01m0sj2f8mxydc7zxz6y8xn6b1
     - IF-01m0f0wn897newtcbva7xqgvx6
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 84e3985271cf90b1460ac631356ecb5dc057c2d9
 ---
 ## Outcome
 
