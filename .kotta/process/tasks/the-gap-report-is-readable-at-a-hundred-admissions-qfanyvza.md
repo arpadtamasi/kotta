@@ -24,7 +24,7 @@ coverage:
   'The spec-delta section names the change, not the admission''s essay. A changed node that is admitted is shown with its kind, not with the whole reason repeated per entry.':
     - UC-01m0fpqfxjvet99wbz0v1ag64q
     - BR-01m0swjgrreeby1pyfdzf4mf7d
-  'This workspace''s report fits a reading. `kotta gap` on the current workspace prints under a hundred lines, and no sentence in it appears more than three times.':
+  'The report stops scaling with the size of a bulk admission. No sentence appears in it more than three times, and adding a node to a group that shares a reason lengthens the report by one line rather than by a paragraph.':
     - UC-01m0fpqfxjvet99wbz0v1ag64q
   '`--json` loses nothing. Every admission still carries its own full reason in the machine-readable form, and the counts per kind are unchanged.':
     - UC-01m0fpqfxjvet99wbz0v1ag64q
@@ -54,6 +54,8 @@ A measure that is not read fails the same way as one that lies. That is not a ne
 
 ## Constraints
 
+Length is not the measure and must not become one. A line per node and a line per enforcement site is what this report is for; the defect is repetition, not size, and no acceptance here may be met by cutting an entry or eliding a reason. An earlier draft of this task pinned "under a hundred lines" and was corrected before submission, because that number could only have been reached by truncating.
+
 Grouping is by exact reason text, not by kind: two nodes admitted individually with different reasons stay individual even when their kind matches, because the reason is what the reader needs.
 
 The summary line stays first and unchanged, so a reader who stops after four lines still has every number.
@@ -72,7 +74,7 @@ The bulk admissions differ only by the node they sit on, so exact-text grouping 
 
 - A shared reason is printed once. Admissions carrying identical text are grouped under that text stated a single time, with their titles and ids named beneath it, and adding another node to such a group lengthens the report by one line.
 - The spec-delta section names the change, not the admission's essay. A changed node that is admitted is shown with its kind, not with the whole reason repeated per entry.
-- This workspace's report fits a reading. `kotta gap` on the current workspace prints under a hundred lines, and no sentence in it appears more than three times.
+- The report stops scaling with the size of a bulk admission. No sentence appears in it more than three times, and adding a node to a group that shares a reason lengthens the report by one line rather than by a paragraph.
 - `--json` loses nothing. Every admission still carries its own full reason in the machine-readable form, and the counts per kind are unchanged.
 
 ## Verification
