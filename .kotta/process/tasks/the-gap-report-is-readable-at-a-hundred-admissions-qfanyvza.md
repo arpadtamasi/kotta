@@ -1,7 +1,7 @@
 ---
 id: T-01m0t6y6mrz2qv285gqfanyvza
 title: The gap report is readable at a hundred admissions
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -32,7 +32,9 @@ coverage:
 worktree: .
 branch_origin: adopted
 start_ref: HEAD
-start_commit: 2a0950765a9b08c04bbcdb64550a3d58571f4b22
+start_commit: 550ffc6cb5ef71441cc72a2af06cf7daabe75b50
+assigned_agent: claude
+execution_mode: inherited
 ---
 ## Outcome
 
