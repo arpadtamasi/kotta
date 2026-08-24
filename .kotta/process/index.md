@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- the-gap-report-is-readable-at-a-hundred-admissions-qfanyvza
+None.
 
 ## Review
 
-None.
+- the-gap-report-is-readable-at-a-hundred-admissions-qfanyvza
 
 ## Blocked
 

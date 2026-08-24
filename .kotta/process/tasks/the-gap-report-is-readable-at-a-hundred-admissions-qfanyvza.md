@@ -1,7 +1,7 @@
 ---
 id: T-01m0t6y6mrz2qv285gqfanyvza
 title: The gap report is readable at a hundred admissions
-status: active
+status: review
 origin: human
 types:
   - bug
@@ -83,3 +83,31 @@ The bulk admissions differ only by the node they sit on, so exact-text grouping 
 
 - `run: npx vitest run tests/integration/gap-readability.test.ts` — the new suite.
 - `run: npm test` — the full suite.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A shared reason is printed once. Admissions carrying identical text are grouped under that text stated a single time, with their titles and ids named beneath it, and adding another node to such a group lengthens the report by one line. | run: npx vitest run tests/integration/gap-readability.test.ts -t 'a shared reason is printed once' — verified: exit 0 at 574efc0 |
+| The spec-delta section names the change, not the admission's essay. A changed node that is admitted is shown with its kind, not with the whole reason repeated per entry. | run: npx vitest run tests/integration/gap-readability.test.ts -t 'adding a node to a shared group' — verified: exit 0 at 574efc0 |
+| The report stops scaling with the size of a bulk admission. No sentence appears in it more than three times, and adding a node to a group that shares a reason lengthens the report by one line rather than by a paragraph. | run: npx vitest run tests/integration/gap-readability.test.ts -t 'no sentence in this workspace' — verified: exit 0 at 574efc0 |
+| `--json` loses nothing. Every admission still carries its own full reason in the machine-readable form, and the counts per kind are unchanged. | run: npx vitest run tests/integration/gap-readability.test.ts -t 'json keeps every admission' — verified: exit 0 at 574efc0 |
+
+### Verification performed
+
+A shared reason is printed once. Admissions carrying identical text are grouped under that text stated a single time, with their titles and ids named beneath it, and adding another node to such a group lengthens the report by one line.: run: npx vitest run tests/integration/gap-readability.test.ts -t 'a shared reason is printed once'
+The spec-delta section names the change, not the admission's essay. A changed node that is admitted is shown with its kind, not with the whole reason repeated per entry.: run: npx vitest run tests/integration/gap-readability.test.ts -t 'adding a node to a shared group'
+The report stops scaling with the size of a bulk admission. No sentence appears in it more than three times, and adding a node to a group that shares a reason lengthens the report by one line rather than by a paragraph.: run: npx vitest run tests/integration/gap-readability.test.ts -t 'no sentence in this workspace'
+`--json` loses nothing. Every admission still carries its own full reason in the machine-readable form, and the counts per kind are unchanged.: run: npx vitest run tests/integration/gap-readability.test.ts -t 'json keeps every admission'
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
