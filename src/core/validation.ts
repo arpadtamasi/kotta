@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 import { PROFILE_REQUIREMENTS } from "./profiles.js";
 import { TASK_ID, filenameMatchesId } from "./identity.js";
+import { TASK_STATES } from "../filesystem/entities.js";
 import { parseMarkdown, sections, subsections } from "./markdown.js";
 import { receiptErrors } from "./approval-receipt.js";
 
@@ -11,8 +12,9 @@ export interface ValidationReport { valid: boolean; errors: ValidationIssue[] }
 const COMMON_SECTIONS = ["Outcome", "Scope", "Non-goals", "Acceptance", "Verification", "Constraints", "Open decisions", "Execution notes"];
 
 // Lifecycle state lives in the frontmatter status field alone, so a value outside the lifecycle
-// means the task is in no state at all — kept in lockstep with TASK_STATES in filesystem/entities.
-const TASK_STATE_VALUES = ["backlog", "defined", "active", "review", "done"];
+// means the task is in no state at all. One list, imported: "kept in lockstep" was the arrangement
+// this rule exists to end (BR-01m0sj2f8mxydc7zxz6y8xn6b1).
+const TASK_STATE_VALUES: readonly string[] = TASK_STATES;
 
 // F-019: the structured Deviations field stays "None."/"Not declared." while the narrative names deviations.
 const UNDECLARED_DEVIATIONS = /^(?:none|not declared)\.?$/i;

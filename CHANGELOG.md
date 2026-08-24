@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **The published schemas are enforced.** Kotta ships six JSON schemas declaring eighteen sets of
+  permitted values; four had anything in the code to compare against, and the rest existed only as
+  TypeScript unions, which vanish before a comparison could happen. Every published set now has a
+  runtime constant beside it — the types are derived from those constants rather than restating
+  them — and one suite reads the shipped files and asserts the two agree in both directions. A
+  published enum with no pairing fails the suite by name, which is how `task.priority` and
+  `task.risk` were found. `validation.ts` no longer keeps its own copy of the task states "in
+  lockstep" with `entities.ts`; it imports them.
+
 - **The brief tells the agent how to reach Kotta, and `kotta doctor` answers on demand.** Every
   execution brief now carries a `- kotta:` line naming the interpreter and entry point that
   assembled it. The brief declares itself the complete execution context and routes every state

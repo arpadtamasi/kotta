@@ -5,6 +5,20 @@ import { TASK_ID, displayId, filenameMatchesId } from "../core/identity.js";
 import { processPath } from "./workspace.js";
 
 export const TASK_STATES = ["backlog", "defined", "active", "review", "done"] as const;
+/**
+ * The sets the published schemas declare, stated once at runtime so they can be asserted against
+ * (BR-01m0sj2f8mxydc7zxz6y8xn6b1). A TypeScript union alone vanishes before the comparison.
+ */
+export const ENTITY_ORIGINS = ["human", "agent", "observation", "imported"] as const;
+export const OBSERVATION_ORIGINS = ["human", "agent"] as const;
+export const EXECUTION_MODES = ["fresh", "inherited"] as const;
+export const CLAIM_ORIGINS = ["created", "adopted"] as const;
+export const OBSERVATION_TYPES = ["bug", "technical-debt", "risk", "improvement", "inconsistency", "duplication", "security", "performance", "other"] as const;
+export const CONFIDENCE_LEVELS = ["low", "medium", "high"] as const;
+export const SEVERITY_LEVELS = ["low", "medium", "high", "critical"] as const;
+/** A task's priority and its risk are graded on the same scale, and both are published. */
+export const PRIORITY_LEVELS = SEVERITY_LEVELS;
+export const RISK_LEVELS = SEVERITY_LEVELS;
 export const BATCH_STATES = ["backlog", "defined", "active", "done"] as const;
 
 export type EntityKind = "task" | "batch";

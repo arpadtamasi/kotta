@@ -532,6 +532,11 @@ export function closeTask(id: string, approved: boolean, repositoryRoot?: string
 }
 
 const CANCEL_RESOLUTIONS = ["duplicate", "obsolete", "cancelled"] as const;
+/**
+ * Every resolution a task can end with. `close` writes `completed`; the rest are cancel's, and the
+ * published task schema states the union — so the union lives here rather than only in the schema.
+ */
+export const TASK_RESOLUTIONS = ["completed", ...CANCEL_RESOLUTIONS] as const;
 /** Every live state. A retirement must reach the work wherever it got to, or it is not a retirement. */
 const CANCELLABLE_STATES = ["backlog", "defined", "active", "review"];
 /** Resolutions that assert something else took this work's place. The something else gets named. */
