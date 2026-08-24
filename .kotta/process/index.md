@@ -13,6 +13,7 @@ None.
 ## Defined tasks
 
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
+- the-brief-tells-the-agent-how-to-reach-kotta-g5a5tek7
 
 ## Active tasks
 
