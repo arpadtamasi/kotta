@@ -13,6 +13,7 @@ None.
 ## Defined tasks
 
 - az-agenseknek-szolo-szabalyok-csak-egy-masolt-agents-md-ben--bd1366pk
+- the-published-schemas-are-enforced-673emy85
 
 ## Active tasks
 
