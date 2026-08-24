@@ -20,7 +20,7 @@ None.
 
 ## Review
 
-- an-admission-says-which-kind-it-is-k7fppjk0
+None.
 
 ## Blocked
 
