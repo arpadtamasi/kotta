@@ -3,7 +3,7 @@ id: T-028
 title: >-
   The CLI is not reachable where the work happens, and the skills are bypassed —
   831 a-team commands, 5 skill invocations
-status: backlog
+status: done
 origin: observation
 types:
   - feature
@@ -16,8 +16,22 @@ blocks: []
 branch: null
 pull_request: null
 created_at: '2026-08-02'
-updated_at: '2026-08-02'
+updated_at: '2026-08-24'
 source_observation: F-023
+resolution: obsolete
+cancellation_reason: >-
+  Delivered, and its one remaining item was declined on purpose. The host
+  configuration records a proved invocation (src/commands/integrate.ts, merged
+  088b1c8); the execution brief states one for the agent and 'kotta doctor'
+  answers the reachability question on demand (merged a254b84). The fourth item
+  — making the skills use a resolved path — is not outstanding work:
+  BR-01m0r52vex4j22266nepm5yq8s excludes them by name, because they are read by
+  people and absolute paths there would be permanent noise bought against one
+  failure.
+superseded_by: T-01m0sdzjpwx5kafvp1g5a5tek7
+approved_by: cli
+approved_at: '2026-08-24T09:35:07.201Z'
+approval_basis: 'CLI --approve: task.cancel'
 ---
 # T-028 — A kotta bináris legyen elérhető minden worktree-ben és subshellben
 
