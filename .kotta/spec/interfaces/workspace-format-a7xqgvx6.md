@@ -17,7 +17,7 @@ A Git repository; the layout created by init or brought current by migrate.
 
 ## Postconditions
 
-One entity, one stable file; lifecycle state lives in the frontmatter status field alone, and a transition is an in-place edit, never a move. Published schemas define tasks, observations, batches, claims, events, and config.
+One entity, one stable file; lifecycle state lives in the frontmatter status field alone, and a transition is an in-place edit, never a move. Published schemas define tasks, observations, batches, claims, events, and config, and each is asserted against the code that enforces it, so a published schema states what the code actually holds to.
 
 ## Invariants
 

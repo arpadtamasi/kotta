@@ -1,0 +1,17 @@
+{
+  "id": "E-01m0shz9h9pn4ys2hmzvyzaems",
+  "entity": "T-028",
+  "task": "T-028",
+  "kind": "approval",
+  "approval_id": "E-01m0shz9h9pn4ys2hmzvyzaems",
+  "phase": "proposed",
+  "action": "task.cancel",
+  "payload": {
+    "resolution": "obsolete",
+    "reason": "Delivered, and its one remaining item was declined on purpose. The host configuration records a proved invocation (src/commands/integrate.ts, merged 088b1c8); the execution brief states one for the agent and 'kotta doctor' answers the reachability question on demand (merged a254b84). The fourth item — making the skills use a resolved path — is not outstanding work: BR-01m0r52vex4j22266nepm5yq8s excludes them by name, because they are read by people and absolute paths there would be permanent noise bought against one failure.",
+    "superseded_by": "T-01m0sdzjpwx5kafvp1g5a5tek7",
+    "surface": "cli"
+  },
+  "source_message": null,
+  "created_at": "2026-08-24T09:35:07.305Z"
+}
