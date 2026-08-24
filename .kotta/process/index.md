@@ -20,7 +20,7 @@ None.
 
 ## Review
 
-- the-brief-tells-the-agent-how-to-reach-kotta-g5a5tek7
+None.
 
 ## Blocked
 

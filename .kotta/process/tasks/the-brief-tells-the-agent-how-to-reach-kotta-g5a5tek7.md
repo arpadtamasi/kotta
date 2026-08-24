@@ -1,7 +1,7 @@
 ---
 id: T-01m0sdzjpwx5kafvp1g5a5tek7
 title: The brief tells the agent how to reach Kotta
-status: review
+status: done
 origin: human
 types:
   - bug
@@ -38,6 +38,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: dacced88f206aa3ebd3bf4f9d381ca2af72442eb
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-24T08:44:30.171Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
