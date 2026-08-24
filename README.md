@@ -185,8 +185,15 @@ whole value: it records that the promise stands and is not yet kept.
 
 ```yaml
 accepted:
-  - "implementation: the exporter ships after the policy workshop; nothing implements this yet"
+  - "unimplemented: the exporter ships after the policy workshop; nothing implements this yet"
 ```
+
+An admission says which of three situations it is, and the report counts them apart, because one
+word covering all three made the number unreadable. **structural** — many code sites realise the
+promise and no single one would ever name it, which is the measurement's boundary rather than a
+debt. **unexamined** — nobody has checked yet, the only kind that may honestly be written in bulk.
+**unimplemented** — someone looked and it is not built, which is the number to read as debt. An
+admission naming none of them is refused like an unadmitted promise.
 
 Every command that creates an entity prints its identifier. New identifiers are minted
 without coordination — `T-` plus a time-sortable ULID — so two agents on two branches can

@@ -32,7 +32,7 @@ function run(root: string): { stdout: string; json: { ok: boolean; data: Record<
 function node(root: string, id: string, title: string, accepted?: string): void {
   writeFileSync(join(root, `.kotta/spec/glossary-terms/${title.toLowerCase().replaceAll(" ", "-")}-${id.slice(-8)}.md`), [
     "---", `id: ${id}`, "form: glossary-term", `title: ${title}`,
-    ...(accepted ? ["accepted:", `  - \"implementation: ${accepted}\"`] : []),
+    ...(accepted ? ["accepted:", `  - \"unimplemented: ${accepted}\"`] : []),
     "---", "", "## Definition", `${title} is observable.`, "", "## Usage", "The running system applies it.", "", "## Non-examples", "Unrelated behavior.", "",
   ].join("\n"));
 }
