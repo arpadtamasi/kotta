@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- the-published-schemas-are-enforced-673emy85
+None.
 
 ## Review
 
-None.
+- the-published-schemas-are-enforced-673emy85
 
 ## Blocked
 

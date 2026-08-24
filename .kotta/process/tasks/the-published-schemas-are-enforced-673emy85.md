@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdnwfg647qh8j2673emy85
 title: The published schemas are enforced
-status: active
+status: review
 origin: human
 types:
   - bug
@@ -84,3 +84,31 @@ The existing observation agreement test is the pattern to generalise, not to cop
 
 - `run: npx vitest run tests/integration/published-schemas.test.ts` — the new suite.
 - `run: npm test` — the full suite, since reconciliation may move a constant.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| Every published schema is asserted against the code. For each file under `schemas/`, the suite reads the shipped file and compares the values it permits, and the fields it requires, against the constants the code enforces. | run: npx vitest run tests/integration/published-schemas.test.ts — verified: exit 0 at fea93b9 |
+| A drift in either direction fails and names the field. Adding a permitted value to a schema without adding it to the code fails the suite naming the schema and the field, and so does the reverse. | Probed both directions by hand at 69746e2. Adding 'paused' to task.schema.json status made the suite fail naming 'task.schema.json · status' with + "paused" in the diff; adding 'borrowed' to CLAIM_ORIGINS made 'claim.schema.json · origin' fail the same way. Both probes reverted; git diff on schemas/ and src/ is clean. |
+| The check reads the published file. The assertion loads `schemas/*.json` from disk rather than any copy kept beside the test, so a passing suite is evidence about what Kotta publishes. | run: npx vitest run tests/integration/published-schemas.test.ts -t 'every published enum has a pairing' — verified: exit 0 at fea93b9 |
+| A schema nobody holds to is not left published. Any schema, or field of one, that no code enforces is either given an enforcing constant or removed, and the outcome is stated per schema rather than left to the reader to infer. | All eighteen published sets now have a runtime constant; ten were added in this task (ENTITY_ORIGINS, OBSERVATION_ORIGINS, EXECUTION_MODES, CLAIM_ORIGINS, OBSERVATION_TYPES, CONFIDENCE_LEVELS, SEVERITY_LEVELS, PRIORITY_LEVELS, RISK_LEVELS in src/filesystem/entities.ts; EVENT_KINDS, EVENT_ROLES, APPROVAL_PHASE_VALUES in src/core/events.ts; TASK_RESOLUTIONS in src/commands/task.ts), and none was removed because each turned out to be enforced in fact. The totality test fails on any unpaired enum, which is how task.priority and task.risk were found. |
+
+### Verification performed
+
+Every published schema is asserted against the code. For each file under `schemas/`, the suite reads the shipped file and compares the values it permits, and the fields it requires, against the constants the code enforces.: run: npx vitest run tests/integration/published-schemas.test.ts
+A drift in either direction fails and names the field. Adding a permitted value to a schema without adding it to the code fails the suite naming the schema and the field, and so does the reverse.: Probed both directions by hand at 69746e2. Adding 'paused' to task.schema.json status made the suite fail naming 'task.schema.json · status' with + "paused" in the diff; adding 'borrowed' to CLAIM_ORIGINS made 'claim.schema.json · origin' fail the same way. Both probes reverted; git diff on schemas/ and src/ is clean.
+The check reads the published file. The assertion loads `schemas/*.json` from disk rather than any copy kept beside the test, so a passing suite is evidence about what Kotta publishes.: run: npx vitest run tests/integration/published-schemas.test.ts -t 'every published enum has a pairing'
+A schema nobody holds to is not left published. Any schema, or field of one, that no code enforces is either given an enforcing constant or removed, and the outcome is stated per schema rather than left to the reader to infer.: All eighteen published sets now have a runtime constant; ten were added in this task (ENTITY_ORIGINS, OBSERVATION_ORIGINS, EXECUTION_MODES, CLAIM_ORIGINS, OBSERVATION_TYPES, CONFIDENCE_LEVELS, SEVERITY_LEVELS, PRIORITY_LEVELS, RISK_LEVELS in src/filesystem/entities.ts; EVENT_KINDS, EVENT_ROLES, APPROVAL_PHASE_VALUES in src/core/events.ts; TASK_RESOLUTIONS in src/commands/task.ts), and none was removed because each turned out to be enforced in fact. The totality test fails on any unpaired enum, which is how task.priority and task.risk were found.
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
