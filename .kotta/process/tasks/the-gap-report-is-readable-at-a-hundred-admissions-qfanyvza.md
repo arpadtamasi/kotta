@@ -1,7 +1,7 @@
 ---
 id: T-01m0t6y6mrz2qv285gqfanyvza
 title: The gap report is readable at a hundred admissions
-status: active
+status: defined
 origin: human
 types:
   - bug
@@ -29,9 +29,7 @@ coverage:
   '`--json` loses nothing. Every admission still carries its own full reason in the machine-readable form, and the counts per kind are unchanged.':
     - UC-01m0fpqfxjvet99wbz0v1ag64q
     - BR-01m0swjgrreeby1pyfdzf4mf7d
-assigned_agent: claude
 worktree: .
-execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 2a0950765a9b08c04bbcdb64550a3d58571f4b22
