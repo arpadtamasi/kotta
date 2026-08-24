@@ -1,7 +1,7 @@
 ---
 id: T-01m0tjx38y6mdbpyzhgxm1dq6q
 title: The sign gate is removed
-status: review
+status: done
 origin: human
 types:
   - refactor
@@ -38,6 +38,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 05c485e58927c0f700cc7a13c6c7feadb41bfafe
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-24T21:03:26.781Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
