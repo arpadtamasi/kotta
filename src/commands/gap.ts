@@ -191,6 +191,15 @@ function enforcementSites(files: Array<{ path: string; text: string }>, nodeIds:
   return [...gaps.values()].sort((left, right) => left.behavior.localeCompare(right.behavior) || left.path.localeCompare(right.path) || left.line - right.line);
 }
 
+/** Admissions that share a reason word for word: one decision, however many nodes carry it. */
+function groupByReason(gaps: AcceptedImplementationGap[]): Map<string, AcceptedImplementationGap[]> {
+  const groups = new Map<string, AcceptedImplementationGap[]>();
+  // Grouped by the exact text, never by kind: the reason is what a reader came for, and two nodes
+  // admitted separately stay separate even when their kind matches.
+  for (const gap of gaps) groups.set(gap.reason, [...(groups.get(gap.reason) ?? []), gap]);
+  return groups;
+}
+
 export function formatGapReport(data: GapReportResult["data"]): string {
   const lines = [
     "# Implementation gap report",
@@ -208,7 +217,7 @@ export function formatGapReport(data: GapReportResult["data"]): string {
       const status = node.evidence.length
         ? `evidence: ${node.evidence.map((entry) => `${entry.kind} ${entry.path}`).join(", ")}`
         : accepted
-          ? `admitted as ${accepted.kind}: ${accepted.reason}`
+          ? `admitted as ${accepted.kind}`
           : `missing: looked for ${node.evidenceSought}`;
       lines.push(`- ${node.title} · ${node.id} — ${status} (${node.path})`);
     }
@@ -225,7 +234,18 @@ export function formatGapReport(data: GapReportResult["data"]): string {
     const group = data.acceptedGaps.filter((gap) => gap.kind === kind);
     if (!group.length) continue;
     lines.push("", `## Admitted as ${kind}`);
-    for (const node of group) lines.push(`- ${node.changed ? "[changed] " : ""}${node.title} · ${node.id} — ${node.reason} (${node.path})`);
+    // A bulk admission is one decision, and printing its reason once per node made this report 333
+    // lines with a paragraph repeated a hundred and eight times — read once, then skipped, which is
+    // how a measure stops being consulted. Identical text is one heading; the nodes sit under it.
+    for (const [reason, nodes] of groupByReason(group)) {
+      if (nodes.length > 1) {
+        lines.push("", `${nodes.length} nodes, all admitted with the same reason:`, `> ${reason}`, "");
+        for (const node of nodes) lines.push(`- ${node.changed ? "[changed] " : ""}${node.title} · ${node.id} (${node.path})`);
+      } else {
+        const [node] = nodes;
+        lines.push(`- ${node.changed ? "[changed] " : ""}${node.title} · ${node.id} — ${reason} (${node.path})`);
+      }
+    }
   }
   if (data.reverse.length) {
     lines.push("", "## Enforced behavior with no specification trace");
