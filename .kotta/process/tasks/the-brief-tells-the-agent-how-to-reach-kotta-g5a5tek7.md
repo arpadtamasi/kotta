@@ -1,7 +1,7 @@
 ---
 id: T-01m0sdzjpwx5kafvp1g5a5tek7
 title: The brief tells the agent how to reach Kotta
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -15,7 +15,7 @@ spec:
   - BR-01m0r52vex4j22266nepm5yq8s
   - EX-01m0r52vexxy9azs452pb05pmr
   - IF-01m0f0wn89efd2ss83c4csk7qx
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-24'
 updated_at: '2026-08-24'
@@ -32,6 +32,12 @@ coverage:
     - EX-01m0r52vexxy9azs452pb05pmr
   'Skills and messages are untouched. The shipped skills still read `kotta task close <id>`, and no message string gains an absolute path.':
     - BR-01m0r52vex4j22266nepm5yq8s
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: dacced88f206aa3ebd3bf4f9d381ca2af72442eb
 ---
 ## Outcome
 
