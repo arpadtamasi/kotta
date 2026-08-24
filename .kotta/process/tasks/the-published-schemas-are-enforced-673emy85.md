@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdnwfg647qh8j2673emy85
 title: The published schemas are enforced
-status: review
+status: done
 origin: human
 types:
   - bug
@@ -38,6 +38,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 84e3985271cf90b1460ac631356ecb5dc057c2d9
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-24T10:34:05.611Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
