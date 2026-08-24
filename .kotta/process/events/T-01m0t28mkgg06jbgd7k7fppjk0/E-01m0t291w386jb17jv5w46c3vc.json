@@ -1,0 +1,9 @@
+{
+  "entity": "T-01m0t28mkgg06jbgd7k7fppjk0",
+  "task": "T-01m0t28mkgg06jbgd7k7fppjk0",
+  "kind": "lifecycle",
+  "state": "defined",
+  "summary": "Task definition validated for accepted-spec coverage; no separate sign gate required.",
+  "id": "E-01m0t291w386jb17jv5w46c3vc",
+  "created_at": "2026-08-24T14:20:04.355Z"
+}

@@ -88,10 +88,13 @@ accepted:
   - "implementation: the exporter ships after the policy workshop; nothing implements this yet"
 ```
 
-The `implementation` key (and its `implementation-gap` and `verification` synonyms) is the one
-`kotta gap` reads, and it is not optional bookkeeping: a node with no evidence and no such entry
-makes `kotta gap` refuse (BR-01m0qtshfqhcrrqtz051zm9svr). Write the reason for a reader who will
-meet it a year from now, and delete it when the promise is kept.
+`kotta gap` reads three admission kinds — `structural`, `unexamined`, `unimplemented` — and this is
+not optional bookkeeping: a node with no evidence and no such entry makes the command refuse
+(BR-01m0qtshfqhcrrqtz051zm9svr), and so does an admission that names no kind
+(BR-01m0swjgrreeby1pyfdzf4mf7d). Choose `structural` when many sites realise the promise and none
+could name it, `unexamined` when nobody has looked yet, `unimplemented` when someone looked and it
+is not built. Write the reason for a reader who will meet it a year from now, and delete the entry
+when the promise is kept.
 
 When an accepted entry matches a missing required edge, remove the question from the work list and
 place the entry under **Accepted gaps** with its reason. Also list well-formed accepted entries for

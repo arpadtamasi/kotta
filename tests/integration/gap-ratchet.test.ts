@@ -24,7 +24,7 @@ const NODE = (id: string, title: string, admission?: string) => [
   `id: ${id}`,
   "form: business-rule",
   `title: "${title}"`,
-  ...(admission ? ["accepted:", `  - "implementation: ${admission}"`] : []),
+  ...(admission ? ["accepted:", `  - "unimplemented: ${admission}"`] : []),
   "---",
   "",
   "## Rule",
@@ -80,6 +80,7 @@ describe("every accepted promise is kept or admitted", () => {
     expect(said, "the unadmitted node is named").toContain("An unadmitted rule");
     expect(said, "and the reader is told where evidence was sought").toContain("BR-01cccccccccccccccccccccccc");
     expect(said, "and what would settle it").toContain("accepted:");
+    expect(said, "naming the kinds it may choose from").toContain("unimplemented");
     // The report is why the command is run at all, so refusing must not swallow it.
     expect(said, "the report is still printed").toContain("Implementation gap report");
     expect(said, "and the failure is named beside it").toMatch(/failed with 1 error/);
@@ -94,7 +95,7 @@ describe("every accepted promise is kept or admitted", () => {
     const result = attempt(root, ["gap"]);
     const said = say(result);
     expect(result.status, "the admission is enough").toBe(0);
-    expect(said, "the admitted nodes are reported as admitted").toContain("Accepted gaps");
+    expect(said, "the admitted nodes are reported under their kind").toContain("## Admitted as unimplemented");
     expect(said, "with their stated reason").toContain("Deliberately unbuilt while the shape settles.");
     expect(said, "and nothing is reported as a promise without evidence").not.toContain("Promises without implementing or verifying evidence");
 
@@ -115,6 +116,6 @@ describe("every accepted promise is kept or admitted", () => {
 
     const result = attempt(clone, ["gap"]);
     expect(result.status, say(result).split("\n").slice(-8).join("\n")).toBe(0);
-    expect(say(result), "and says so by keeping the two columns apart").toContain("Accepted gaps");
+    expect(say(result), "and says so by keeping the kinds apart").toMatch(/## Admitted as (structural|unexamined)/);
   }, 180_000);
 });

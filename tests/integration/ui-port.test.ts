@@ -17,6 +17,26 @@ const freeBasePort = async (): Promise<number> => {
   return port;
 };
 
+/**
+ * A run of consecutive ports, all held. `freeBasePort` finds one free port, and these tests then
+ * assumed its neighbours were free too — true when the suite runs alone and false under load, where
+ * another test binds one of them between the probe and the occupation. The run is claimed as a whole
+ * or released and retried, so the test asserts what it means to and not the machine's luck.
+ */
+const occupyRun = async (count: number): Promise<{ base: number; held: Server[] }> => {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    const base = await freeBasePort();
+    const held: Server[] = [];
+    try {
+      for (let index = 0; index < count; index += 1) held.push(await occupy(base + index));
+      return { base, held };
+    } catch {
+      for (const listener of held) await close(listener);
+    }
+  }
+  throw new Error(`No run of ${count} consecutive free ports on ${HOST} after 40 attempts.`);
+};
+
 const occupy = async (port: number): Promise<Server> => {
   const server = idleServer();
   await new Promise<void>((resolve, reject) => { server.once("error", reject); server.listen(port, HOST, resolve); });
@@ -73,12 +93,14 @@ describe("ui server binding", () => {
   });
 
   test("consecutive collisions advance in ascending order", async () => {
-    const base = await freeBasePort();
-    const occupied = [await occupy(base), await occupy(base + 1)];
+    // Three consecutive ports: two to hold, and the third free for the bind to land on.
+    const { base, held } = await occupyRun(3);
+    const third = held.pop()!;
+    await close(third);
     const server = idleServer();
     try {
       expect(await bindUiServer(server, HOST, undefined, base)).toEqual({ port: base + 2, fallback: true });
-    } finally { await close(server); for (const held of occupied) await close(held); }
+    } finally { await close(server); for (const listener of held) await close(listener); }
   });
 
   test("an explicit occupied port fails without selecting a neighbour", async () => {
@@ -92,11 +114,9 @@ describe("ui server binding", () => {
   });
 
   test("exhausting the retry bound explains how to supply an explicit port", async () => {
-    const base = await freeBasePort();
-    const held: Server[] = [];
+    const { base, held } = await occupyRun(UI_PORT_RETRY_BOUND);
     const server = idleServer();
     try {
-      for (let index = 0; index < UI_PORT_RETRY_BOUND; index += 1) held.push(await occupy(base + index));
       await expect(bindUiServer(server, HOST, undefined, base)).rejects.toThrow(`Ports ${base}-${base + UI_PORT_RETRY_BOUND - 1} on ${HOST} are all in use.`);
     } finally { await close(server); for (const listener of held) await close(listener); }
   });

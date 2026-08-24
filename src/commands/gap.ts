@@ -20,10 +20,19 @@ export interface GapNode {
   evidenceSought: string;
 }
 
+/**
+ * Which of three situations an admission records (BR-01m0swjgrreeby1pyfdzf4mf7d). One word covering
+ * all three made the count unreadable: "nobody looked" moved the same number as "many sites realise
+ * this and none can name it", and the two ask for opposite work.
+ */
+export const ADMISSION_KINDS = ["structural", "unexamined", "unimplemented"] as const;
+export type AdmissionKind = typeof ADMISSION_KINDS[number];
+
 export interface AcceptedImplementationGap {
   id: string;
   title: string;
   path: string;
+  kind: AdmissionKind;
   reason: string;
   changed: boolean;
 }
@@ -47,6 +56,8 @@ export interface GapReportResult {
     nodes: GapNode[];
     promises: GapNode[];
     acceptedGaps: AcceptedImplementationGap[];
+    /** Admissions that name no kind: neither kept, nor filed under any of the three. */
+    unkinded: GapNode[];
     reverse: ReverseGap[];
     report: string;
   };
@@ -132,15 +143,26 @@ function lastSpecLanding(root: string, ref: string, workspace: string): { commit
   return { commit, changedPaths: new Set(listed ? listed.split(/\r?\n/).filter(Boolean) : []) };
 }
 
-function acceptedImplementationReason(entries: string[]): string | null {
+/** The legacy spellings, kept reading so an existing workspace is not broken by the kinds. */
+const UNKINDED_KEYS = ["implementation", "implementation-gap", "verification"];
+
+/**
+ * The admission on a node, with the kind it declares. A legacy unkinded entry is returned with a
+ * null kind so the caller can refuse it by name rather than guessing which of the three it meant.
+ */
+function acceptedAdmission(entries: string[]): { kind: AdmissionKind | null; reason: string } | null {
+  let unkinded: { kind: null; reason: string } | null = null;
   for (const entry of entries) {
     const separator = entry.indexOf(":");
     if (separator < 1) continue;
     const key = entry.slice(0, separator).trim().toLowerCase();
     const reason = entry.slice(separator + 1).trim();
-    if (["implementation", "implementation-gap", "verification"].includes(key) && reason) return reason;
+    if (!reason) continue;
+    const kind = ADMISSION_KINDS.find((candidate) => candidate === key);
+    if (kind) return { kind, reason };
+    if (UNKINDED_KEYS.includes(key) && !unkinded) unkinded = { kind: null, reason };
   }
-  return null;
+  return unkinded;
 }
 
 function enforcementSites(files: Array<{ path: string; text: string }>, nodeIds: string[]): ReverseGap[] {
@@ -174,7 +196,9 @@ export function formatGapReport(data: GapReportResult["data"]): string {
     "# Implementation gap report",
     "",
     `Base: ${data.baseBranch}@${data.commit}`,
-    `Promises without evidence: ${data.promises.length} · Accepted gaps: ${data.acceptedGaps.length} · Unspecified enforcement: ${data.reverse.length}`,
+    // Counted apart, because the three ask for opposite work and one total hid that
+    // (BR-01m0swjgrreeby1pyfdzf4mf7d). `unimplemented` is the one to read as debt.
+    `Promises without evidence: ${data.promises.length} · ${ADMISSION_KINDS.map((kind) => `${kind}: ${data.acceptedGaps.filter((gap) => gap.kind === kind).length}`).join(" · ")}${data.unkinded.length ? ` · admitted without a kind: ${data.unkinded.length}` : ""} · Unspecified enforcement: ${data.reverse.length}`,
   ];
   const changed = data.nodes.filter((node) => node.changed);
   if (changed.length) {
@@ -184,18 +208,24 @@ export function formatGapReport(data: GapReportResult["data"]): string {
       const status = node.evidence.length
         ? `evidence: ${node.evidence.map((entry) => `${entry.kind} ${entry.path}`).join(", ")}`
         : accepted
-          ? `accepted gap: ${accepted.reason}`
+          ? `admitted as ${accepted.kind}: ${accepted.reason}`
           : `missing: looked for ${node.evidenceSought}`;
       lines.push(`- ${node.title} · ${node.id} — ${status} (${node.path})`);
     }
+  }
+  if (data.unkinded.length) {
+    lines.push("", "## Admitted without saying which kind");
+    for (const node of data.unkinded) lines.push(`- ${node.changed ? "[changed] " : ""}${node.title} · ${node.id} (${node.path})`);
   }
   if (data.promises.length) {
     lines.push("", "## Promises without implementing or verifying evidence");
     for (const node of data.promises) lines.push(`- ${node.changed ? "[changed] " : ""}${node.title} · ${node.id} — looked for ${node.evidenceSought} (${node.path})`);
   }
-  if (data.acceptedGaps.length) {
-    lines.push("", "## Accepted gaps");
-    for (const node of data.acceptedGaps) lines.push(`- ${node.changed ? "[changed] " : ""}${node.title} · ${node.id} — ${node.reason} (${node.path})`);
+  for (const kind of ADMISSION_KINDS) {
+    const group = data.acceptedGaps.filter((gap) => gap.kind === kind);
+    if (!group.length) continue;
+    lines.push("", `## Admitted as ${kind}`);
+    for (const node of group) lines.push(`- ${node.changed ? "[changed] " : ""}${node.title} · ${node.id} — ${node.reason} (${node.path})`);
   }
   if (data.reverse.length) {
     lines.push("", "## Enforced behavior with no specification trace");
@@ -225,12 +255,16 @@ export function gapReport(repositoryRoot: string): GapReportResult {
 
   const promises: GapNode[] = [];
   const acceptedGaps: AcceptedImplementationGap[] = [];
+  const unkinded: GapNode[] = [];
   for (const node of described) {
     if (node.evidence.length) continue;
     const source = nodes.find((candidate) => candidate.id === node.id)!;
-    const reason = acceptedImplementationReason(source.accepted);
-    if (reason) acceptedGaps.push({ id: node.id, title: node.title, path: node.path, reason, changed: node.changed });
-    else promises.push(node);
+    const admission = acceptedAdmission(source.accepted);
+    if (!admission) promises.push(node);
+    // An admission that names no kind is refused rather than filed under a guess: naming three
+    // situations with one word is the defect this rule removes (BR-01m0swjgrreeby1pyfdzf4mf7d).
+    else if (!admission.kind) unkinded.push(node);
+    else acceptedGaps.push({ id: node.id, title: node.title, path: node.path, kind: admission.kind, reason: admission.reason, changed: node.changed });
   }
   const reverse = enforcementSites(files, nodes.map((node) => node.id));
   const data: GapReportResult["data"] = {
@@ -241,6 +275,7 @@ export function gapReport(repositoryRoot: string): GapReportResult {
     nodes: described,
     promises,
     acceptedGaps,
+    unkinded,
     reverse,
     report: "",
   };
@@ -248,10 +283,17 @@ export function gapReport(repositoryRoot: string): GapReportResult {
   // Every accepted promise is kept or admitted (BR-01m0qtshfqhcrrqtz051zm9svr). A promise with no
   // evidence and no stated reason is the one thing this read refuses over: the count of unaccounted
   // promises could otherwise only grow, because nothing in the workflow ever had to look at it.
-  const errors = promises.map((node) => ({
-    code: "UNADMITTED_PROMISE",
-    message: `${node.title} (${node.form}) has no evidence and admits no implementation gap. Looked for ${node.evidenceSought}. Implement it, or record why it stands unimplemented in its frontmatter: accepted: ["implementation: <reason>"].`,
-    path: node.path,
-  }));
+  const errors = [
+    ...promises.map((node) => ({
+      code: "UNADMITTED_PROMISE",
+      message: `${node.title} (${node.form}) has no evidence and admits no gap. Looked for ${node.evidenceSought}. Implement it, or admit the gap in its frontmatter: accepted: ["<kind>: <reason>"], where <kind> is one of ${ADMISSION_KINDS.join(", ")}.`,
+      path: node.path,
+    })),
+    ...unkinded.map((node) => ({
+      code: "UNKINDED_ADMISSION",
+      message: `${node.title} (${node.form}) admits a gap without saying which kind it is. Rewrite the accepted entry as one of ${ADMISSION_KINDS.join(", ")}: 'structural' when many sites realise the promise and none names it, 'unexamined' when nobody has looked yet, 'unimplemented' when someone looked and it is not built.`,
+      path: node.path,
+    })),
+  ];
   return { ok: errors.length === 0, command: "gap report", data, errors };
 }

@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **An admission says which kind it is.** `kotta gap` counted 106 admitted gaps as one number, and
+  a triage found three situations under one label: 52 forms no code site would ever name, and 54
+  questions nobody had asked. Admissions are now `structural`, `unexamined` or `unimplemented`, the
+  report counts and lists the three apart, and an admission naming no kind is refused the way an
+  unadmitted promise is. This workspace's inherited admissions were kinded by form, and the
+  structural wording says so: none of them claims that anybody examined the node. `unimplemented` is
+  the count to read as debt, and it stands at zero here because nobody has yet looked closely enough
+  to move anything into it.
+
 - **The published schemas are enforced.** Kotta ships six JSON schemas declaring eighteen sets of
   permitted values; four had anything in the code to compare against, and the rest existed only as
   TypeScript unions, which vanish before a comparison could happen. Every published set now has a
