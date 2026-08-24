@@ -12,7 +12,7 @@ accepted:
 
 ## Given
 
-A signed task with no claim, in a clean repository with the control checkout on the base branch.
+A defined task with no claim, in a clean repository with the control checkout on the base branch.
 
 ## When
 

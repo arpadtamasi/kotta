@@ -17,4 +17,4 @@ The task corpus is the asset, and it is only trustworthy if every judgement in i
 
 ## Scope
 
-Definition, execution, review, and triage. Open decisions block signing; mid-execution questions stop the run rather than being silently decided; recorded decisions travel into briefs.
+Definition, execution, review, and triage. Open decisions block defining; mid-execution questions stop the run rather than being silently decided; recorded decisions travel into briefs.

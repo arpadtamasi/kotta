@@ -17,4 +17,4 @@ Direct work larger than they can continuously observe without losing control of 
 
 ## Responsibilities
 
-State intent. Decide every consequential gate: sign, close, cancel, observation dispositions, decision records. Accept evidence, not reports. Answer open questions instead of letting agents invent intent.
+State intent. Decide every consequential gate: close, cancel, observation dispositions, decision records. Accept evidence, not reports. Answer open questions instead of letting agents invent intent.

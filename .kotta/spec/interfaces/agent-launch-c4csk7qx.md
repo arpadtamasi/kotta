@@ -13,7 +13,7 @@ The boundary between execute and the coding agent it launches: what the agent re
 
 ## Preconditions
 
-A defined task (signed as well, where the workspace retains the compatibility gate); a clean repository; the agent command resolved from the agent argument or the environment override (which is how tests drive a deterministic double).
+A defined task; a clean repository; the agent command resolved from the agent argument or the environment override (which is how tests drive a deterministic double).
 
 ## Postconditions
 

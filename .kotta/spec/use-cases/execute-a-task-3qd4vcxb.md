@@ -19,7 +19,7 @@ Implement one defined task in an isolated Git context, from its brief alone, and
 
 ## Preconditions
 
-The task is defined and signed, its dependencies are done, no claim or execution context exists, the repository is clean, and the agent command resolves.
+The task is defined, its dependencies are done, no claim or execution context exists, the repository is clean, and the agent command resolves.
 
 ## Main success scenario
 
