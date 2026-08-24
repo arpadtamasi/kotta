@@ -3,8 +3,17 @@ import { join } from "node:path";
 import { ANY_ENTITY_ID_SOURCE, TASK_ID, mintEventId } from "./identity.js";
 import { processPath } from "../filesystem/workspace.js";
 
-export type EventKind = "message" | "turn-failed" | "lifecycle" | "approval";
-export type ApprovalPhase = "proposed" | "approved" | "rejected" | "cancelled" | "applied" | "failed";
+/**
+ * The published event schema states these sets, and a type alone would vanish before anything could
+ * compare them (BR-01m0sj2f8mxydc7zxz6y8xn6b1). The values live once, at runtime, and the type is
+ * derived from them — so `schemas/event.schema.json` has something it can be asserted against.
+ */
+export const EVENT_KINDS = ["message", "turn-failed", "lifecycle", "approval"] as const;
+export const EVENT_ROLES = ["human", "assistant"] as const;
+export const APPROVAL_PHASE_VALUES = ["proposed", "approved", "rejected", "cancelled", "applied", "failed"] as const;
+
+export type EventKind = typeof EVENT_KINDS[number];
+export type ApprovalPhase = typeof APPROVAL_PHASE_VALUES[number];
 
 export interface KottaEvent {
   id: string;
@@ -29,7 +38,7 @@ export interface KottaEvent {
 
 const EVENT_ID = /^E-[0-9a-hjkmnp-tv-z]{26}$/;
 const ENTITY_ID = new RegExp(`^${ANY_ENTITY_ID_SOURCE}$`);
-const APPROVAL_PHASES = new Set<ApprovalPhase>(["proposed", "approved", "rejected", "cancelled", "applied", "failed"]);
+const APPROVAL_PHASES = new Set<ApprovalPhase>(APPROVAL_PHASE_VALUES);
 
 export function validateEvent(event: KottaEvent): string[] {
   const errors: string[] = [];
