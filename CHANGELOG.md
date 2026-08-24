@@ -49,6 +49,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **The gap report is readable at a hundred admissions.** Kinding the admissions produced a correct
+  report nobody would finish: 333 lines, 122,078 characters, and one sixty-word paragraph repeated
+  108 times, because wording written for a single node was never read back against a hundred.
+  Admissions sharing a reason word for word are now grouped under that reason stated once, with
+  their nodes named beneath, and the spec-delta section shows a changed admission by its kind rather
+  than reprinting the essay. `--json` is untouched: every entry keeps its own reason, because
+  nothing there is reading it. Length was deliberately not made the measure — a line per node is
+  what the report is for, and no entry is cut or elided.
+
 - **The invocation Kotta writes for a host does not depend on PATH.** `kotta integrate` recorded
   `command = "kotta"`, a name resolved against a PATH Kotta cannot see — and a non-interactive
   shell, which is what hosts and agent worktrees run in, loads no version manager, so a Kotta

@@ -1,0 +1,117 @@
+---
+id: T-01m0t6y6mrz2qv285gqfanyvza
+title: The gap report is readable at a hundred admissions
+status: done
+origin: human
+types:
+  - bug
+profiles: []
+priority: medium
+risk: medium
+batch: null
+depends_on: []
+blocks: []
+spec:
+  - UC-01m0fpqfxjvet99wbz0v1ag64q
+  - BR-01m0swjgrreeby1pyfdzf4mf7d
+branch: claude/graft-kottara-837884
+pull_request: null
+created_at: '2026-08-24'
+updated_at: '2026-08-24'
+coverage:
+  'A shared reason is printed once. Admissions carrying identical text are grouped under that text stated a single time, with their titles and ids named beneath it, and adding another node to such a group lengthens the report by one line.':
+    - UC-01m0fpqfxjvet99wbz0v1ag64q
+  'The spec-delta section names the change, not the admission''s essay. A changed node that is admitted is shown with its kind, not with the whole reason repeated per entry.':
+    - UC-01m0fpqfxjvet99wbz0v1ag64q
+    - BR-01m0swjgrreeby1pyfdzf4mf7d
+  'The report stops scaling with the size of a bulk admission. No sentence appears in it more than three times, and adding a node to a group that shares a reason lengthens the report by one line rather than by a paragraph.':
+    - UC-01m0fpqfxjvet99wbz0v1ag64q
+  '`--json` loses nothing. Every admission still carries its own full reason in the machine-readable form, and the counts per kind are unchanged.':
+    - UC-01m0fpqfxjvet99wbz0v1ag64q
+    - BR-01m0swjgrreeby1pyfdzf4mf7d
+worktree: .
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 550ffc6cb5ef71441cc72a2af06cf7daabe75b50
+assigned_agent: claude
+execution_mode: inherited
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-24T16:01:10.539Z'
+approval_basis: 'CLI --approve: task.close'
+---
+## Outcome
+
+`kotta gap` is what the use case says it is — the input to defining tasks. Today, at 1ce7c7a, it prints 333 lines and 122,078 characters, and one sixty-word paragraph appears 108 times, because the bulk admission wording was written for a single node and never read back against a hundred. The summary line is right and the sections are right; the body is a wall, and a wall is read once and then skipped.
+
+A measure that is not read fails the same way as one that lies. That is not a new agreement — it is what "the report is the input to defining tasks" already promises, and this is a defect against it.
+
+## Scope
+
+- Admissions sharing identical reason text are grouped: the reason once, the nodes named beneath.
+- The `Latest accepted spec delta` section shows a changed admitted node by its kind rather than reprinting the reason.
+- `--json` is untouched: every entry keeps its own reason, and the counts per kind stay as they are.
+
+## Non-goals
+
+- Changing what is counted, or any kind's meaning. The numbers on the summary line must come out identical before and after.
+- Truncating or eliding a reason. A reason is either shown in full or shown once for its group; nothing is cut mid-sentence.
+- Reformatting the other reports. `status` and `batch status` are not this defect.
+
+## Constraints
+
+Length is not the measure and must not become one. A line per node and a line per enforcement site is what this report is for; the defect is repetition, not size, and no acceptance here may be met by cutting an entry or eliding a reason. An earlier draft of this task pinned "under a hundred lines" and was corrected before submission, because that number could only have been reached by truncating.
+
+Grouping is by exact reason text, not by kind: two nodes admitted individually with different reasons stay individual even when their kind matches, because the reason is what the reader needs.
+
+The summary line stays first and unchanged, so a reader who stops after four lines still has every number.
+
+## Open decisions
+
+None.
+
+## Execution notes
+
+`formatGapReport` in `src/commands/gap.ts` builds both the delta section and the per-kind sections; the repetition is in `- ${title} · ${id} — ${reason}` and in the delta's `admitted as ${kind}: ${reason}`.
+
+The bulk admissions differ only by the node they sit on, so exact-text grouping collapses them into two groups — one structural, one unexamined — and leaves any individually written admission alone.
+
+## Acceptance
+
+- A shared reason is printed once. Admissions carrying identical text are grouped under that text stated a single time, with their titles and ids named beneath it, and adding another node to such a group lengthens the report by one line.
+- The spec-delta section names the change, not the admission's essay. A changed node that is admitted is shown with its kind, not with the whole reason repeated per entry.
+- The report stops scaling with the size of a bulk admission. No sentence appears in it more than three times, and adding a node to a group that shares a reason lengthens the report by one line rather than by a paragraph.
+- `--json` loses nothing. Every admission still carries its own full reason in the machine-readable form, and the counts per kind are unchanged.
+
+## Verification
+
+- `run: npx vitest run tests/integration/gap-readability.test.ts` — the new suite.
+- `run: npm test` — the full suite.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A shared reason is printed once. Admissions carrying identical text are grouped under that text stated a single time, with their titles and ids named beneath it, and adding another node to such a group lengthens the report by one line. | run: npx vitest run tests/integration/gap-readability.test.ts -t 'a shared reason is printed once' — verified: exit 0 at 574efc0 |
+| The spec-delta section names the change, not the admission's essay. A changed node that is admitted is shown with its kind, not with the whole reason repeated per entry. | run: npx vitest run tests/integration/gap-readability.test.ts -t 'adding a node to a shared group' — verified: exit 0 at 574efc0 |
+| The report stops scaling with the size of a bulk admission. No sentence appears in it more than three times, and adding a node to a group that shares a reason lengthens the report by one line rather than by a paragraph. | run: npx vitest run tests/integration/gap-readability.test.ts -t 'no sentence in this workspace' — verified: exit 0 at 574efc0 |
+| `--json` loses nothing. Every admission still carries its own full reason in the machine-readable form, and the counts per kind are unchanged. | run: npx vitest run tests/integration/gap-readability.test.ts -t 'json keeps every admission' — verified: exit 0 at 574efc0 |
+
+### Verification performed
+
+A shared reason is printed once. Admissions carrying identical text are grouped under that text stated a single time, with their titles and ids named beneath it, and adding another node to such a group lengthens the report by one line.: run: npx vitest run tests/integration/gap-readability.test.ts -t 'a shared reason is printed once'
+The spec-delta section names the change, not the admission's essay. A changed node that is admitted is shown with its kind, not with the whole reason repeated per entry.: run: npx vitest run tests/integration/gap-readability.test.ts -t 'adding a node to a shared group'
+The report stops scaling with the size of a bulk admission. No sentence appears in it more than three times, and adding a node to a group that shares a reason lengthens the report by one line rather than by a paragraph.: run: npx vitest run tests/integration/gap-readability.test.ts -t 'no sentence in this workspace'
+`--json` loses nothing. Every admission still carries its own full reason in the machine-readable form, and the counts per kind are unchanged.: run: npx vitest run tests/integration/gap-readability.test.ts -t 'json keeps every admission'
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
