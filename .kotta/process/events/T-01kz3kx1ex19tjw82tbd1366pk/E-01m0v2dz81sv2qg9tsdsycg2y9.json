@@ -1,0 +1,9 @@
+{
+  "entity": "T-01kz3kx1ex19tjw82tbd1366pk",
+  "task": "T-01kz3kx1ex19tjw82tbd1366pk",
+  "kind": "lifecycle",
+  "state": "done",
+  "summary": "Task cancelled from defined with resolution obsolete. Reason: Written before the task rename and before the coverage gate: it asks for 'kotta contract brief' and its six acceptance conditions are all uncovered, so it cannot start. Most of what it wanted has landed — the D-009 fixed header carries the scope boundary, and the reachability wave added the '- kotta:' invocation line. One sentence of it survives, captured as T-01m0v2d804h1pk95y4bmq7fk8m. Superseded by T-01m0v2d804h1pk95y4bmq7fk8m.",
+  "id": "E-01m0v2dz81sv2qg9tsdsycg2y9",
+  "created_at": "2026-08-24T23:41:59.937Z"
+}

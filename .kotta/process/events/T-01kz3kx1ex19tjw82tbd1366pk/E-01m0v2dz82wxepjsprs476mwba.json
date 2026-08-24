@@ -1,0 +1,17 @@
+{
+  "id": "E-01m0v2dz82wxepjsprs476mwba",
+  "entity": "T-01kz3kx1ex19tjw82tbd1366pk",
+  "task": "T-01kz3kx1ex19tjw82tbd1366pk",
+  "kind": "approval",
+  "approval_id": "E-01m0v2dz82wxepjsprs476mwba",
+  "phase": "proposed",
+  "action": "task.cancel",
+  "payload": {
+    "resolution": "obsolete",
+    "reason": "Written before the task rename and before the coverage gate: it asks for 'kotta contract brief' and its six acceptance conditions are all uncovered, so it cannot start. Most of what it wanted has landed — the D-009 fixed header carries the scope boundary, and the reachability wave added the '- kotta:' invocation line. One sentence of it survives, captured as T-01m0v2d804h1pk95y4bmq7fk8m.",
+    "superseded_by": "T-01m0v2d804h1pk95y4bmq7fk8m",
+    "surface": "cli"
+  },
+  "source_message": null,
+  "created_at": "2026-08-24T23:41:59.938Z"
+}
