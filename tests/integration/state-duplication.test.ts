@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFil
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
-import { retainLegacySignGate } from "../helpers/legacy-sign.js";
+import { acceptFixtureSpec, coveredDefinition } from "../helpers/covered-task.js";
 
 /**
  * State lives in one place (T-01m0jdnshte2ffyzcp3bhf9kh1, successor of T-036).
@@ -145,7 +145,7 @@ describe("state lives in one place", () => {
   test("two concurrent transitions meet as a merge conflict on the status line of one file, never as a second copy", () => {
     const root = repository("conflict");
     run(root, ["init"]);
-    retainLegacySignGate(root);
+    acceptFixtureSpec(root);
     git(root, "add", "-A");
     git(root, "commit", "-m", "init kotta");
     const task = run(root, ["task", "new", "--title", "Contested", "--type", "feature"]).data as { id: string; path: string };
@@ -154,13 +154,13 @@ describe("state lives in one place", () => {
     git(root, "commit", "-m", "capture task");
     const base = git(root, "rev-parse", "HEAD");
 
-    // One side approves the task for execution; the other retires it.
-    run(root, ["task", "sign", task.id, "--approve"]);
-    git(root, "branch", "branch-signed");
+    // One side takes the task to defined; the other retires it.
+    run(root, ["task", "define", task.id, "--from", coveredDefinition(task.path)]);
+    git(root, "branch", "branch-defined");
     git(root, "reset", "--hard", base);
     run(root, ["task", "cancel", task.id, "--resolution", "cancelled", "--reason", "Retired on the other side", "--approve"]);
 
-    const merge = spawnSync("git", ["merge", "--no-ff", "branch-signed", "-m", "merge"], { cwd: root, encoding: "utf8" });
+    const merge = spawnSync("git", ["merge", "--no-ff", "branch-defined", "-m", "merge"], { cwd: root, encoding: "utf8" });
     expect(merge.status).not.toBe(0);
     expect(`${merge.stdout}${merge.stderr}`).toContain("CONFLICT");
 

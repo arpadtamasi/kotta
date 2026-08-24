@@ -14,9 +14,8 @@
     },
     "workflow": {
       "type": "object",
-      "required": ["require_human_sign_approval", "require_human_done_approval", "allow_agent_observations", "allow_agent_defined_tasks"],
+      "required": ["require_human_done_approval", "allow_agent_observations", "allow_agent_defined_tasks"],
       "properties": {
-        "require_human_sign_approval": { "type": "boolean" },
         "require_human_done_approval": { "type": "boolean" },
         "allow_agent_observations": { "type": "boolean" },
         "allow_agent_defined_tasks": { "type": "boolean" }

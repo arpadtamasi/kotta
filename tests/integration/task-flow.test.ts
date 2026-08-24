@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 import { readEvents } from "../../src/core/events.js";
-import { retainLegacySignGate } from "../helpers/legacy-sign.js";
+import { acceptFixtureSpec, coveredDefinition } from "../helpers/covered-task.js";
 
 const cli = resolve("dist/cli/index.js");
 const FLOW_SPEC_ID = "GT-01m0c0000000000000000000fl";
@@ -25,7 +25,7 @@ describe("task execution vertical slice", () => {
     git(repository, "init", "-b", "main");
     writeFileSync(join(repository, "README.md"), "fixture\n");
     run(repository, ["init"]);
-    retainLegacySignGate(repository);
+    acceptFixtureSpec(repository);
     const created = spawnSync("node", [cli, "task", "new", "--title", "Visible id", "--type", "feature"], { cwd: repository, encoding: "utf8" });
     expect(created.status).toBe(0);
     expect(created.stdout).toMatch(/^Created task T-[0-9a-hjkmnp-tv-z]{26} at .+\.md\.\n$/);
@@ -39,7 +39,7 @@ describe("task execution vertical slice", () => {
     git(repository, "config", "user.email", "test@example.com");
     writeFileSync(join(repository, "README.md"), "fixture\n");
     run(repository, ["init"]);
-    retainLegacySignGate(repository);
+    acceptFixtureSpec(repository);
     writeFileSync(join(repository, ".kotta/spec/glossary-terms/clean-install-000000fl.md"), [
       "---", `id: ${FLOW_SPEC_ID}`, "form: glossary-term", "title: Clean install", "---", "",
       "## Definition", "A clean install succeeds.", "", "## Usage", "Release verification.", "", "## Non-examples", "An existing installation.", "",
@@ -137,9 +137,10 @@ None.
     expect(basename(task)).toBe(`release-cli-${first.data.id.slice(-8)}.md`);
     expect(readFileSync(task, "utf8")).toContain("priority: high");
     expect(readFileSync(task, "utf8")).toContain(`blocks:\n  - ${second.data.id}`);
-    expect(run(repository, ["task", "sign", first.data.id, "--approve"])).toMatchObject({ ok: true, command: "task sign" });
+    expect(readFileSync(task, "utf8")).toMatch(/^status: defined$/m);
+    expect(run(repository, ["task", "validate", first.data.id])).toMatchObject({ ok: true, command: "task validate" });
     expect(execFileSync("git", ["status", "--porcelain", "--", ".kotta"], { cwd: repository, encoding: "utf8" })).toBe("");
-    expect(execFileSync("git", ["log", "-1", "--format=%s"], { cwd: repository, encoding: "utf8" }).trim()).toBe(`chore(kotta): sign ${first.data.id}`);
+    expect(execFileSync("git", ["log", "-1", "--format=%s"], { cwd: repository, encoding: "utf8" }).trim()).toBe(`chore(kotta): define ${first.data.id}`);
   });
 
   test("amends a defined task in place, including its title, filename and history", () => {
@@ -149,13 +150,15 @@ None.
     git(repository, "config", "user.email", "test@example.com");
     writeFileSync(join(repository, "README.md"), "fixture\n");
     run(repository, ["init"]);
-    retainLegacySignGate(repository);
     writeFileSync(join(repository, ".kotta/spec/glossary-terms/corrected-task-000000fl.md"), [
       "---", `id: ${FLOW_SPEC_ID}`, "form: glossary-term", "title: Corrected task", "---", "",
       "## Definition", "The title and body are corrected in place.", "", "## Usage", "Pre-execution amendment.", "", "## Non-examples", "Changing active work.", "",
     ].join("\n"));
     const created = run(repository, ["task", "new", "--title", "Shpi the exporter", "--type", "feature"]) as { data: { id: string; path: string } };
-    run(repository, ["task", "sign", created.data.id, "--approve"]);
+    run(repository, ["task", "define", created.data.id, "--from", coveredDefinition(created.data.path, {
+      spec: [FLOW_SPEC_ID],
+      acceptance: ["The title and body are corrected in place."],
+    })]);
 
     const oldPath = created.data.path;
     writeFileSync(oldPath, readFileSync(oldPath, "utf8").replace(/updated_at: .+/, "updated_at: 2020-01-01"));
@@ -227,9 +230,9 @@ None.
     git(repository, "config", "user.email", "test@example.com");
     writeFileSync(join(repository, "README.md"), "fixture\n");
     run(repository, ["init"]);
-    retainLegacySignGate(repository);
+    acceptFixtureSpec(repository);
     const created = run(repository, ["task", "new", "--title", `Immutable ${state}`, "--type", "feature"]) as { data: { id: string; path: string } };
-    run(repository, ["task", "sign", created.data.id, "--approve"]);
+    run(repository, ["task", "define", created.data.id, "--from", coveredDefinition(created.data.path)]);
     const target = created.data.path;
     const snapshot = readFileSync(target, "utf8").replace("status: defined", `status: ${state}`);
     writeFileSync(target, snapshot);
@@ -247,7 +250,7 @@ None.
     git(repository, "init", "-b", "main");
     writeFileSync(join(repository, "README.md"), "fixture\n");
     run(repository, ["init"]);
-    retainLegacySignGate(repository);
+    acceptFixtureSpec(repository);
     const created = run(repository, ["task", "new", "--title", "Safe definition", "--type", "feature"]) as { data: { id: string; path: string } };
     const task = created.data.path;
     const before = readFileSync(task, "utf8");
@@ -264,7 +267,7 @@ None.
     git(repository, "init", "-b", "main");
     writeFileSync(join(repository, "README.md"), "fixture\n");
     run(repository, ["init"]);
-    retainLegacySignGate(repository);
+    acceptFixtureSpec(repository);
     const created = run(repository, ["task", "new", "--title", "Missing source", "--type", "feature"]) as { data: { id: string; path: string } };
     const missing = join(repository, "no-such-definition.md");
     const result = spawnSync("node", [cli, "task", "define", created.data.id, "--from", missing, "--json"], { cwd: repository, encoding: "utf8" });
@@ -274,21 +277,23 @@ None.
     expect(readFileSync(created.data.path, "utf8")).toContain("status: backlog");
   });
 
-  test("sign accepts an unambiguous no-open-decisions statement without exact punctuation", () => {
+  test("define accepts an unambiguous no-open-decisions statement without exact punctuation", () => {
     const repository = mkdtempSync(join(tmpdir(), "kotta-open-decisions-"));
     git(repository, "init", "-b", "main");
     git(repository, "config", "user.name", "Kotta Test");
     git(repository, "config", "user.email", "test@example.com");
     writeFileSync(join(repository, "README.md"), "fixture\n");
     run(repository, ["init"]);
-    retainLegacySignGate(repository);
+    acceptFixtureSpec(repository);
     const created = run(repository, ["task", "new", "--title", "Flexible approval", "--type", "feature"]) as { data: { id: string; path: string } };
-    writeFileSync(created.data.path, readFileSync(created.data.path, "utf8")
-      .replace("Describe the observable outcome.", "Approval is not punctuation-sensitive.")
-      .replace("- Define an observable condition.", "- The valid task is signed.")
-      .replace("- Explain how acceptance will be checked.", "- Run this test.")
-      .replace("## Open decisions\n\nNone.", "## Open decisions\n\nNone"));
-    expect(run(repository, ["task", "sign", created.data.id, "--approve"])).toMatchObject({ ok: true, data: { id: created.data.id } });
+    const definition = coveredDefinition(created.data.path, {
+      outcome: "Definition is not punctuation-sensitive.",
+      acceptance: ["The valid task is defined."],
+      verification: "Run this test.",
+    });
+    writeFileSync(definition, readFileSync(definition, "utf8").replace("## Open decisions\n\nNone.", "## Open decisions\n\nNone"));
+    expect(run(repository, ["task", "define", created.data.id, "--from", definition])).toMatchObject({ ok: true, data: { id: created.data.id, state: "defined" } });
+    expect(run(repository, ["task", "validate", created.data.id])).toMatchObject({ ok: true, data: { id: created.data.id } });
   });
 
   test("moves a valid profiled task to defined and starts it in an isolated worktree", () => {
@@ -301,7 +306,7 @@ None.
     git(repository, "commit", "-m", "initial");
 
     run(repository, ["init"]);
-    retainLegacySignGate(repository);
+    acceptFixtureSpec(repository);
     git(repository, "add", ".gitattributes", ".gitignore");
     git(repository, "commit", "-m", "initialize Kotta metadata");
     const created = run(repository, ["task", "new", "--title", "Ship export", "--type", "feature", "--profile", "workflow"]) as { data: { id: string; path: string } };
@@ -310,13 +315,12 @@ None.
     expect(id).toMatch(/^T-[0-9a-hjkmnp-tv-z]{26}$/);
 
     const task = created.data.path;
-    writeFileSync(task, readFileSync(task, "utf8").replace(
-      "Describe the observable outcome.",
-      "Users can export filtered courses.\n\n## Actors\n\nCourse administrator.\n\n## Initial state\n\nA filtered course list is visible.\n\n## States\n\nReady and exported.\n\n## Transitions\n\nReady to exported.\n\n## Triggers\n\nExport action.\n\n## Permissions\n\nCourse export permission.\n\n## Error paths\n\nAn actionable error is shown.\n\n## Cancellation path\n\nCancellation leaves the list unchanged.\n\n## Retry and duplicate-action behaviour\n\nRetry is safe and duplicate actions are ignored.\n\n## Audit and notification expectations\n\nThe export is audited; no notification is sent.",
-    ).replace("- Define an observable condition.", "- A filtered export file is produced.")
-      .replace("- Explain how acceptance will be checked.", "- Run the export integration test."));
-
-    expect(run(repository, ["task", "sign", id, "--approve"])).toMatchObject({ ok: true, command: "task sign" });
+    expect(run(repository, ["task", "define", id, "--from", coveredDefinition(task, {
+      outcome: "Users can export filtered courses.",
+      acceptance: ["A filtered export file is produced."],
+      verification: "Run the export integration test.",
+    })])).toMatchObject({ ok: true, command: "task define", data: { state: "defined" } });
+    expect(run(repository, ["task", "validate", id])).toMatchObject({ ok: true, command: "task validate" });
     expect(existsSync(task)).toBe(true);
     expect(readFileSync(task, "utf8")).toMatch(/^status: defined$/m);
 

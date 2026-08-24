@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, readdirSync, unlinkSync, writeFi
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
-import { retainLegacySignGate } from "../helpers/legacy-sign.js";
+import { acceptFixtureSpec, coveredDefinition } from "../helpers/covered-task.js";
 
 const cli = resolve("dist/cli/index.js");
 
@@ -25,14 +25,14 @@ function newTask(repository: string, title: string): { id: string; path: string 
   return (run(repository, ["task", "new", "--title", title, "--type", "feature"]) as { data: { id: string; path: string } }).data;
 }
 
-/** A task complete enough to sign, so a cancellation can be tested from every live state. */
+/** A defined task, so a cancellation can be tested from every live state. */
 function definedTask(repository: string, title: string): { id: string; path: string } {
   const task = newTask(repository, title);
-  writeFileSync(task.path, readFileSync(task.path, "utf8")
-    .replace("Describe the observable outcome.", "The outcome is observable.")
-    .replace("- Define an observable condition.", "- The condition is observable.")
-    .replace("- Explain how acceptance will be checked.", "- The condition is checked by reading it."));
-  run(repository, ["task", "sign", task.id, "--approve"]);
+  run(repository, ["task", "define", task.id, "--from", coveredDefinition(task.path, {
+    outcome: "The outcome is observable.",
+    acceptance: ["The condition is observable."],
+    verification: "The condition is checked by reading it.",
+  })]);
   return task;
 }
 
@@ -62,7 +62,7 @@ function fixture(prefix: string): string {
   git(repository, "add", ".");
   git(repository, "commit", "-m", "initial");
   run(repository, ["init"]);
-  retainLegacySignGate(repository);
+  acceptFixtureSpec(repository);
   git(repository, "add", ".gitattributes", ".gitignore");
   git(repository, "commit", "-m", "initialize Kotta metadata");
   return repository;

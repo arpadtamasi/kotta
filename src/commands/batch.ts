@@ -210,31 +210,26 @@ export function validateBatch(id: string, repositoryRoot?: string) {
   } catch (error) {
     errors.push({ code: "DEPENDENCY_ERROR", message: error instanceof Error ? error.message : String(error) });
   }
-  return { ok: errors.length === 0, command: "batch validate", data: { id, state: batch.state, waves, children, warnings }, errors };
-}
-
-export function signBatch(id: string, approved: boolean, repositoryRoot?: string) {
-  const root = controlPlaneRoot(repositoryRoot ?? findRepositoryRoot());
-  const batch = findBatch(root, id);
-  if (batch.state !== "backlog") throw new Error(`Batch ${id} must be in backlog before it can be signed.`);
-  if (!approved) throw new Error("Human sign-off is required. Re-run with --approve after reviewing batch scope and ordering.");
-  const validation = validateBatch(id, root);
-  if (!validation.ok) throw new Error(validation.errors.map((error) => error.message).join("\n"));
-  const entity = parseMarkdown(readFileSync(batch.path, "utf8"));
-  const taskIds = Array.isArray(entity.data.tasks) ? entity.data.tasks.map(String) : [];
-  const dependencies = taskDependencies(root, taskIds);
-  const invalidStates = taskIds.filter((taskId) => !["backlog", "defined", "done"].includes(findTask(root, taskId).state));
-  if (invalidStates.length) throw new Error(`Batch tasks must be backlog, defined, or done before batch readiness: ${invalidStates.join(", ")}.`);
-  const unsignedFrontier = taskIds.filter((taskId) => {
-    if (findTask(root, taskId).state !== "backlog") return false;
-    return (dependencies.get(taskId) ?? []).every((dependency) => findTask(root, dependency).state === "done");
-  });
-  if (unsignedFrontier.length) throw new Error(`Every currently executable batch task must be signed: ${unsignedFrontier.join(", ")}.`);
-  entity.data.status = "defined";
-  entity.data.updated_at = new Date().toISOString().slice(0, 10);
-  writeFileSync(batch.path, renderMarkdown(entity.data, entity.content));
-  regenerateIndex(root);
-  return { ok: true, command: "batch sign", data: { id, path: batch.path } };
+  // Validation is the transition (SM-01m0f0wn89m2xwd4z4mk9p71d5). A batch expresses the agreement
+  // its members already carry, so grouping approves nothing and there is nothing here for a human
+  // to approve; a batch that validates is defined, exactly as a covered task is.
+  let state = batch.state;
+  if (!errors.length && state === "backlog") {
+    const open = subtreeTasks(batchTree(root, id))
+      .map((taskId) => ({ id: taskId, state: findTask(root, taskId).state }))
+      .filter((member) => !["backlog", "defined", "done"].includes(member.state));
+    if (open.length) {
+      errors.push({ code: "MEMBER_NOT_READY", message: `Batch ${id} cannot become defined while ${open.map((member) => `${member.id} is ${member.state}`).join(", ")}.` });
+    } else {
+      entity.data.status = "defined";
+      entity.data.updated_at = new Date().toISOString().slice(0, 10);
+      writeFileSync(batch.path, renderMarkdown(entity.data, entity.content));
+      regenerateIndex(root);
+      appendLifecycleEvent(root, id, "defined", "Batch validated; grouping carries no approval of its own.");
+      state = "defined";
+    }
+  }
+  return { ok: errors.length === 0, command: "batch validate", data: { id, state, waves, children, warnings }, errors };
 }
 
 /** Resolves the coordinator branch the batch must run on, creating or adopting it when safe. */

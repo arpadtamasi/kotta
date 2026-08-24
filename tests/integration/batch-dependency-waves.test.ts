@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
-import { retainLegacySignGate } from "../helpers/legacy-sign.js";
+import { acceptFixtureSpec, coveredDefinition } from "../helpers/covered-task.js";
 import { readEvents } from "../../src/core/events.js";
 
 const cli = resolve("dist/cli/index.js");
@@ -23,11 +23,7 @@ function attempt(cwd: string, args: string[]) {
 function defineTask(root: string, title: string) {
   const created = run(root, ["task", "new", "--title", title, "--type", "feature"]);
   const { id, path } = created.data as { id: string; path: string };
-  writeFileSync(path, readFileSync(path, "utf8")
-    .replace("Describe the observable outcome.", `${title} works.`)
-    .replace("- Define an observable condition.", `- ${title} is observable.`)
-    .replace("- Explain how acceptance will be checked.", "- Run integration tests."));
-  run(root, ["task", "sign", id, "--approve"]);
+  run(root, ["task", "define", id, "--from", coveredDefinition(path, { outcome: `${title} works.`, acceptance: [`${title} is observable.`], verification: "Run integration tests." })]);
   return { id, filename: basename(path) };
 }
 
@@ -40,7 +36,7 @@ function dependencyBatch(label: string) {
   git(root, "add", ".");
   git(root, "commit", "-m", "initial");
   run(root, ["init"]);
-  retainLegacySignGate(root);
+  acceptFixtureSpec(root);
 
   const predecessor = defineTask(root, "Build predecessor");
   const dependent = defineTask(root, "Build dependent");
@@ -52,7 +48,7 @@ function dependencyBatch(label: string) {
   const batchId = String(batch.data.id);
   run(root, ["batch", "add", batchId, predecessor.id]);
   run(root, ["batch", "add", batchId, dependent.id]);
-  run(root, ["batch", "sign", batchId, "--approve"]);
+  run(root, ["batch", "validate", batchId]);
   git(root, "add", ".");
   git(root, "commit", "-m", "define dependency batch");
   return { root, batchId, predecessor, dependent };

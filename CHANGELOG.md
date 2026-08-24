@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Removed
+
+- **The sign gate is gone.** `kotta task sign` could only fire in a workspace that opted into
+  `workflow.require_human_sign_approval` and held a task with no spec references — a pre-coverage
+  shape `migrate` carries everyone out of — and `kotta batch sign` had never run at all: zero events
+  across six batches. Both commands, the config key they depended on, the `task.sign` approval
+  action, and the four branches the flag fed in `define`, `validate` and `start` are removed.
+  Defining a task with valid coverage is the whole transition to `defined`; validating a batch is
+  the whole transition for a batch. `init` no longer writes the key and the published config schema
+  no longer admits it; `migrate` no longer renames the older `require_human_ready_approval` into it.
+  An existing config that still carries the key is left exactly as it is: nothing reads it.
+
+  **Breaking:** `kotta task sign` and `kotta batch sign` no longer exist, and `approval_request`
+  no longer accepts `task.sign`. Every lifecycle test that used the sign path now runs the product
+  path instead — a landed spec node and a covered definition — so nothing was covered only by the
+  retired gate: the suite is the same 67 files and 447 passing tests before and after.
+
 ## [0.9.0] - 2026-08-24
 
 ### Added

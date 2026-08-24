@@ -11,7 +11,6 @@ import { integrateCodex } from "../../src/commands/integrate.js";
 import { readWorkspace } from "../../src/commands/ui.js";
 import { readEvents } from "../../src/core/events.js";
 import { findTask } from "../../src/filesystem/entities.js";
-import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
 const cli = resolve("dist/cli/index.js");
 const MCP_TASK_SPEC_ID = "GT-01m0c0000000000000000000mc";
@@ -29,7 +28,6 @@ function fixture(): string {
   execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: root });
   writeFileSync(join(root, "README.md"), "fixture\n");
   execFileSync("node", [cli, "init", "--json"], { cwd: root });
-  retainLegacySignGate(root);
   writeFileSync(join(root, ".kotta/spec/glossary-terms/caller-approval-000000mc.md"), [
     "---", `id: ${MCP_TASK_SPEC_ID}`, "form: glossary-term", "title: Caller approval", "---", "",
     "## Definition", "Human approval is recorded from host-chat elicitation.", "", "## Usage", "MCP lifecycle fixture.", "", "## Non-examples", "An unrecorded response.", "",
@@ -183,25 +181,7 @@ describe("Kotta caller-chat MCP", () => {
     const validated = await connected.client.callTool({ name: "task_validate", arguments: { id } });
     expect((validated.structuredContent as { ok: boolean }).ok).toBe(true);
 
-    const approval = await connected.client.callTool({
-      name: "approval_request",
-      arguments: { entity: id, action: "task.sign", payload: {}, clientRequestId: "sign-once" },
-    });
-    expect(approval.isError).not.toBe(true);
-    expect(JSON.stringify(connected.prompt())).toContain(`task.sign ${id}`);
     expect(findTask(root, id).state).toBe("defined");
-    const events = readEvents(root, id);
-    expect(events.filter((event) => event.kind === "approval").map((event) => event.phase)).toEqual(["proposed", "approved", "applied"]);
-    const approved = events.find((event) => event.phase === "approved");
-    expect(approved?.source_message).toMatch(/^E-/);
-    expect(events.find((event) => event.id === approved?.source_message)?.text).toContain("Approved in caller chat");
-
-    const repeated = await connected.client.callTool({
-      name: "approval_request",
-      arguments: { entity: id, action: "task.sign", payload: {}, clientRequestId: "sign-once" },
-    });
-    expect((repeated.structuredContent as { phase: string }).phase).toBe("applied");
-    expect(readEvents(root, id).filter((event) => event.kind === "approval")).toHaveLength(3);
 
     const started = await connected.client.callTool({
       name: "task_start_caller",
@@ -219,6 +199,26 @@ describe("Kotta caller-chat MCP", () => {
     });
     expect(submitted.isError).not.toBe(true);
     expect(findTask(root, id).state).toBe("review");
+
+    const approval = await connected.client.callTool({
+      name: "approval_request",
+      arguments: { entity: id, action: "task.close", payload: {}, clientRequestId: "close-once" },
+    });
+    expect(approval.isError).not.toBe(true);
+    expect(JSON.stringify(connected.prompt())).toContain(`task.close ${id}`);
+    expect(findTask(root, id).state).toBe("done");
+    const events = readEvents(root, id);
+    expect(events.filter((event) => event.kind === "approval").map((event) => event.phase)).toEqual(["proposed", "approved", "applied"]);
+    const approved = events.find((event) => event.phase === "approved");
+    expect(approved?.source_message).toMatch(/^E-/);
+    expect(events.find((event) => event.id === approved?.source_message)?.text).toContain("Approved in caller chat");
+
+    const repeated = await connected.client.callTool({
+      name: "approval_request",
+      arguments: { entity: id, action: "task.close", payload: {}, clientRequestId: "close-once" },
+    });
+    expect((repeated.structuredContent as { phase: string }).phase).toBe("applied");
+    expect(readEvents(root, id).filter((event) => event.kind === "approval")).toHaveLength(3);
   });
 
   test("records a rejection and leaves lifecycle state unchanged", async () => {
@@ -226,11 +226,14 @@ describe("Kotta caller-chat MCP", () => {
     const { client } = await connect(root, "reject");
     const id = await createAndDefine(client, root);
     await client.callTool({ name: "task_message_record", arguments: { task: id, role: "human", text: "ok, mehet" } });
-    expect(findTask(root, id).state).toBe("backlog");
+    expect(findTask(root, id).state).toBe("defined");
     expect(readEvents(root, id).filter((event) => event.kind === "approval")).toEqual([]);
-    const result = await client.callTool({ name: "approval_request", arguments: { entity: id, action: "task.sign", payload: {} } });
+    const result = await client.callTool({
+      name: "approval_request",
+      arguments: { entity: id, action: "task.cancel", payload: { resolution: "cancelled", reason: "The work is objectless" } },
+    });
     expect(result.isError).not.toBe(true);
-    expect(findTask(root, id).state).toBe("backlog");
+    expect(findTask(root, id).state).toBe("defined");
     expect(readEvents(root, id).filter((event) => event.kind === "approval").map((event) => event.phase)).toEqual(["proposed", "rejected"]);
   });
 
@@ -277,7 +280,6 @@ describe("Kotta caller-chat MCP", () => {
     const root = fixture();
     const connected = await connect(root);
     const id = await createAndDefine(connected.client, root);
-    await connected.client.callTool({ name: "approval_request", arguments: { entity: id, action: "task.sign", payload: {} } });
     expect(findTask(root, id).state).toBe("defined");
 
     const amendedDefinition = definition(id)
@@ -309,7 +311,6 @@ describe("Kotta caller-chat MCP", () => {
     );
     const mapped = await connected.client.callTool({ name: "task_define", arguments: { id, definition: mappedDefinition } });
     expect(mapped.isError).not.toBe(true);
-    await connected.client.callTool({ name: "approval_request", arguments: { entity: id, action: "task.sign", payload: {} } });
     await connected.client.callTool({ name: "task_start_caller", arguments: { id, agent: "codex" } });
 
     const duplicate = await connected.client.callTool({
@@ -329,11 +330,10 @@ describe("Kotta caller-chat MCP", () => {
     expect(findTask(root, id).state).toBe("review");
   });
 
-  test("retires a signed task from the caller chat, with the reason and the supersession in the prompt", async () => {
+  test("retires a defined task from the caller chat, with the reason and the supersession in the prompt", async () => {
     const root = fixture();
     const connected = await connect(root);
     const id = await createAndDefine(connected.client, root);
-    await connected.client.callTool({ name: "approval_request", arguments: { entity: id, action: "task.sign", payload: {} } });
     expect(findTask(root, id).state).toBe("defined");
 
     const unnamed = await connected.client.callTool({
@@ -360,19 +360,22 @@ describe("Kotta caller-chat MCP", () => {
     expect(retiredFile).toContain("approved_by: caller-chat");
     expect(retiredFile).toMatch(/approved_at: /);
     expect(retiredFile).toContain(`caller-chat yes (${cancelYes?.id}): task.cancel`);
-    // The refused proposal above never reached the event log; only sign and cancel did.
+    // The refused proposal above never reached the event log; only the cancel did.
     const phases = readEvents(root, id).filter((event) => event.kind === "approval").map((event) => event.phase);
-    expect(phases).toEqual(["proposed", "approved", "applied", "proposed", "approved", "applied"]);
+    expect(phases).toEqual(["proposed", "approved", "applied"]);
   });
 
   test("fails closed when the calling host cannot present elicitation", async () => {
     const root = fixture();
     const client = await connectWithoutElicitation(root);
     const id = await createAndDefine(client, root);
-    const result = await client.callTool({ name: "approval_request", arguments: { entity: id, action: "task.sign", payload: {} } });
+    const result = await client.callTool({
+      name: "approval_request",
+      arguments: { entity: id, action: "task.cancel", payload: { resolution: "cancelled", reason: "The work is objectless" } },
+    });
     expect(result.isError).toBe(true);
     expect(JSON.stringify(result.structuredContent)).toContain("Nothing was applied");
-    expect(findTask(root, id).state).toBe("backlog");
+    expect(findTask(root, id).state).toBe("defined");
     expect(readEvents(root, id).filter((event) => event.kind === "approval").map((event) => event.phase)).toEqual(["proposed", "failed"]);
   });
 });

@@ -3,7 +3,7 @@ import { copyFileSync, existsSync, mkdtempSync, readFileSync, readdirSync, write
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
-import { retainLegacySignGate } from "../helpers/legacy-sign.js";
+import { acceptFixtureSpec, coveredDefinition } from "../helpers/covered-task.js";
 
 const cli = resolve("dist/cli/index.js");
 const MINTED = /^[TFP]-[0-9a-hjkmnp-tv-z]{26}$/;
@@ -25,7 +25,7 @@ function repository(label: string): string {
   git(root, "add", ".");
   git(root, "commit", "-m", "initial");
   run(root, ["init"]);
-  retainLegacySignGate(root);
+  acceptFixtureSpec(root);
   git(root, "add", "-A");
   git(root, "commit", "-m", "init kotta");
   return root;
@@ -109,10 +109,12 @@ describe("coordination-free identity (D-003, narrowed by D-010)", () => {
     expect(status.allTasks.sort()).toEqual([created.id, "T-001"].sort());
 
     // The legacy task still moves through the workflow under its own id and filename.
-    expect(run(root, ["task", "sign", "T-001", "--approve"])).toMatchObject({ ok: true });
-    const legacyAfterSign = join(root, ".kotta/process/tasks", "T-001-legacy-work.md");
-    expect(existsSync(legacyAfterSign)).toBe(true);
-    expect(readFileSync(legacyAfterSign, "utf8")).toMatch(/^status: defined$/m);
+    const source = join(root, "legacy-definition.md");
+    writeFileSync(source, readFileSync(legacyPath, "utf8").split(/^---$/m).slice(2).join("---").replace(/^\n+/, ""));
+    expect(run(root, ["task", "define", "T-001", "--from", source])).toMatchObject({ ok: true, data: { state: "defined" } });
+    const legacyAfterDefine = join(root, ".kotta/process/tasks", "T-001-legacy-work.md");
+    expect(existsSync(legacyAfterDefine)).toBe(true);
+    expect(readFileSync(legacyAfterDefine, "utf8")).toMatch(/^status: defined$/m);
   });
 
   test("validate reports DUPLICATE_ID when two entities share one id, in either form", () => {

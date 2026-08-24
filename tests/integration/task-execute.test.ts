@@ -3,7 +3,6 @@ import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSyn
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
-import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
 const cli = resolve("dist/cli/index.js");
 const EXECUTE_SPEC_ID = "GT-01m0c0000000000000000000xe";
@@ -83,7 +82,6 @@ function fixture(label: string, options: { defined?: boolean } = {}): Fixture {
   git(repository, "config", "user.email", "test@example.com");
   writeFileSync(join(repository, "README.md"), "fixture\n");
   expectOk(cliRun(repository, ["init", "--json"]));
-  retainLegacySignGate(repository);
   writeFileSync(join(repository, ".kotta/spec/glossary-terms/export-file-000000xe.md"), [
     "---", `id: ${EXECUTE_SPEC_ID}`, "form: glossary-term", "title: Export file", "---", "",
     "## Definition", "Exporter produces a file.", "", "## Usage", "Execution fixture.", "", "## Non-examples", "An empty run.", "",
@@ -129,8 +127,7 @@ None.
 
 None.
 `);
-  expectOk(cliRun(repository, ["task", "define", id, "--from", definition, "--json"]));
-  if (options.defined !== false) expectOk(cliRun(repository, ["task", "sign", id, "--approve", "--json"]));
+  expectOk(cliRun(repository, ["task", "define", id, "--from", definition, ...(options.defined === false ? ["--draft"] : []), "--json"]));
   git(repository, "add", "-A");
   git(repository, "commit", "-m", "fixture");
 

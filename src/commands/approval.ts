@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import matter from "gray-matter";
 import { closeBatch } from "./batch.js";
 import { findBatch } from "../filesystem/batches.js";
-import { cancelTask, closeTask, reopenTask, signTask } from "./task.js";
+import { cancelTask, closeTask, reopenTask } from "./task.js";
 import { OBSERVATION_DISPOSITIONS as DISPOSITION_VALUES, findObservation, resolveObservation } from "./observation.js";
 import { appendEvent, approvalHistory, mintApprovalId, readEvents, type KottaEvent } from "../core/events.js";
 import { chatApprovalReceipt, type ApprovalReceipt } from "../core/approval-receipt.js";
@@ -12,7 +12,6 @@ import { findRepositoryRoot } from "../filesystem/workspace.js";
 import { commitControlState, withControlPlaneMutation } from "../git/control-plane.js";
 
 export const APPROVAL_ACTIONS = [
-  "task.sign",
   "observation.resolve",
   "task.close",
   "task.cancel",
@@ -95,7 +94,7 @@ function assertApplicable(root: string, entity: string, action: ApprovalAction):
   }
   if (action.startsWith("task.")) {
     const state = findTask(root, entity).state;
-    const expected = action === "task.sign" ? "backlog" : "review";
+    const expected = "review";
     if (state !== expected) throw new Error(`${action} requires ${entity} to be ${expected}; it is ${state}. Refresh state before preparing another action.`);
     return;
   }
@@ -113,9 +112,6 @@ function assertApplicable(root: string, entity: string, action: ApprovalAction):
 function apply(root: string, proposal: KottaEvent, receipt: ApprovalReceipt): unknown {
   const payload = proposal.payload ?? {};
   switch (proposal.action as ApprovalAction) {
-    // Signing exists only as a workspace opt-in compatibility gate; when enabled it is still a
-    // real consequential transition and therefore carries the same durable receipt as other gates.
-    case "task.sign": return signTask(proposal.entity, true, root, { approvalRecorded: true, locked: true, commit: false, receipt });
     case "observation.resolve": return resolveObservation(proposal.entity, String(payload.disposition), true, root, {
       approvalRecorded: true,
       locked: true,

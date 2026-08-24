@@ -7,7 +7,7 @@ description: This skill should be used when the user asks to "check requirements
 
 Read the form registry and specification nodes as a graph. Report malformed nodes, broken
 references, unanswered required edges, explicitly accepted gaps, and reverse dependency impact.
-Remain read-only: this report never changes files, runs a lifecycle transition, or gates sign,
+Remain read-only: this report never changes files, runs a lifecycle transition, or gates a definition,
 review, close, validation, build, or deployment.
 
 Treat the registry as the only source of form-specific knowledge. Never hard-code the eleven

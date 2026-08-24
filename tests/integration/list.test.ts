@@ -3,7 +3,7 @@ import { mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from 
 import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
-import { retainLegacySignGate } from "../helpers/legacy-sign.js";
+import { acceptFixtureSpec, FIXTURE_SPEC_ID } from "../helpers/covered-task.js";
 
 const cli = resolve("dist/cli/index.js");
 
@@ -43,7 +43,7 @@ function fixture(label: string): { repository: string; tasks: string[] } {
   git(repository, "config", "user.email", "test@example.com");
   writeFileSync(join(repository, "README.md"), "fixture\n");
   cliRun(repository, ["init", "--json"]);
-  retainLegacySignGate(repository);
+  acceptFixtureSpec(repository);
   const tasks = ["Ship the exporter", "Retire the old importer"].map((title) => {
     const created = cliRun(repository, ["task", "new", "--title", title, "--type", "feature", "--json"]);
     return (JSON.parse(created.stdout) as { data: { id: string } }).data.id;
@@ -85,12 +85,14 @@ describe("listing every entity", () => {
     const { repository, tasks } = fixture("states");
     const definition = join(repository, "definition.md");
     writeFileSync(definition, [
+      "---", `spec: [${FIXTURE_SPEC_ID}]`, "coverage:", `  "It ships.": [${FIXTURE_SPEC_ID}]`, "---", "",
       "## Outcome", "", "The exporter ships.", "", "## Scope", "", "1. Ship it.", "",
+      "## Non-goals", "", "Anything else.", "",
       "## Acceptance", "", "- It ships.", "", "## Verification", "", "- Run it.", "",
-      "## Open decisions", "", "None.", "",
+      "## Constraints", "", "None.", "", "## Open decisions", "", "None.", "",
+      "## Execution notes", "", "None.", "",
     ].join("\n"));
-    cliRun(repository, ["task", "define", tasks[0], "--from", definition, "--json"]);
-    cliRun(repository, ["task", "sign", tasks[0], "--approve", "--json"]);
+    expect(cliRun(repository, ["task", "define", tasks[0], "--from", definition, "--json"]).status).toBe(0);
 
     expect(json(repository, ["task", "list", "--state", "defined"]).data).toMatchObject({ count: 1 });
     expect(json(repository, ["task", "list", "--state", "backlog"]).data).toMatchObject({ count: 1 });

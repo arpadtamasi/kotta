@@ -3,7 +3,6 @@ import { mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from 
 import { tmpdir } from "node:os";
 import { join, relative, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
-import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
 const cli = resolve("dist/cli/index.js");
 const SHOW_SPEC_ID = "GT-01m0c0000000000000000000sh";
@@ -43,7 +42,6 @@ function fixture(label: string): { repository: string; id: string; short: string
   git(repository, "config", "user.email", "test@example.com");
   writeFileSync(join(repository, "README.md"), "fixture\n");
   cliRun(repository, ["init", "--json"]);
-  retainLegacySignGate(repository);
   writeFileSync(join(repository, ".kotta/spec/glossary-terms/shipped-000000sh.md"), [
     "---", `id: ${SHOW_SPEC_ID}`, "form: glossary-term", "title: Shipped", "---", "",
     "## Definition", "It ships.", "", "## Usage", "Task acceptance.", "", "## Non-examples", "It waits.", "",
@@ -101,7 +99,7 @@ describe("showing one entity", () => {
     ].join("\n"));
     expect(cliRun(repository, ["task", "define", short, "--from", definition, "--json"]).status).toBe(0);
     expect(cliRun(repository, ["task", "validate", short, "--json"]).status).toBe(0);
-    expect(json<{ data: { entities: { state: string }[] } }>(repository, ["task", "list"]).data.entities[0].state).toBe("backlog");
+    expect(json<{ data: { entities: { state: string }[] } }>(repository, ["task", "list"]).data.entities[0].state).toBe("defined");
   });
 
   test("an unknown id fails naming it, and nothing about brief or batch status changes", () => {

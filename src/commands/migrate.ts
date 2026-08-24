@@ -70,7 +70,6 @@ const OBSERVATION_DISPOSITIONS: Record<string, string> = {
 };
 const CLAIM_KEYS: Record<string, string> = { ticket: "task", contract: "task" };
 const CONFIG_WORKFLOW_KEYS: Record<string, string> = {
-  require_human_ready_approval: "require_human_sign_approval",
   allow_agent_findings: "allow_agent_observations",
   allow_agent_ready_tickets: "allow_agent_defined_tasks",
   allow_agent_defined_contracts: "allow_agent_defined_tasks",

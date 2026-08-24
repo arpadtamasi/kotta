@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, unlinkSync, writeFileSync } from
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
-import { retainLegacySignGate } from "../helpers/legacy-sign.js";
+import { acceptFixtureSpec, coveredDefinition } from "../helpers/covered-task.js";
 
 const cli = resolve("dist/cli/index.js");
 const run = (cwd: string, args: string[]) => {
@@ -22,13 +22,12 @@ describe("review and close", () => {
     writeFileSync(join(root, "README.md"), "fixture\n");
     git(root, "add", "."); git(root, "commit", "-m", "initial");
     run(root, ["init"]);
-    retainLegacySignGate(root);
+    acceptFixtureSpec(root);
     git(root, "add", ".gitattributes", ".gitignore"); git(root, "commit", "-m", "initialize Kotta metadata");
     const created = (run(root, ["task", "new", "--title", "Document flow", "--type", "documentation"]) as { data: { id: string; path: string } }).data;
     const id = created.id;
     const path = created.path;
-    writeFileSync(path, readFileSync(path, "utf8").replace("Describe the observable outcome.", "The flow is documented.").replace("- Define an observable condition.", "- Documentation describes the flow.").replace("- Explain how acceptance will be checked.", "- Read the rendered documentation."));
-    run(root, ["task", "sign", id, "--approve"]);
+    run(root, ["task", "define", id, "--from", coveredDefinition(path, { outcome: "The flow is documented.", acceptance: ["Documentation describes the flow."], verification: "Read the rendered documentation." })]);
     run(root, ["task", "start", id, "--agent", "codex"]);
     const worktree = join(root, ".worktrees", id);
     writeFileSync(join(worktree, "flow.md"), "# Flow\n");

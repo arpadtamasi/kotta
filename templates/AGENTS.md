@@ -49,7 +49,6 @@ backlog → defined → active → review → done
 | --- | --- | --- |
 | Capture intent | `kotta task new --title "…" --type <type> [--profile …]` | human, or agent if allowed by config |
 | Formalize | `kotta task define <id> --from <file>`; every acceptance condition maps to a referenced accepted spec node | agent; valid coverage moves it to `defined` |
-| Optional legacy sign | `kotta task sign <id> --approve` only when `workflow.require_human_sign_approval: true` kept it in backlog | **human decides** (rule 5) |
 | Execute | `kotta task execute <id> --agent <agent>` | agent, in its own claim + branch + worktree |
 | Submit | `kotta task review <id> --evidence "<exact check>=<evidence>" --pull-request <ref>` (repeat evidence per check) | agent |
 | Close | `kotta task close <id> --approve`, after the human said yes in chat | **human decides** (rule 5) |

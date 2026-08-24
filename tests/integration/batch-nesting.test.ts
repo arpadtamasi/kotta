@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
-import { retainLegacySignGate } from "../helpers/legacy-sign.js";
+import { acceptFixtureSpec, coveredDefinition } from "../helpers/covered-task.js";
 
 const cli = resolve("dist/cli/index.js");
 
@@ -24,7 +24,7 @@ function repository(label: string): string {
   git(root, "add", ".");
   git(root, "commit", "-m", "initial");
   run(root, ["init"]);
-  retainLegacySignGate(root);
+  acceptFixtureSpec(root);
   git(root, "add", ".");
   git(root, "commit", "-m", "kotta");
   return root;
@@ -32,10 +32,7 @@ function repository(label: string): string {
 
 function task(root: string, title: string): { id: string; path: string } {
   const created = (run(root, ["task", "new", "--title", title, "--type", "feature"]) as { data: { id: string; path: string } }).data;
-  writeFileSync(created.path, readFileSync(created.path, "utf8")
-    .replace("Describe the observable outcome.", `${title} works.`)
-    .replace("- Define an observable condition.", `- ${title} is observable.`)
-    .replace("- Explain how acceptance will be checked.", "- Read it."));
+  run(root, ["task", "define", created.id, "--from", coveredDefinition(created.path, { outcome: `${title} works.`, acceptance: [`${title} is observable.`], verification: "Read it." })]);
   return created;
 }
 
@@ -98,13 +95,12 @@ describe("a batch that groups other batches", () => {
   test("is not run directly: execution stays a leaf operation", () => {
     const root = repository("start");
     const work = task(root, "Only work");
-    run(root, ["task", "sign", work.id, "--approve"]);
     const leaf = batch(root, "Leaf");
     const parent = batch(root, "Parent");
     run(root, ["batch", "add", leaf, work.id]);
     run(root, ["batch", "add", parent, leaf]);
-    run(root, ["batch", "sign", leaf, "--approve"]);
-    run(root, ["batch", "sign", parent, "--approve"]);
+    run(root, ["batch", "validate", leaf]);
+    run(root, ["batch", "validate", parent]);
     git(root, "add", ".");
     git(root, "commit", "-m", "define batches");
 

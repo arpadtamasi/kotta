@@ -4,7 +4,6 @@ import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { parse } from "yaml";
 import { describe, expect, test } from "vitest";
-import { retainLegacySignGate } from "../helpers/legacy-sign.js";
 
 const cli = resolve("dist/cli/index.js");
 const HOSTED_SPEC_ID = "GT-01m0c0000000000000000000hs";
@@ -37,7 +36,6 @@ function hostedRepository(branch = "claude/harness-branch"): string {
   git(root, "add", ".");
   git(root, "commit", "-m", "initial");
   run(root, ["init"]);
-  retainLegacySignGate(root);
   writeFileSync(join(root, ".kotta/spec/glossary-terms/file-exists-000000hs.md"), [
     "---", `id: ${HOSTED_SPEC_ID}`, "form: glossary-term", "title: File exists", "---", "",
     "## Definition", "The file exists.", "", "## Usage", "Hosted task acceptance.", "", "## Non-examples", "A missing file.", "",
@@ -64,7 +62,6 @@ describe("a single checkout that is not on the base branch", () => {
     const source = join(mkdtempSync(join(tmpdir(), "kotta-def-")), "definition.md");
     writeFileSync(source, definition(created.id));
     run(root, ["task", "define", created.id, "--from", source]);
-    run(root, ["task", "sign", created.id, "--approve"]);
 
     const started = run(root, ["task", "start", created.id, "--agent", "codex"]) as { data: { branch: string; origin: string } };
     expect(started.data).toMatchObject({ branch: "claude/harness-branch", origin: "adopted" });
@@ -100,7 +97,6 @@ describe("a single checkout that is not on the base branch", () => {
     const source = join(mkdtempSync(join(tmpdir(), "kotta-def-")), "definition.md");
     writeFileSync(source, definition(created.id));
     run(root, ["task", "define", created.id, "--from", source]);
-    run(root, ["task", "sign", created.id, "--approve"]);
     run(root, ["task", "start", created.id, "--agent", "codex"]);
 
     const cancelled = run(root, ["task", "cancel", created.id, "--resolution", "cancelled", "--reason", "The host moved on", "--approve"]) as { data: { adopted: boolean } };
@@ -120,7 +116,6 @@ describe("a single checkout that is not on the base branch", () => {
     const source = join(mkdtempSync(join(tmpdir(), "kotta-def-")), "definition.md");
     writeFileSync(source, definition(created.id));
     run(root, ["task", "define", created.id, "--from", source]);
-    run(root, ["task", "sign", created.id, "--approve"]);
 
     const started = run(root, ["task", "start", created.id, "--agent", "codex"]) as { data: { branch: string; origin: string } };
 
@@ -152,7 +147,6 @@ describe("git.branch_pattern", () => {
     const source = join(mkdtempSync(join(tmpdir(), "kotta-def-")), "definition.md");
     writeFileSync(source, definition(created.id));
     run(root, ["task", "define", created.id, "--from", source]);
-    run(root, ["task", "sign", created.id, "--approve"]);
 
     const config = join(root, ".kotta/config.yaml");
     writeFileSync(config, readFileSync(config, "utf8").replace('branch_pattern: "{prefix}/{id}-{slug}"', 'branch_pattern: "agent/{slug}-{id}"'));
@@ -172,7 +166,6 @@ describe("git.branch_pattern", () => {
     const source = join(mkdtempSync(join(tmpdir(), "kotta-def-")), "definition.md");
     writeFileSync(source, definition(created.id));
     run(root, ["task", "define", created.id, "--from", source]);
-    run(root, ["task", "sign", created.id, "--approve"]);
 
     const config = join(root, ".kotta/config.yaml");
     writeFileSync(config, readFileSync(config, "utf8").replace('branch_pattern: "{prefix}/{id}-{slug}"', 'branch_pattern: "{prefix}/{id}..{slug}"'));

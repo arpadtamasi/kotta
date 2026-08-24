@@ -5,11 +5,11 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { initCommand } from "../commands/init.js";
 import { expandOperations } from "../core/operations.js";
-import { briefTask, cancelTask, closeTask, defineTask, newTask, signTask, reopenTask, reviewTask, startTask, validateTask } from "../commands/task.js";
+import { briefTask, cancelTask, closeTask, defineTask, newTask, reopenTask, reviewTask, startTask, validateTask } from "../commands/task.js";
 import { executeTask, formatExecution } from "../commands/execute.js";
 import { statusCommand } from "../commands/status.js";
 import { newObservation, resolveObservation, validateObservation } from "../commands/observation.js";
-import { closeBatch, finalizeBatch, newBatch, batchStatus, signBatch, startBatch, updateBatchTasks, validateBatch } from "../commands/batch.js";
+import { closeBatch, finalizeBatch, newBatch, batchStatus, startBatch, updateBatchTasks, validateBatch } from "../commands/batch.js";
 import { validateWorkspace } from "../commands/validate.js";
 import { listClaims, releaseClaim } from "../commands/claim.js";
 import { formatList, listCommand, type ListResult } from "../commands/list.js";
@@ -445,13 +445,6 @@ defineCommand("task", "define <id>")
     }, { requireClean: false });
     print(result, Boolean(options.json));
   });
-// Accepted-spec coverage normally makes define the backlog -> defined transition. This command
-// remains only for workspaces that deliberately retain the compatibility gate.
-defineCommand("task", "sign <id>")
-  .description("Opt-in compatibility gate: sign a covered backlog task, moving it to defined")
-  .option("--approve")
-  .option("--json")
-  .action((id: string, options: { approve?: boolean; json?: boolean }) => print(signTask(id, Boolean(options.approve)), Boolean(options.json)));
 defineCommand("task", "start <id>", renderTaskStart)
   .requiredOption("--agent <agent>")
   .option("--caller", "Let the current caller execute inside the new worktree with inherited context")
@@ -581,11 +574,6 @@ defineCommand("batch", "remove <batch-id> <member-id>")
 defineCommand("batch", "validate <id>")
   .option("--json")
   .action((id: string, options: { json?: boolean }) => print(validateBatch(id), Boolean(options.json)));
-defineCommand("batch", "sign <id>")
-  .description("Human gate: sign a validated backlog batch, moving it to defined")
-  .option("--approve")
-  .option("--json")
-  .action((id: string, options: { approve?: boolean; json?: boolean }) => print(signBatch(id, Boolean(options.approve)), Boolean(options.json)));
 defineCommand("batch", "start <id>", renderBatchStart)
   .requiredOption("--agent <agent>")
   .option("--json")
