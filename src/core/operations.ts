@@ -47,6 +47,7 @@ export const OPERATIONS: readonly OperationDeclaration[] = [
   { id: "workspace.status", summary: "Report defined, active, review and new-observation state.", cli: ["status"], mcp: "workspace_status" },
   { id: "workspace.gap", summary: "Trace accepted specification to the evidence that implements it.", cli: ["gap"], mcp: "gap_report" },
   { id: "workspace.sync", summary: "Install the shipped skills and refresh the generated rules.", cli: ["sync"], mcp: { absent: TERMINAL_SETUP } },
+  { id: "workspace.doctor", summary: "Report whether Kotta is reachable from where its work happens.", cli: ["doctor"], mcp: { absent: "Answers about the environment a command was typed in; a chat reaches Kotta through a server that is already running." } },
 
   // The parameterised families: one declaration, one command and one tool per entity. They come
   // first inside every entity group because that is where orientation belongs.

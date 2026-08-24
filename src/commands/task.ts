@@ -9,6 +9,7 @@ import { entityFilename, mintId } from "../core/identity.js";
 import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
 import { assertValid, validateTaskDefinitionFile, validateTaskFile } from "../core/validation.js";
 import { BRANCH_PREFIXES } from "../core/profiles.js";
+import { invocationLine } from "../core/invocation.js";
 import { assertClean, assertSafeWorktreePath, git } from "../git/git.js";
 import { commitControlState, controlPlaneRoot, resolveControlPlane, withControlPlaneMutation } from "../git/control-plane.js";
 import { findSpecNode, readSpecNodeText } from "../spec/registry.js";
@@ -764,6 +765,10 @@ export function briefTask(id: string, options: { out?: string; warnTokens?: numb
     `- depends_on: ${dependsOn.length ? dependsOn.join(", ") : "none"}`,
     `- spec: ${specIds.length ? specIds.join(", ") : "none"}`,
     `- branch: ${entity.data.branch ? String(entity.data.branch) : "none"}`,
+    // The brief claims to be the complete execution context, and every rule in it routes state
+    // changes through Kotta — so it cannot leave how to reach Kotta to a PATH nobody checked
+    // (BR-01m0r52vex4j22266nepm5yq8s). Proved from the process assembling the brief.
+    `- kotta: ${invocationLine()}`,
     "",
     "This brief is the complete intent context for executing this task (D-009).",
     "It deliberately EXCLUDES: other tasks' bodies, observations, chat history and the",

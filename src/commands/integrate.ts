@@ -1,20 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { findRepositoryRoot } from "../filesystem/workspace.js";
-
-/**
- * A written invocation is proved, not hoped (BR-01m0qyxvz954ay2rbm00bazrd5).
- *
- * The interpreter running Kotta and the absolute path of Kotta's own entry point — both facts the
- * running process already holds. `command = "kotta"` was a hope about a PATH Kotta cannot see, and
- * it fails in exactly the shells Kotta sends work into: a non-interactive shell loads no version
- * manager, so a binary installed through one is simply absent. Naming `dist/cli/index.js` alone
- * would not fix it either — its shebang defers the same hope to `env`.
- */
-export function kottaInvocation(): { command: string; entry: string } {
-  return { command: process.execPath, entry: fileURLToPath(new URL("../cli/index.js", import.meta.url)) };
-}
+import { kottaInvocation } from "../core/invocation.js";
 
 /** TOML basic strings escape a backslash and a quote; Windows paths carry the first. */
 function toml(value: string): string {
