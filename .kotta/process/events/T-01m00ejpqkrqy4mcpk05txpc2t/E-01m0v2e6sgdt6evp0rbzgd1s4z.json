@@ -1,0 +1,17 @@
+{
+  "entity": "T-01m00ejpqkrqy4mcpk05txpc2t",
+  "task": "T-01m00ejpqkrqy4mcpk05txpc2t",
+  "kind": "approval",
+  "approval_id": "E-01m0v2e6sfj5cr1qnh80yh9rxr",
+  "phase": "approved",
+  "action": "task.cancel",
+  "payload": {
+    "resolution": "cancelled",
+    "reason": "The state it asks for already holds: kotta validate reports ok true on this repository with no DEVIATION_MISMATCH, and the closed contract it names carries its deviations in the structured section. Nothing is left to do.",
+    "superseded_by": null,
+    "surface": "cli"
+  },
+  "source_message": "E-01m0v2e6sgfkeeeb86h9vx89k6",
+  "id": "E-01m0v2e6sgdt6evp0rbzgd1s4z",
+  "created_at": "2026-08-24T23:42:07.664Z"
+}

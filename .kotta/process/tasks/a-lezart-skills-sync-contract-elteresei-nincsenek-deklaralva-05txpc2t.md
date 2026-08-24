@@ -1,7 +1,7 @@
 ---
 id: T-01m00ejpqkrqy4mcpk05txpc2t
 title: A lezárt skills-sync contract eltérései nincsenek deklarálva
-status: backlog
+status: done
 origin: observation
 types:
   - feature
@@ -14,8 +14,16 @@ blocks: []
 branch: null
 pull_request: null
 created_at: '2026-08-14'
-updated_at: '2026-08-14'
+updated_at: '2026-08-24'
 source_observation: F-01m00e988sfbhses939jkezp7j
+resolution: cancelled
+cancellation_reason: >-
+  The state it asks for already holds: kotta validate reports ok true on this
+  repository with no DEVIATION_MISMATCH, and the closed contract it names
+  carries its deviations in the structured section. Nothing is left to do.
+approved_by: cli
+approved_at: '2026-08-24T23:42:07.586Z'
+approval_basis: 'CLI --approve: task.cancel'
 ---
 # A lezárt skills-sync contract eltérései nincsenek deklarálva
 
