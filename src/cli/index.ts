@@ -22,6 +22,7 @@ import { WorkspaceShapeError, assertCurrentWorkspaceShape, findRepositoryRoot } 
 import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
 import { mcpCommand } from "../commands/mcp.js";
 import { integrateCodex } from "../commands/integrate.js";
+import { doctorCommand } from "../commands/doctor.js";
 import { syncCommand } from "../commands/sync.js";
 import { gapReport } from "../commands/gap.js";
 import { displayId } from "../core/identity.js";
@@ -174,6 +175,16 @@ function renderBatchStatus(result: unknown): string {
     ...(data.children.length ? ["", "Child batches", ...data.children.map((child) => `  ${child.state}  ${child.title}  ${displayId(child.id)}`)] : []),
     `Coordinator: ${String(data.coordinator.state)}${data.coordinator.branch ? ` on ${String(data.coordinator.branch)}` : ""}.`,
     ...((data.coordinator.blockers ?? []) as string[]).map((blocker) => `  ${blocker}`),
+  ].join("\n");
+}
+
+function renderDoctor(result: unknown): string {
+  const data = (result as { data: { invocation: string; bareName: string | null } }).data;
+  return [
+    `Kotta runs as: ${data.invocation}`,
+    data.bareName
+      ? `The name 'kotta' resolves here, to ${data.bareName}.`
+      : "The name 'kotta' resolves to nothing on this PATH.",
   ].join("\n");
 }
 
@@ -600,6 +611,10 @@ defineCommand("claim", "release <id>")
   .option("--json")
   .action((id: string, options: { force?: boolean; json?: boolean }) => print(releaseClaim(id, Boolean(options.force)), Boolean(options.json)));
 
+defineCommand(null, "doctor", renderDoctor)
+  .description("Report whether Kotta is reachable from where its work happens")
+  .option("--json")
+  .action((options: { json?: boolean }) => print(doctorCommand(), Boolean(options.json)));
 defineCommand(null, "integrate", renderIntegrate, "integrate codex")
   .description("Connect Kotta to a calling agent host")
   .argument("<host>", "Supported host: codex")

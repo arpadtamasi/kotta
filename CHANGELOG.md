@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **The brief tells the agent how to reach Kotta, and `kotta doctor` answers on demand.** Every
+  execution brief now carries a `- kotta:` line naming the interpreter and entry point that
+  assembled it. The brief declares itself the complete execution context and routes every state
+  change through Kotta, while resolving the bare name `kotta` was left to a PATH nobody had checked
+  — and a non-interactive shell, which is what an agent worktree gets, resolves it to nothing. The
+  new `kotta doctor` reports whether the bare name resolves in the environment it is handed, and
+  names the invocation that works when it does not. The shipped skills keep writing
+  `kotta task close <id>`: they are read by people, and absolute paths there would be permanent
+  noise. `kottaInvocation()` moved to `src/core/invocation.ts` so `integrate` and the brief answer
+  from one fact.
+
 - **Every accepted promise is kept or admitted.** `kotta gap` no longer only reports: it refuses a
   workspace holding a specification node that has neither evidence naming its id nor an admitted
   implementation gap in its own frontmatter, naming each and exiting non-zero. The report still

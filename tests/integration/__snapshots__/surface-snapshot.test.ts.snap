@@ -20,6 +20,8 @@ Commands:
                               evidence and enforcement without a spec trace
   sync [options]              Install the skills Kotta ships and refresh the
                               workspace rules file
+  doctor [options]            Report whether Kotta is reachable from where its
+                              work happens
   task                        Create and transition tasks
   observation                 Capture and disposition observations
   decision                    Record durable human decisions
@@ -94,6 +96,15 @@ Options:
                  a recognized legacy Kotta prelude after the human said yes
   --json
   -h, --help     display help for command
+
+### kotta doctor
+Usage: kotta doctor [options]
+
+Report whether Kotta is reachable from where its work happens
+
+Options:
+  --json
+  -h, --help  display help for command
 
 ### kotta task
 Usage: kotta task [options] [command]
