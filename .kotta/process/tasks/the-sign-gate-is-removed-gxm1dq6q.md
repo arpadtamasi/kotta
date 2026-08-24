@@ -1,7 +1,7 @@
 ---
 id: T-01m0tjx38y6mdbpyzhgxm1dq6q
 title: The sign gate is removed
-status: active
+status: review
 origin: human
 types:
   - refactor
@@ -89,3 +89,31 @@ The operation declarations are `task.sign` and `batch.sign` in `src/core/operati
 - `run: npx vitest run tests/integration/operation-registry.test.ts` — the surface, proven as a set.
 - `run: npx vitest run tests/integration/batch.test.ts` — the batch lifecycle without the gate.
 - `run: npm test` — the full suite, whose count is the check that nothing was covered only by signing.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| No surface carries a sign command. `kotta task sign` and `kotta batch sign` are gone from the CLI, from the operation declaration, and from the shipped rules file; the registry's totality test proves neither surface kept one. | run: npx vitest run tests/integration/operation-registry.test.ts tests/integration/surface-snapshot.test.ts — verified: exit 0 at 378a45a |
+| A batch reaches defined by validating. `kotta batch validate` carries a backlog batch to defined with no approval, and refuses while any member is neither backlog, defined nor done. | run: npx vitest run tests/integration/batch.test.ts tests/integration/batch-nesting.test.ts tests/integration/batch-coordinator.test.ts — verified: exit 0 at 378a45a |
+| The legacy opt-in is gone from config and from every branch it fed. `workflow.require_human_sign_approval` is no longer read, no longer published in the config schema, and no longer written by init; a workspace that still carries the key is not broken by it. | run: npx vitest run tests/integration/coverage.test.ts tests/integration/init.test.ts tests/integration/migrate.test.ts — verified: exit 0 at 378a45a |
+| Nothing was covered only by the retired gate. Every test that reached a state through signing reaches it through defining instead, and the suite's count does not fall. | The same suite runs before and after: 67 files, 447 passed and 1 skipped on origin/main (2b1fcd8, measured in a clean worktree) and 67 files, 447 passed and 1 skipped here. tests/helpers/legacy-sign.ts is replaced by tests/helpers/covered-task.ts, which lands an accepted glossary term and builds a covered definition from the task's own template body, so 21 fixtures now take the product path. |
+
+### Verification performed
+
+No surface carries a sign command. `kotta task sign` and `kotta batch sign` are gone from the CLI, from the operation declaration, and from the shipped rules file; the registry's totality test proves neither surface kept one.: run: npx vitest run tests/integration/operation-registry.test.ts tests/integration/surface-snapshot.test.ts
+A batch reaches defined by validating. `kotta batch validate` carries a backlog batch to defined with no approval, and refuses while any member is neither backlog, defined nor done.: run: npx vitest run tests/integration/batch.test.ts tests/integration/batch-nesting.test.ts tests/integration/batch-coordinator.test.ts
+The legacy opt-in is gone from config and from every branch it fed. `workflow.require_human_sign_approval` is no longer read, no longer published in the config schema, and no longer written by init; a workspace that still carries the key is not broken by it.: run: npx vitest run tests/integration/coverage.test.ts tests/integration/init.test.ts tests/integration/migrate.test.ts
+Nothing was covered only by the retired gate. Every test that reached a state through signing reaches it through defining instead, and the suite's count does not fall.: The same suite runs before and after: 67 files, 447 passed and 1 skipped on origin/main (2b1fcd8, measured in a clean worktree) and 67 files, 447 passed and 1 skipped here. tests/helpers/legacy-sign.ts is replaced by tests/helpers/covered-task.ts, which lands an accepted glossary term and builds a covered definition from the task's own template body, so 21 fixtures now take the product path.
+
+### Deviations
+
+None.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.

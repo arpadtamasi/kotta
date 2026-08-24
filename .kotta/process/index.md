@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- the-sign-gate-is-removed-gxm1dq6q
+None.
 
 ## Review
 
-None.
+- the-sign-gate-is-removed-gxm1dq6q
 
 ## Blocked
 
