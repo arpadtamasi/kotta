@@ -1,7 +1,7 @@
 ---
 id: T-01m0t6y6mrz2qv285gqfanyvza
 title: The gap report is readable at a hundred admissions
-status: review
+status: done
 origin: human
 types:
   - bug
@@ -35,6 +35,10 @@ start_ref: HEAD
 start_commit: 550ffc6cb5ef71441cc72a2af06cf7daabe75b50
 assigned_agent: claude
 execution_mode: inherited
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-24T16:01:10.539Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
