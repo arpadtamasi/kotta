@@ -28,7 +28,7 @@ coverage:
   'The human sees the decision before saying yes. The proposal carries the decision''s full text, and what the elicitation shows is what gets published; nothing about the draft reaches the workspace before the yes.':
     - BR-01m0vqr9k6r571egp3z8qwnpkj
     - UC-01m0f0wn89p42025mt5vg5012n
-  'The declaration no longer says the operator publishes it. `decision.create` names its MCP path in the operation registry instead of an absence reason, and the registry''s totality test proves the surfaces agree.':
+  'The declaration no longer says the operator publishes it. `decision.create` declares the same chat-gated absence the other five gates declare, and the registry''s totality test proves the surfaces still agree.':
     - BR-01m0nsyasfnjc9s4073r8zb33j
     - IF-01m0f0wn89cq1pnnsta9q8wqx9
   'A malformed proposal is refused before the human is asked, and a refusal changes nothing. A payload that is not exactly the decision text is refused by name, and a decision that fails to validate leaves no decision file and no partial event trail.':
@@ -60,7 +60,7 @@ The sixth human gate stops being the one that sends you to the terminal. Five of
 
 - Recording a decision is proposed and approved in the conversation, like every other gate. `approval_request` accepts `decision.create`, elicits the human answer, and on yes publishes the decision through the same validated service the CLI uses, with the same receipt.
 - The human sees the decision before saying yes. The proposal carries the decision's full text, and what the elicitation shows is what gets published; nothing about the draft reaches the workspace before the yes.
-- The declaration no longer says the operator publishes it. `decision.create` names its MCP path in the operation registry instead of an absence reason, and the registry's totality test proves the surfaces agree.
+- The declaration no longer says the operator publishes it. `decision.create` declares the same chat-gated absence the other five gates declare, and the registry's totality test proves the surfaces still agree.
 - A malformed proposal is refused before the human is asked, and a refusal changes nothing. A payload that is not exactly the decision text is refused by name, and a decision that fails to validate leaves no decision file and no partial event trail.
 
 ## Verification
@@ -83,4 +83,6 @@ None.
 
 `APPROVAL_ACTIONS`, `validateEntity`, `validatePayload`, `approvalDescription`, `assertApplicable` and `apply` are all in `src/commands/approval.ts` and each will need a branch for the new action. `createDecision` is in `src/commands/decision.ts` and takes `{ from, id, approved }` — a text payload needs either a temporary file or a sibling entry point that takes the source directly; prefer the latter over writing a temp file inside a lock.
 
-The MCP `approval_request` tool builds its action enum from `APPROVAL_ACTIONS` (`src/commands/mcp.ts`), so the surface follows the constant. `tests/integration/mcp.test.ts` already exercises propose/reject/fail-closed against `task.cancel`; the decision path belongs beside them.
+Gated actions are not their own MCP tools: the five existing ones declare `absent: CHAT_GATED`, "Reached from chat through approval_request". `decision.create` joins them by replacing its current reason with that one — the registry keeps counting it absent, and the surface follows `APPROVAL_ACTIONS` because the `approval_request` action enum is built from the constant (`src/commands/mcp.ts`).
+
+A decision has no id before it is recorded, and every other approval names an entity that already resolves. Mint it the way `task_create` mints a task id — server-side, at proposal time — and refuse a supplied id that already exists before the human is asked, not after. `tests/integration/mcp.test.ts` already exercises propose/reject/fail-closed against `task.cancel`; the decision path belongs beside them.
