@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **Recording a decision reaches the calling chat.** Five of Kotta's six approval-carrying
+  mutations were proposed and answered in chat; the sixth was declared absent from that surface
+  with the reason "a chat proposes the draft and the operator publishes it" — which is the operator
+  typing a command, exactly what rule 5 forbids and what the accepted specification says a gate
+  must not require. `approval_request` now takes `decision.create`, carrying the decision's
+  Markdown as its one payload field. The id is minted with the proposal, the way `task_create`
+  mints a task id, so `entity` is omitted for this action alone; the elicitation shows the draft
+  verbatim above the question, and the yes publishes it through the same service the CLI uses, with
+  the same receipt. A duplicate id is refused before the human is asked; a draft that fails its own
+  validation fails durably after the yes and lands nothing. `kotta decision create --from <file>
+  --approve` is unchanged.
+
+- **The approval machinery says what it enforces.** Three rules the code has always enforced and
+  nothing promised now sit in the specification, each with an example and each naming the site in
+  `src/commands/approval.ts` where it is kept: an entity carries at most one undecided approval,
+  each action declares the exact payload it accepts, and an approval reaches one terminal phase and
+  keeps it — a failed application is recorded as a failure, never as a transition.
+
 ### Removed
 
 - **The sign gate is gone.** `kotta task sign` could only fire in a workspace that opted into

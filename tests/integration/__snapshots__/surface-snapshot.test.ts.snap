@@ -566,6 +566,7 @@ exports[`the surfaces Kotta exposes > the MCP tool surface, read from a live ser
             "task.cancel",
             "task.request-changes",
             "batch.close",
+            "decision.create",
           ],
           "type": "string",
         },
@@ -586,7 +587,6 @@ exports[`the surfaces Kotta exposes > the MCP tool surface, read from a live ser
         },
       },
       "required": [
-        "entity",
         "action",
       ],
       "type": "object",

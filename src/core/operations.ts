@@ -73,7 +73,7 @@ export const OPERATIONS: readonly OperationDeclaration[] = [
   { id: "observation.resolve", summary: "Disposition an observation.", cli: ["observation", "resolve"], mcp: { absent: CHAT_GATED } },
 
   // Decisions.
-  { id: "decision.create", summary: "Publish a durable human decision.", cli: ["decision", "create"], mcp: { absent: "Written from a reviewed draft file; a chat proposes the draft and the operator publishes it." } },
+  { id: "decision.create", summary: "Publish a durable human decision.", cli: ["decision", "create"], mcp: { absent: CHAT_GATED } },
 
   // Batches.
   { id: "batch.create", summary: "Create a batch.", cli: ["batch", "new"], mcp: { absent: BATCH_SHAPING } },

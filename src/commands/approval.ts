@@ -1,12 +1,13 @@
 import { readFileSync } from "node:fs";
 import matter from "gray-matter";
 import { closeBatch } from "./batch.js";
+import { findDecision, recordDecision } from "./decision.js";
 import { findBatch } from "../filesystem/batches.js";
 import { cancelTask, closeTask, reopenTask } from "./task.js";
 import { OBSERVATION_DISPOSITIONS as DISPOSITION_VALUES, findObservation, resolveObservation } from "./observation.js";
 import { appendEvent, approvalHistory, mintApprovalId, readEvents, type KottaEvent } from "../core/events.js";
 import { chatApprovalReceipt, type ApprovalReceipt } from "../core/approval-receipt.js";
-import { TASK_ID, OBSERVATION_ID, BATCH_ID } from "../core/identity.js";
+import { TASK_ID, OBSERVATION_ID, BATCH_ID, DECISION_ID, mintId } from "../core/identity.js";
 import { findTask } from "../filesystem/entities.js";
 import { findRepositoryRoot } from "../filesystem/workspace.js";
 import { commitControlState, withControlPlaneMutation } from "../git/control-plane.js";
@@ -17,6 +18,7 @@ export const APPROVAL_ACTIONS = [
   "task.cancel",
   "task.request-changes",
   "batch.close",
+  "decision.create",
 ] as const;
 
 export type ApprovalAction = typeof APPROVAL_ACTIONS[number];
@@ -28,10 +30,26 @@ const CANCEL_RESOLUTIONS = new Set(["duplicate", "obsolete", "cancelled"]);
 const SUPERSEDING_RESOLUTIONS = new Set(["duplicate", "obsolete"]);
 /** Cancelling is the one gated action whose whole point is the payload: what ends, why, and what replaced it. */
 const CANCEL_PAYLOAD_FIELDS = new Set(["resolution", "reason", "supersededBy"]);
+/** Recording a decision is the other: the human is answering about text that does not exist yet. */
+const DECISION_PAYLOAD_FIELDS = new Set(["source"]);
 
 function validateEntity(action: ApprovalAction, entity: string): void {
-  const pattern = action.startsWith("task.") ? TASK_ID : action === "observation.resolve" ? OBSERVATION_ID : BATCH_ID;
+  const pattern = action.startsWith("task.") ? TASK_ID
+    : action === "observation.resolve" ? OBSERVATION_ID
+      : action === "decision.create" ? DECISION_ID
+        : BATCH_ID;
   if (!pattern.test(entity)) throw new Error(`${action} requires the matching Kotta entity id.`);
+}
+
+/**
+ * Every other gated action names an entity that already exists; a decision does not exist until
+ * its approval applies. The id is minted here, the way task_create mints a task id, so the
+ * proposal, the elicitation and the record all name the same decision.
+ */
+export function approvalEntity(action: string, entity?: string): string {
+  if (entity?.trim()) return entity.trim();
+  if (action === "decision.create") return mintId("D");
+  throw new Error(`${action} requires the matching Kotta entity id.`);
 }
 
 /**
@@ -47,6 +65,11 @@ function validatePayload(action: ApprovalAction, payload: Record<string, unknown
     const supersededBy = typeof payload.supersededBy === "string" ? payload.supersededBy.trim() : "";
     if (SUPERSEDING_RESOLUTIONS.has(resolution) && !supersededBy) throw new Error(`Resolution '${resolution}' requires supersededBy naming the task or decision that took this work's place.`);
     if (Object.keys(payload).some((key) => !CANCEL_PAYLOAD_FIELDS.has(key))) throw new Error("task.cancel accepts only the resolution, reason and supersededBy payload.");
+    return;
+  }
+  if (action === "decision.create") {
+    if (!(typeof payload.source === "string" && payload.source.trim())) throw new Error("decision.create requires source carrying the decision's Markdown.");
+    if (Object.keys(payload).some((key) => !DECISION_PAYLOAD_FIELDS.has(key))) throw new Error("decision.create accepts only the decision's source.");
     return;
   }
   if (action === "observation.resolve") {
@@ -68,6 +91,7 @@ function validatePayload(action: ApprovalAction, payload: Record<string, unknown
 }
 
 function relatedTask(root: string, entity: string, action: ApprovalAction): string | null {
+  if (action === "decision.create") return null;
   if (action.startsWith("task.")) return entity;
   if (action === "observation.resolve") {
     const observation = findObservation(root, entity);
@@ -86,10 +110,37 @@ export function approvalDescription(action: ApprovalAction, entity: string, payl
     const superseded = typeof payload.supersededBy === "string" && payload.supersededBy.trim() ? ` --superseded-by ${payload.supersededBy.trim()}` : "";
     return `${action} ${entity} --resolution ${String(payload.resolution)}${superseded} --reason "${String(payload.reason)}"`;
   }
+  // What the human is answering about is the decision's own words, so the description carries its
+  // title rather than a command they could not read the consequence from.
+  if (action === "decision.create") return `${action} ${entity} — ${decisionTitle(String(payload.source ?? ""))}`;
   return `${action} ${entity}`;
 }
 
+/**
+ * What the human must read before answering, beyond the one-line description. A decision is the
+ * one gated action whose whole substance is text that does not exist yet, so the elicitation
+ * carries that text verbatim: what is shown is what gets recorded.
+ */
+export function approvalDetail(action: ApprovalAction, payload: Record<string, unknown> = {}): string | null {
+  if (action !== "decision.create") return null;
+  const source = String(payload.source ?? "").trim();
+  return source ? source : null;
+}
+
+/** The title line of a decision draft, for the question the human is shown. */
+function decisionTitle(source: string): string {
+  const front = source.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  const titled = front?.[1].match(/^title:\s*(.+)$/m)?.[1]?.trim().replace(/^['"]|['"]$/g, "");
+  if (titled) return titled;
+  return source.match(/^#\s+(.+)$/m)?.[1]?.trim() ?? "untitled decision";
+}
+
 function assertApplicable(root: string, entity: string, action: ApprovalAction): void {
+  if (action === "decision.create") {
+    // A duplicate id is refused before the question is asked, not after the yes is spent.
+    if (findDecision(root, entity)) throw new Error(`Decision ${entity} already exists. Choose a different id or inspect the existing record.`);
+    return;
+  }
   if (action === "task.cancel") {
     const state = findTask(root, entity).state;
     // Cancelling is the exception among the task actions: it reaches the work wherever it
@@ -134,6 +185,7 @@ function apply(root: string, proposal: KottaEvent, receipt: ApprovalReceipt): un
     });
     case "task.request-changes": return reopenTask(proposal.entity, true, root, { locked: true, commit: false, approvalRecorded: true, receipt });
     case "batch.close": return closeBatch(proposal.entity, true, root, { skipClean: true, commit: false, approvalRecorded: true, receipt });
+    case "decision.create": return recordDecision({ source: String(payload.source), id: proposal.entity, approved: true, receipt }, root);
   }
 }
 
