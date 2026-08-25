@@ -121,7 +121,8 @@ terminal. `kotta ui` only displays the resulting canonical state and timeline.
 3. **An observation is not a task.** It is dispositioned by `kotta observation validate <id>`
    and a human-approved `kotta observation resolve <id> --disposition <disposition> --approve`.
 4. **Do not invent product intent or accepted trade-offs.** Ask the human. Durable answers are
-   recorded with `kotta decision create --from <file> --approve`.
+   recorded with `kotta decision create --from <file> --approve`, or from the calling chat through
+   `approval_request` with `decision.create`, which carries the draft's text into the question.
 5. **Approval is a human gate — ask for it here, in the conversation.** Put the decision to the
    human in chat, in their language: what will happen, named by **title**, one line, then a plain
    yes or no. Never an id, never a command for them to go and run. On an explicit yes **in this

@@ -7,7 +7,7 @@ import { z } from "zod";
 
 /** The server reports the version it actually is: a literal here said 0.5.0 for two releases. */
 const packageVersion = String((JSON.parse(readFileSync(fileURLToPath(new URL("../../package.json", import.meta.url)), "utf8")) as { version: unknown }).version);
-import { APPROVAL_ACTIONS, approvalDescription, decideApproval, failApproval, proposeApproval, type ApprovalAction, type ApprovalDecision } from "./approval.js";
+import { APPROVAL_ACTIONS, approvalDescription, approvalDetail, approvalEntity, decideApproval, failApproval, proposeApproval, type ApprovalAction, type ApprovalDecision } from "./approval.js";
 import { recordTaskMessage } from "./conversation.js";
 import { briefTask, defineTask, newTask, reviewTask, startTask, validateTask } from "./task.js";
 import { newObservation } from "./observation.js";
@@ -272,7 +272,9 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     title: "Request an exact Kotta approval",
     description: "Present one exact pending Kotta transition in the current host chat. Apply it only after the human explicitly approves the elicitation; rejection and cancellation are durable.",
     inputSchema: {
-      entity: z.string().min(1),
+      // Omitted only for decision.create, whose entity does not exist until the approval applies:
+      // the id is minted with the proposal and reported back with it.
+      entity: z.string().min(1).optional(),
       // Derived, not restated: a hand-kept copy of this list is how a retired action survives in
       // one surface after leaving the other (BR-01m0nsyasfnjc9s4073r8zb33j).
       action: z.enum(APPROVAL_ACTIONS),
@@ -282,19 +284,25 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     annotations: { ...localWrite, idempotentHint: false },
   }, async ({ entity, action, payload, clientRequestId }) => {
     try {
-      const proposed = proposeApproval({ entity, action, payload, clientRequestId }, root);
+      // Resolved once: from here on the proposal, the elicitation and the record name one entity,
+      // whether the caller supplied it or decision.create minted it.
+      const subject = approvalEntity(action, entity);
+      const proposed = proposeApproval({ entity: subject, action, payload, clientRequestId }, root);
       const approvalId = String(proposed.data.event.approval_id);
       if (!proposed.data.created) {
-        const terminal = readEvents(controlPlaneRoot(root), entity).find((event) => event.approval_id === approvalId && ["applied", "rejected", "cancelled", "failed"].includes(String(event.phase)));
+        const terminal = readEvents(controlPlaneRoot(root), subject).find((event) => event.approval_id === approvalId && ["applied", "rejected", "cancelled", "failed"].includes(String(event.phase)));
         if (terminal) return toolResult({ ok: terminal.phase === "applied", approvalId, phase: terminal.phase, event: terminal }, `Approval ${approvalId} is already ${terminal.phase}.`);
       }
 
-      const description = approvalDescription(action as ApprovalAction, entity, payload);
+      const description = approvalDescription(action as ApprovalAction, subject, payload);
+      const detail = approvalDetail(action as ApprovalAction, payload);
       let elicited;
       try {
         elicited = await server.server.elicitInput({
           mode: "form",
-          message: `Kotta requests one scoped decision: ${description}`,
+          message: detail
+            ? `Kotta requests one scoped decision: ${description}\n\nThis is what will be recorded, exactly as shown:\n\n${detail}`
+            : `Kotta requests one scoped decision: ${description}`,
           requestedSchema: {
             type: "object",
             properties: {

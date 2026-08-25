@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
@@ -14,6 +14,13 @@ import { findTask } from "../../src/filesystem/entities.js";
 
 const cli = resolve("dist/cli/index.js");
 const MCP_TASK_SPEC_ID = "GT-01m0c0000000000000000000mc";
+/** A decision draft the chat carries whole, because there is no file for the human to open. */
+const DECISION_SOURCE = [
+  "---", "title: Adopt blue-green cutover", "---",
+  "## Decision", "", "Use a blue-green cutover.", "",
+  "## Context", "", "The release cannot tolerate downtime.", "",
+  "## Consequences", "", "Operate two stacks until verification completes.", "",
+].join("\n");
 const clients: Client[] = [];
 const servers: ReturnType<typeof createKottaMcpServer>[] = [];
 
@@ -363,6 +370,87 @@ describe("Kotta caller-chat MCP", () => {
     // The refused proposal above never reached the event log; only the cancel did.
     const phases = readEvents(root, id).filter((event) => event.kind === "approval").map((event) => event.phase);
     expect(phases).toEqual(["proposed", "approved", "applied"]);
+  });
+
+  test("records a decision from the caller chat, showing its text and leaving a receipt", async () => {
+    const root = fixture();
+    const connected = await connect(root, "approve");
+
+    const recorded = await connected.client.callTool({
+      name: "approval_request",
+      arguments: { action: "decision.create", payload: { source: DECISION_SOURCE } },
+    });
+    expect(recorded.isError).not.toBe(true);
+
+    // The id was minted with the proposal: the human never relayed one, and nothing named a file.
+    const files = readdirSync(join(root, ".kotta/process/decisions"));
+    expect(files).toHaveLength(1);
+    const id = files[0].replace(/\.md$/, "");
+    expect(id).toMatch(/^D-[0-9a-hjkmnp-tv-z]{26}$/);
+
+    // Acceptance 2: what the elicitation showed is what was published, verbatim.
+    const prompt = JSON.stringify(connected.prompt());
+    expect(prompt).toContain("Adopt blue-green cutover");
+    expect(prompt).toContain("Operate two stacks until verification completes");
+    const stored = readFileSync(join(root, ".kotta/process/decisions", files[0]), "utf8");
+    expect(stored).toContain("Use a blue-green cutover.");
+    expect(stored).toContain("Operate two stacks until verification completes.");
+
+    // Acceptance 1: the same receipt every other chat-approved gate leaves.
+    expect(stored).toContain("approved_by: caller-chat");
+    expect(stored).toMatch(/approved_at: /);
+    const yes = readEvents(root, id).filter((event) => event.kind === "message" && event.role === "human").at(-1);
+    expect(stored).toContain(`caller-chat yes (${yes?.id}): decision.create`);
+    expect(readEvents(root, id).filter((event) => event.kind === "approval").map((event) => event.phase))
+      .toEqual(["proposed", "approved", "applied"]);
+    expect(execFileSync("git", ["status", "--porcelain", "--", ".kotta"], { cwd: root, encoding: "utf8" })).toBe("");
+  });
+
+  test("a rejected decision records the refusal and publishes nothing", async () => {
+    const root = fixture();
+    const { client } = await connect(root, "reject");
+
+    const result = await client.callTool({
+      name: "approval_request",
+      arguments: { action: "decision.create", payload: { source: DECISION_SOURCE } },
+    });
+
+    expect(result.isError).not.toBe(true);
+    expect(existsSync(join(root, ".kotta/process/decisions"))
+      ? readdirSync(join(root, ".kotta/process/decisions"))
+      : []).toEqual([]);
+    const phases = readEvents(root).filter((event) => event.kind === "approval").map((event) => event.phase);
+    expect(phases).toEqual(["proposed", "rejected"]);
+  });
+
+  test("a decision payload that is not the decision's text is refused before the human is asked", async () => {
+    const root = fixture();
+    const connected = await connect(root, "approve");
+
+    for (const payload of [{}, { source: "   " }, { source: DECISION_SOURCE, title: "Adopt blue-green cutover" }]) {
+      const refused = await connected.client.callTool({ name: "approval_request", arguments: { action: "decision.create", payload } });
+      expect(refused.isError, JSON.stringify(payload)).toBe(true);
+      expect(JSON.stringify(refused.structuredContent)).toContain("decision.create");
+    }
+    // Nothing was asked and nothing was written: no elicitation, no decision, no event.
+    expect(connected.prompt()).toBeNull();
+    expect(existsSync(join(root, ".kotta/process/decisions"))
+      ? readdirSync(join(root, ".kotta/process/decisions"))
+      : []).toEqual([]);
+    expect(readEvents(root).filter((event) => event.kind === "approval")).toEqual([]);
+
+    // A draft that only fails on its own content is refused after the yes, as a durable failure -
+    // the decision never lands, and the approval carries the reason.
+    const invalid = await connected.client.callTool({
+      name: "approval_request",
+      arguments: { action: "decision.create", payload: { source: "---\ntitle: Incomplete\n---\n## Decision\n\nProceed.\n" } },
+    });
+    expect(invalid.isError).toBe(true);
+    expect(existsSync(join(root, ".kotta/process/decisions"))
+      ? readdirSync(join(root, ".kotta/process/decisions"))
+      : []).toEqual([]);
+    expect(readEvents(root).filter((event) => event.kind === "approval").map((event) => event.phase))
+      .toEqual(["proposed", "approved", "failed"]);
   });
 
   test("fails closed when the calling host cannot present elicitation", async () => {
