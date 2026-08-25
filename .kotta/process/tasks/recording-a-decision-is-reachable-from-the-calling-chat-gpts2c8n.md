@@ -1,7 +1,7 @@
 ---
 id: T-01m0wak7d8mrr6z098gpts2c8n
 title: Recording a decision is reachable from the calling chat
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -37,7 +37,9 @@ coverage:
 worktree: .
 branch_origin: adopted
 start_ref: HEAD
-start_commit: c8059887d62d358391b99c9f388f072a0d345850
+start_commit: e1b138a170d9327b1f532a21a8c630425f5b6f4e
+assigned_agent: claude
+execution_mode: inherited
 ---
 ## Outcome
 
