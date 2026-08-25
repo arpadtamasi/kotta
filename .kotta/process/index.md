@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- recording-a-decision-is-reachable-from-the-calling-chat-gpts2c8n
+None.
 
 ## Review
 
-None.
+- recording-a-decision-is-reachable-from-the-calling-chat-gpts2c8n
 
 ## Blocked
 

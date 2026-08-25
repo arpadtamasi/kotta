@@ -1,7 +1,7 @@
 ---
 id: T-01m0wak7d8mrr6z098gpts2c8n
 title: Recording a decision is reachable from the calling chat
-status: active
+status: review
 origin: human
 types:
   - feature
@@ -88,3 +88,31 @@ None.
 Gated actions are not their own MCP tools: the five existing ones declare `absent: CHAT_GATED`, "Reached from chat through approval_request". `decision.create` joins them by replacing its current reason with that one — the registry keeps counting it absent, and the surface follows `APPROVAL_ACTIONS` because the `approval_request` action enum is built from the constant (`src/commands/mcp.ts`).
 
 A decision has no id before it is recorded, and every other approval names an entity that already resolves. Mint it the way `task_create` mints a task id — server-side, at proposal time — and refuse a supplied id that already exists before the human is asked, not after. `tests/integration/mcp.test.ts` already exercises propose/reject/fail-closed against `task.cancel`; the decision path belongs beside them.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| Recording a decision is proposed and approved in the conversation, like every other gate. `approval_request` accepts `decision.create`, elicits the human answer, and on yes publishes the decision through the same validated service the CLI uses, with the same receipt. | run: npx vitest run tests/integration/mcp.test.ts -t 'records a decision from the caller chat' — verified: exit 0 at 58b2f3d |
+| The human sees the decision before saying yes. The proposal carries the decision's full text, and what the elicitation shows is what gets published; nothing about the draft reaches the workspace before the yes. | run: npx vitest run tests/integration/mcp.test.ts tests/integration/decision.test.ts — verified: exit 0 at 58b2f3d |
+| The declaration no longer says the operator publishes it. `decision.create` declares the same chat-gated absence the other five gates declare, and the registry's totality test proves the surfaces still agree. | run: npx vitest run tests/integration/operation-registry.test.ts tests/integration/surface-snapshot.test.ts — verified: exit 0 at 58b2f3d |
+| A malformed proposal is refused before the human is asked, and a refusal changes nothing. A payload that is not exactly the decision text is refused by name, and a decision that fails to validate leaves no decision file and no partial event trail. | run: npx vitest run tests/integration/mcp.test.ts -t 'refused before the human is asked' — verified: exit 0 at 58b2f3d |
+
+### Verification performed
+
+Recording a decision is proposed and approved in the conversation, like every other gate. `approval_request` accepts `decision.create`, elicits the human answer, and on yes publishes the decision through the same validated service the CLI uses, with the same receipt.: run: npx vitest run tests/integration/mcp.test.ts -t 'records a decision from the caller chat'
+The human sees the decision before saying yes. The proposal carries the decision's full text, and what the elicitation shows is what gets published; nothing about the draft reaches the workspace before the yes.: run: npx vitest run tests/integration/mcp.test.ts tests/integration/decision.test.ts
+The declaration no longer says the operator publishes it. `decision.create` declares the same chat-gated absence the other five gates declare, and the registry's totality test proves the surfaces still agree.: run: npx vitest run tests/integration/operation-registry.test.ts tests/integration/surface-snapshot.test.ts
+A malformed proposal is refused before the human is asked, and a refusal changes nothing. A payload that is not exactly the decision text is refused by name, and a decision that fails to validate leaves no decision file and no partial event trail.: run: npx vitest run tests/integration/mcp.test.ts -t 'refused before the human is asked'
+
+### Deviations
+
+Two lines outside the stated Scope: templates/AGENTS.md rule 4 and skills/define-task step 5 both told an agent to record a decision with the CLI. Leaving them would have kept the promise unkept in practice, since those are the texts an executing agent reads. kotta sync regenerated .kotta/AGENTS.md from the template.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
