@@ -1,7 +1,7 @@
 ---
 id: T-01m0wak7d8mrr6z098gpts2c8n
 title: Recording a decision is reachable from the calling chat
-status: active
+status: defined
 origin: human
 types:
   - feature
@@ -34,9 +34,7 @@ coverage:
   'A malformed proposal is refused before the human is asked, and a refusal changes nothing. A payload that is not exactly the decision text is refused by name, and a decision that fails to validate leaves no decision file and no partial event trail.':
     - BR-01m0vqr9k6r571egp3z8qwnpkj
     - IF-01m0f0wn89cq1pnnsta9q8wqx9
-assigned_agent: claude
 worktree: .
-execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: c8059887d62d358391b99c9f388f072a0d345850
