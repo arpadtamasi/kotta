@@ -20,7 +20,7 @@ None.
 
 ## Review
 
-- recording-a-decision-is-reachable-from-the-calling-chat-gpts2c8n
+None.
 
 ## Blocked
 

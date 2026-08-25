@@ -1,7 +1,7 @@
 ---
 id: T-01m0wak7d8mrr6z098gpts2c8n
 title: Recording a decision is reachable from the calling chat
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -40,6 +40,10 @@ start_ref: HEAD
 start_commit: e1b138a170d9327b1f532a21a8c630425f5b6f4e
 assigned_agent: claude
 execution_mode: inherited
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-25T23:33:59.060Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
