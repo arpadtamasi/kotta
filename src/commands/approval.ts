@@ -34,6 +34,11 @@ function validateEntity(action: ApprovalAction, entity: string): void {
   if (!pattern.test(entity)) throw new Error(`${action} requires the matching Kotta entity id.`);
 }
 
+/**
+ * An approval carries only the payload its action needs
+ * (BR-01m0vqr9k6r571egp3z8qwnpkj, EX-01m0vqr9k6781kw70g9h722qk7): each action declares its exact
+ * fields, and anything else is refused before the human is asked.
+ */
 function validatePayload(action: ApprovalAction, payload: Record<string, unknown>): void {
   if (action === "task.cancel") {
     const resolution = typeof payload.resolution === "string" ? payload.resolution : "";
@@ -156,6 +161,8 @@ export function proposeApproval(options: {
     if (existing) return { ok: true, command: "approval propose", data: { event: existing, created: false, description: approvalDescription(action, options.entity, payload) } };
     assertApplicable(root, options.entity, action);
     const events = readEvents(root, options.entity);
+    // One entity carries one undecided approval (BR-01m0vqr9k5ypcztw4v0ns2qa6a,
+    // EX-01m0vqr9k6c4d77g48rw7akt6c): two open questions would make the human's yes ambiguous.
     const pending = events.find((candidate) => candidate.kind === "approval" && candidate.phase === "proposed"
       && !events.some((later) => later.kind === "approval" && later.approval_id === candidate.approval_id && later.phase !== "proposed"));
     if (pending) throw new Error(`${options.entity} already has a pending approval: ${pending.action}. Resolve it before preparing another action.`);
@@ -217,6 +224,8 @@ export function decideApproval(options: {
     const events = readEvents(root);
     const proposal = events.find((event) => event.kind === "approval" && event.phase === "proposed" && event.approval_id === options.approvalId);
     if (!proposal || !ACTIONS.has(String(proposal.action))) throw new Error(`Approval ${options.approvalId} was not found.`);
+    // An approval is decided once, and its outcome is durable (BR-01m0vqr9k64ht9h70fpjy6rky9,
+    // EX-01m0vqr9k6w5923nksb536e3j2): a replayed yes returns the phase it ended in, applying nothing.
     const history = approvalHistory(events, options.approvalId);
     const terminal = history.find((event) => ["applied", "rejected", "cancelled", "failed"].includes(String(event.phase)));
     if (terminal) return { ok: true, command: "approval decide", data: { event: terminal, result: null, alreadyDecided: true } };

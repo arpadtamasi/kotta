@@ -3,7 +3,7 @@ id: T-01kz3kx1ex19tjw82tbd1366pk
 title: >-
   Az agenseknek szolo szabalyok csak egy masolt AGENTS.md-ben elnek, pedig a
   termeknek kellene hordoznia oket (brief header + kotta guide)
-status: defined
+status: done
 origin: observation
 types:
   - feature
@@ -16,9 +16,20 @@ blocks: []
 branch: null
 pull_request: null
 created_at: '2026-08-03'
-updated_at: '2026-08-08'
+updated_at: '2026-08-24'
 source_observation: F-01kz3k2axqqy6r4rgqmgt5ybtt
-resolution: null
+resolution: obsolete
+cancellation_reason: >-
+  Written before the task rename and before the coverage gate: it asks for
+  'kotta contract brief' and its six acceptance conditions are all uncovered, so
+  it cannot start. Most of what it wanted has landed — the D-009 fixed header
+  carries the scope boundary, and the reachability wave added the '- kotta:'
+  invocation line. One sentence of it survives, captured as
+  T-01m0v2d804h1pk95y4bmq7fk8m.
+superseded_by: T-01m0v2d804h1pk95y4bmq7fk8m
+approved_by: cli
+approved_at: '2026-08-24T23:41:59.859Z'
+approval_basis: 'CLI --approve: task.cancel'
 ---
 # T-01kz3kx1ex19tjw82tbd1366pk — The execution brief carries the two rules an executing agent cannot infer
 

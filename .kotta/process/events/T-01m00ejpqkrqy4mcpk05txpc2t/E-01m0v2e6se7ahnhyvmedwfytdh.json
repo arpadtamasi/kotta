@@ -1,0 +1,9 @@
+{
+  "entity": "T-01m00ejpqkrqy4mcpk05txpc2t",
+  "task": "T-01m00ejpqkrqy4mcpk05txpc2t",
+  "kind": "lifecycle",
+  "state": "done",
+  "summary": "Task cancelled from backlog with resolution cancelled. Reason: The state it asks for already holds: kotta validate reports ok true on this repository with no DEVIATION_MISMATCH, and the closed contract it names carries its deviations in the structured section. Nothing is left to do.",
+  "id": "E-01m0v2e6se7ahnhyvmedwfytdh",
+  "created_at": "2026-08-24T23:42:07.663Z"
+}
