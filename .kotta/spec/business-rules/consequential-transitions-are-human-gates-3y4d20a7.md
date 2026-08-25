@@ -2,9 +2,6 @@
 id: BR-01m0f0wn89zb3wfb3t3y4d20a7
 form: business-rule
 title: "Consequential transitions are human gates"
-accepted:
-  - >-
-    unexamined: Inherited on 2026-08-23 and kinded on 2026-08-24. Nobody has yet checked whether this promise is kept. This is a form that can name itself where it is enforced or proven, so the absence of its id is a real question that has simply not been asked. Answer it by naming the node where the code enforces it or a test proves it, or by reclassifying it as unimplemented.
 ---
 
 ## Rule
@@ -17,4 +14,4 @@ Human intent and acceptance are the explicit authority the whole model rests on.
 
 ## Scope
 
-Every approval-carrying mutation, on every surface - MCP elicitation and plain chat alike. Where no human is present, nothing is approved. The recorded receipt (approved_by, approved_at, approval_basis) is what makes a chat-relayed approval auditable.
+Every approval-carrying mutation, on every surface - MCP elicitation and plain chat alike. The two are the same set, not two lists that happen to agree: a command that demands approval and an action the calling chat can put to a human are one and the same, asserted by comparing the sets rather than by any count. A gate that exists in only one of them would send the human to the other, which is exactly what this rule forbids. Where no human is present, nothing is approved. The recorded receipt (approved_by, approved_at, approval_basis) is what makes a chat-relayed approval auditable.

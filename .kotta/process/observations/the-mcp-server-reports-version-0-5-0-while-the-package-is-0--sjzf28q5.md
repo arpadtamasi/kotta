@@ -1,13 +1,18 @@
 ---
 id: F-01m0qz4ryygynhfp3hsjzf28q5
 title: The MCP server reports version 0.5.0 while the package is 0.7.0
-status: new
+status: resolved
 origin: agent
 observation_type: defect
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-23'
+disposition: reject
+resolved_at: '2026-08-25T23:42:42.277Z'
+approved_by: cli
+approved_at: '2026-08-25T23:42:42.278Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0qz4ryygynhfp3hsjzf28q5 — The MCP server reports version 0.5.0 while the package is 0.7.0
 

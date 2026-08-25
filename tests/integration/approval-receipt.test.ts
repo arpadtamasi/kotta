@@ -5,6 +5,12 @@ import { basename, join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 import { acceptFixtureSpec, coveredDefinition } from "../helpers/covered-task.js";
 
+/**
+ * Every approval is recorded on the entity it approved - who, when, and on what basis
+ * (BR-01m0f0wn89zb3wfb3t3y4d20a7, EX-01m0f0wn8am4hb2vy03wmn4brs). The surface clause of the same
+ * rule, that a gate reaches both the CLI and the calling chat, is proven in gate-surfaces.test.ts.
+ */
+
 const cli = resolve("dist/cli/index.js");
 
 function run(repository: string, args: string[]): Record<string, unknown> {

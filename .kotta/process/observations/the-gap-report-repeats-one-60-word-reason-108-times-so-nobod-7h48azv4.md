@@ -1,13 +1,18 @@
 ---
 id: F-01m0t6j0cp4b85gxnh7h48azv4
 title: 'The gap report repeats one 60-word reason 108 times, so nobody will read it'
-status: new
+status: resolved
 origin: agent
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-24'
+disposition: reject
+resolved_at: '2026-08-25T23:42:51.317Z'
+approved_by: cli
+approved_at: '2026-08-25T23:42:51.317Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0t6j0cp4b85gxnh7h48azv4 — The gap report repeats one 60-word reason 108 times, so nobody will read it
 
