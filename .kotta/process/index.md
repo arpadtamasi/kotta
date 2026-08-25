@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- recording-a-decision-is-reachable-from-the-calling-chat-gpts2c8n
+None.
 
 ## Active tasks
 
-None.
+- recording-a-decision-is-reachable-from-the-calling-chat-gpts2c8n
 
 ## Review
 
