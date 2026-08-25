@@ -12,7 +12,7 @@ None.
 
 ## Defined tasks
 
-None.
+- recording-a-decision-is-reachable-from-the-calling-chat-gpts2c8n
 
 ## Active tasks
 
