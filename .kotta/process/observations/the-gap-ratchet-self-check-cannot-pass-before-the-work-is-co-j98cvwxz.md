@@ -3,13 +3,18 @@ id: F-01m0sm78y2b1vpg1msj98cvwxz
 title: >-
   The gap ratchet self-check cannot pass before the work is committed, and
   nothing says so
-status: new
+status: resolved
 origin: agent
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-24'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-26T01:00:49.331Z'
+approved_by: cli
+approved_at: '2026-08-26T01:00:49.331Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0sm78y2b1vpg1msj98cvwxz — The gap ratchet self-check cannot pass before the work is committed, and nothing says so
 
