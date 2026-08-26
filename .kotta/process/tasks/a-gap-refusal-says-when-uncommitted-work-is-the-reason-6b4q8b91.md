@@ -1,7 +1,7 @@
 ---
 id: T-01m0xraxm6k5mbbr266b4q8b91
 title: A gap refusal says when uncommitted work is the reason
-status: review
+status: done
 origin: human
 types:
   - bug
@@ -31,6 +31,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 4dda185b6717638d87221f53ead41c112b668dd3
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-26T01:00:13.486Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
