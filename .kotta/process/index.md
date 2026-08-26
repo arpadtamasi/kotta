@@ -12,7 +12,7 @@ None.
 
 ## Defined tasks
 
-None.
+- T-019-sweep-one-command-that-answers-what-is-unfinished-and-why
 
 ## Active tasks
 
