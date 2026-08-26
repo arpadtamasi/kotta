@@ -251,6 +251,39 @@ describe("the workspace rules file", () => {
     expect((run(["sync"]) as { data: { agents: { state: string } } }).data.agents.state).toBe("unchanged");
   });
 
+  /**
+   * The suite used to leave drift by rewriting Kotta's generated-file manifest — the hand-edit of
+   * Kotta-owned state the rules forbid, performed by the very tests that check those rules
+   * (F-01m0tnv8vmjjjack09xt7w25zf). `--replace-rules` is the supported way, so nothing needs to
+   * reach past the tool. Read over a three-line window, which is what the removed call spanned.
+   *
+   * The needle is assembled rather than written, so this check does not match its own source.
+   */
+  test("no test reconciles drift by writing Kotta's own manifest", () => {
+    const needle = `${"kotta"}-generated.json`;
+    const writes = /write(?:File)?Sync|cpSync|appendFileSync/;
+    const suite = resolve("tests");
+    const files: string[] = [];
+    const walk = (directory: string): void => {
+      for (const entry of readdirSync(directory, { withFileTypes: true })) {
+        const path = join(directory, entry.name);
+        if (entry.isDirectory()) walk(path);
+        else if (/\.tsx?$/.test(entry.name)) files.push(path);
+      }
+    };
+    walk(suite);
+    expect(files.length, "the walk found the suite").toBeGreaterThan(20);
+
+    const offenders = files.filter((path) => {
+      const lines = readFileSync(path, "utf8").split(/\r?\n/);
+      return lines.some((_line, index) => {
+        const window = lines.slice(index, index + 3).join("\n");
+        return window.includes(needle) && writes.test(window);
+      });
+    });
+    expect(offenders.map((path) => path.slice(suite.length + 1))).toEqual([]);
+  });
+
   test("status names a missing and then a drifted rules file", () => {
     run(["init"]);
     rmSync(rules());
