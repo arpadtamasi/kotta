@@ -75,7 +75,7 @@ function validatePayload(action: ApprovalAction, payload: Record<string, unknown
   if (action === "observation.resolve") {
     const disposition = typeof payload.disposition === "string" ? payload.disposition : "";
     if (!OBSERVATION_DISPOSITIONS.has(disposition)) throw new Error("observation.resolve requires one explicit valid disposition.");
-    if (Object.keys(payload).some((key) => key !== "disposition" && key !== "spec")) throw new Error("observation.resolve accepts only the scoped disposition and spec payload.");
+    if (Object.keys(payload).some((key) => !["disposition", "spec", "task"].includes(key))) throw new Error("observation.resolve accepts only the scoped disposition, spec and task payload.");
     // amend-spec is the one disposition that carries references: it must name at least one amended
     // specification node, and no other disposition may.
     if (disposition === "amend-spec") {
@@ -84,6 +84,14 @@ function validatePayload(action: ApprovalAction, payload: Record<string, unknown
       }
     } else if (payload.spec !== undefined) {
       throw new Error("observation.resolve accepts spec only with the amend-spec disposition.");
+    }
+    // Attaching is the mirror of amending: its whole meaning is the reference it carries.
+    if (disposition === "attach-to-existing-task") {
+      if (!(typeof payload.task === "string" && payload.task.trim())) {
+        throw new Error("observation.resolve with disposition attach-to-existing-task requires task naming the task this observation was folded into.");
+      }
+    } else if (payload.task !== undefined) {
+      throw new Error("observation.resolve accepts task only with the attach-to-existing-task disposition.");
     }
     return;
   }
@@ -104,7 +112,8 @@ function relatedTask(root: string, entity: string, action: ApprovalAction): stri
 export function approvalDescription(action: ApprovalAction, entity: string, payload: Record<string, unknown> = {}): string {
   if (action === "observation.resolve") {
     const spec = Array.isArray(payload.spec) && payload.spec.length ? ` --spec ${payload.spec.map(String).join(",")}` : "";
-    return `${action} ${entity} --disposition ${String(payload.disposition)}${spec}`;
+    const task = typeof payload.task === "string" && payload.task.trim() ? ` --task ${payload.task.trim()}` : "";
+    return `${action} ${entity} --disposition ${String(payload.disposition)}${spec}${task}`;
   }
   if (action === "task.cancel") {
     const superseded = typeof payload.supersededBy === "string" && payload.supersededBy.trim() ? ` --superseded-by ${payload.supersededBy.trim()}` : "";
@@ -173,6 +182,7 @@ function apply(root: string, proposal: KottaEvent, receipt: ApprovalReceipt): un
       locked: true,
       commit: false,
       spec: Array.isArray(payload.spec) ? payload.spec.map(String) : undefined,
+      task: typeof payload.task === "string" ? payload.task : undefined,
       receipt,
     });
     case "task.close": return closeTask(proposal.entity, true, root, { locked: true, commit: false, approvalRecorded: true, receipt });

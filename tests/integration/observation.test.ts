@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { readdirSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import matter from "gray-matter";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
@@ -171,5 +171,83 @@ describe("the amend-spec disposition", () => {
     const refused = attempt(root, ["observation", "resolve", observationId, "--disposition", "reject", "--spec", specId, "--approve"]);
     expect(refused.status).not.toBe(0);
     expect(`${refused.stdout}${refused.stderr}`).toContain("applies only to the amend-spec disposition");
+  });
+});
+
+/**
+ * A disposition whose meaning is a reference records the reference
+ * (SM-01m0f0wn892ntx934by9gwednb). Attaching said a noticing was folded into work that already
+ * exists and stored no trace of which: measured on Kotta's own workspace, 61 resolutions carried
+ * the disposition and none carried a task, because the tool offered no way to name one
+ * (F-01m0xsbc9zz7d2k3t3d1yfve96). The reachable exit gets used, so `create-task` was reached for
+ * instead and minted a duplicate.
+ */
+describe("the attach-to-existing-task disposition", () => {
+  const capture = (root: string): string => {
+    const created = run(root, ["observation", "new", "--title", "The importer logs nothing", "--type", "bug", "--evidence", "Observed in the fixture."]) as { data: { id: string } };
+    run(root, ["observation", "validate", created.data.id]);
+    return created.data.id;
+  };
+  const existingTask = (root: string): string =>
+    (run(root, ["task", "new", "--title", "Repair the importer", "--type", "bug"]) as { data: { id: string } }).data.id;
+
+  test("records the task it attaches to, and canonicalises the short id the listing prints", () => {
+    const root = initRepository("kotta-observation-attach-");
+    const taskId = existingTask(root);
+    const observationId = capture(root);
+
+    // The short form is what `task list` prints, so it is what an operator types.
+    const short = `T-${taskId.slice(-8)}`;
+    const resolved = run(root, ["observation", "resolve", observationId, "--disposition", "attach-to-existing-task", "--task", short, "--approve"]) as { ok: boolean; data: { disposition: string; taskId?: string } };
+
+    expect(resolved.ok).toBe(true);
+    expect(resolved.data.taskId, "the record holds one unambiguous reference").toBe(taskId);
+    const file = join(root, ".kotta/process/observations", `the-importer-logs-nothing-${observationId.slice(-8)}.md`);
+    const record = matter(readFileSync(file, "utf8")).data;
+    expect(record.status).toBe("resolved");
+    expect(record.disposition).toBe("attach-to-existing-task");
+    expect(record.task).toBe(taskId);
+    // Attaching folds into work that exists; it never mints any.
+    expect(readdirSync(join(root, ".kotta/process/tasks"))).toHaveLength(1);
+    expect(run(root, ["observation", "show", observationId]) as { data: { facts: Record<string, string> } })
+      .toMatchObject({ data: { facts: { task: taskId } } });
+  });
+
+  test("is refused without a task, with one that resolves to nothing, and on any other disposition", () => {
+    const root = initRepository("kotta-observation-attach-refuse-");
+    existingTask(root);
+    const observationId = capture(root);
+    const before = readFileSync(join(root, ".kotta/process/observations", `the-importer-logs-nothing-${observationId.slice(-8)}.md`), "utf8");
+
+    const bare = attempt(root, ["observation", "resolve", observationId, "--disposition", "attach-to-existing-task", "--approve"]);
+    expect(bare.status).not.toBe(0);
+    expect(bare.stdout).toContain("requires --task");
+
+    const dangling = attempt(root, ["observation", "resolve", observationId, "--disposition", "attach-to-existing-task", "--task", "T-01m0zzzzzzzzzzzzzzzzzzzzzz", "--approve"]);
+    expect(dangling.status).not.toBe(0);
+    expect(dangling.stdout).toContain("T-01m0zzzzzzzzzzzzzzzzzzzzzz");
+
+    // The payload is scoped per disposition, the way --spec is: a stray one is refused, not dropped.
+    const stray = attempt(root, ["observation", "resolve", observationId, "--disposition", "reject", "--task", "T-01m0zzzzzzzzzzzzzzzzzzzzzz", "--approve"]);
+    expect(stray.status).not.toBe(0);
+    expect(stray.stdout).toContain("applies only to the attach-to-existing-task disposition");
+
+    // Three refusals, and the observation is exactly as it was.
+    expect(readFileSync(join(root, ".kotta/process/observations", `the-importer-logs-nothing-${observationId.slice(-8)}.md`), "utf8")).toBe(before);
+  });
+
+  test("a resolution recorded before the requirement says its link was never recorded", () => {
+    const root = initRepository("kotta-observation-attach-legacy-");
+    const observationId = capture(root);
+    const file = join(root, ".kotta/process/observations", `the-importer-logs-nothing-${observationId.slice(-8)}.md`);
+
+    // The shape of all 61: resolved as attached, with no task, written before this was required.
+    const legacy = matter(readFileSync(file, "utf8"));
+    writeFileSync(file, matter.stringify(legacy.content, { ...legacy.data, status: "resolved", disposition: "attach-to-existing-task", resolved_at: "2026-08-01T00:00:00.000Z" }));
+
+    // Not back-filled by guessing — which task it was is not recorded anywhere — but not silent either.
+    expect((run(root, ["observation", "show", observationId]) as { data: { facts: Record<string, string> } }).data.facts.task)
+      .toContain("not recorded");
+    expect(run(root, ["validate"]), "and a record written before the requirement still validates").toMatchObject({ ok: true });
   });
 });

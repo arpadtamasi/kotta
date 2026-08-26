@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **Attaching an observation names the task it attaches to.** The disposition's whole meaning is
+  the work a noticing was folded into, and nothing stored one: `observation resolve` took
+  `--disposition` and `--spec`, and only the `create-task` branch ever wrote a link. Measured on
+  Kotta's own workspace, 61 resolutions carried `attach-to-existing-task` and none carried a task.
+  The cost was not bookkeeping — the honest exit was unreachable, so the reachable one got used
+  instead, minting an empty duplicate that was cancelled the same day. `--task` now names it,
+  canonicalising the short id the listing prints, refusing an id that resolves to nothing, and
+  refusing itself on any other disposition; `approval_request` carries the same field under the
+  same rule, and shows the human which task. The 61 are not back-filled by guessing — which task
+  each was is recorded nowhere — but `observation show` says the link was never recorded rather
+  than showing silence.
+
 - **A gap refusal says when uncommitted work is the reason.** `kotta gap` reads the accepted
   specification on the base branch, deliberately — the agreement is what landed, not what is being
   typed. So a wave that lands a spec node together with the code naming it fails until the commit

@@ -527,9 +527,10 @@ defineCommand("observation", "validate <id>")
 defineCommand("observation", "resolve <id>")
   .requiredOption("--disposition <disposition>")
   .option("--spec <spec...>", "Specification nodes the amendment touched (amend-spec only)")
+  .option("--task <task>", "The task this observation was folded into (attach-to-existing-task only)")
   .option("--approve")
   .option("--json")
-  .action((id: string, options: { disposition: string; spec?: string[]; approve?: boolean; json?: boolean }) => print(resolveObservation(id, options.disposition, Boolean(options.approve), undefined, { spec: options.spec }), Boolean(options.json)));
+  .action((id: string, options: { disposition: string; spec?: string[]; task?: string; approve?: boolean; json?: boolean }) => print(resolveObservation(id, options.disposition, Boolean(options.approve), undefined, { spec: options.spec, task: options.task }), Boolean(options.json)));
 
 defineCommand("decision", "list", renderEntityList)
   .description("List decisions with their state and title")

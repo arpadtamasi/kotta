@@ -283,6 +283,43 @@ describe("Kotta caller-chat MCP", () => {
     ]);
   });
 
+  test("attaching an observation from the caller chat carries the task it attaches to", async () => {
+    const root = fixture();
+    const connected = await connect(root, "approve");
+    const id = await createAndDefine(connected.client, root);
+    const captured = JSON.parse(execFileSync("node", [
+      cli, "observation", "new",
+      "--title", "The importer logs nothing",
+      "--type", "bug",
+      "--evidence", "Observed while defining the caller-chat task.",
+      "--json",
+    ], { cwd: root, encoding: "utf8" })) as { data: { id: string } };
+    const observation = captured.data.id;
+
+    // Attaching with no task is refused before the human is asked: the payload is scoped per
+    // disposition (BR-01m0vqr9k6r571egp3z8qwnpkj), and this disposition's meaning is the reference.
+    const bare = await connected.client.callTool({
+      name: "approval_request",
+      arguments: { entity: observation, action: "observation.resolve", payload: { disposition: "attach-to-existing-task" } },
+    });
+    expect(bare.isError).toBe(true);
+    expect(JSON.stringify(bare.structuredContent)).toContain("attach-to-existing-task");
+    expect(connected.prompt(), "and nothing reached the human").toBeNull();
+
+    const attached = await connected.client.callTool({
+      name: "approval_request",
+      arguments: { entity: observation, action: "observation.resolve", payload: { disposition: "attach-to-existing-task", task: id } },
+    });
+    expect(attached.isError).not.toBe(true);
+    // The human is shown which task, not only which command.
+    expect(JSON.stringify(connected.prompt())).toContain(`--task ${id}`);
+    expect(readWorkspace(root).observations.find((entry) => entry.id === observation)).toMatchObject({
+      status: "resolved",
+      disposition: "attach-to-existing-task",
+      task: id,
+    });
+  });
+
   test("amends an already-defined task through the MCP define tool", async () => {
     const root = fixture();
     const connected = await connect(root);

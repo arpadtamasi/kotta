@@ -328,6 +328,8 @@ Options:
   --disposition <disposition>
   --spec <spec...>             Specification nodes the amendment touched
                                (amend-spec only)
+  --task <task>                The task this observation was folded into
+                               (attach-to-existing-task only)
   --approve
   --json
   -h, --help                   display help for command
