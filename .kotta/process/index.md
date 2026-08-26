@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- the-constant-ceremony-promise-is-counted-not-assumed-zd2yk5vs
+None.
 
 ## Active tasks
 
-None.
+- the-constant-ceremony-promise-is-counted-not-assumed-zd2yk5vs
 
 ## Review
 

@@ -1,7 +1,7 @@
 ---
 id: T-01m0jkmw2rxxwj4jfvzd2yk5vs
 title: 'The constant-ceremony promise is counted, not assumed'
-status: defined
+status: active
 origin: human
 types:
   - workflow
@@ -13,7 +13,7 @@ depends_on: []
 blocks: []
 spec:
   - QA-01m0fp2hdkq55yrx9qr5t8pweh
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-21'
 updated_at: '2026-08-26'
@@ -26,6 +26,12 @@ coverage:
     - QA-01m0fp2hdkq55yrx9qr5t8pweh
   'Where this workspace''s own history cannot meet the promise, the boundary is named and dated rather than the failing entities being quietly excluded from the count.':
     - QA-01m0fp2hdkq55yrx9qr5t8pweh
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 95263309e7d10caebf356b5151db488f05a5b6cb
 ---
 # T-01m0jkmw2rxxwj4jfvzd2yk5vs — The constant-ceremony promise is counted, not assumed
 
