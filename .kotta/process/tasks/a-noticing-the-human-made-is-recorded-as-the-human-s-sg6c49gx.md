@@ -1,7 +1,7 @@
 ---
 id: T-01m0ypa2rb5xev2g5dsg6c49gx
 title: A noticing the human made is recorded as the human's
-status: active
+status: review
 origin: human
 types:
   - bug
@@ -76,3 +76,29 @@ None.
 The literal is at `src/commands/observation.ts:75`, inside `writeObservation`'s `data` object. `newObservation` takes `{ title, type, evidence, discoveredDuring }` today and is called from both the CLI action and the MCP `observation_create` tool.
 
 `ENTITY_ORIGINS` in `src/filesystem/entities.ts` is the published set to validate against — restating the two values here would be the drift the schema-to-enum agreement test forbids.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A noticing the human made can be recorded as the human's. `observation new` takes the origin, the record carries it, and the calling chat can record what the operator said without it becoming the agent's own. | run: npx vitest run tests/integration/observation.test.ts -t 'records the operator' tests/integration/mcp.test.ts — verified: exit 0 at 8b364e5 |
+| The default is unchanged and honest. Without the option an observation is the agent's, as it always was, and only the declared values are accepted. | run: npx vitest run tests/integration/observation.test.ts -t 'defaults to the agent' — verified: exit 0 at 8b364e5 |
+| Whose noticing it was is visible where observations are read. The listing and the record distinguish a human's from an agent's without anyone opening the file. | run: npx vitest run tests/integration/list.test.ts tests/integration/surface-snapshot.test.ts — verified: exit 0 at 8b364e5 |
+
+### Verification performed
+
+A noticing the human made can be recorded as the human's. `observation new` takes the origin, the record carries it, and the calling chat can record what the operator said without it becoming the agent's own.: run: npx vitest run tests/integration/observation.test.ts -t 'records the operator' tests/integration/mcp.test.ts
+The default is unchanged and honest. Without the option an observation is the agent's, as it always was, and only the declared values are accepted.: run: npx vitest run tests/integration/observation.test.ts -t 'defaults to the agent'
+Whose noticing it was is visible where observations are read. The listing and the record distinguish a human's from an agent's without anyone opening the file.: run: npx vitest run tests/integration/list.test.ts tests/integration/surface-snapshot.test.ts
+
+### Deviations
+
+One fix beyond the stated Scope: observation_create's double control-plane lock. It is a distinct defect that predates this task and is recorded as its own observation, but the third acceptance condition — the chat records the operator's own — cannot be true while that path refuses as busy, so it was necessary rather than opportunistic. The change removes a wrapper whose commit the service already performed.
+
+### Observations created
+
+F-01m0ypea8kn7shamp4a0t798a8 (the operator's own, recorded as theirs: severity and confidence are still constants, and whether they earn their place has no evidence yet), F-01m0ypjk6gzymm0y51m96mmdaw (observation_create deadlocked on its own lock)
+
+### Known concerns
+
+Not declared.

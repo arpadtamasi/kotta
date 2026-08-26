@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- a-noticing-the-human-made-is-recorded-as-the-human-s-sg6c49gx
+None.
 
 ## Review
 
-None.
+- a-noticing-the-human-made-is-recorded-as-the-human-s-sg6c49gx
 
 ## Blocked
 
