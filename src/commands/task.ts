@@ -19,6 +19,7 @@ import { cliApprovalReceipt, stampReceipt, type ApprovalReceipt } from "../core/
 import { readEnv } from "../core/env.js";
 import { assertDistinctReviewEvidence, declaredCommand, prepareReviewEvidence, type ReviewEvidenceInput } from "../core/review-evidence.js";
 import { taskCoverage, validateTaskCoverage, type CoverageEntry } from "../core/coverage.js";
+import { findDecision } from "./decision.js";
 
 export function slugify(value: string): string {
   return value.toLowerCase().normalize("NFKD").replace(/\p{M}/gu, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
@@ -127,9 +128,10 @@ export function defineTask(id: string, definition: string, repositoryRoot?: stri
   const candidate = `${destination}.define-${process.pid}.tmp`;
   writeFileSync(candidate, renderMarkdown(current.data, draft.content));
   try {
+    const decisionExists = (decision: string) => Boolean(findDecision(root, decision));
     assertValid(targetState === "backlog"
-      ? validateTaskDefinitionFile(candidate)
-      : validateTaskFile(candidate, targetState));
+      ? validateTaskDefinitionFile(candidate, decisionExists)
+      : validateTaskFile(candidate, targetState, decisionExists));
     if (!options.draft) {
       const coverageErrors = validateTaskCoverage(root, current.data, draft.content, candidate);
       assertValid({ valid: coverageErrors.length === 0, errors: coverageErrors });

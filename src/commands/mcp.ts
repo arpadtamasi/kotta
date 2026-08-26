@@ -13,6 +13,7 @@ import { briefTask, defineTask, newTask, reviewTask, startTask, validateTask } f
 import { newObservation } from "./observation.js";
 import { statusCommand } from "./status.js";
 import { sweep } from "./sweep.js";
+import { openQuestions } from "./questions.js";
 import { listCommand } from "./list.js";
 import { showCommand } from "./show.js";
 import { OBSERVATION_ORIGINS, entityStates } from "../filesystem/entities.js";
@@ -102,6 +103,24 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
       const summary = items.length
         ? `${items.length} stopped: ${Object.entries(counts).map(([category, count]) => `${category} ${count}`).join(", ")}.`
         : "Nothing has stopped.";
+      return toolResult(result as unknown as ToolPayload, summary);
+    } catch (error) { return toolError(error); }
+  });
+
+  define("workspace_questions", {
+    title: "Read the open questions an entity asks",
+    description: "List the undecided points written under an entity's Open decisions heading — one entity, or every entity at once — each with the position that addresses it, whether it still blocks defining, and the decision that answered it where one did. Reads only; writes nothing.",
+    inputSchema: {
+      id: z.string().optional(),
+    },
+    annotations: readOnly,
+  }, async ({ id }) => {
+    try {
+      const result = openQuestions(id, root);
+      const { entities, open, total } = result.data;
+      const summary = total
+        ? `${open} open of ${total} across ${entities.length} ${entities.length === 1 ? "entity" : "entities"}.`
+        : "No entity asks an open question.";
       return toolResult(result as unknown as ToolPayload, summary);
     } catch (error) { return toolError(error); }
   });

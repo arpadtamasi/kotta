@@ -16,6 +16,8 @@ Commands:
   init [options]              Create a .kotta workspace
   sweep [options]             Report what has stopped, why, and the one action
                               that would move it
+  questions [options] [id]    Report the open questions an entity asks, or every
+                              entity's at once
   validate [options]          Validate the Kotta workspace
   status [options]            Show canonical workspace status
   gap [options]               Report accepted spec promises without repository
@@ -72,6 +74,15 @@ Options:
                                  as undispositioned
   --json
   -h, --help                     display help for command
+
+### kotta questions
+Usage: kotta questions [options] [id]
+
+Report the open questions an entity asks, or every entity's at once
+
+Options:
+  --json
+  -h, --help  display help for command
 
 ### kotta validate
 Usage: kotta validate [options]
@@ -1094,6 +1105,25 @@ exports[`the surfaces Kotta exposes > the MCP tool surface, read from a live ser
     },
     "name": "task_validate",
     "title": "Validate a Kotta task",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "id": {
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "workspace_questions",
+    "title": "Read the open questions an entity asks",
   },
   {
     "annotations": {

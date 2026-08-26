@@ -10,6 +10,8 @@ import remarkGfm from "remark-gfm";
 
 /* ── Types ───────────────────────────────────────────── */
 type Status = "backlog" | "defined" | "active" | "review" | "done";
+/** One undecided point an entity carries, as the workspace parsed it (BR-01m0z873stwx7szg5896gwsbry). */
+type OpenQuestion = { position: number; reference: string; text: string; line: number; decisions: string[]; resolved: boolean };
 type Migration = {
   project: string;
   legacy_ticket_count: number;
@@ -23,12 +25,13 @@ type Task = {
   batch: string | null; depends_on: string[]; blocks?: string[]; blocked?: boolean; resolution?: string;
   source_observation?: string | null; assigned_agent?: string | null; worktree?: string | null;
   execution_mode?: "fresh" | "inherited"; branch?: string | null; pull_request?: string | null; created_at?: string | null; updated_at?: string | null; sections: Record<string, string>;
+  questions?: OpenQuestion[];
   claim?: Claim | null;
   migration?: { legacy_id: string; legacy_title: string; lane: string; legacy_status: string; backlog_section: string; story_points: number | null; ready_candidate: boolean; split: boolean; status_correction?: string | null; source_file: string } | null;
 };
 type Claim = { task: string; agent: string; branch: string; worktree: string; started_at: string };
 type Batch = {
-  id: string; title: string; status: string; kind: string; tasks: string[]; batches?: string[]; sections: Record<string, string>;
+  id: string; title: string; status: string; kind: string; tasks: string[]; batches?: string[]; sections: Record<string, string>; questions?: OpenQuestion[];
   created_at?: string | null; updated_at?: string | null;
   execution?: { mode?: string; parallelism?: number; stop_on_failure?: boolean };
   coordinator?: { branch?: string; base_branch?: string; base_commit?: string; cleaned_at?: string | null } | null;
@@ -36,7 +39,7 @@ type Batch = {
 type Observation = {
   id: string; title: string; status: "new" | "resolved"; observation_type: string; severity: string; confidence: string;
   discovered_during?: string | null; created_at?: string | null; resolution?: string; became?: string | null;
-  disposition?: string; spec?: string[]; sections: Record<string, string>;
+  disposition?: string; spec?: string[]; sections: Record<string, string>; questions?: OpenQuestion[];
 };
 type Decision = { id: string; title: string; date: string | null; sections: Record<string, string> };
 type Diagnostic = { entity: string; id: string; worktree: string; message: string };
@@ -1047,15 +1050,59 @@ function EntityTimeline({ id, workspace }: {
   </section>;
 }
 
-function TaskSection({ label, value, onOpen }: { label: string; value?: string; onOpen: (id: string) => void }) {
+/* ── Open questions ──────────────────────────────────── */
+
+/** A click on a question, carried down to whichever component renders where it is written. */
+type Jump = { position: number; nonce: number };
+
+function sectionDomId(entityId: string, name: string): string {
+  return `q-${entityId}-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+}
+
+/**
+ * Carry the reader to where the question is written: the nth item of the section that holds it,
+ * or the section itself where the entity wrote its questions as prose.
+ */
+function scrollToQuestion(domId: string, position: number): void {
+  const container = document.getElementById(domId);
+  if (!container) return;
+  const items = container.querySelectorAll("li");
+  const target = (items[position - 1] as HTMLElement | undefined) ?? container;
+  if (typeof target.scrollIntoView === "function") target.scrollIntoView({ block: "center", behavior: "smooth" });
+  target.classList.add("is-jump-target");
+  window.setTimeout(() => target.classList.remove("is-jump-target"), 2000);
+}
+
+/**
+ * What still waits on a human in this entity, as its own panel: the same enumeration the defining
+ * gate reads, so the board can never show an entity as clear while Kotta refuses it.
+ */
+function QuestionsPanel({ questions, onSelect }: { questions: OpenQuestion[]; onSelect: (question: OpenQuestion) => void }) {
+  if (!questions.length) return null;
+  const open = questions.filter((question) => !question.resolved).length;
+  return <section className="questions" aria-label="Open questions">
+    <div className="questions__head">Open questions · {open} of {questions.length} waiting</div>
+    <ol className="questions__list">
+      {questions.map((question) => <li key={question.position} className={question.resolved ? "questions__item is-answered" : "questions__item"}>
+        <button type="button" className="questions__jump" onClick={() => onSelect(question)}>
+          <span className="questions__mark">Q{question.position}</span>
+          <span className="questions__text">{question.text}</span>
+        </button>
+        <span className="questions__state">{question.resolved ? `answered by ${question.decisions.join(", ")}` : "waiting on you"}</span>
+      </li>)}
+    </ol>
+  </section>;
+}
+
+function TaskSection({ label, value, onOpen, domId }: { label: string; value?: string; onOpen: (id: string) => void; domId?: string }) {
   if (!value?.trim()) return null;
-  return <section className="task-brief__section">
+  return <section className="task-brief__section" id={domId}>
     <h3>{label}</h3>
     <MarkdownContent value={value} onEntity={onOpen} />
   </section>;
 }
 
-function TaskTabs({ task, workspace, board, onOpen }: { task: Task; workspace: Workspace; board: Board; onOpen: (id: string) => void }) {
+function TaskTabs({ task, workspace, board, onOpen, jump }: { task: Task; workspace: Workspace; board: Board; onOpen: (id: string) => void; jump?: Jump | null }) {
   const tabs = ["brief", "context", "activity"] as const;
   type Tab = typeof tabs[number];
   const [active, setActive] = useState<Tab>("brief");
@@ -1072,6 +1119,15 @@ function TaskTabs({ task, workspace, board, onOpen }: { task: Task; workspace: W
   const activityKeys = ["review evidence", "verification performed", "deviations", "observations created", "known concerns"];
   const reserved = new Set(["user goal", "outcome", "acceptance", "constraints", "verification", ...contextKeys, ...activityKeys].map(normalizedName));
   const specialist = Object.entries(task.sections).filter(([name, body]) => body?.trim() && !reserved.has(normalizedName(name)));
+  // Open decisions lives in the Context tab, so answering a jump means opening that tab first and
+  // scrolling once React has rendered it.
+  useEffect(() => {
+    if (!jump) return;
+    setActive("context");
+    const handle = window.setTimeout(() => scrollToQuestion(sectionDomId(task.id, "open decisions"), jump.position), 0);
+    return () => window.clearTimeout(handle);
+  }, [jump, task.id]);
+
   const onTabKey = (event: ReactKeyboardEvent<HTMLButtonElement>, index: number) => {
     let next = index;
     if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
@@ -1115,7 +1171,7 @@ function TaskTabs({ task, workspace, board, onOpen }: { task: Task; workspace: W
           <div><dt>Depends on</dt><dd>{task.depends_on?.length ? task.depends_on.map(displayId).join(", ") : "none"}</dd></div>
         </dl>
         <DerivationPanel id={task.id} board={board} onOpen={onOpen} />
-        {contextKeys.map((name) => <TaskSection key={name} label={titleCase(name)} value={section(name)} onOpen={onOpen} />)}
+        {contextKeys.map((name) => <TaskSection key={name} label={titleCase(name)} value={section(name)} onOpen={onOpen} domId={sectionDomId(task.id, name)} />)}
         {specialist.length > 0 && <details className="task-more">
           <summary>Additional task sections · {specialist.length}</summary>
           {specialist.map(([name, body]) => <TaskSection key={name} label={titleCase(name)} value={body} onOpen={onOpen} />)}
@@ -1133,6 +1189,7 @@ export function EntityDrawer({ id, workspace, board, onClose, onOpen }: {
   id: string; workspace: Workspace; board: Board; onClose: () => void; onOpen: (id: string) => void;
 }) {
   const ref = useDialog(onClose);
+  const [jump, setJump] = useState<Jump | null>(null);
   const task = board.taskById.get(id);
   const batch = board.batchById.get(id);
   const observation = board.observationById.get(id);
@@ -1140,6 +1197,14 @@ export function EntityDrawer({ id, workspace, board, onClose, onOpen }: {
   const entity = task ?? batch ?? observation ?? decision;
   const kind = task ? "task" : batch ? "batch" : observation ? "observation" : decision ? "decision" : "entity";
   const drift = (workspace.diagnostics ?? []).filter((d) => d.id === id);
+  const questions = (task ?? batch ?? observation)?.questions ?? [];
+
+  // A task answers its own jump, because its sections live behind tabs; every other kind renders
+  // them inline, so the drawer answers it here.
+  useEffect(() => {
+    if (!jump || task) return;
+    scrollToQuestion(sectionDomId(id, "open decisions"), jump.position);
+  }, [jump, task, id]);
 
   const fields: Array<[string, string]> = [];
   if (observation) {
@@ -1165,11 +1230,12 @@ export function EntityDrawer({ id, workspace, board, onClose, onOpen }: {
         ? <div className="drawer__gone"><Dangling field="reference" id={id} /></div>
         : <>
           <h2 className="drawer__title">{entity.title}</h2>
+          <QuestionsPanel questions={questions} onSelect={(question) => setJump((previous) => ({ position: question.position, nonce: (previous?.nonce ?? 0) + 1 }))} />
           {drift.length > 0 && <div className="drawer__drift" role="alert">
             <div className="dangling__kind">state drift</div>
             {drift.map((d, i) => <div key={i} className="contra__line">{d.message} · {d.worktree}</div>)}
           </div>}
-          {task ? <TaskTabs key={task.id} task={task} workspace={workspace} board={board} onOpen={onOpen} /> : <>
+          {task ? <TaskTabs key={task.id} task={task} workspace={workspace} board={board} onOpen={onOpen} jump={jump} /> : <>
             <dl className="drawer__fields">
               {fields.map(([key, value]) => <div key={key}>
                 <dt>{key}</dt>
@@ -1177,7 +1243,7 @@ export function EntityDrawer({ id, workspace, board, onClose, onOpen }: {
               </div>)}
             </dl>
             {Object.entries(entity.sections ?? {}).map(([name, body]) => body && body.trim()
-              ? <section key={name} className="drawer__section">
+              ? <section key={name} className="drawer__section" id={sectionDomId(id, name)}>
                 <div className="drawer__section-head">{titleCase(name)}</div>
                 <MarkdownContent value={body} onEntity={onOpen} />
               </section>

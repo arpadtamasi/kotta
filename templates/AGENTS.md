@@ -61,8 +61,12 @@ plain `execute` is refused rather than starting a second agent.
 `task start --caller` is the explicit inherited-context alternative. It returns the isolated
 worktree to the current caller without launching another agent. Fresh remains the default.
 
-A task with no unresolved choice may use `None`, `N/A`, or `No open decisions` (with or
-without a final period) under `Open decisions`. Any substantive text there blocks defining.
+Undecided points are enumerated under `Open decisions`, one list item each, addressed as
+`<id>/Q<n>` by their position. A question is answered by naming the decision record that settled
+it — the item then stays where it stood, so the reasoning survives the answer. A task with no
+unresolved choice may instead use `None`, `N/A`, or `No open decisions` (with or without a final
+period); that is the empty enumeration. Defining is refused while any question is unanswered, and
+it names which ones. `kotta questions [<id>]` lists them for one entity or for the whole workspace.
 Coverage is named, never inferred: each acceptance bullet either contains a referenced spec id or
 has an exact-text entry in frontmatter `coverage` mapping it to one or more ids from `spec`. If the
 accepted specification does not promise a condition, record an observation and amend the spec;

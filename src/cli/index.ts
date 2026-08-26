@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { initCommand } from "../commands/init.js";
 import { sweep, SWEEP_CATEGORIES, type SweepItem } from "../commands/sweep.js";
+import { openQuestions, type EntityQuestions } from "../commands/questions.js";
 import { REPLACE_RULES_REMEDY, type WorkspaceAgentsState } from "../commands/agents.js";
 import { expandOperations } from "../core/operations.js";
 import { briefTask, cancelTask, closeTask, defineTask, newTask, reopenTask, reviewTask, startTask, validateTask } from "../commands/task.js";
@@ -423,6 +424,33 @@ defineCommand(null, "migrate")
     process.stdout.write(options.json ? `${JSON.stringify(result)}\n` : `${formatMigration(result)}\n`);
   });
 
+/**
+ * The list to work through: the entity, then its questions in the order they are written, each
+ * addressed by the position that names it. An answered question is shown with the decision that
+ * answered it rather than hidden, because that is the part that explains the rest.
+ */
+function renderQuestions(result: unknown): string {
+  const data = (result as { data: { entity: string | null; entities: EntityQuestions[]; total: number; open: number } }).data;
+  if (!data.entities.length) {
+    return data.entity
+      ? `${displayId(data.entity)} asks no open question.`
+      : "No entity asks an open question.";
+  }
+  const lines: string[] = [];
+  for (const entity of data.entities) {
+    const blocking = entity.blocksDefining ? " · blocks defining" : "";
+    lines.push(`${displayId(entity.id)}  ${truncate(entity.title, 52)}  (${entity.open} open of ${entity.questions.length}${blocking})`);
+    for (const question of entity.questions) {
+      const mark = question.resolved ? `answered by ${question.decisions.join(", ")}` : "open";
+      lines.push(`  Q${question.position}  ${truncate(question.text, 68)}`);
+      lines.push(`      ${mark} · ${entity.path}:${question.line}`);
+    }
+  }
+  lines.push("");
+  lines.push(`${data.open} open of ${data.total} across ${data.entities.length} ${data.entities.length === 1 ? "entity" : "entities"}.`);
+  return lines.join("\n");
+}
+
 defineCommand(null, "init", renderInit)
   .description("Create a .kotta workspace")
   .option("--project-name <name>")
@@ -439,6 +467,11 @@ defineCommand(null, "sweep", renderSweep)
     ...(options.stalledHours === undefined ? {} : { stalledHours: Number(options.stalledHours) }),
     ...(options.undispositionedDays === undefined ? {} : { undispositionedDays: Number(options.undispositionedDays) }),
   }), Boolean(options.json)));
+
+defineCommand(null, "questions [id]", renderQuestions)
+  .description("Report the open questions an entity asks, or every entity's at once")
+  .option("--json")
+  .action((id: string | undefined, options: { json?: boolean }) => print(openQuestions(id), Boolean(options.json)));
 
 defineCommand(null, "validate")
   .description("Validate the Kotta workspace")

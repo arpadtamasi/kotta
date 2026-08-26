@@ -11,9 +11,13 @@ Investigate before asking the human. Use the `kotta` CLI for every task creation
 2. Separate observed facts from missing product intent. Ask only focused questions whose answers cannot be discovered locally.
 3. Propose the smallest independently executable outcome, bounded scope, non-goals, constraints, acceptance conditions, and a verification method for each condition. Name every accepted spec node the task executes in frontmatter `spec`.
 4. Select every applicable type and profile. Satisfy the union of their required sections; do not force unlike work through a generic definition.
-5. Record unresolved human choices under open decisions. When none remain, write `None`, `N/A`, or
-   `No open decisions`, optionally followed by a period; these are the accepted empty markers. Never
-   invent intent or trade-offs.
+5. Record unresolved human choices under open decisions, one list item per question. Each is
+   addressed as `<task-id>/Q<n>` by its position, and defining is refused while any is unanswered,
+   naming which. A question is answered by naming the decision record that settled it, in the item
+   itself — leave the item where it stands rather than deleting it, so the reasoning survives the
+   answer. When none were ever open, write `None`, `N/A`, or `No open decisions`, optionally
+   followed by a period; these are the accepted empty markers. Never invent intent or trade-offs.
+   `kotta questions <task-id>` lists what the task still asks.
    When a human resolves a choice and asks to retain it durably, record it with `kotta decision create --from <draft.md> --approve`, or from the calling chat through `approval_request` with `decision.create`; never edit `.kotta/process/decisions/`.
 6. Add a frontmatter `coverage` map whose keys are the exact acceptance bullet text and whose values are one or more ids already listed in `spec`. An acceptance bullet may instead contain its referenced id directly. Coverage is explicit, never inferred from similar prose. If a condition is not promised by the accepted spec, create an observation and take it through `amend-spec`; keep the task in backlog.
 7. Create the item with `kotta task new`, write the investigated definition to a temporary Markdown file, then apply it with `kotta task define <task-id> --from <file>`. A valid covered definition moves directly to `defined`. While coverage is still being worked out, iterate the stored text with `kotta task define <task-id> --from <file> --draft`: the structure is validated, no coverage is demanded, and the task stays in backlog — never hand-edit the stored file instead.

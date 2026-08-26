@@ -5,6 +5,7 @@ import { WORKSPACE_DIRECTORY_LABEL, findRepositoryRoot, hasWorkspace, processPat
 import { idFromEntityFile } from "../filesystem/entities.js";
 import { validateTaskFile } from "../core/validation.js";
 import { validateBatch } from "./batch.js";
+import { findDecision } from "./decision.js";
 import { validateClaim } from "../core/claim.js";
 import { parseMarkdown } from "../core/markdown.js";
 import { validateDecisionFile } from "../core/decision.js";
@@ -38,7 +39,7 @@ export function validateWorkspace() {
   const tasksDirectory = processPath(root, "tasks");
   for (const filename of existsSync(tasksDirectory) ? readdirSync(tasksDirectory).filter((name) => name.endsWith(".md")) : []) {
     const path = join(tasksDirectory, filename);
-    const report = validateTaskFile(path);
+    const report = validateTaskFile(path, undefined, (decision) => Boolean(findDecision(root, decision)));
     errors.push(...report.errors);
     // The frontmatter carries identity; a minted entity's filename holds only its short suffix.
     const id = idFromEntityFile(path, filename) ?? filename.replace(/\.md$/, "");

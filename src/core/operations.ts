@@ -44,6 +44,7 @@ export const OPERATIONS: readonly OperationDeclaration[] = [
   { id: "workspace.migrate", summary: "Carry a workspace from any older shape to the current one.", cli: ["migrate"], mcp: { absent: TERMINAL_SETUP } },
   { id: "workspace.init", summary: "Initialize a repository-native workspace.", cli: ["init"], mcp: { absent: TERMINAL_SETUP } },
   { id: "workspace.sweep", summary: "Report what has stopped, why, and the one action that would move it.", cli: ["sweep"], mcp: "workspace_sweep" },
+  { id: "workspace.questions", summary: "Report the open questions an entity asks, or every entity's at once.", cli: ["questions"], mcp: "workspace_questions" },
   { id: "workspace.validate", summary: "Validate every record in the workspace.", cli: ["validate"], mcp: { absent: "Chat reads state through workspace_status and the entity tools; a full validation is an operator's check before a release." } },
   { id: "workspace.status", summary: "Report defined, active, review and new-observation state.", cli: ["status"], mcp: "workspace_status" },
   { id: "workspace.gap", summary: "Trace accepted specification to the evidence that implements it.", cli: ["gap"], mcp: "gap_report" },

@@ -430,6 +430,9 @@ kotta migrate --dry-run
 kotta migrate
 kotta validate
 kotta status
+kotta sweep
+kotta questions
+kotta questions T-024
 
 kotta task new --title "Add filtered export" --type feature --profile ui workflow
 kotta task define T-014 --from /tmp/T-014-draft.md --draft   # iterate a capture in backlog; no coverage yet

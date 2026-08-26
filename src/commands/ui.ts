@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import matter from "gray-matter";
 import { parse } from "yaml";
 import { sections } from "../core/markdown.js";
+import { parseOpenQuestions } from "../core/questions.js";
 import { findTask, idFromFilename } from "../filesystem/entities.js";
 import { ENV_PREFIX, readEnv } from "../core/env.js";
 import { PROCESS_DIRECTORY, WORKSPACE_DIRECTORIES, WORKSPACE_SCHEMA_VERSION, flatWorkspaceEntries, hasWorkspace, legacyStateDirectories, v4StateDirectories, workspaceDirectoryName, workspaceSchemaVersion, workspaceShapeStanding } from "../filesystem/workspace.js";
@@ -160,10 +161,33 @@ export function readWorkspace(workspaceOption: string) {
     }
     return entries.sort((left, right) => basename(left.repoPath).localeCompare(basename(right.repoPath)));
   };
+  // Decisions are cross-cutting and stateless, so they carry a date instead of a status.
+  // They come out of the same cached snapshot: no extra subprocess. (T-029)
+  const decisions = gather(`${processDirectory}/decisions`).map((entry) => {
+    const parsed = matter(readMd(entry.repoPath, entry.fromRef));
+    const date = parsed.data.date;
+    return {
+      id: String(parsed.data.id ?? basename(entry.repoPath).replace(/\.md$/, "")),
+      title: String(parsed.data.title ?? ""),
+      date: date instanceof Date ? date.toISOString().slice(0, 10) : date === undefined ? null : String(date),
+      filename: basename(entry.repoPath),
+      sections: sectionObject(parsed.content),
+    };
+  });
+  const decisionIds = new Set(decisions.map((decision) => decision.id));
+
   // Lifecycle state lives in the frontmatter status field alone; the file's location says nothing.
   const parseEntity = (entry: { repoPath: string; fromRef: boolean }): Record<string, unknown> => {
     const parsed = matter(readMd(entry.repoPath, entry.fromRef));
-    return { ...(parsed.data as Record<string, unknown>), filename: basename(entry.repoPath), sections: sectionObject(parsed.content) };
+    const id = String(parsed.data.id ?? idFromFilename(basename(entry.repoPath)) ?? "");
+    return {
+      ...(parsed.data as Record<string, unknown>),
+      filename: basename(entry.repoPath),
+      sections: sectionObject(parsed.content),
+      // The same parse the gate and the CLI read (BR-01m0z873stwx7szg5896gwsbry): the panel cannot
+      // show an entity as clear while defining refuses it.
+      questions: parseOpenQuestions(id, parsed.content, (decision) => decisionIds.has(decision)),
+    };
   };
 
   const diagnostics: Array<{ entity: "task"; id: string; worktree: string; message: string }> = [];
@@ -186,7 +210,7 @@ export function readWorkspace(workspaceOption: string) {
         if (String(parsed.data.id) !== id) throw new Error(`Task metadata id '${String(parsed.data.id)}' does not match ${id}.`);
         if (String(baseline.status) === "defined" && location.state === "active") {
           diagnostics.push({ entity: "task", id, worktree, message: "Legacy execution state is still stored in the feature worktree; the next lifecycle mutation will adopt it into the control plane." });
-          return { ...(parsed.data as Record<string, unknown>), filename: location.filename, sections: sectionObject(parsed.content), migration: migrationById.get(id) ?? null, worktree };
+          return { ...(parsed.data as Record<string, unknown>), filename: location.filename, sections: sectionObject(parsed.content), questions: parseOpenQuestions(id, parsed.content, (decision) => decisionIds.has(decision)), migration: migrationById.get(id) ?? null, worktree };
         }
         return { ...baseline, migration: migrationById.get(id) ?? null, worktree };
       } catch (error) {
@@ -197,19 +221,6 @@ export function readWorkspace(workspaceOption: string) {
   });
   const batches = gather(`${processDirectory}/batches`).map(parseEntity);
   const observations = gather(`${processDirectory}/observations`).map(parseEntity);
-  // Decisions are cross-cutting and stateless, so they carry a date instead of a status.
-  // They come out of the same cached snapshot: no extra subprocess. (T-029)
-  const decisions = gather(`${processDirectory}/decisions`).map((entry) => {
-    const parsed = matter(readMd(entry.repoPath, entry.fromRef));
-    const date = parsed.data.date;
-    return {
-      id: String(parsed.data.id ?? basename(entry.repoPath).replace(/\.md$/, "")),
-      title: String(parsed.data.title ?? ""),
-      date: date instanceof Date ? date.toISOString().slice(0, 10) : date === undefined ? null : String(date),
-      filename: basename(entry.repoPath),
-      sections: sectionObject(parsed.content),
-    };
-  });
   const eventPrefix = `${workspaceDirectory}/${processDirectory}/events/`;
   const eventPaths = useBase
     ? (refFiles ? [...refFiles.keys()].filter((path) => path.startsWith(eventPrefix) && path.endsWith(".json")) : listFilesFromRef(projectRoot, base, workspaceDirectory, `${processDirectory}/events`, ".json"))

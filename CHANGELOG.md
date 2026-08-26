@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **An entity's open questions are a list, not prose.** `Open decisions` was read by one literal
+  check: the section either said `None.` or the whole task was refused, with no way to say which
+  point was still open, no way to count what was waiting, and no way to see it anywhere but by
+  re-reading the entity. Undecided points are now enumerated — one list item each, addressed as
+  `<id>/Q<n>` — and a question is answered by naming the decision record that settled it, staying
+  where it stood so the reasoning survives the answer. Defining refuses by position and quotes what
+  is still being asked; `kotta questions [<id>]` and `workspace_questions` list them for one entity
+  or for every entity at once, blocking ones first; the board shows them as their own panel and
+  carries the reader to the line each is written on. One parse serves all four, so a listing can
+  never disagree with a refusal. Nothing already written changes meaning: a denial is the empty
+  enumeration, and every entity in this repository validates exactly as before. Asked for as T-024
+  on 2026-08-01.
+
 - **`kotta sweep` answers what has stopped, and why.** `status` gives three counts; the question
   actually asked — *what is not finished, and why* — was re-derived by hand every time, six times
   in one session. Sweep derives it from tasks, batches, observations, claims and Git, and gives

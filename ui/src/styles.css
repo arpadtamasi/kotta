@@ -678,6 +678,19 @@ code { font-family: var(--font-mono); }
 .drawer__section { border-top: 1px solid var(--line-soft); padding-top: var(--space-3); margin-top: var(--space-3); }
 .drawer__section-head { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; margin-bottom: var(--space-2); color: var(--text-muted); }
 .drawer__gone { padding: var(--space-6) 0; }
+
+/* Open questions: what still waits on a human in this entity, ahead of the entity's own text. */
+.questions { margin: 0 0 var(--space-4); border-left: 4px solid var(--color-accent); background: var(--color-accent-100); padding: var(--space-2) var(--space-3); }
+.questions__head { font-family: var(--font-mono); font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: var(--space-2); }
+.questions__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-2); }
+.questions__item { display: grid; gap: 2px; min-width: 0; }
+.questions__item.is-answered { opacity: .62; }
+.questions__jump { display: flex; gap: var(--space-2); align-items: baseline; width: 100%; text-align: left; background: none; border: 0; padding: 0; cursor: pointer; color: inherit; font: inherit; }
+.questions__jump:hover .questions__text, .questions__jump:focus-visible .questions__text { text-decoration: underline; }
+.questions__mark { flex: 0 0 auto; font-family: var(--font-mono); font-size: 10.5px; color: var(--color-accent-700); }
+.questions__text { font-size: 12.5px; overflow-wrap: anywhere; }
+.questions__state { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .04em; color: var(--text-muted); padding-left: 26px; }
+.is-jump-target { background: var(--color-accent-200); transition: background 320ms ease-out; }
 .task-metrics {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: var(--space-4) 0 0;
   border-top: 1px solid var(--color-divider); border-bottom: 1px solid var(--color-divider);

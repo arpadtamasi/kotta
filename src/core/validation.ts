@@ -5,6 +5,7 @@ import { TASK_ID, filenameMatchesId } from "./identity.js";
 import { TASK_STATES } from "../filesystem/entities.js";
 import { parseMarkdown, sections, subsections } from "./markdown.js";
 import { receiptErrors } from "./approval-receipt.js";
+import { parseOpenQuestions, unresolvedQuestions } from "./questions.js";
 
 export interface ValidationIssue { code: string; message: string; path?: string }
 export interface ValidationReport { valid: boolean; errors: ValidationIssue[] }
@@ -26,7 +27,7 @@ function values(value: unknown): string[] {
   return Array.isArray(value) ? value.map(String) : value ? [String(value)] : [];
 }
 
-function validateTask(path: string, expectedState?: string, requireDefinition = false): ValidationReport {
+function validateTask(path: string, expectedState?: string, requireDefinition = false, decisionExists?: (id: string) => boolean): ValidationReport {
   const errors: ValidationIssue[] = [];
   if (!existsSync(path)) return { valid: false, errors: [{ code: "NOT_FOUND", message: `Task not found: ${path}`, path }] };
   let entity;
@@ -56,9 +57,19 @@ function validateTask(path: string, expectedState?: string, requireDefinition = 
       if (body === undefined || body.trim() === "") errors.push({ code: "MISSING_PROFILE_SECTION", message: `Profile '${profile}' requires section: ${heading}.`, path });
     }
   }
-  const openDecisions = bodySections.get("open decisions")?.trim() ?? "";
-  if (state === "defined" && !/^(?:none|n\/a|no open decisions)\.?$/i.test(openDecisions)) {
-    errors.push({ code: "OPEN_DECISIONS", message: "A defined task must say that no decisions remain open (for example 'None.').", path });
+  // The gate reads the enumeration and nothing else (BR-01m0z873stwx7szg5896gwsbry): no questions
+  // passes, every question naming an existing decision passes, and anything still open is refused
+  // by the position that addresses it rather than as an undifferentiated section.
+  if (state === "defined") {
+    const open = unresolvedQuestions(parseOpenQuestions(id, entity.content, decisionExists));
+    if (open.length) {
+      const named = open.map((question) => `${question.reference}: ${question.text}`).join("; ");
+      errors.push({
+        code: "OPEN_DECISIONS",
+        message: `A defined task carries no unresolved question. Still open — ${named}. Answer each in conversation and name the decision that settled it, or say 'None.' if none remain.`,
+        path,
+      });
+    }
   }
   const cancelled = state === "done" && ["cancelled", "duplicate", "obsolete"].includes(String(entity.data.resolution));
   if (["review", "done"].includes(state) && !cancelled && !bodySections.get("review evidence")?.trim()) errors.push({ code: "MISSING_REVIEW_EVIDENCE", message: `${state} task requires review evidence.`, path });
@@ -73,12 +84,17 @@ function validateTask(path: string, expectedState?: string, requireDefinition = 
   return { valid: errors.length === 0, errors };
 }
 
-export function validateTaskFile(path: string, expectedState?: string): ValidationReport {
-  return validateTask(path, expectedState);
+/**
+ * `decisionExists` answers whether a decision a question names is actually recorded. Callers that
+ * hold a workspace root pass it; without one a well-formed reference is taken at face value, and
+ * every call site inside Kotta holds one.
+ */
+export function validateTaskFile(path: string, expectedState?: string, decisionExists?: (id: string) => boolean): ValidationReport {
+  return validateTask(path, expectedState, false, decisionExists);
 }
 
-export function validateTaskDefinitionFile(path: string): ValidationReport {
-  return validateTask(path, "backlog", true);
+export function validateTaskDefinitionFile(path: string, decisionExists?: (id: string) => boolean): ValidationReport {
+  return validateTask(path, "backlog", true, decisionExists);
 }
 
 export function assertValid(report: ValidationReport): void {
