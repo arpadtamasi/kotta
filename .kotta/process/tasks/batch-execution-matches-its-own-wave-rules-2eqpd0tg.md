@@ -54,10 +54,8 @@ None.
 ## Open decisions
 
 - Is `parallelism` a bound on how many members run at once, or on how many one release may start?
-  The use case says the batch "releases the first wave within the configured parallelism", which
-  reads as the first; the code implements the second. The measurement below is a defect under the
-  first reading and correct behaviour under the second, so the reading decides whether this is a
-  fix or an amendment.
+  Settled by D-01m0zhkpw7v7pq322pg5nycf1d: it bounds how many run at once, so the measurement below
+  is a defect and this task is a fix, not an amendment.
 
 ## Execution notes
 
