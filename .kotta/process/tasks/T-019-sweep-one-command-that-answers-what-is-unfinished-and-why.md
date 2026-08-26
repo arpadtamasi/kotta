@@ -1,7 +1,7 @@
 ---
 id: T-019
 title: 'Sweep: one command that answers what is unfinished and why'
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -11,7 +11,7 @@ risk: medium
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-01'
 updated_at: '2026-08-26'
@@ -29,6 +29,12 @@ coverage:
   'A heuristic says so. Every item an age threshold produced names that threshold in its reason, and both thresholds are overridable, so a wrong default is visible rather than silently filtering.':
     - UC-01m0f0wn89m98wpkqq8e5c9p6p
     - IF-01m0f0wn8994dzf9z1sdygxa04
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 49606150d9c1bae8a82e62d02b0d6b1906148ba6
 ---
 ## Outcome
 
