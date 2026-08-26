@@ -46,9 +46,12 @@ export function formatList(result: ListResult): string {
   }
   const shown = entities.map((listed) => ({ ...listed, label: stateLabel(listed) }));
   const width = Math.max(...shown.map(({ label }) => label.length));
-  // displayId, not shortId: a sequential id has no short form, and printing `null`
-  // beside a title is worse than printing the id it already has.
-  const lines = shown.map(({ label, id, title }) => `  ${label.padEnd(width)}  ${title || "(untitled)"}  ${displayId(id)}`);
+  // Whose noticing it was, marked only when it is the operator's: 'agent' on almost every row
+  // would be a column of one value, which is the shape this distinction was lost in.
+  const lines = shown.map(({ label, id, title, origin }) =>
+    // displayId, not shortId: a sequential id has no short form, and printing `null`
+    // beside a title is worse than printing the id it already has.
+    `  ${label.padEnd(width)}  ${origin === "human" ? "human · " : ""}${title || "(untitled)"}  ${displayId(id)}`);
   return [...lines, `${count} ${count === 1 ? entity : plural(entity)}.`].join("\n");
 }
 

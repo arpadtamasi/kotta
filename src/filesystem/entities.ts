@@ -57,6 +57,20 @@ export function idFromEntityFile(path: string, filename: string): string | null 
  * retired, and the two must not read alike (BR-01m0pw5bc7b1rkg5dct5qgdkmb) — so every reader that
  * shows a state can ask for the qualifier beside it. Absent on a live entity, which has not ended.
  */
+/**
+ * Whose noticing an observation records. Read for the listing, where the distinction between the
+ * operator's own and an agent's is the one a reader wants first
+ * (UC-01m0f0wn89jqb5mpcjjt1j5j8p).
+ */
+export function originFromEntityFile(path: string): string | null {
+  try {
+    const origin = String(parseMarkdown(readFileSync(path, "utf8")).data.origin ?? "").trim();
+    return origin || null;
+  } catch {
+    return null;
+  }
+}
+
 export function resolutionFromEntityFile(path: string): string | null {
   try {
     const resolution = String(parseMarkdown(readFileSync(path, "utf8")).data.resolution ?? "").trim();
@@ -150,6 +164,8 @@ export interface ListedEntity {
   path: string;
   /** How a terminal state was reached, when that changes what the state means; null otherwise. */
   resolution: string | null;
+  /** Whose noticing this was, for observations; null for kinds that have no origin. */
+  origin: string | null;
 }
 
 /**
@@ -171,7 +187,14 @@ export function listEntities(root: string, entity: ListableEntity, states?: stri
       const id = idFromEntityFile(file, name);
       if (id === null) return [];
       const state = entity === "decision" ? "recorded" : stateFromEntityFile(file);
-      return [{ id, state, title: entityTitle(file), path: file, resolution: entity === "decision" ? null : resolutionFromEntityFile(file) }];
+      return [{
+        id,
+        state,
+        title: entityTitle(file),
+        path: file,
+        resolution: entity === "decision" ? null : resolutionFromEntityFile(file),
+        origin: entity === "observation" ? originFromEntityFile(file) : null,
+      }];
     })
     .filter(({ state }) => !wanted || wanted.has(state))
     .sort((a, b) => (order.get(a.state) ?? order.size) - (order.get(b.state) ?? order.size) || a.path.localeCompare(b.path));

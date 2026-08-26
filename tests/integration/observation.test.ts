@@ -101,6 +101,42 @@ describe("observation disposition", () => {
   });
 });
 
+/**
+ * A noticing the human made is recorded as the human's (UC-01m0f0wn89jqb5mpcjjt1j5j8p).
+ *
+ * Measured on Kotta's own workspace before this: 146 of 150 observations carried `origin: agent`
+ * and the four that did not came from migration — because the field was written as a literal and
+ * no surface offered it. The operator's noticings are made in passing, and stayed in the
+ * conversation they were said in.
+ */
+describe("whose noticing it was", () => {
+  const capture = (root: string, extra: string[] = []) =>
+    run(root, ["observation", "new", "--title", "The importer logs nothing", "--type", "bug", "--evidence", "The operator said so.", ...extra]) as { data: { id: string; path: string } };
+
+  test("records the operator's own when the agent is relaying it", () => {
+    const root = initRepository("kotta-observation-origin-");
+    const created = capture(root, ["--origin", "human"]);
+    expect(matter(readFileSync(created.data.path, "utf8")).data.origin).toBe("human");
+    // Visible where observations are read, without opening the file.
+    expect(execFileSync("node", [cli, "observation", "list"], { cwd: root, encoding: "utf8" })).toContain("human · The importer logs nothing");
+  });
+
+  test("defaults to the agent, as it always did, and refuses anything undeclared", () => {
+    const root = initRepository("kotta-observation-origin-default-");
+    const created = capture(root);
+    expect(matter(readFileSync(created.data.path, "utf8")).data.origin).toBe("agent");
+    // An agent's own noticing is not marked: a column of one value is the shape this was lost in.
+    expect(execFileSync("node", [cli, "observation", "list"], { cwd: root, encoding: "utf8" })).not.toContain("human ·");
+
+    const refused = attempt(root, ["observation", "new", "--title", "Invented", "--type", "bug", "--evidence", "e", "--origin", "operator"]);
+    expect(refused.status).not.toBe(0);
+    expect(refused.stdout).toContain("Unknown origin 'operator'");
+    // Named the values it does accept, rather than leaving the caller to guess.
+    expect(refused.stdout).toContain("human");
+    expect(refused.stdout).toContain("agent");
+  });
+});
+
 describe("the amend-spec disposition", () => {
   const capture = (root: string, title = "The lifecycle glossary is silent on amend-spec"): string => {
     const created = run(root, ["observation", "new", "--title", title, "--type", "inconsistency", "--evidence", "The glossary omits the constructive exit."]) as { data: { id: string } };

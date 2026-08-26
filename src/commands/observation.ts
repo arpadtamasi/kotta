@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { findRepositoryRoot, regenerateIndex, processPath } from "../filesystem/workspace.js";
-import { canonicalEntityId, findTask, listEntities, stateFromEntityFile } from "../filesystem/entities.js";
+import { OBSERVATION_ORIGINS, canonicalEntityId, findTask, listEntities, stateFromEntityFile } from "../filesystem/entities.js";
 import { entityFilename, filenameMatchesId, mintId } from "../core/identity.js";
 import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
 import { newTask } from "./task.js";
@@ -32,6 +32,20 @@ function slugify(value: string): string {
   return value.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60);
 }
 
+/**
+ * Whose noticing this is. Validated against OBSERVATION_ORIGINS, the pair the published
+ * observation schema declares — not the wider ENTITY_ORIGINS, which also carries the origins a
+ * task can have. Restating either here would be the drift the schema-to-enum test forbids.
+ */
+function observationOrigin(requested?: string): string {
+  const value = (requested ?? "").trim();
+  if (!value) return "agent";
+  if (!(OBSERVATION_ORIGINS as readonly string[]).includes(value)) {
+    throw new Error(`Unknown origin '${value}'. An observation is recorded as one of: ${OBSERVATION_ORIGINS.join(", ")}.`);
+  }
+  return value;
+}
+
 export function findObservation(root: string, id: string) {
   const directory = processPath(root, "observations");
   if (existsSync(directory)) {
@@ -44,7 +58,7 @@ export function findObservation(root: string, id: string) {
   throw new Error(`Observation ${id} was not found.`);
 }
 
-export function newObservation(options: { title: string; type: string; evidence: string; discoveredDuring?: string }, repositoryRoot?: string) {
+export function newObservation(options: { title: string; type: string; evidence: string; origin?: string; discoveredDuring?: string }, repositoryRoot?: string) {
   const requestedRoot = repositoryRoot ?? findRepositoryRoot();
   if (options.discoveredDuring) {
     return withControlPlaneMutation(requestedRoot, (root) => {
@@ -67,12 +81,16 @@ export function newObservation(options: { title: string; type: string; evidence:
   }, { requireClean: false });
 }
 
-function writeObservation(root: string, options: { title: string; type: string; evidence: string; discoveredDuring?: string }) {
+function writeObservation(root: string, options: { title: string; type: string; evidence: string; discoveredDuring?: string; origin?: string }) {
   const id = mintId("F");
   const filename = entityFilename(id, slugify(options.title));
   const directory = processPath(root, "observations");
   mkdirSync(directory, { recursive: true });
-  const data = { id, title: options.title, status: "new", origin: "agent", observation_type: options.type, confidence: "high", severity: "medium", discovered_during: options.discoveredDuring ?? null, created_at: new Date().toISOString().slice(0, 10) };
+  // The most valuable noticings are the ones a person makes in passing
+  // (UC-01m0f0wn89jqb5mpcjjt1j5j8p). Whoever noticed it is the one fact here the record cannot
+  // derive: the agent runs the command either way, so it says whose noticing it is relaying.
+  const origin = observationOrigin(options.origin);
+  const data = { id, title: options.title, status: "new", origin, observation_type: options.type, confidence: "high", severity: "medium", discovered_during: options.discoveredDuring ?? null, created_at: new Date().toISOString().slice(0, 10) };
   const content = `# ${id} — ${options.title}\n\n## Observation\n\n${options.title}.\n\n## Evidence\n\n${options.evidence}\n\n## Impact hypothesis\n\nThis may cause incorrect or inconsistent behaviour.\n\n## Confidence\n\nHigh: the evidence is directly observable.\n\n## Suggested disposition\n\nInvestigate and create the smallest appropriate task after human approval.\n`;
   const path = join(directory, filename);
   writeFileSync(path, renderMarkdown(data, content));
