@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- batch-execution-matches-its-own-wave-rules-2eqpd0tg
+None.
 
 ## Review
 
-None.
+- batch-execution-matches-its-own-wave-rules-2eqpd0tg
 
 ## Blocked
 

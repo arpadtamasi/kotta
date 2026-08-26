@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdntvbbp5rbj6t2eqpd0tg
 title: Batch execution matches its own wave rules
-status: active
+status: review
 origin: human
 types:
   - bug
@@ -105,3 +105,31 @@ reader needs from it.
 
 The decision landed in `Run a batch` before this was defined, so the use case now states the bound
 and the reporting rule the code has to keep.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A batch never holds more members at once than its configured parallelism: with nothing finished in between, a second release starts nothing and reports the budget as the reason. | run: npx vitest run tests/integration/batch-waves-budget.test.ts -t "starts nothing" — verified: exit 0 at 6c6038c |
+| A member the batch is already running is reported as running. Only a member the batch has not released is reported as waiting. | run: npx vitest run tests/integration/batch-waves-budget.test.ts -t "reported as running" — verified: exit 0 at 6c6038c |
+| Which member is eligible does not change: the dependency rules and the sequential mode still decide the same set, and a batch whose members are all done still says so. | run: npx vitest run tests/integration/batch-dependency-waves.test.ts tests/integration/batch.test.ts — verified: exit 0 at 6c6038c |
+| A release with no budget left changes nothing — no claim, no branch, no worktree, no lifecycle event for a member it did not start. | run: npx vitest run tests/integration/batch-waves-budget.test.ts -t "still releases one\|does not blame" — verified: exit 0 at 6c6038c |
+
+### Verification performed
+
+A batch never holds more members at once than its configured parallelism: with nothing finished in between, a second release starts nothing and reports the budget as the reason.: run: npx vitest run tests/integration/batch-waves-budget.test.ts -t "starts nothing"
+A member the batch is already running is reported as running. Only a member the batch has not released is reported as waiting.: run: npx vitest run tests/integration/batch-waves-budget.test.ts -t "reported as running"
+Which member is eligible does not change: the dependency rules and the sequential mode still decide the same set, and a batch whose members are all done still says so.: run: npx vitest run tests/integration/batch-dependency-waves.test.ts tests/integration/batch.test.ts
+A release with no budget left changes nothing — no claim, no branch, no worktree, no lifecycle event for a member it did not start.: run: npx vitest run tests/integration/batch-waves-budget.test.ts -t "still releases one|does not blame"
+
+### Deviations
+
+The third acceptance condition ends "and a batch whose members are all done still says so". That state is unreachable: closing the last member completes the batch, and batch start then refuses on the state before it can report anything, so the sentence describes a path no operator can take. The condition is covered for the half that is reachable — eligibility is unchanged, proven by the untouched dependency-wave and batch suites — and the unreachable half was replaced in the tests by a case that is real: a release held back by a dependency reports the member waiting and does not blame the budget. Recorded rather than quietly satisfied.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
