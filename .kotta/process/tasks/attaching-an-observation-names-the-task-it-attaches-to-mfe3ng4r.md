@@ -1,7 +1,7 @@
 ---
 id: T-01m0yh0wjar1yaj6n9mfe3ng4r
 title: Attaching an observation names the task it attaches to
-status: review
+status: done
 origin: human
 types:
   - bug
@@ -36,6 +36,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: d88e09f349cddc72bd0959f449120cadb9a33dc9
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-26T08:28:11.687Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
