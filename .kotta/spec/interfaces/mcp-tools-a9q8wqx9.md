@@ -17,7 +17,7 @@ The server connected to the host (kotta integrate codex writes the project-scope
 
 ## Postconditions
 
-Identifiers and paths return as structured data, so the human never relays them. An approval interrupts the chat with one exact entity-scoped approve/reject/cancel form, records the visible response, and applies the same validated mutation the CLI would - once.
+Identifiers and paths return as structured data, so the human never relays them; the sentence returned alongside that data names the entity by title, because it is the part a human reads. An approval interrupts the chat with one exact entity-scoped approve/reject/cancel form, records the visible response, and applies the same validated mutation the CLI would - once.
 
 ## Invariants
 
