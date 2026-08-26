@@ -104,8 +104,15 @@ describe("an admission says which kind it is", () => {
     const kinds = report.data.acceptedGaps.map(({ kind }) => kind);
     expect(kinds).toContain("structural");
     expect(kinds).toContain("unexamined");
-    // Nobody examined these nodes, so none of them may claim the kind that means someone did.
-    expect(kinds.filter((kind) => kind === "unimplemented"), "no bulk assignment claims a judgement").toEqual([]);
+    // The inherited admissions were assigned in bulk, from the form or from the fact that nobody
+    // had looked; none of them may claim the kind that means someone did. A node examined
+    // deliberately since may — and says when, which is what tells the two apart.
+    const bulk = report.data.acceptedGaps.filter(({ reason }) => /Inherited on |Assigned on /.test(reason));
+    expect(bulk.length, "the inherited set is what this test is about").toBeGreaterThan(0);
+    expect(bulk.map(({ kind }) => kind).filter((kind) => kind === "unimplemented"), "no bulk assignment claims a judgement").toEqual([]);
+    for (const gap of report.data.acceptedGaps.filter(({ kind }) => kind === "unimplemented")) {
+      expect(gap.reason, "an unimplemented admission says when it was examined").toMatch(/Examined on \d{4}-\d{2}-\d{2}/);
+    }
     for (const gap of report.data.acceptedGaps.filter(({ kind }) => kind === "structural")) {
       expect(gap.reason, "the structural wording says the kind came from the form").toContain("from the form of this node");
     }
