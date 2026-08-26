@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdnvvee6r2qsg7rjgfx1b1
 title: Vocabulary and release hygiene sweep
-status: review
+status: done
 origin: human
 types:
   - docs
@@ -32,6 +32,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 3e5c76b6c180829d6f4ad5a0f45f770e83ffe82c
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-26T21:08:30.391Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 # T-01m0jdnvvee6r2qsg7rjgfx1b1 — Vocabulary and release hygiene sweep
 
