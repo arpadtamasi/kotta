@@ -1,7 +1,7 @@
 ---
 id: T-01m0xraxm6k5mbbr266b4q8b91
 title: A gap refusal says when uncommitted work is the reason
-status: active
+status: review
 origin: human
 types:
   - bug
@@ -73,3 +73,29 @@ None.
 `gapReport` in `src/commands/gap.ts:259` resolves `baseBranch^{commit}` and reads everything at that ref; the refusal is assembled around line 309, where `UNADMITTED_PROMISE` is pushed. `git(root, ["status", "--porcelain"])` is the cheapest read of the working tree, and `readableRepositoryFiles` already knows which paths are excluded from evidence.
 
 `tests/integration/gap-ratchet.test.ts` builds a fixture that commits its nodes precisely because of this; a case that deliberately leaves them uncommitted is the missing one.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A refusal that uncommitted work would explain says so. When `kotta gap` refuses and the working tree holds uncommitted changes that could carry the missing evidence, the refusal names that as the likely cause and the step that settles it. | run: npx vitest run tests/integration/gap-ratchet.test.ts -t 'uncommitted evidence would explain' — verified: exit 0 at fb85742 |
+| A refusal with nothing uncommitted is unchanged. The sentence appears only when there is something to explain, so it never becomes a line every refusal carries. | run: npx vitest run tests/integration/gap-ratchet.test.ts -t 'neither evidenced nor admitted' — verified: exit 0 at fb85742 |
+| The report stays deterministic and still writes nothing. The added sentence is derived from the same repository, the exit status is decided by the same rule as before, and a passing report gains nothing. | run: npx vitest run tests/integration/gap-kinds.test.ts tests/integration/gap-readability.test.ts — verified: exit 0 at fb85742 |
+
+### Verification performed
+
+A refusal that uncommitted work would explain says so. When `kotta gap` refuses and the working tree holds uncommitted changes that could carry the missing evidence, the refusal names that as the likely cause and the step that settles it.: run: npx vitest run tests/integration/gap-ratchet.test.ts -t 'uncommitted evidence would explain'
+A refusal with nothing uncommitted is unchanged. The sentence appears only when there is something to explain, so it never becomes a line every refusal carries.: run: npx vitest run tests/integration/gap-ratchet.test.ts -t 'neither evidenced nor admitted'
+The report stays deterministic and still writes nothing. The added sentence is derived from the same repository, the exit status is decided by the same rule as before, and a passing report gains nothing.: run: npx vitest run tests/integration/gap-kinds.test.ts tests/integration/gap-readability.test.ts
+
+### Deviations
+
+None.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
