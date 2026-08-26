@@ -1,7 +1,7 @@
 ---
 id: T-019
 title: 'Sweep: one command that answers what is unfinished and why'
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -35,6 +35,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 49606150d9c1bae8a82e62d02b0d6b1906148ba6
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-26T14:35:16.335Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 

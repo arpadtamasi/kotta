@@ -20,7 +20,7 @@ None.
 
 ## Review
 
-- T-019-sweep-one-command-that-answers-what-is-unfinished-and-why
+None.
 
 ## Blocked
 
