@@ -1,7 +1,7 @@
 ---
 id: T-01m0ypa2rb5xev2g5dsg6c49gx
 title: A noticing the human made is recorded as the human's
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -14,7 +14,7 @@ blocks: []
 spec:
   - UC-01m0f0wn89jqb5mpcjjt1j5j8p
   - E-01m0f0wn89cry06jvtwtmpk4fr
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-26'
 updated_at: '2026-08-26'
@@ -26,6 +26,12 @@ coverage:
     - E-01m0f0wn89cry06jvtwtmpk4fr
   Whose noticing it was is visible where observations are read. The listing and the record distinguish a human's from an agent's without anyone opening the file.:
     - E-01m0f0wn89cry06jvtwtmpk4fr
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 9a7e879991847f0d8b495bfe771847e8e8e72a0d
 ---
 ## Outcome
 

@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- a-noticing-the-human-made-is-recorded-as-the-human-s-sg6c49gx
+None.
 
 ## Active tasks
 
-None.
+- a-noticing-the-human-made-is-recorded-as-the-human-s-sg6c49gx
 
 ## Review
 
