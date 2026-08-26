@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- entities-are-named-to-humans-by-title-not-ulid-phvrrgqx
+None.
 
 ## Review
 
-None.
+- entities-are-named-to-humans-by-title-not-ulid-phvrrgqx
 
 ## Blocked
 

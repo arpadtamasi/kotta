@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdnv5fjechrfqwphvrrgqx
 title: 'Entities are named to humans by title, not ULID'
-status: active
+status: review
 origin: human
 types:
   - ui
@@ -112,3 +112,33 @@ The generic `kotta <command> completed.` line is the widest of the three and the
 is what `define`, `start`, `review`, `close` and `cancel` printed for every gate the operator
 approved in this session. It names neither the entity nor what happened to it, so it fails the rule
 in its weakest form rather than by printing an id.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| Every sentence a calling chat receives from a Kotta tool names the entity it is about by title. Measured today: eight of nine name a bare identifier and no title. | run: npx vitest run tests/integration/mcp.test.ts — verified: exit 0 at 6d6e81e |
+| Every gate description names the judgement by title. Measured today: five of the six read `task.close T-01m0…` and only `decision.create` carries a title. | run: npx vitest run tests/integration/named-by-title.test.ts -t "gate description" — verified: exit 0 at 6d6e81e |
+| Every terminal result that reports work on an entity names that entity by title. Measured today the lifecycle commands print `kotta task close completed.`, naming neither the entity nor the work. | run: npx vitest run tests/integration/named-by-title.test.ts -t "whole lifecycle" — verified: exit 0 at 6d6e81e |
+| An identifier never stands alone where a title exists to name, and the identifier a reader will type back still travels with it, so nothing that resolved before stops resolving. | run: npx vitest run tests/integration/named-by-title.test.ts -t "types back\|structured payload" — verified: exit 0 at 6d6e81e |
+| The rule holds for entities that have no title to name and for one whose title is missing or empty: the rendering falls back to the identifier rather than to nothing. | run: npx vitest run tests/integration/named-by-title.test.ts -t "falls back" — verified: exit 0 at 6d6e81e |
+
+### Verification performed
+
+Every sentence a calling chat receives from a Kotta tool names the entity it is about by title. Measured today: eight of nine name a bare identifier and no title.: run: npx vitest run tests/integration/mcp.test.ts
+Every gate description names the judgement by title. Measured today: five of the six read `task.close T-01m0…` and only `decision.create` carries a title.: run: npx vitest run tests/integration/named-by-title.test.ts -t "gate description"
+Every terminal result that reports work on an entity names that entity by title. Measured today the lifecycle commands print `kotta task close completed.`, naming neither the entity nor the work.: run: npx vitest run tests/integration/named-by-title.test.ts -t "whole lifecycle"
+An identifier never stands alone where a title exists to name, and the identifier a reader will type back still travels with it, so nothing that resolved before stops resolving.: run: npx vitest run tests/integration/named-by-title.test.ts -t "types back|structured payload"
+The rule holds for entities that have no title to name and for one whose title is missing or empty: the rendering falls back to the identifier rather than to nothing.: run: npx vitest run tests/integration/named-by-title.test.ts -t "falls back"
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
