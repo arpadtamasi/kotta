@@ -3,13 +3,20 @@ id: F-01m0xsbc9zz7d2k3t3d1yfve96
 title: >-
   attach-to-existing-task never records which task, so 61 of 61 uses lost the
   link
-status: new
+status: resolved
 origin: agent
 observation_type: inconsistency
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-26'
+disposition: amend-spec
+resolved_at: '2026-08-26T07:55:25.125Z'
+approved_by: cli
+approved_at: '2026-08-26T07:55:25.125Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - SM-01m0f0wn892ntx934by9gwednb
 ---
 # F-01m0xsbc9zz7d2k3t3d1yfve96 — attach-to-existing-task never records which task, so 61 of 61 uses lost the link
 
