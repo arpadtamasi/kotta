@@ -14,6 +14,8 @@ Commands:
   migrate [options]           Carry a legacy or flat workspace into the spec/
                               and process/ namespaces
   init [options]              Create a .kotta workspace
+  sweep [options]             Report what has stopped, why, and the one action
+                              that would move it
   validate [options]          Validate the Kotta workspace
   status [options]            Show canonical workspace status
   gap [options]               Report accepted spec promises without repository
@@ -57,6 +59,19 @@ Options:
                          human said yes
   --json
   -h, --help             display help for command
+
+### kotta sweep
+Usage: kotta sweep [options]
+
+Report what has stopped, why, and the one action that would move it
+
+Options:
+  --stalled-hours <hours>        Hours without a commit after which an active
+                                 task counts as stalled
+  --undispositioned-days <days>  Days in new after which an observation counts
+                                 as undispositioned
+  --json
+  -h, --help                     display help for command
 
 ### kotta validate
 Usage: kotta validate [options]
@@ -1094,6 +1109,28 @@ exports[`the surfaces Kotta exposes > the MCP tool surface, read from a live ser
     },
     "name": "workspace_status",
     "title": "Read Kotta workspace status",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "stalledHours": {
+          "type": "number",
+        },
+        "undispositionedDays": {
+          "type": "number",
+        },
+      },
+      "type": "object",
+    },
+    "name": "workspace_sweep",
+    "title": "Report what has stopped in the Kotta workspace",
   },
 ]
 `;
