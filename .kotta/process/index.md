@@ -35,5 +35,6 @@ None.
 - after-a-bulk-spec-edit-the-delta-section-lists-the-entire-sp-wg7qqm4b
 - an-acceptance-condition-described-a-batch-state-no-operator--tg485bq5
 - batch-start-dirties-the-workspace-it-just-checked-so-the-fir-dp1kb6m1
+- nothing-states-when-a-durable-answer-needs-a-decision-record-e445zj0k
 - observation-create-from-the-chat-deadlocks-on-its-own-lock-w-m96mmdaw
 - severity-and-confidence-are-written-as-constants-so-nothing--a0t798a8
