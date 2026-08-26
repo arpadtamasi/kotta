@@ -15,6 +15,27 @@ carrying everything below and the 0.9.0 section under it.
 
 ### Added
 
+- **Entities are named to humans by title, not by identifier.** Eight of the nine sentences the MCP
+  tools returned to a calling chat named a bare identifier and no title; five of the six gate
+  descriptions read `task.close T-01m0vqr9k…`; and every lifecycle command in the terminal printed
+  `kotta task close completed.`, naming neither the entity nor the work. One resolution now serves
+  the terminal, the chat and the gate, because three would eventually disagree about the same
+  entity. A gate names every entity it mentions, its subject and its references alike. Identifiers
+  stay permanent, stay in the structured payloads, and still travel beside a title where the reader
+  will type one back; where no title exists, the id is what names the entity, because a blank name
+  claims less than the result carries. The shipped rules file generalises the same instruction to
+  the agent's own prose. Asked for as T-01m0jdnv5fjechrfqwphvrrgqx on 2026-08-21.
+
+- **A batch holds no more members than its configured parallelism.** The cap was applied to the
+  members whose state is `defined`; members already active were filtered out above it and so never
+  counted against it. Measured with four independent members and `--parallelism 2`, two releases
+  with nothing finished in between left four tasks active, four claims and four worktrees — and the
+  run reported the two it had left running as `Waiting:`. A release now reads the running members
+  from the same state the eligibility filter reads, spends the budget against them, and names the
+  budget when it holds work back; running is reported apart from waiting. Which member is eligible
+  is unchanged. Settled by D-01m0zhkpw7v7pq322pg5nycf1d after both readings of the word proved
+  defensible from the code.
+
 - **An entity's open questions are a list, not prose.** `Open decisions` was read by one literal
   check: the section either said `None.` or the whole task was refused, with no way to say which
   point was still open, no way to count what was waiting, and no way to see it anywhere but by
