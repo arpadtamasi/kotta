@@ -1,0 +1,9 @@
+{
+  "entity": "T-01m0jdnv5fjechrfqwphvrrgqx",
+  "task": "T-01m0jdnv5fjechrfqwphvrrgqx",
+  "kind": "lifecycle",
+  "state": "active",
+  "summary": "Execution started on claude/graft-kottara-837884 with claude from HEAD at 48ec42f76392f360a0124d24b7162a4e394ab2c3, adopting the only checkout; Kotta created no branch and no worktree.",
+  "id": "E-01m0zfx4nzkqpcfnp5hc8fpzzx",
+  "created_at": "2026-08-26T16:54:26.240Z"
+}

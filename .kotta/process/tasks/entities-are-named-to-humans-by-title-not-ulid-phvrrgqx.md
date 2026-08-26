@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdnv5fjechrfqwphvrrgqx
 title: 'Entities are named to humans by title, not ULID'
-status: defined
+status: active
 origin: human
 types:
   - ui
@@ -17,7 +17,7 @@ spec:
   - UC-01m0f0wn89p42025mt5vg5012n
   - IF-01m0f0wn89cq1pnnsta9q8wqx9
   - IF-01m0f0wn8994dzf9z1sdygxa04
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-21'
 updated_at: '2026-08-26'
@@ -35,6 +35,12 @@ coverage:
     - BR-01m0f0wn89c50fe1mz5yn1nw85
   'The rule holds for entities that have no title to name and for one whose title is missing or empty: the rendering falls back to the identifier rather than to nothing.':
     - BR-01m0f0wn89c50fe1mz5yn1nw85
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 48ec42f76392f360a0124d24b7162a4e394ab2c3
 ---
 # T-01m0jdnv5fjechrfqwphvrrgqx — Entities are named to humans by title, not ULID
 

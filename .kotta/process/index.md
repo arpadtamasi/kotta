@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- entities-are-named-to-humans-by-title-not-ulid-phvrrgqx
+None.
 
 ## Active tasks
 
-None.
+- entities-are-named-to-humans-by-title-not-ulid-phvrrgqx
 
 ## Review
 
