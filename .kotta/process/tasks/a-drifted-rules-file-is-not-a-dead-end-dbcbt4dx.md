@@ -1,7 +1,7 @@
 ---
 id: T-01m0xp4sph61ykf0y0dbcbt4dx
 title: A drifted rules file is not a dead end
-status: review
+status: active
 origin: human
 types:
   - bug
@@ -33,6 +33,9 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: efd314eaf811308b6adc86c33524cc5d41b95554
+approved_by: cli
+approved_at: '2026-08-26T00:21:11.737Z'
+approval_basis: 'CLI --approve: task.request-changes'
 ---
 ## Outcome
 
@@ -83,31 +86,3 @@ None.
 The drift sentence the operator reads is `src/cli/index.ts:50`; `status` reports the same state through `agentsDrift`.
 
 `tests/integration/sync.test.ts:199-214` is both the test to change and the clearest statement of the defect: it hand-writes the manifest to move a drifted file back under Kotta's ownership.
-
-## Review evidence
-
-| Acceptance condition | Evidence |
-|---|---|
-| A drifted rules file names the way back. `kotta sync` and `kotta status` report the drift with the exact command that resolves it, instead of reporting only that the file was left alone. | run: npx vitest run tests/integration/sync.test.ts -t 'names the command that resolves it' — verified: exit 0 at 5c96f6d |
-| Taking Kotta's copy is a command, not a hand-edit of Kotta-owned state. One explicit flag rewrites the rules file from the template, records it, and says what it replaced; without that flag an edited file is still never replaced. | run: npx vitest run tests/integration/sync.test.ts -t 'refreshes its own copy and leaves an edited one alone' — verified: exit 0 at 5c96f6d |
-| The release stops causing drift it cannot clear. The maintainer-release path refreshes the rules file through Kotta rather than editing it, and a test reproduces the 90edd48 edit and clears it in one command. | run: npx vitest run tests/integration/sync.test.ts -t 'release edit that caused' — verified: exit 0 at 5c96f6d |
-| No test reaches past the tool to reconcile. The suite no longer writes `.kotta/.kotta-generated.json` by hand to leave drift, because it no longer has to. | Measured on this commit: grep -c 'kotta-generated' tests/ returns 0, where sync.test.ts:206-210 previously hand-wrote the manifest's sha256 to move a drifted file back under Kotta's ownership. The whole suite is green at 68 files, 454 passed and 1 skipped. |
-
-### Verification performed
-
-A drifted rules file names the way back. `kotta sync` and `kotta status` report the drift with the exact command that resolves it, instead of reporting only that the file was left alone.: run: npx vitest run tests/integration/sync.test.ts -t 'names the command that resolves it'
-Taking Kotta's copy is a command, not a hand-edit of Kotta-owned state. One explicit flag rewrites the rules file from the template, records it, and says what it replaced; without that flag an edited file is still never replaced.: run: npx vitest run tests/integration/sync.test.ts -t 'refreshes its own copy and leaves an edited one alone'
-The release stops causing drift it cannot clear. The maintainer-release path refreshes the rules file through Kotta rather than editing it, and a test reproduces the 90edd48 edit and clears it in one command.: run: npx vitest run tests/integration/sync.test.ts -t 'release edit that caused'
-No test reaches past the tool to reconcile. The suite no longer writes `.kotta/.kotta-generated.json` by hand to leave drift, because it no longer has to.: Measured on this commit: grep -c 'kotta-generated' tests/ returns 0, where sync.test.ts:206-210 previously hand-wrote the manifest's sha256 to move a drifted file back under Kotta's ownership. The whole suite is green at 68 files, 454 passed and 1 skipped.
-
-### Deviations
-
-None.
-
-### Observations created
-
-Not declared.
-
-### Known concerns
-
-Not declared.

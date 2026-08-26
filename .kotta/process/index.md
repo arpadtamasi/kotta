@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-None.
+- a-drifted-rules-file-is-not-a-dead-end-dbcbt4dx
 
 ## Review
 
-- a-drifted-rules-file-is-not-a-dead-end-dbcbt4dx
+None.
 
 ## Blocked
 
