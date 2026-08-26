@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- attaching-an-observation-names-the-task-it-attaches-to-mfe3ng4r
+None.
 
 ## Active tasks
 
-None.
+- attaching-an-observation-names-the-task-it-attaches-to-mfe3ng4r
 
 ## Review
 

@@ -1,7 +1,7 @@
 ---
 id: T-01m0yh0wjar1yaj6n9mfe3ng4r
 title: Attaching an observation names the task it attaches to
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -15,7 +15,7 @@ spec:
   - SM-01m0f0wn892ntx934by9gwednb
   - E-01m0f0wn89cry06jvtwtmpk4fr
   - IF-01m0f0wn8994dzf9z1sdygxa04
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-26'
 updated_at: '2026-08-26'
@@ -30,6 +30,12 @@ coverage:
     - IF-01m0f0wn8994dzf9z1sdygxa04
   'The 61 links already lost stay lost, visibly. Resolutions recorded before this carry no task and are not back-filled by guessing; the report of an observation says which task it attached to, or that none was recorded.':
     - E-01m0f0wn89cry06jvtwtmpk4fr
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: d88e09f349cddc72bd0959f449120cadb9a33dc9
 ---
 ## Outcome
 
