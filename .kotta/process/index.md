@@ -12,7 +12,7 @@ None.
 
 ## Defined tasks
 
-None.
+- vocabulary-and-release-hygiene-sweep-rjgfx1b1
 
 ## Active tasks
 

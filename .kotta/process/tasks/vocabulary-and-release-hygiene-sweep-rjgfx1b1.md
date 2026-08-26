@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdnvvee6r2qsg7rjgfx1b1
 title: Vocabulary and release hygiene sweep
-status: backlog
+status: defined
 origin: human
 types:
   - docs
@@ -11,37 +11,76 @@ risk: medium
 batch: null
 depends_on: []
 blocks: []
-spec: []
+spec:
+  - BR-01m0zx29x1nvccpr4xwyhjr153
+  - EX-01m0zx29x1pnyjsa5dyg4dc6n5
 branch: null
 pull_request: null
 created_at: '2026-08-21'
-updated_at: '2026-08-21'
+updated_at: '2026-08-26'
+coverage:
+  'Every published surface that tells a reader how to install Kotta names the version the package declares at that commit. Measured today: the rules file said 0.10.0, the README 0.9.0, the site 0.7.0.':
+    - BR-01m0zx29x1nvccpr4xwyhjr153
+  'A surface that drifts from the declared version fails a check by name, so the disagreement cannot survive a release rather than being noticed by a reader whose install failed.':
+    - BR-01m0zx29x1nvccpr4xwyhjr153
+    - EX-01m0zx29x1pnyjsa5dyg4dc6n5
+  'No published surface names a version by hand where the package already declares one, so bumping the version is one edit and not four.':
+    - BR-01m0zx29x1nvccpr4xwyhjr153
 ---
 # T-01m0jdnvvee6r2qsg7rjgfx1b1 — Vocabulary and release hygiene sweep
 
 ## Outcome
 
-Describe the observable outcome.
+Nothing Kotta publishes tells a reader to install a version that does not exist. The capture named
+two sweeps; only one of them turned out to have an object.
+
+**Vocabulary: measured clean, nothing to do.** Every remaining occurrence of the pre-rename
+vocabulary is deliberate: `LEGACY_WORKSPACE_DIRECTORY = ".a-team"` and the `.a-team/` reader that
+D-007 keeps readable, the `ticket → task` key maps `migrate` needs to read old workspaces, and the
+README's own rename section. Zero drift, so the sweep half of this task is answered by the
+measurement rather than by an edit.
+
+**Release hygiene: three surfaces, three numbers, two wrong.** Measured on 2026-08-26:
+
+| Surface | Said | Reality |
+| --- | --- | --- |
+| `.kotta/AGENTS.md` (generated, ships into every project) | 0.10.0 | correct — interpolated from the package |
+| `README.md:124` | 0.9.0 | tagged once, never published, answers 404 |
+| `site/index.html:196` | 0.7.0 | stale by three versions |
+
+Each was true when it was written. The generated one stayed true because nobody maintains it.
 
 ## Scope
 
-Describe what is included.
+- The install version in `README.md` and in `site/index.html`.
+- `site/tests/site.spec.ts`, which pins the advertised version as a literal and so drifts with it.
+- A check that fails by name when a published surface disagrees with the package.
 
 ## Non-goals
 
-Describe what is excluded.
+- Publishing, tagging, or deciding when to release: this makes the advertised version true, it does
+  not make it exist.
+- The changelog, whose subject is versions past.
+- The generated rules file, which already interpolates the running package and needs no repair.
+- The pre-rename vocabulary, measured clean above; the task carries the measurement, not an edit.
 
 ## Acceptance
 
-- Define an observable condition.
+- Every published surface that tells a reader how to install Kotta names the version the package declares at that commit. Measured today: the rules file said 0.10.0, the README 0.9.0, the site 0.7.0.
+- A surface that drifts from the declared version fails a check by name, so the disagreement cannot survive a release rather than being noticed by a reader whose install failed.
+- No published surface names a version by hand where the package already declares one, so bumping the version is one edit and not four.
 
 ## Verification
 
-- Explain how acceptance will be checked.
+- run: npx vitest run tests/integration/published-install-line.test.ts
+- run: npx vitest run --reporter dot
+- run: npm run typecheck
 
 ## Constraints
 
-None.
+- The site is a static page with no build-time templating of its own; whatever keeps its version
+  true must not turn it into something that needs one.
+- The check reads the package as the single source, never a second copy of the number.
 
 ## Open decisions
 
@@ -49,4 +88,6 @@ None.
 
 ## Execution notes
 
-None.
+The capture is from 2026-08-21, before the 0.9.0 release that was tagged and never published. That
+failure is what made the README's line false, so the task's object was created after it was
+written.
