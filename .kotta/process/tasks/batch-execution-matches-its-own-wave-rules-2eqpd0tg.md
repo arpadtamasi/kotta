@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdntvbbp5rbj6t2eqpd0tg
 title: Batch execution matches its own wave rules
-status: review
+status: done
 origin: human
 types:
   - bug
@@ -34,6 +34,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: a5ea9e550268d54052c22a4a91e29239988beb74
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-26T18:48:54.397Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 # T-01m0jdntvbbp5rbj6t2eqpd0tg — Batch execution matches its own wave rules
 
