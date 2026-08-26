@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- the-brief-names-the-command-for-recording-an-out-of-scope-ob-bmq7fk8m
+None.
 
 ## Active tasks
 
-None.
+- the-brief-names-the-command-for-recording-an-out-of-scope-ob-bmq7fk8m
 
 ## Review
 

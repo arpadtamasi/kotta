@@ -1,7 +1,7 @@
 ---
 id: T-01m0v2d804h1pk95y4bmq7fk8m
 title: The brief names the command for recording an out-of-scope observation
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -14,7 +14,7 @@ blocks: []
 spec:
   - BR-01m0r52vex4j22266nepm5yq8s
   - BR-01m0fp2hdkqz08arp5ebt122r9
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-24'
 updated_at: '2026-08-26'
@@ -24,6 +24,12 @@ coverage:
     - BR-01m0fp2hdkqz08arp5ebt122r9
   'The brief stays deterministic: two runs on the same workspace produce identical bytes.':
     - BR-01m0r52vex4j22266nepm5yq8s
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 6a3d0209261e5f281a075343fc3872d127ee1062
 ---
 ## Outcome
 
