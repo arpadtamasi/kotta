@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- T-019-sweep-one-command-that-answers-what-is-unfinished-and-why
+None.
 
 ## Review
 
-None.
+- T-019-sweep-one-command-that-answers-what-is-unfinished-and-why
 
 ## Blocked
 

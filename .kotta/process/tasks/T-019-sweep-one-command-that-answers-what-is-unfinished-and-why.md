@@ -1,7 +1,7 @@
 ---
 id: T-019
 title: 'Sweep: one command that answers what is unfinished and why'
-status: active
+status: review
 origin: human
 types:
   - feature
@@ -102,3 +102,31 @@ The derivation goes in its own module and the CLI calls it, so the board's own t
 `listClaims` (`src/commands/claim.ts`), `linkedWorktrees` and `branchExists` (`src/git/coordinator.ts`), `readEvents` (`src/core/events.ts`) and `listEntities` (`src/filesystem/entities.ts`) are what the categories read; the board's `readNotices` in `src/commands/ui.ts` already derives part of `drift` and must be reused rather than rewritten.
 
 Land the categories one at a time with their tests. Four categories reported honestly beat seven guessed — the instruction is T-019's own, and it was right.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| Every category is derived, not guessed, and each item names the reason it stopped and the one action that would move it. Each category is proven by a test that builds the state and asserts the item appears there and nowhere else. | run: npx vitest run tests/integration/sweep.test.ts — verified: exit 0 at a26d2f5 |
+| The default output fits a screen and a still workspace says so in one line. Categories with nothing in them are omitted rather than printed as zeros, and `--json` is where completeness lives. | run: npx vitest run tests/integration/sweep.test.ts -t 'screenful\|still workspace' — verified: exit 0 at a26d2f5 |
+| Sweep writes nothing and runs where validate refuses. Two runs produce identical output, the workspace is untouched after both, and a workspace that fails validation is still swept — the failure is reported, not fatal. | run: npx vitest run tests/integration/sweep.test.ts -t 'ranked, deterministic\|validate refuses' — verified: exit 0 at a26d2f5 |
+| A heuristic says so. Every item an age threshold produced names that threshold in its reason, and both thresholds are overridable, so a wrong default is visible rather than silently filtering. | run: npx vitest run tests/integration/sweep.test.ts -t 'stalled:\|undispositioned:' — verified: exit 0 at a26d2f5 |
+
+### Verification performed
+
+Every category is derived, not guessed, and each item names the reason it stopped and the one action that would move it. Each category is proven by a test that builds the state and asserts the item appears there and nowhere else.: run: npx vitest run tests/integration/sweep.test.ts
+The default output fits a screen and a still workspace says so in one line. Categories with nothing in them are omitted rather than printed as zeros, and `--json` is where completeness lives.: run: npx vitest run tests/integration/sweep.test.ts -t 'screenful|still workspace'
+Sweep writes nothing and runs where validate refuses. Two runs produce identical output, the workspace is untouched after both, and a workspace that fails validation is still swept — the failure is reported, not fatal.: run: npx vitest run tests/integration/sweep.test.ts -t 'ranked, deterministic|validate refuses'
+A heuristic says so. Every item an age threshold produced names that threshold in its reason, and both thresholds are overridable, so a wrong default is visible rather than silently filtering.: run: npx vitest run tests/integration/sweep.test.ts -t 'stalled:|undispositioned:'
+
+### Deviations
+
+None.
+
+### Observations created
+
+F-01m0yta2mqnm3pw84vg6rrrhtc (two approvals proposed 20 days ago that the work went around, and nothing can close), F-01m0ytmp2fpw8kzn5n17sdgc5a (29 tasks closed with a declared deviation no observation records)
+
+### Known concerns
+
+Not declared.
