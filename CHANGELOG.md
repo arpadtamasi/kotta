@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-08-26
+
+0.9.0 was tagged but never reached the registry, so npm's latest stayed at 0.7.0 while the rules
+file Kotta writes into every project named 0.9.0 as its install line. 0.10.0 is the first release
+carrying everything below and the 0.9.0 section under it.
+
+
 ### Added
 
 - **An entity's open questions are a list, not prose.** `Open decisions` was read by one literal
