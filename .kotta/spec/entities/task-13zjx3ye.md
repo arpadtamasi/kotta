@@ -29,4 +29,4 @@ status (backlog/defined/active/review/done), origin (human/agent/observation/imp
 
 ## Invariants
 
-Only a validated, defined task whose acceptance conditions are covered by accepted spec executes. Open decisions must be empty before defining completes. At most one claim at a time. A task never creates agreement: needs outside its coverage become observations. A terminal task carries a resolution saying how it ended; duplicate and obsolete also name what superseded it.
+Only a validated, defined task whose acceptance conditions are covered by accepted spec executes. Every question under Open decisions must be resolved, each naming the decision that settled it, before defining completes; an entity with no questions is the empty case. At most one claim at a time. A task never creates agreement: needs outside its coverage become observations. A terminal task carries a resolution saying how it ended; duplicate and obsolete also name what superseded it.

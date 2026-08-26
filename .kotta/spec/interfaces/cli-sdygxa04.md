@@ -9,7 +9,7 @@ accepted:
 
 ## Purpose
 
-The complete, scriptable operation surface and the human-operated recovery path: init, migrate, validate, status, gap, the task/observation/batch/decision/claim command families, sync, integrate, mcp, and ui. Every command supports JSON output.
+The complete, scriptable operation surface and the human-operated recovery path: init, migrate, validate, status, sweep, questions, gap, the task/observation/batch/decision/claim command families, sync, integrate, mcp, and ui. Every command supports JSON output.
 
 ## Preconditions
 

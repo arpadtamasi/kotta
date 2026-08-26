@@ -12,7 +12,7 @@ None.
 
 ## Defined tasks
 
-None.
+- T-024-entitas-nyitott-kerdesei-elso-osztalyu-lista-ticketen-packag
 
 ## Active tasks
 
