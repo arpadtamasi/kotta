@@ -1,0 +1,9 @@
+{
+  "entity": "T-01m0jkmwe6g7rtjsc6bj3rsmn7",
+  "task": "T-01m0jkmwe6g7rtjsc6bj3rsmn7",
+  "kind": "lifecycle",
+  "state": "done",
+  "summary": "Task cancelled from backlog with resolution cancelled. Reason: A title-only capture with no specification demand behind it: the spec names the shipped skills only where their drift is reported, never which skills exist, and validate-observation already ships for the dispositioning path this would have distilled. Retired on the operator's decision after the backlog was read against the accepted spec.",
+  "id": "E-01m0zdgtc1dctess2nvach55kc",
+  "created_at": "2026-08-26T16:12:45.313Z"
+}

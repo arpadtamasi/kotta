@@ -1,0 +1,17 @@
+{
+  "entity": "T-01m0jkmwe6g7rtjsc6bj3rsmn7",
+  "task": "T-01m0jkmwe6g7rtjsc6bj3rsmn7",
+  "kind": "approval",
+  "approval_id": "E-01m0zdgtc24e0nbbz6rycqm1pm",
+  "phase": "approved",
+  "action": "task.cancel",
+  "payload": {
+    "resolution": "cancelled",
+    "reason": "A title-only capture with no specification demand behind it: the spec names the shipped skills only where their drift is reported, never which skills exist, and validate-observation already ships for the dispositioning path this would have distilled. Retired on the operator's decision after the backlog was read against the accepted spec.",
+    "superseded_by": null,
+    "surface": "cli"
+  },
+  "source_message": "E-01m0zdgtc2mgs4x2tvvcssg18q",
+  "id": "E-01m0zdgtc22e1xm70krvjnavh8",
+  "created_at": "2026-08-26T16:12:45.314Z"
+}
