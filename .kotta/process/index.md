@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- vocabulary-and-release-hygiene-sweep-rjgfx1b1
+None.
 
 ## Review
 
-None.
+- vocabulary-and-release-hygiene-sweep-rjgfx1b1
 
 ## Blocked
 

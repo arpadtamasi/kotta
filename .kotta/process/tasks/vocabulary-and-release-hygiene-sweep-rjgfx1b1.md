@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdnvvee6r2qsg7rjgfx1b1
 title: Vocabulary and release hygiene sweep
-status: active
+status: review
 origin: human
 types:
   - docs
@@ -97,3 +97,29 @@ None.
 The capture is from 2026-08-21, before the 0.9.0 release that was tagged and never published. That
 failure is what made the README's line false, so the task's object was created after it was
 written.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| Every published surface that tells a reader how to install Kotta names the version the package declares at that commit. Measured today: the rules file said 0.10.0, the README 0.9.0, the site 0.7.0. | run: npx vitest run tests/integration/published-install-line.test.ts -t "in step with the package" — verified: exit 0 at a8065e0 |
+| A surface that drifts from the declared version fails a check by name, so the disagreement cannot survive a release rather than being noticed by a reader whose install failed. | run: npx vitest run tests/integration/published-install-line.test.ts -t "does not declare" — verified: exit 0 at a8065e0 |
+| No published surface names a version by hand where the package already declares one, so bumping the version is one edit and not four. | run: npx vitest run tests/integration/published-install-line.test.ts -t "second copy" — verified: exit 0 at a8065e0 |
+
+### Verification performed
+
+Every published surface that tells a reader how to install Kotta names the version the package declares at that commit. Measured today: the rules file said 0.10.0, the README 0.9.0, the site 0.7.0.: run: npx vitest run tests/integration/published-install-line.test.ts -t "in step with the package"
+A surface that drifts from the declared version fails a check by name, so the disagreement cannot survive a release rather than being noticed by a reader whose install failed.: run: npx vitest run tests/integration/published-install-line.test.ts -t "does not declare"
+No published surface names a version by hand where the package already declares one, so bumping the version is one edit and not four.: run: npx vitest run tests/integration/published-install-line.test.ts -t "second copy"
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
