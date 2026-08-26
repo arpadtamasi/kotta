@@ -1,7 +1,7 @@
 ---
 id: T-01m0v2d804h1pk95y4bmq7fk8m
 title: The brief names the command for recording an out-of-scope observation
-status: backlog
+status: defined
 origin: human
 types:
   - feature
@@ -11,11 +11,19 @@ risk: medium
 batch: null
 depends_on: []
 blocks: []
-spec: []
+spec:
+  - BR-01m0r52vex4j22266nepm5yq8s
+  - BR-01m0fp2hdkqz08arp5ebt122r9
 branch: null
 pull_request: null
 created_at: '2026-08-24'
-updated_at: '2026-08-24'
+updated_at: '2026-08-26'
+coverage:
+  'The brief''s fixed header names the observation command, so the boundary rule states both what to do and how.':
+    - BR-01m0r52vex4j22266nepm5yq8s
+    - BR-01m0fp2hdkqz08arp5ebt122r9
+  'The brief stays deterministic: two runs on the same workspace produce identical bytes.':
+    - BR-01m0r52vex4j22266nepm5yq8s
 ---
 ## Outcome
 
