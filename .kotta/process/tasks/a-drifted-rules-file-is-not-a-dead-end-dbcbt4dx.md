@@ -1,7 +1,7 @@
 ---
 id: T-01m0xp4sph61ykf0y0dbcbt4dx
 title: A drifted rules file is not a dead end
-status: review
+status: done
 origin: human
 types:
   - bug
@@ -34,8 +34,9 @@ branch_origin: adopted
 start_ref: HEAD
 start_commit: efd314eaf811308b6adc86c33524cc5d41b95554
 approved_by: cli
-approved_at: '2026-08-26T00:21:11.737Z'
-approval_basis: 'CLI --approve: task.request-changes'
+approved_at: '2026-08-26T00:40:26.355Z'
+approval_basis: 'CLI --approve: task.close'
+resolution: completed
 ---
 ## Outcome
 
