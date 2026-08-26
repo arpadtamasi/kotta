@@ -3,13 +3,20 @@ id: F-01m0v2g1gjpjqn9tfz0nz1wjyk
 title: >-
   An operation's MCP-absence reason is free prose that nothing checks against
   the rules it must obey
-status: new
+status: resolved
 origin: agent
 observation_type: inconsistency
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-24'
+disposition: amend-spec
+resolved_at: '2026-08-26T07:55:26.283Z'
+approved_by: cli
+approved_at: '2026-08-26T07:55:26.283Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - BR-01m0nsyasfnjc9s4073r8zb33j
 ---
 # F-01m0v2g1gjpjqn9tfz0nz1wjyk — An operation's MCP-absence reason is free prose that nothing checks against the rules it must obey
 
