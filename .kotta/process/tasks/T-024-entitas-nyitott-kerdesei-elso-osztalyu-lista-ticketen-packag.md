@@ -1,7 +1,7 @@
 ---
 id: T-024
 title: 'Entitás nyitott kérdései: első osztályú lista ticketen, package-en, findingon'
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -11,7 +11,7 @@ risk: medium
 batch: null
 depends_on: []
 blocks: []
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-01'
 updated_at: '2026-08-26'
@@ -39,6 +39,12 @@ coverage:
   'Kotta''s own workspace is the migration proof: every entity that exists today validates exactly as it did before, because a section that denies open questions is the empty enumeration and no entity is rewritten to gain the feature.':
     - BR-01m0z873stwx7szg5896gwsbry
     - E-01m0f0wn898ayyrvy613zjx3ye
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 36d01e4301504bb587469e4ace7d45310cba847b
 ---
 # T-024 — Entitás nyitott kérdései: első osztályú lista ticketen, package-en, findingon
 
