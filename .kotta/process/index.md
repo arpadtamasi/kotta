@@ -20,7 +20,7 @@ None.
 
 ## Review
 
-- T-024-entitas-nyitott-kerdesei-elso-osztalyu-lista-ticketen-packag
+None.
 
 ## Blocked
 

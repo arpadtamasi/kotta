@@ -1,7 +1,7 @@
 ---
 id: T-024
 title: 'Entitás nyitott kérdései: első osztályú lista ticketen, package-en, findingon'
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -45,6 +45,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 36d01e4301504bb587469e4ace7d45310cba847b
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-26T15:57:24.892Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 # T-024 — Entitás nyitott kérdései: első osztályú lista ticketen, package-en, findingon
 
