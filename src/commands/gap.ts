@@ -322,7 +322,8 @@ export function gapReport(repositoryRoot: string): GapReportResult {
   // The read is of the base branch by design, so evidence that is written but not committed is
   // invisible to it and the refusal reads as a real defect. Naming that cost a diagnosis four
   // times in three days (F-01m0sm78y2b1vpg1msj98cvwxz); a refusal names its corrective action
-  // (IF-01m0f0wn8994dzf9z1sdygxa04), and here the action is a commit, not a fix.
+  // (IF-01m0f0wn8994dzf9z1sdygxa04, UC-01m0fpqfxjvet99wbz0v1ag64q), and here the action is a
+  // commit, not a fix.
   const uncommitted = promises.length ? uncommittedEvidencePaths(repositoryRoot, workspace) : [];
   const pending = uncommitted.length
     ? ` This report reads ${baseBranch}@${commit.slice(0, 7)}, and ${uncommitted.length} path${uncommitted.length === 1 ? " is" : "s are"} uncommitted in the working tree (${uncommitted.slice(0, 3).join(", ")}${uncommitted.length > 3 ? ", …" : ""}). If the evidence is among them, commit it and read again.`

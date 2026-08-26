@@ -89,7 +89,8 @@ export interface WorkspaceAgentsResult {
 /**
  * The one sentence a drifted file is missing: how to stop being drifted. A verdict with no remedy
  * is what left this repository's own rules file behind its template for two days
- * (F-01m0tnv8vmjjjack09xt7w25zf, IF-01m0f0wn8994dzf9z1sdygxa04).
+ * (F-01m0tnv8vmjjjack09xt7w25zf, IF-01m0f0wn8994dzf9z1sdygxa04). Drift is a state to leave
+ * (BR-01m0f1djtb5dkb76tjzq4x3ffh): this names the one command that leaves it.
  */
 export const REPLACE_RULES_REMEDY = "To discard those edits and take Kotta's copy, run 'kotta sync --replace-rules'; to keep them, move them into the project's own AGENTS.md, which Kotta never writes.";
 

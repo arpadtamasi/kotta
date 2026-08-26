@@ -2,14 +2,11 @@
 id: BR-01m0f1djtb5dkb76tjzq4x3ffh
 form: business-rule
 title: "Kotta owns its rules file, never the project's"
-accepted:
-  - >-
-    unexamined: Inherited on 2026-08-23 and kinded on 2026-08-24. Nobody has yet checked whether this promise is kept. This is a form that can name itself where it is enforced or proven, so the absence of its id is a real question that has simply not been asked. Answer it by naming the node where the code enforces it or a test proves it, or by reclassifying it as unimplemented.
 ---
 
 ## Rule
 
-Kotta fully owns .kotta/AGENTS.md: it writes it, keeps it current with the running package's real install line, and reports a hand-edited copy as drifted rather than replacing it. The project's own AGENTS.md belongs to the project - Kotta appends at most one referencing line, only after an explicit yes, idempotently; a non-interactive run never writes the project's file.
+Kotta fully owns .kotta/AGENTS.md: it writes it, keeps it current with the running package's real install line, and reports a hand-edited copy as drifted rather than replacing it. Drift is a state to leave, not a verdict to live under: the report names the one deliberate command that discards the local edits and takes Kotta's copy, that command says how much it discarded, and nothing else replaces an edited file. Reconciling edits is the operator's, in the template - a refreshed file never merges them. The project's own AGENTS.md belongs to the project - Kotta appends at most one referencing line, only after an explicit yes, idempotently; a non-interactive run never writes the project's file.
 
 ## Rationale
 
