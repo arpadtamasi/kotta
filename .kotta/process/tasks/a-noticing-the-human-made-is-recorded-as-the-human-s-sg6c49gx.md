@@ -1,7 +1,7 @@
 ---
 id: T-01m0ypa2rb5xev2g5dsg6c49gx
 title: A noticing the human made is recorded as the human's
-status: review
+status: done
 origin: human
 types:
   - bug
@@ -32,6 +32,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 9a7e879991847f0d8b495bfe771847e8e8e72a0d
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-26T09:55:17.746Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 

@@ -20,7 +20,7 @@ None.
 
 ## Review
 
-- a-noticing-the-human-made-is-recorded-as-the-human-s-sg6c49gx
+None.
 
 ## Blocked
 
