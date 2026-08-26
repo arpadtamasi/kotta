@@ -33,5 +33,6 @@ None.
 - a-migration-proof-test-pinned-the-workspace-s-entities-inste-f8ytwx3k
 - a-proposed-approval-outlives-its-entity-and-nothing-can-clos-g6rrrhtc
 - after-a-bulk-spec-edit-the-delta-section-lists-the-entire-sp-wg7qqm4b
+- batch-start-dirties-the-workspace-it-just-checked-so-the-fir-dp1kb6m1
 - observation-create-from-the-chat-deadlocks-on-its-own-lock-w-m96mmdaw
 - severity-and-confidence-are-written-as-constants-so-nothing--a0t798a8
