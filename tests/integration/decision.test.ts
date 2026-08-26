@@ -55,7 +55,9 @@ describe("durable decision CLI", () => {
     const humanSource = join(root, "second.md");
     writeFileSync(humanSource, validSource.replace("Adopt blue-green cutover", "Keep rollback window"));
     const human = execFileSync("node", [cli, "decision", "create", "--from", humanSource, "--approve"], { cwd: root, encoding: "utf8" });
-    expect(human).toMatch(/Recorded decision D-[0-9a-hjkmnp-tv-z]{26} at/);
+    // The decision is named by its own title, with the short id the CLI accepts back
+    // (BR-01m0f0wn89c50fe1mz5yn1nw85).
+    expect(human).toMatch(/Recorded decision Keep rollback window \(D-[0-9a-hjkmnp-tv-z]{8}\) at/);
 
     const validation = run(root, ["validate"]);
     expect(validation.status).toBe(0);
