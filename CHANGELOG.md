@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- **A drifted rules file is no longer a dead end.** Kotta promises to keep `.kotta/AGENTS.md`
+  current and to report a *hand-edited* copy as drifted rather than replacing it. Releasing 0.9.0
+  broke both halves at once: the bump edited the one interpolated line by hand instead of letting
+  Kotta write it, so Kotta's own edit read as the operator's, the recorded hash went stale, and
+  every `sync` since reported drift and left the file behind its template. Nothing named a way out
+  — the two that existed were deleting the file, or rewriting `.kotta/.kotta-generated.json` by
+  hand, which is the sort of edit these rules forbid and which the suite itself was doing.
+  `kotta sync --replace-rules` now takes Kotta's copy deliberately, reporting how many lines it
+  discarded, and both `sync` and `status` name it when they report drift. The maintainer-release
+  section says the bump runs `kotta sync` rather than editing the file.
+
 ### Added
 
 - **Recording a decision reaches the calling chat.** Five of Kotta's six approval-carrying

@@ -172,13 +172,13 @@ export function syncSkills(environment: NodeJS.ProcessEnv = process.env): SyncRe
  * pointer line to it after a human said yes; without the flag the pointer is only reported, so the
  * calling agent can quote the exact line when it asks (D-01kztp2epe4sehb25mpv7hc33b).
  */
-export function syncCommand(options: { linkAgents?: boolean } = {}, environment: NodeJS.ProcessEnv = process.env) {
+export function syncCommand(options: { linkAgents?: boolean; replaceRules?: boolean } = {}, environment: NodeJS.ProcessEnv = process.env) {
   const skills = syncSkills(environment);
   // `sync` installs the skills from anywhere; only the rules file needs a workspace to live in.
   const located = (() => { try { return findRepositoryRoot(); } catch { return null; } })();
   const root = located && hasWorkspace(located) ? located : null;
   if (root) syncWorkspaceForms(root);
-  const agents = root ? syncWorkspaceAgents(root) : null;
+  const agents = root ? syncWorkspaceAgents(root, { replace: options.replaceRules }) : null;
   const projectAgents = root && options.linkAgents ? linkProjectAgents(root) : null;
   return { ok: true as const, command: "sync" as const, data: { ...skills.data, agents, projectAgents, pointer: root ? pointerLine(root) : null } };
 }

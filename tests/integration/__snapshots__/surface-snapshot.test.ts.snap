@@ -92,10 +92,13 @@ Usage: kotta sync [options]
 Install the skills Kotta ships and refresh the workspace rules file
 
 Options:
-  --link-agents  Link the project's AGENTS.md to the workspace rules, migrating
-                 a recognized legacy Kotta prelude after the human said yes
+  --link-agents    Link the project's AGENTS.md to the workspace rules,
+                   migrating a recognized legacy Kotta prelude after the human
+                   said yes
+  --replace-rules  Discard local edits to the workspace rules file and take
+                   Kotta's copy; without this an edited file is never replaced
   --json
-  -h, --help     display help for command
+  -h, --help       display help for command
 
 ### kotta doctor
 Usage: kotta doctor [options]

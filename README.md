@@ -688,6 +688,12 @@ board carries the same notice until the gap closes.
 tag/version mismatch or a commit outside `main`, runs the full tests, inspects the packed
 allowlist, and exercises a clean install before publishing.
 
+The bump changes the install line `.kotta/AGENTS.md` interpolates, so **run `kotta sync` as part of
+the bump and commit what it writes** — never edit that file by hand. Kotta reports a rules file it
+did not write as drifted and leaves it alone, so a hand edit made during a release reads as the
+operator's and freezes the file behind its template. That is what 0.9.0 did; `kotta sync
+--replace-rules` is the way back if it happens again.
+
 ### The first release under the scoped package name
 
 The CLI was renamed with 0.3.0. npm rejected the unscoped `kotta` package name as too similar to

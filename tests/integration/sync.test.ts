@@ -22,6 +22,15 @@ function run(args: string[], cwd = repository): unknown {
   );
 }
 
+/** The human rendering, where a remedy either reaches the operator or does not. */
+function human(args: string[], cwd = repository): string {
+  return execFileSync("node", [cli, ...args], {
+    cwd,
+    encoding: "utf8",
+    env: { ...process.env, KOTTA_SKILLS_HOME: skillsHome },
+  });
+}
+
 function shippedNames(): string[] {
   return readdirSync(shipped, { withFileTypes: true })
     .filter((entry) => entry.isDirectory() && existsSync(join(shipped, entry.name, "SKILL.md")))
@@ -203,14 +212,43 @@ describe("the workspace rules file", () => {
     expect(drifted.data.agents.state).toBe("drifted");
     expect(readFileSync(rules(), "utf8")).toBe("shortened by hand\n");
 
-    // An outdated but untouched copy is Kotta's to refresh; the manifest is what tells them apart.
-    const rendered = readFileSync(rules(), "utf8");
-    writeFileSync(join(repository, ".kotta/.kotta-generated.json"), JSON.stringify({
-      files: { "AGENTS.md": createHash("sha256").update(rendered).digest("hex") },
-    }));
-    const refreshed = run(["sync"]) as { data: { agents: { state: string } } };
-    expect(refreshed.data.agents.state).toBe("updated");
+    // The way back is a command, not a hand-written manifest: this test used to reach past the
+    // tool and rewrite .kotta-generated.json, which is the hand-edit the rules forbid.
+    const replaced = run(["sync", "--replace-rules"]) as { data: { agents: { state: string; discardedLines: number } } };
+    expect(replaced.data.agents.state).toBe("replaced");
+    expect(replaced.data.agents.discardedLines).toBeGreaterThan(0);
     expect(readFileSync(rules(), "utf8")).toContain("## The tool these rules assume");
+
+    // And having taken Kotta's copy, the file is Kotta's again: the next plain sync is a no-op.
+    expect((run(["sync"]) as { data: { agents: { state: string } } }).data.agents.state).toBe("unchanged");
+  });
+
+  test("a drifted rules file names the command that resolves it, in sync and in status", () => {
+    run(["init"]);
+    writeFileSync(rules(), "shortened by hand\n");
+
+    for (const args of [["sync"], ["status"]]) {
+      const said = human(args);
+      expect(said, `${args[0]} names the remedy`).toContain("kotta sync --replace-rules");
+      // A verdict with no remedy is what left this repository behind its own template for two days.
+      expect(said, `${args[0]} names what keeping the edits costs`).toContain("project's own AGENTS.md");
+    }
+    expect(readFileSync(rules(), "utf8"), "naming the remedy changes nothing").toBe("shortened by hand\n");
+  });
+
+  test("the release edit that caused F-01m0tnv8vmjjjack09xt7w25zf is cleared in one command", () => {
+    run(["init"]);
+    // Exactly what commit 90edd48 did: edit the one interpolated line rather than let Kotta write
+    // it. Kotta's own edit then read as a hand edit, and every sync since reported drift.
+    const current = readFileSync(rules(), "utf8");
+    const bumped = current.replace(/@arpadtamasi\/kotta@[0-9.]+/g, "@arpadtamasi/kotta@9.9.9");
+    expect(bumped, "the fixture reproduces the edit").not.toBe(current);
+    writeFileSync(rules(), bumped);
+
+    expect((run(["sync"]) as { data: { agents: { state: string } } }).data.agents.state).toBe("drifted");
+    expect((run(["sync", "--replace-rules"]) as { data: { agents: { state: string } } }).data.agents.state).toBe("replaced");
+    expect(readFileSync(rules(), "utf8")).toBe(current);
+    expect((run(["sync"]) as { data: { agents: { state: string } } }).data.agents.state).toBe("unchanged");
   });
 
   test("status names a missing and then a drifted rules file", () => {
