@@ -28,6 +28,7 @@ None.
 
 ## New observations
 
+- 29-closed-tasks-declared-a-deviation-that-no-observation-rec-17sdgc5a
 - F-021-finding-metadata-is-single-valued-in-practice-severity-confi
 - a-proposed-approval-outlives-its-entity-and-nothing-can-clos-g6rrrhtc
 - after-a-bulk-spec-edit-the-delta-section-lists-the-entire-sp-wg7qqm4b
