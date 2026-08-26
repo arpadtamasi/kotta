@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
@@ -5,6 +7,11 @@ const viewports = [
   { name: "mobile", width: 375, height: 812 },
   { name: "desktop", width: 1440, height: 900 },
 ] as const;
+
+/** The one version any published surface may name (BR-01m0zx29x1nvccpr4xwyhjr153). */
+function declaredVersion(): string {
+  return (JSON.parse(readFileSync(resolve("package.json"), "utf8")) as { version: string }).version;
+}
 
 test("renders the approved content task in order", async ({ page }) => {
   const requests: string[] = [];
@@ -35,7 +42,7 @@ test("renders the approved content task in order", async ({ page }) => {
   await expect(page.getByText("One agent · one branch · one isolated worktree.")).toBeVisible();
   await expect(page.locator("tbody tr")).toHaveCount(5);
   await expect(page.locator("tbody th")).toHaveText(["Agent chat", "Issue tracker", "Agent runtime", "Spec generator", "Kotta"]);
-  await expect(page.locator("#install")).toContainText("@arpadtamasi/kotta@0.7.0");
+  await expect(page.locator("#install")).toContainText(`@arpadtamasi/kotta@${declaredVersion()}`);
   await expect(page.locator("#install")).toContainText("npx skills@1.5.20 add arpadtamasi/kotta");
   await expect(page.locator("#install")).toContainText("/setup-kotta");
   await expect(page.locator("#install")).toContainText("/define-task");
