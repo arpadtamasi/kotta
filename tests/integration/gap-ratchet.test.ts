@@ -86,6 +86,33 @@ describe("every accepted promise is kept or admitted", () => {
     expect(said, "and the failure is named beside it").toMatch(/failed with 1 error/);
   }, 60_000);
 
+  test("a refusal that uncommitted evidence would explain says so, and a clean one does not", () => {
+    const { root } = fixture("uncommitted");
+
+    // The fixture commits its nodes; the missing case is evidence that is written and not yet
+    // committed, which is what a wave landing a node and the code naming it always looks like.
+    const clean = say(attempt(root, ["gap"]));
+    expect(clean, "nothing uncommitted, nothing to explain").not.toContain("uncommitted in the working tree");
+    expect(clean, "and the refusal itself is unchanged").toContain("BR-01cccccccccccccccccccccccc");
+
+    writeFileSync(join(root, "tests", "unadmitted.test.js"), "// proves BR-01cccccccccccccccccccccccc\n");
+    const pending = say(attempt(root, ["gap"]));
+
+    expect(pending, "the read names the ref it read").toMatch(/reads main@[0-9a-f]{7},/);
+    expect(pending, "and says what is uncommitted").toContain("uncommitted in the working tree");
+    expect(pending, "naming the path").toContain("tests/unadmitted.test.js");
+    expect(pending, "and the step that settles it").toContain("commit it and read again");
+    // It says the evidence *may* be among them: the report never read those files.
+    expect(pending, "without claiming the file is the evidence").toContain("If the evidence is among them");
+    // The verdict is unchanged: an uncommitted file does not let a promise through.
+    expect(attempt(root, ["gap"]).status, "still a refusal").not.toBe(0);
+
+    // Committing the very same file settles it, which is the whole point of saying so.
+    execFileSync("git", ["add", "."], { cwd: root });
+    execFileSync("git", ["commit", "-m", "evidence"], { cwd: root });
+    expect(attempt(root, ["gap"]).status, "committed, the promise is evidenced").toBe(0);
+  }, 60_000);
+
   test("an evidenced node and an admitted node both pass, and are not confused", () => {
     const { root, rules, commit } = fixture("passes");
     // The only change: the third node admits its gap. Nothing else moves.

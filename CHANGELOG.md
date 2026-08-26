@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **A gap refusal says when uncommitted work is the reason.** `kotta gap` reads the accepted
+  specification on the base branch, deliberately — the agreement is what landed, not what is being
+  typed. So a wave that lands a spec node together with the code naming it fails until the commit
+  exists, and the refusal explained none of that: it named the node, named the id it looked for,
+  and said the evidence was missing. It cost a diagnosis four times in three days. When the report
+  refuses and the working tree holds uncommitted paths that could carry the evidence, the refusal
+  now names the ref it read, what is uncommitted, and that committing settles it — without
+  claiming those files are the evidence, which it has not read. A clean tree adds nothing, and the
+  verdict is unchanged either way.
+
 - **A drifted rules file is no longer a dead end.** Kotta promises to keep `.kotta/AGENTS.md`
   current and to report a *hand-edited* copy as drifted rather than replacing it. Releasing 0.9.0
   broke both halves at once: the bump edited the one interpolated line by hand instead of letting
