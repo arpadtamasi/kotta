@@ -82,6 +82,48 @@ describe("the brief carries the way to reach Kotta", () => {
     expect(JSON.parse(run.stdout) as { ok: boolean }, "and it answers as Kotta").toMatchObject({ ok: true });
   }, 60_000);
 
+  test("the boundary rule names the call it depends on, and the call runs", () => {
+    const { root, id } = fixture("boundary");
+    const brief = say(attempt(root, ["task", "brief", id]));
+
+    // The header already told the agent that out-of-scope work is recorded, and never what to
+    // call. A rule stated without its means is a rule the agent cannot keep
+    // (BR-01m0r52vex4j22266nepm5yq8s, BR-01m0fp2hdkqz08arp5ebt122r9).
+    expect(brief, "the rule").toContain("Anything you notice outside this task's scope is recorded");
+    expect(brief, "and the means").toContain("observation new --title");
+
+    // Named in the same proved invocation as everything else the brief tells the agent to run, not
+    // as the bare name a non-interactive shell resolves to nothing.
+    const { command, args } = statedInvocation(brief);
+    const line = brief.split(/\r?\n/).find((candidate) => candidate.includes("observation new --title"))!;
+    expect(line.startsWith(`${command} ${args[0]}`), line).toBe(true);
+
+    // And it is a real command, not a plausible-looking string: spawned exactly as written, it
+    // records an observation. The environment keeps its PATH because writing canonical state takes
+    // the control-plane lock and commits, so this call needs git — that the interpreter and entry
+    // resolve without any PATH is the neighbouring test's claim, and it is what makes this one
+    // spawnable at all.
+    const recorded = spawnSync(command, [...args, "observation", "new", "--title", "Noticed outside the scope", "--type", "bug", "--evidence", "Seen while executing.", "--json"], {
+      cwd: root, encoding: "utf8",
+    });
+    expect(recorded.status, say(recorded)).toBe(0);
+    expect(say(attempt(root, ["observation", "list"]))).toContain("Noticed outside the scope");
+  });
+
+  test("the fixed header is not what the size warning tells you to split", () => {
+    const { root, id } = fixture("largest");
+    const report = JSON.parse(say(attempt(root, ["task", "brief", id, "--json"]))) as {
+      data: { largestSection: string; sections: Array<{ name: string; characters: number }> };
+    };
+
+    // The header's size stays visible...
+    const header = report.data.sections.find((section) => section.name === "header");
+    expect(header?.characters, "the header is measured and reported").toBeGreaterThan(0);
+    // ...but the warning's advice is "split it or sharpen it", which is advice about task content.
+    // The header is fixed text the CLI owns; it grows with Kotta, and a reader cannot act on it.
+    expect(report.data.largestSection).not.toBe("header");
+  });
+
   test("doctor answers the reachability question in both directions", () => {
     const { root } = fixture("doctor");
 

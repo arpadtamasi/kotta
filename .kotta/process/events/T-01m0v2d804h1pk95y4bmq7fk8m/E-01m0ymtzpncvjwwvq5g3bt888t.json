@@ -1,0 +1,14 @@
+{
+  "entity": "T-01m0v2d804h1pk95y4bmq7fk8m",
+  "task": "T-01m0v2d804h1pk95y4bmq7fk8m",
+  "kind": "approval",
+  "approval_id": "E-01m0ymtzpmwvre2a8cd7d5p5td",
+  "phase": "approved",
+  "action": "task.close",
+  "payload": {
+    "surface": "cli"
+  },
+  "source_message": "E-01m0ymtzpm1ew7tbhanx7189d3",
+  "id": "E-01m0ymtzpncvjwwvq5g3bt888t",
+  "created_at": "2026-08-26T09:01:24.053Z"
+}

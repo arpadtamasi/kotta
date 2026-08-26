@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **The brief names the command its own boundary rule depends on.** The fixed header told the
+  executing agent that work outside the task's scope is recorded rather than silently done — the
+  rule — and never what to call. An agent that has not read the skills, or runs on a host where
+  they are not installed, was told to do something and not told how. The header now names
+  `observation new` in the same proved invocation it already states for reaching Kotta, so the rule
+  arrives with its means. The fixed header also stopped being what the size warning tells you to
+  split: its size is still reported, but the advice — "split it or sharpen it" — is advice about
+  task content, and the header grows with Kotta rather than with the task.
+
 - **Attaching an observation names the task it attaches to.** The disposition's whole meaning is
   the work a noticing was folded into, and nothing stored one: `observation resolve` took
   `--disposition` and `--spec`, and only the `create-task` branch ever wrote a link. Measured on
