@@ -519,8 +519,9 @@ defineCommand("observation", "new")
   .requiredOption("--type <type>")
   .requiredOption("--evidence <evidence>")
   .option("--discovered-during <task>")
+  .option("--origin <origin>", "Whose noticing this is: human when relaying what the operator said, agent by default")
   .option("--json")
-  .action((options: { title: string; type: string; evidence: string; discoveredDuring?: string; json?: boolean }) => print(newObservation(options), Boolean(options.json)));
+  .action((options: { title: string; type: string; evidence: string; discoveredDuring?: string; origin?: string; json?: boolean }) => print(newObservation(options), Boolean(options.json)));
 defineCommand("observation", "validate <id>")
   .option("--json")
   .action((id: string, options: { json?: boolean }) => print(validateObservation(id), Boolean(options.json)));

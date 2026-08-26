@@ -311,6 +311,8 @@ Options:
   --type <type>
   --evidence <evidence>
   --discovered-during <task>
+  --origin <origin>           Whose noticing this is: human when relaying what
+                              the operator said, agent by default
   --json
   -h, --help                  display help for command
 
@@ -717,6 +719,13 @@ exports[`the surfaces Kotta exposes > the MCP tool surface, read from a live ser
         },
         "evidence": {
           "minLength": 1,
+          "type": "string",
+        },
+        "origin": {
+          "enum": [
+            "human",
+            "agent",
+          ],
           "type": "string",
         },
         "title": {

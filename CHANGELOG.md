@@ -8,6 +8,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **A noticing the human made is recorded as the human's.** 146 of Kotta's own 150 observations
+  carried `origin: agent`, and the four that did not came from migration — not agents defaulting,
+  but the only value the tool could write: `origin`, `confidence` and `severity` were literals in
+  `writeObservation` and no surface offered any of them. The operator's noticings are made in
+  passing, and stayed in the conversation they were said in. `observation new --origin human` and
+  the same field on `observation_create` record whose noticing it was; the default is unchanged,
+  an undeclared value is refused naming the two that exist, and the listing marks a human's
+  without marking every agent's. `severity` and `confidence` are deliberately left as they are:
+  nobody has ever been able to supply one, so there is no evidence about whether they earn their
+  place (F-01m0ypea8kn7shamp4a0t798a8).
+
+- **Capturing an observation from the chat no longer refuses as busy.** `observation_create`
+  wrapped its standalone branch in a control-plane lock and called a service that takes the same
+  lock, so the inner acquisition always found it held: the chat could capture an observation
+  attributed to a task and never a standalone one. The wrapper's commit was already the service's
+  own (F-01m0ypjk6gzymm0y51m96mmdaw).
+
 - **The brief names the command its own boundary rule depends on.** The fixed header told the
   executing agent that work outside the task's scope is recorded rather than silently done — the
   rule — and never what to call. An agent that has not read the skills, or runs on a host where

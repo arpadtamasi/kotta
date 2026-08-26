@@ -14,7 +14,7 @@ import { newObservation } from "./observation.js";
 import { statusCommand } from "./status.js";
 import { listCommand } from "./list.js";
 import { showCommand } from "./show.js";
-import { entityStates } from "../filesystem/entities.js";
+import { OBSERVATION_ORIGINS, entityStates } from "../filesystem/entities.js";
 import { readEvents } from "../core/events.js";
 import { assertCurrentWorkspaceShape, findRepositoryRoot } from "../filesystem/workspace.js";
 import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
@@ -235,17 +235,18 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
       type: z.string().min(1),
       evidence: z.string().min(1),
       discoveredDuring: z.string().optional(),
+      // The chat is where the operator's noticings are made, and where they were lost
+      // (UC-01m0f0wn89jqb5mpcjjt1j5j8p): relaying one says so rather than claiming it.
+      origin: z.enum(OBSERVATION_ORIGINS).optional(),
     },
     annotations: localWrite,
-  }, async ({ title, type, evidence, discoveredDuring }) => {
+  }, async ({ title, type, evidence, discoveredDuring, origin }) => {
     try {
-      const result = discoveredDuring
-        ? newObservation({ title, type, evidence, discoveredDuring }, root)
-        : withControlPlaneMutation(root, (controlRoot) => {
-          const created = newObservation({ title, type, evidence }, controlRoot);
-          commitControlState(controlRoot, `chore(kotta): capture ${created.data.id}`);
-          return created;
-        }, { requireClean: false });
+      // One lock, taken by the service. Wrapping this call in a second withControlPlaneMutation
+      // made the inner acquisition find the lock held by the outer one, so the standalone chat
+      // capture always refused as busy (F-01m0ypjk6gzymm0y51m96mmdaw); the wrapper's commit was
+      // already newObservation's own.
+      const result = newObservation({ title, type, evidence, discoveredDuring, origin }, root);
       return toolResult(result as unknown as ToolPayload, `Captured ${result.data.id} at ${result.data.path}.`);
     } catch (error) { return toolError(error); }
   });

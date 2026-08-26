@@ -283,6 +283,30 @@ describe("Kotta caller-chat MCP", () => {
     ]);
   });
 
+  test("the caller chat records the operator's own noticing as theirs", async () => {
+    const root = fixture();
+    const connected = await connect(root, "approve");
+
+    // The chat is where the operator's noticings are made, and where they were lost: the tool
+    // wrote origin as a literal, so an agent relaying what was said claimed it as its own
+    // (UC-01m0f0wn89jqb5mpcjjt1j5j8p).
+    const relayed = await connected.client.callTool({
+      name: "observation_create",
+      arguments: { title: "The board sorts by a column of one value", type: "process", evidence: "Said by the operator while triaging.", origin: "human" },
+    });
+    expect(relayed.isError, JSON.stringify(relayed.structuredContent ?? relayed.content)).not.toBe(true);
+
+    const own = await connected.client.callTool({
+      name: "observation_create",
+      arguments: { title: "The importer logs nothing", type: "bug", evidence: "Seen while reading the code." },
+    });
+    expect(own.isError).not.toBe(true);
+
+    const observations = readWorkspace(root).observations;
+    expect(observations.find((entry) => String(entry.title).startsWith("The board sorts"))).toMatchObject({ origin: "human" });
+    expect(observations.find((entry) => String(entry.title).startsWith("The importer"))).toMatchObject({ origin: "agent" });
+  });
+
   test("attaching an observation from the caller chat carries the task it attaches to", async () => {
     const root = fixture();
     const connected = await connect(root, "approve");
