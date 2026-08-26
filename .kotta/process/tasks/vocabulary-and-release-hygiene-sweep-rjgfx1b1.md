@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdnvvee6r2qsg7rjgfx1b1
 title: Vocabulary and release hygiene sweep
-status: defined
+status: active
 origin: human
 types:
   - docs
@@ -14,7 +14,7 @@ blocks: []
 spec:
   - BR-01m0zx29x1nvccpr4xwyhjr153
   - EX-01m0zx29x1pnyjsa5dyg4dc6n5
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-21'
 updated_at: '2026-08-26'
@@ -26,6 +26,12 @@ coverage:
     - EX-01m0zx29x1pnyjsa5dyg4dc6n5
   'No published surface names a version by hand where the package already declares one, so bumping the version is one edit and not four.':
     - BR-01m0zx29x1nvccpr4xwyhjr153
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 3e5c76b6c180829d6f4ad5a0f45f770e83ffe82c
 ---
 # T-01m0jdnvvee6r2qsg7rjgfx1b1 — Vocabulary and release hygiene sweep
 
