@@ -3,7 +3,7 @@ import { spawnSync } from "node:child_process";
 import { join, resolve } from "node:path";
 import { parse as parseYaml, stringify } from "yaml";
 import { findRepositoryRoot, regenerateIndex, workspaceDirectoryName, processPath } from "../filesystem/workspace.js";
-import { canonicalEntityId, findTask, listEntities } from "../filesystem/entities.js";
+import { canonicalEntityId, entityTitle, findTask, listEntities } from "../filesystem/entities.js";
 import { batchSubtreeComplete, batchTree, subtreeTasks } from "../filesystem/batches.js";
 import { entityFilename, mintId } from "../core/identity.js";
 import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
@@ -57,7 +57,7 @@ export function newTask(options: { title: string; type: string; profiles: string
   const content = `# ${id} — ${options.title}\n\n## Outcome\n\nDescribe the observable outcome.\n\n${profileSections ? `${profileSections}\n\n` : ""}## Scope\n\nDescribe what is included.\n\n## Non-goals\n\nDescribe what is excluded.\n\n## Acceptance\n\n- Define an observable condition.\n\n## Verification\n\n- Explain how acceptance will be checked.\n\n## Constraints\n\nNone.\n\n## Open decisions\n\nNone.\n\n## Execution notes\n\nNone.\n`;
   writeFileSync(path, renderMarkdown(data, content));
   regenerateIndex(root);
-  return { ok: true, command: "task new", data: { id, path } };
+  return { ok: true, command: "task new", data: { id, title: options.title, path } };
 }
 
 const DEFINITION_FIELDS = new Set(["id", "title", "types", "profiles", "priority", "risk", "depends_on", "blocks", "spec", "coverage"]);
@@ -153,6 +153,7 @@ export function defineTask(id: string, definition: string, repositoryRoot?: stri
     command: "task define",
     data: {
       id,
+      title: String(current.data.title ?? ""),
       path: destination,
       state: targetState,
       // A definition that validates is defined; there is no gate between here and starting.
@@ -190,7 +191,7 @@ export function validateTask(id: string, repositoryRoot?: string) {
   if (task.state !== "backlog" && !cancelled) {
     errors.push(...validateTaskCoverage(root, entity.data, entity.content, task.path));
   }
-  return { ok: errors.length === 0, command: "task validate", data: { id, state: task.state }, errors };
+  return { ok: errors.length === 0, command: "task validate", data: { id, title: entityTitle(task.path), state: task.state }, errors };
 }
 
 export interface StartTaskOptions {
@@ -342,7 +343,7 @@ export function startTask(
       ok: true,
       command: "task start",
       data: {
-        id, branch, worktree, startRef, startCommit,
+        id, title: entityTitle(task.path), branch, worktree, startRef, startCommit,
         dependencyIntegrationTarget: dependencyIntegrationTarget ?? null,
         executionMode,
         origin: adopting ? "adopted" : "created",
@@ -437,7 +438,7 @@ export function reviewTask(id: string, evidence: ReviewEvidenceInput, pullReques
     git(executionRoot, ["add", workspaceDirectoryName(executionRoot)]);
     git(executionRoot, ["commit", "-m", `chore(kotta): move ${id} lifecycle to control plane`]);
   }
-  return { ok: true, command: "task review", data: { id, pullRequest: pullRequest ?? null, controlRoot: root, adoptedLegacyState: legacy } };
+  return { ok: true, command: "task review", data: { id, title: entityTitle(task.path), pullRequest: pullRequest ?? null, controlRoot: root, adoptedLegacyState: legacy } };
   });
 }
 
@@ -482,7 +483,7 @@ export function closeTask(id: string, approved: boolean, repositoryRoot?: string
     }
   }
   if (options.commit !== false) commitControlState(root, `chore(kotta): close ${id}`);
-  return { ok: true, command: "task close", data: { id, resolution: "completed", controlRoot: root, adopted, preserved: adopted ? { branch, worktree } : null } };
+  return { ok: true, command: "task close", data: { id, title: entityTitle(task.path), resolution: "completed", controlRoot: root, adopted, preserved: adopted ? { branch, worktree } : null } };
   };
   return options.locked ? close(callerRoot) : withControlPlaneMutation(callerRoot, close);
 }
@@ -598,7 +599,7 @@ export function cancelTask(
   if (!options.approvalRecorded) appendCliApprovalAudit(root, canonicalId, "task.cancel", { resolution, reason: stated, superseded_by: superseding });
   if (!adopted && existsSync(worktree)) git(root, ["worktree", "remove", worktree]);
   if (options.commit !== false) commitControlState(root, `chore(kotta): cancel ${canonicalId} (${resolution})`);
-  return { ok: true, command: "task cancel", data: { id: canonicalId, resolution, reason: stated, supersededBy: superseding, path: task.path, claimReleased, branch, adopted, dependents } };
+  return { ok: true, command: "task cancel", data: { id: canonicalId, title: entityTitle(task.path), resolution, reason: stated, supersededBy: superseding, path: task.path, claimReleased, branch, adopted, dependents } };
   };
   return options.locked ? cancel(callerRoot) : withControlPlaneMutation(callerRoot, cancel);
 }
@@ -628,7 +629,7 @@ export function reopenTask(id: string, approved: boolean, repositoryRoot?: strin
   appendLifecycleEvent(root, id, changesRequested ? "active" : "backlog", changesRequested ? "Review changes requested; execution resumed." : "Terminal task reopened in backlog.");
   if (!options.approvalRecorded) appendCliApprovalAudit(root, id, changesRequested ? "task.request-changes" : "task.reopen");
   if (options.commit !== false) commitControlState(root, `chore(kotta): reopen ${id} for changes`);
-  return { ok: true, command: "task reopen", data: { id, state: changesRequested ? "active" : "backlog" } };
+  return { ok: true, command: "task reopen", data: { id, title: entityTitle(task.path), state: changesRequested ? "active" : "backlog" } };
   };
   return options.locked ? reopen(requestedRoot) : withControlPlaneMutation(requestedRoot, reopen);
 }

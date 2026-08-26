@@ -103,5 +103,5 @@ function publishDecision(root: string, source: string, requestedId: string | und
     if (existsSync(candidate)) unlinkSync(candidate);
     throw error;
   }
-  return { ok: true, command: "decision create", data: { id, path } };
+  return { ok: true, command: "decision create", data: { id, title: draft.title, path } };
 }

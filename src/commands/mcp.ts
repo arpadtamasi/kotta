@@ -16,7 +16,8 @@ import { sweep } from "./sweep.js";
 import { openQuestions } from "./questions.js";
 import { listCommand } from "./list.js";
 import { showCommand } from "./show.js";
-import { OBSERVATION_ORIGINS, entityStates } from "../filesystem/entities.js";
+import { OBSERVATION_ORIGINS, entityStates, entityTitleById } from "../filesystem/entities.js";
+import { named } from "../core/naming.js";
 import { readEvents } from "../core/events.js";
 import { assertCurrentWorkspaceShape, findRepositoryRoot } from "../filesystem/workspace.js";
 import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
@@ -190,7 +191,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
         commitControlState(controlRoot, `chore(kotta): capture ${created.data.id}`);
         return created;
       }, { requireClean: false });
-      return toolResult(result as unknown as ToolPayload, `Created ${result.data.id} at ${result.data.path}.`);
+      return toolResult(result as unknown as ToolPayload, `Created ${named(result.data.title, result.data.id)} at ${result.data.path}.`);
     } catch (error) { return toolError(error); }
   });
 
@@ -210,7 +211,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
         commitControlState(controlRoot, `chore(kotta): ${draft ? "draft" : "define"} ${id}`);
         return defined;
       }, { requireClean: false });
-      return toolResult(result as unknown as ToolPayload, `Updated ${id}; it is ${result.data.state}. ${result.data.nextStep}`);
+      return toolResult(result as unknown as ToolPayload, `Updated ${named(result.data.title, id)}; it is ${result.data.state}. ${result.data.nextStep}`);
     } catch (error) { return toolError(error); }
   });
 
@@ -222,7 +223,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
   }, async ({ id }) => {
     try {
       const result = validateTask(id, root);
-      return toolResult(result as unknown as ToolPayload, result.ok ? `${id} is valid.` : `${id} is invalid: ${result.errors.map((item) => item.message).join("; ")}`);
+      return toolResult(result as unknown as ToolPayload, result.ok ? `${named(result.data.title, id)} is valid.` : `${named(result.data.title, id)} is invalid: ${result.errors.map((item) => item.message).join("; ")}`);
     } catch (error) { return toolError(error); }
   });
 
@@ -246,7 +247,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
   }, async ({ id, agent }) => {
     try {
       const result = startTask(id, agent, "inherited", root);
-      return toolResult(result as unknown as ToolPayload, `Started ${id} for caller execution in ${result.data.worktree} on ${result.data.branch}.`);
+      return toolResult(result as unknown as ToolPayload, `Started ${named(result.data.title, id)} for caller execution in ${result.data.worktree} on ${result.data.branch}.`);
     } catch (error) { return toolError(error); }
   });
 
@@ -265,7 +266,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
   }, async ({ id, evidence, pullRequest, deviations, observationsCreated, knownConcerns }) => {
     try {
       const result = reviewTask(id, evidence, pullRequest, { deviations, observationsCreated, knownConcerns }, root);
-      return toolResult(result as unknown as ToolPayload, `Submitted ${id} for review${pullRequest ? ` in ${pullRequest}` : ""}.`);
+      return toolResult(result as unknown as ToolPayload, `Submitted ${named(result.data.title, id)} for review${pullRequest ? ` in ${pullRequest}` : ""}.`);
     } catch (error) { return toolError(error); }
   });
 
@@ -289,7 +290,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
       // capture always refused as busy (F-01m0ypjk6gzymm0y51m96mmdaw); the wrapper's commit was
       // already newObservation's own.
       const result = newObservation({ title, type, evidence, discoveredDuring, origin }, root);
-      return toolResult(result as unknown as ToolPayload, `Captured ${result.data.id} at ${result.data.path}.`);
+      return toolResult(result as unknown as ToolPayload, `Captured ${named(result.data.title, result.data.id)} at ${result.data.path}.`);
     } catch (error) { return toolError(error); }
   });
 
@@ -307,7 +308,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
   }, async ({ task, role, text, clientEventId, threadId }) => {
     try {
       const result = recordTaskMessage({ task, role, text, clientEventId, threadId }, root);
-      return toolResult(result as unknown as ToolPayload, `${result.data.created ? "Recorded" : "Already recorded"} ${role} message for ${task}.`);
+      return toolResult(result as unknown as ToolPayload, `${result.data.created ? "Recorded" : "Already recorded"} ${role} message for ${named(entityTitleById(root, task), task)}.`);
     } catch (error) { return toolError(error); }
   });
 
@@ -337,7 +338,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
         if (terminal) return toolResult({ ok: terminal.phase === "applied", approvalId, phase: terminal.phase, event: terminal }, `Approval ${approvalId} is already ${terminal.phase}.`);
       }
 
-      const description = approvalDescription(action as ApprovalAction, subject, payload);
+      const description = String(proposed.data.description);
       const detail = approvalDetail(action as ApprovalAction, payload);
       let elicited;
       try {

@@ -8,7 +8,8 @@ import { OBSERVATION_DISPOSITIONS as DISPOSITION_VALUES, findObservation, resolv
 import { appendEvent, approvalHistory, mintApprovalId, readEvents, type KottaEvent } from "../core/events.js";
 import { chatApprovalReceipt, type ApprovalReceipt } from "../core/approval-receipt.js";
 import { TASK_ID, OBSERVATION_ID, BATCH_ID, DECISION_ID, mintId } from "../core/identity.js";
-import { findTask } from "../filesystem/entities.js";
+import { entityTitleById, findTask } from "../filesystem/entities.js";
+import { named } from "../core/naming.js";
 import { findRepositoryRoot } from "../filesystem/workspace.js";
 import { commitControlState, withControlPlaneMutation } from "../git/control-plane.js";
 
@@ -109,20 +110,45 @@ function relatedTask(root: string, entity: string, action: ApprovalAction): stri
   return null;
 }
 
-export function approvalDescription(action: ApprovalAction, entity: string, payload: Record<string, unknown> = {}): string {
+/**
+ * The one line the human answers, in their language (QA-01m0fp2hdkq55yrx9qr5t8pweh,
+ * UC-01m0f0wn89p42025mt5vg5012n, BR-01m0f0wn89c50fe1mz5yn1nw85): what will happen, to what, named
+ * by title. Never an identifier — it is the machine's, and a permanent one is unreadable by
+ * construction. `title` is what the workspace holds for the entity; without one, its id is all
+ * there is to name it by, and saying that is better than saying nothing.
+ */
+/**
+ * A gate description names every entity it mentions, not only its subject: "attached to Ship the
+ * exporter" rather than "attached to T-01m0…". The workspace is read here, where it is already
+ * open, so the pure renderer below stays a renderer.
+ */
+function withReferencedTitles(root: string, payload: Record<string, unknown>): Record<string, unknown> {
+  const named: Record<string, unknown> = { ...payload };
+  for (const [field, titleField] of [["task", "taskTitle"], ["supersededBy", "supersededByTitle"]] as const) {
+    const reference = typeof payload[field] === "string" ? String(payload[field]).trim() : "";
+    if (reference && !named[titleField]) named[titleField] = entityTitleById(root, reference);
+  }
+  return named;
+}
+
+export function approvalDescription(action: ApprovalAction, entity: string, payload: Record<string, unknown> = {}, title?: string): string {
+  const subject = named(title, entity);
   if (action === "observation.resolve") {
-    const spec = Array.isArray(payload.spec) && payload.spec.length ? ` --spec ${payload.spec.map(String).join(",")}` : "";
-    const task = typeof payload.task === "string" && payload.task.trim() ? ` --task ${payload.task.trim()}` : "";
-    return `${action} ${entity} --disposition ${String(payload.disposition)}${spec}${task}`;
+    const spec = Array.isArray(payload.spec) && payload.spec.length ? `, amending ${payload.spec.map(String).join(", ")}` : "";
+    const task = typeof payload.task === "string" && payload.task.trim() ? `, attached to ${named(payload.taskTitle, payload.task.trim())}` : "";
+    return `Resolve "${subject}" as ${String(payload.disposition)}${spec}${task}`;
   }
   if (action === "task.cancel") {
-    const superseded = typeof payload.supersededBy === "string" && payload.supersededBy.trim() ? ` --superseded-by ${payload.supersededBy.trim()}` : "";
-    return `${action} ${entity} --resolution ${String(payload.resolution)}${superseded} --reason "${String(payload.reason)}"`;
+    const superseded = typeof payload.supersededBy === "string" && payload.supersededBy.trim() ? `, superseded by ${named(payload.supersededByTitle, payload.supersededBy.trim())}` : "";
+    return `Cancel "${subject}" as ${String(payload.resolution)}${superseded} — ${String(payload.reason)}`;
   }
   // What the human is answering about is the decision's own words, so the description carries its
   // title rather than a command they could not read the consequence from.
-  if (action === "decision.create") return `${action} ${entity} — ${decisionTitle(String(payload.source ?? ""))}`;
-  return `${action} ${entity}`;
+  if (action === "decision.create") return `Record the decision "${decisionTitle(String(payload.source ?? ""))}"`;
+  if (action === "task.close") return `Close "${subject}" as completed`;
+  if (action === "task.request-changes") return `Request changes on "${subject}"`;
+  if (action === "batch.close") return `Close the batch "${subject}"`;
+  return `${action} ${subject}`;
 }
 
 /**
@@ -220,7 +246,7 @@ export function proposeApproval(options: {
     const existing = options.clientRequestId
       ? readEvents(root, options.entity).find((event) => event.kind === "approval" && event.client_event_id === options.clientRequestId)
       : undefined;
-    if (existing) return { ok: true, command: "approval propose", data: { event: existing, created: false, description: approvalDescription(action, options.entity, payload) } };
+    if (existing) return { ok: true, command: "approval propose", data: { event: existing, created: false, description: approvalDescription(action, options.entity, withReferencedTitles(root, payload), entityTitleById(root, options.entity)) } };
     assertApplicable(root, options.entity, action);
     const events = readEvents(root, options.entity);
     // One entity carries one undecided approval (BR-01m0vqr9k5ypcztw4v0ns2qa6a,
@@ -242,7 +268,7 @@ export function proposeApproval(options: {
       client_event_id: options.clientRequestId ?? null,
     });
     commitControlState(root, `chore(kotta): propose ${action} for ${options.entity}`);
-    return { ok: true, command: "approval propose", data: { event: result.event, created: result.created, description: approvalDescription(action, options.entity, payload) } };
+    return { ok: true, command: "approval propose", data: { event: result.event, created: result.created, description: approvalDescription(action, options.entity, withReferencedTitles(root, payload), entityTitleById(root, options.entity)) } };
   }, { requireClean: false });
 }
 

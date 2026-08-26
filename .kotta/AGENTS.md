@@ -134,7 +134,10 @@ terminal. `kotta ui` only displays the resulting canonical state and timeline.
    `approval_request` with `decision.create`, which carries the draft's text into the question.
 5. **Approval is a human gate — ask for it here, in the conversation.** Put the decision to the
    human in chat, in their language: what will happen, named by **title**, one line, then a plain
-   yes or no. Never an id, never a command for them to go and run. On an explicit yes **in this
+   yes or no. Never an id, never a command for them to go and run. This is how you write about
+   every entity in the conversation, not only at a gate: name it by its title, and reach for an
+   identifier only where the human will type it back or where nothing else identifies it. A
+   permanent id is unreadable by construction — that is what makes it a good key and a bad name. On an explicit yes **in this
    conversation, for this exact decision**, you may run the command with `--approve` yourself; the
    receipt Kotta records is what makes it durable. Anything less than an explicit yes is a no:
    silence, a yes to a different question, an earlier unrelated yes, or your own judgement that

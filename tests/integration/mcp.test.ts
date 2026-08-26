@@ -116,7 +116,9 @@ async function createAndDefine(client: Client, root: string) {
   const created = await client.callTool({ name: "task_create", arguments: { title: "Caller chat task", type: "feature", profiles: [] } });
   const id = String((created.structuredContent as { data: { id: string } }).data.id);
   expect(id).toMatch(/^T-/);
-  expect(created.content).toEqual(expect.arrayContaining([expect.objectContaining({ text: expect.stringContaining(id) })]));
+  // The sentence a chat reads names the entity by title; the id it needs is in the structured
+  // payload beside it (BR-01m0f0wn89c50fe1mz5yn1nw85).
+  expect(created.content).toEqual(expect.arrayContaining([expect.objectContaining({ text: expect.stringContaining("Caller chat task") })]));
   expect(readWorkspace(root).tasks.some((task) => task.id === id)).toBe(true);
   expect(execFileSync("git", ["status", "--porcelain", "--", ".kotta"], { cwd: root, encoding: "utf8" })).toBe("");
   const defined = await client.callTool({ name: "task_define", arguments: { id, definition: definition(id) } });
@@ -212,7 +214,9 @@ describe("Kotta caller-chat MCP", () => {
       arguments: { entity: id, action: "task.close", payload: {}, clientRequestId: "close-once" },
     });
     expect(approval.isError).not.toBe(true);
-    expect(JSON.stringify(connected.prompt())).toContain(`task.close ${id}`);
+    // The gate names the judgement by title, never by id (QA-01m0fp2hdkq55yrx9qr5t8pweh).
+    expect(JSON.stringify(connected.prompt())).toContain("Close \\\"Caller chat task\\\"");
+    expect(JSON.stringify(connected.prompt())).not.toContain(id);
     expect(findTask(root, id).state).toBe("done");
     const events = readEvents(root, id);
     expect(events.filter((event) => event.kind === "approval").map((event) => event.phase)).toEqual(["proposed", "approved", "applied"]);
@@ -267,7 +271,10 @@ describe("Kotta caller-chat MCP", () => {
     });
 
     expect(resolved.isError).not.toBe(true);
-    expect(JSON.stringify(connected.prompt())).toContain(`--spec ${specId}`);
+    // The human still sees exactly which specification nodes the disposition would amend, now in a
+    // sentence rather than as the command that would do it.
+    expect(JSON.stringify(connected.prompt())).toContain(specId);
+    expect(JSON.stringify(connected.prompt())).toContain("amend-spec");
     expect(readWorkspace(root).observations.find((observation) => observation.id === id)).toMatchObject({
       status: "resolved",
       disposition: "amend-spec",
@@ -335,8 +342,8 @@ describe("Kotta caller-chat MCP", () => {
       arguments: { entity: observation, action: "observation.resolve", payload: { disposition: "attach-to-existing-task", task: id } },
     });
     expect(attached.isError).not.toBe(true);
-    // The human is shown which task, not only which command.
-    expect(JSON.stringify(connected.prompt())).toContain(`--task ${id}`);
+    // The human is shown which task, by the name it carries rather than by its id.
+    expect(JSON.stringify(connected.prompt())).toContain("attached to Caller chat task");
     expect(readWorkspace(root).observations.find((entry) => entry.id === observation)).toMatchObject({
       status: "resolved",
       disposition: "attach-to-existing-task",

@@ -208,6 +208,22 @@ export function listEntities(root: string, entity: ListableEntity, states?: stri
  * Ambiguity is refused rather than resolved: two entities behind one short form is a
  * question for the operator, and silently picking one is the worse failure.
  */
+/**
+ * The title of any entity the workspace holds, or "" when it has none to give. The prefix names the
+ * kind, so a lookup reads one directory rather than the workspace (BR-01m0f0wn89c50fe1mz5yn1nw85).
+ */
+export function entityTitleById(root: string, id: string): string {
+  const trimmed = id.trim();
+  const byPrefix: Record<string, ListableEntity> = { T: "task", F: "observation", P: "batch", D: "decision" };
+  // An imported O- id predates the split and can name either kind, so both are asked.
+  const kinds = trimmed.startsWith("O-") ? (["task", "observation"] as const) : [byPrefix[trimmed[0]] ?? "task"];
+  for (const kind of kinds) {
+    const found = listEntities(root, kind).find((entity) => entity.id === trimmed);
+    if (found?.title) return found.title;
+  }
+  return "";
+}
+
 export function canonicalEntityId(root: string, entity: ListableEntity, id: string): string {
   const trimmed = id.trim();
   const matches = [...new Set(listEntities(root, entity).map((found) => found.id))]
@@ -219,7 +235,7 @@ export function canonicalEntityId(root: string, entity: ListableEntity, id: stri
   return trimmed;
 }
 
-function entityTitle(path: string): string {
+export function entityTitle(path: string): string {
   try {
     const title = parseMarkdown(readFileSync(path, "utf8")).data.title;
     return typeof title === "string" ? title.trim() : "";

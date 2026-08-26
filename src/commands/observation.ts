@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { findRepositoryRoot, regenerateIndex, processPath } from "../filesystem/workspace.js";
-import { OBSERVATION_ORIGINS, canonicalEntityId, findTask, listEntities, stateFromEntityFile } from "../filesystem/entities.js";
+import { OBSERVATION_ORIGINS, canonicalEntityId, entityTitle, findTask, listEntities, stateFromEntityFile } from "../filesystem/entities.js";
 import { entityFilename, filenameMatchesId, mintId } from "../core/identity.js";
 import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
 import { newTask } from "./task.js";
@@ -95,7 +95,7 @@ function writeObservation(root: string, options: { title: string; type: string; 
   const path = join(directory, filename);
   writeFileSync(path, renderMarkdown(data, content));
   regenerateIndex(root);
-  return { ok: true, command: "observation new", data: { id, path } };
+  return { ok: true, command: "observation new", data: { id, title: options.title, path } };
 }
 
 export function validateObservation(id: string, repositoryRoot?: string) {
@@ -184,7 +184,7 @@ export function resolveObservation(id: string, disposition: string, approved: bo
       ...(disposition === "amend-spec" ? { spec } : {}),
     }, typeof entity.data.discovered_during === "string" ? entity.data.discovered_during : null);
     if (options.commit !== false) commitControlState(root, `chore(kotta): resolve ${id}`);
-    return { ok: true, command: "observation resolve", data: { id, disposition, taskId, spec: disposition === "amend-spec" ? spec : undefined } };
+    return { ok: true, command: "observation resolve", data: { id, title: entityTitle(observation.path), disposition, taskId, spec: disposition === "amend-spec" ? spec : undefined } };
   };
   return options.locked ? resolveInControlPlane(requestedRoot) : withControlPlaneMutation(requestedRoot, resolveInControlPlane, { requireClean: false });
 }

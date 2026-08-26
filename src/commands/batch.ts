@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { findRepositoryRoot, regenerateIndex, workspaceDirectoryName, processPath } from "../filesystem/workspace.js";
-import { findTask, listEntities, resolveEffectiveTask } from "../filesystem/entities.js";
+import { entityTitle, findTask, listEntities, resolveEffectiveTask } from "../filesystem/entities.js";
 import { batchTree, findBatch, openSubtreeMembers, subtreeTasks, type BatchTree } from "../filesystem/batches.js";
 import { BATCH_ID, entityFilename, mintId } from "../core/identity.js";
 import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
@@ -115,7 +115,7 @@ export function newBatch(options: { title: string; goal?: string; parallelism?: 
   const path = join(directory, filename);
   writeFileSync(path, renderMarkdown(data, content));
   regenerateIndex(root);
-  return { ok: true, command: "batch new", data: { id, path } };
+  return { ok: true, command: "batch new", data: { id, title, path } };
 }
 
 /**
@@ -229,7 +229,7 @@ export function validateBatch(id: string, repositoryRoot?: string) {
       state = "defined";
     }
   }
-  return { ok: errors.length === 0, command: "batch validate", data: { id, state, waves, children, warnings }, errors };
+  return { ok: errors.length === 0, command: "batch validate", data: { id, title: entityTitle(batch.path), state, waves, children, warnings }, errors };
 }
 
 /** Resolves the coordinator branch the batch must run on, creating or adopting it when safe. */
@@ -420,7 +420,7 @@ export function closeBatch(id: string, approved: boolean, repositoryRoot?: strin
   const entity = parseMarkdown(readFileSync(batch.path, "utf8"));
   const data = entity.data as BatchData;
   // Re-running on a finished batch is a no-op, so a retried coordinator never has to guess.
-  if (batch.state === "done") return { ok: true, command: "batch close", data: { id, status: "done", path: batch.path, changed: false } };
+  if (batch.state === "done") return { ok: true, command: "batch close", data: { id, title: entityTitle(batch.path), status: "done", path: batch.path, changed: false } };
   if (!approved) throw new Error(`Human close approval is required. Re-run with --approve after verifying every task of ${id} is complete.`);
   // A parent is finished when its whole subtree is. The automatic completion a closing task
   // triggers asks the same question, so the two paths cannot drift apart.
@@ -440,7 +440,7 @@ export function closeBatch(id: string, approved: boolean, repositoryRoot?: strin
     git(root, ["add", workspaceDirectoryName(root)]);
     git(root, ["commit", "-m", `chore(kotta): close batch ${id}`]);
   }
-  return { ok: true, command: "batch close", data: { id, status: "done", path: batch.path, changed: true } };
+  return { ok: true, command: "batch close", data: { id, title: entityTitle(batch.path), status: "done", path: batch.path, changed: true } };
 }
 
 /** Opt-in, post-integration cleanup. Every precondition is recomputed here; nothing is forced. */

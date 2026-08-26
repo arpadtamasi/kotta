@@ -29,6 +29,7 @@ import { doctorCommand } from "../commands/doctor.js";
 import { syncCommand } from "../commands/sync.js";
 import { gapReport } from "../commands/gap.js";
 import { displayId } from "../core/identity.js";
+import { named, namedWithId } from "../core/naming.js";
 
 const program = new Command();
 const packagePath = fileURLToPath(new URL("../../package.json", import.meta.url));
@@ -111,9 +112,9 @@ function renderGapReport(result: unknown): string {
     }
 
 function renderTaskStart(result: unknown): string {
-      const data = (result as { data: { id: unknown; branch: unknown; worktree: unknown; startRef: unknown; startCommit: unknown; nextStep: unknown; executionMode?: unknown; callerStep?: unknown } }).data;
+      const data = (result as { data: { id: unknown; title?: unknown; branch: unknown; worktree: unknown; startRef: unknown; startCommit: unknown; nextStep: unknown; executionMode?: unknown; callerStep?: unknown } }).data;
       return [
-        `Started ${String(data.id)} from ${String(data.startRef)} at ${String(data.startCommit)}: branch ${String(data.branch)}, worktree ${String(data.worktree)}.`,
+        `Started ${namedWithId(data.title, String(data.id))} from ${String(data.startRef)} at ${String(data.startCommit)}: branch ${String(data.branch)}, worktree ${String(data.worktree)}.`,
         data.executionMode === "inherited"
           ? `Execution mode: inherited context — ${String(data.callerStep)}`
           : `Next: run the task in a fresh agent context (D-009) — ${String(data.nextStep)}.`,
@@ -140,8 +141,8 @@ function renderEntityShow(result: unknown): string {
 }
 
 function renderTaskCreated(result: unknown): string {
-      const data = (result as { data: { id: unknown; path: unknown } }).data;
-      return `Created task ${String(data.id)} at ${String(data.path)}.`;
+      const data = (result as { data: { id: unknown; title?: unknown; path: unknown } }).data;
+      return `Created task ${namedWithId(data.title, String(data.id))} at ${String(data.path)}.`;
     }
 
 function renderStatus(result: unknown): string {
@@ -170,8 +171,8 @@ function renderStatus(result: unknown): string {
     }
 
 function renderDecisionCreated(result: unknown): string {
-  const data = (result as { data: { id: unknown; path: unknown } }).data;
-  return `Recorded decision ${String(data.id)} at ${String(data.path)}.`;
+  const data = (result as { data: { id: unknown; title?: unknown; path: unknown } }).data;
+  return `Recorded decision ${namedWithId(data.title, String(data.id))} at ${String(data.path)}.`;
 }
 
 function renderSync(result: unknown): string {
@@ -266,6 +267,20 @@ function renderFailure(command: string, result: unknown): string {
   return [`kotta ${command} failed with ${listed.length === 1 ? "1 error" : `${listed.length} errors`}:`, ...lines].join("\n");
 }
 
+/**
+ * What happened, and to what. A command with no renderer of its own still names the entity it acted
+ * on (BR-01m0f0wn89c50fe1mz5yn1nw85): `kotta task close completed.` told the reader neither which
+ * task closed nor how, which is the same failure as printing an id, in its weakest form.
+ */
+function completion(command: string, result: unknown): string {
+  const data = (result as { data?: { id?: unknown; title?: unknown; state?: unknown; resolution?: unknown } }).data;
+  const id = typeof data?.id === "string" ? data.id : "";
+  if (!id) return `kotta ${command} completed.`;
+  const state = typeof data?.state === "string" && data.state ? ` It is ${data.state}.` : "";
+  const resolution = typeof data?.resolution === "string" && data.resolution ? ` Resolution: ${data.resolution}.` : "";
+  return `kotta ${command}: ${namedWithId(data?.title, id)}.${state}${resolution}`;
+}
+
 function humanize(result: unknown): string {
   if (typeof result === "object" && result && "command" in result) {
     const command = String((result as { command: unknown }).command);
@@ -278,7 +293,7 @@ function humanize(result: unknown): string {
       const failure = renderFailure(command, result);
       return render ? `${render(result)}\n\n${failure}` : failure;
     }
-    return render ? render(result) : `kotta ${command} completed.`;
+    return render ? render(result) : completion(command, result);
   }
   return String(result);
 }

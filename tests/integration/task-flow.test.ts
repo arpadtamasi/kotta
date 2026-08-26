@@ -28,7 +28,9 @@ describe("task execution vertical slice", () => {
     acceptFixtureSpec(repository);
     const created = spawnSync("node", [cli, "task", "new", "--title", "Visible id", "--type", "feature"], { cwd: repository, encoding: "utf8" });
     expect(created.status).toBe(0);
-    expect(created.stdout).toMatch(/^Created task T-[0-9a-hjkmnp-tv-z]{26} at .+\.md\.\n$/);
+    // The title leads, because it is what a human reads; the id follows in the short form the CLI
+    // accepts back (BR-01m0f0wn89c50fe1mz5yn1nw85).
+    expect(created.stdout).toMatch(/^Created task Visible id \(T-[0-9a-hjkmnp-tv-z]{8}\) at .+\.md\.\n$/);
     expect(created.stdout).not.toBe("kotta task new completed.\n");
   });
 
