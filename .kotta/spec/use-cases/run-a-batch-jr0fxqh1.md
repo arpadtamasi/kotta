@@ -21,7 +21,7 @@ A validated leaf batch of defined tasks; the control checkout on the base branch
 
 ## Main success scenario
 
-Batch start creates the coordinator branch coord/<id> in its own worktree, records the baseline, and releases the first wave within the configured parallelism. Each completed dependency releases the next wave, created from the coordinator's current commit. Completing the last member completes the batch; after the coordinator merges, finalize proves safety by Git ancestry and cleans up.
+Batch start creates the coordinator branch coord/<id> in its own worktree, records the baseline, and releases the first wave within the configured parallelism. The parallelism bounds how many members the batch holds at once, not how many one release may start (D-01m0zhkpw7v7pq322pg5nycf1d): a release counts what is already running against the budget and starts nothing when it is spent, so starting a batch twice cannot exceed the concurrency its operator configured. A member already running is reported as running; only a member the batch has not released is waiting. Each completed dependency releases the next wave, created from the coordinator's current commit. Completing the last member completes the batch; after the coordinator merges, finalize proves safety by Git ancestry and cleans up.
 
 ## Alternatives
 
