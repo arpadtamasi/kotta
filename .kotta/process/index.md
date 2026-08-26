@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- T-024-entitas-nyitott-kerdesei-elso-osztalyu-lista-ticketen-packag
+None.
 
 ## Review
 
-None.
+- T-024-entitas-nyitott-kerdesei-elso-osztalyu-lista-ticketen-packag
 
 ## Blocked
 

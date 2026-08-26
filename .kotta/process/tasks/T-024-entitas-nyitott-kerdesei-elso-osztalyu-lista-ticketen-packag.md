@@ -1,7 +1,7 @@
 ---
 id: T-024
 title: 'Entitás nyitott kérdései: első osztályú lista ticketen, package-en, findingon'
-status: active
+status: review
 origin: human
 types:
   - feature
@@ -102,3 +102,33 @@ None.
 The capture's fifth acceptance condition named a `crm-kit` workspace as the real proof. That workspace does not exist in this repository and never has; the honest equivalent is this one, so the condition was replaced by the migration proof over Kotta's own entities. The rest of the capture is carried as written.
 
 The capture asks for a "stable" position. Document order is what a plain-markdown format can give, and it is stable against the operation that matters — answering, since answered questions stay in place. That limit is stated in the constraint rather than papered over.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| An entity's open questions are enumerated from its own text: three questions marked in a task are listed as exactly three, each with the position that addresses it and the text it asks, and a task whose section denies any is listed as none. | run: npx vitest run tests/unit/questions.test.ts — verified: exit 0 at 2a43735 |
+| A question naming an existing decision is answered: it is reported resolved with that decision, it does not block defining, and it stays where it stood rather than being removed. An unresolved question refuses defining naming which positions are still open. | run: npx vitest run tests/integration/questions.test.ts -t 'refused by position\|answering the rest\|does not hold' — verified: exit 0 at 2a43735 |
+| The workspace-wide listing gathers from every entity kind whose form carries the section, groups by entity, and puts the questions that block defining before the rest. | run: npx vitest run tests/integration/questions.test.ts -t 'groups by entity\|every entity kind' — verified: exit 0 at 2a43735 |
+| The board shows an entity's open questions as their own panel, and selecting one carries the reader to where that question is written in the entity. | run: npx vitest run tests/ui/open-questions.test.tsx — verified: exit 0 at 2a43735 |
+| Kotta's own workspace is the migration proof: every entity that exists today validates exactly as it did before, because a section that denies open questions is the empty enumeration and no entity is rewritten to gain the feature. | run: npx vitest run tests/integration/questions.test.ts -t "Kotta's own entities" — verified: exit 0 at 2a43735 |
+
+### Verification performed
+
+An entity's open questions are enumerated from its own text: three questions marked in a task are listed as exactly three, each with the position that addresses it and the text it asks, and a task whose section denies any is listed as none.: run: npx vitest run tests/unit/questions.test.ts
+A question naming an existing decision is answered: it is reported resolved with that decision, it does not block defining, and it stays where it stood rather than being removed. An unresolved question refuses defining naming which positions are still open.: run: npx vitest run tests/integration/questions.test.ts -t 'refused by position|answering the rest|does not hold'
+The workspace-wide listing gathers from every entity kind whose form carries the section, groups by entity, and puts the questions that block defining before the rest.: run: npx vitest run tests/integration/questions.test.ts -t 'groups by entity|every entity kind'
+The board shows an entity's open questions as their own panel, and selecting one carries the reader to where that question is written in the entity.: run: npx vitest run tests/ui/open-questions.test.tsx
+Kotta's own workspace is the migration proof: every entity that exists today validates exactly as it did before, because a section that denies open questions is the empty enumeration and no entity is rewritten to gain the feature.: run: npx vitest run tests/integration/questions.test.ts -t "Kotta's own entities"
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
