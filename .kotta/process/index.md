@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- a-gap-refusal-says-when-uncommitted-work-is-the-reason-6b4q8b91
+None.
 
 ## Active tasks
 
-None.
+- a-gap-refusal-says-when-uncommitted-work-is-the-reason-6b4q8b91
 
 ## Review
 

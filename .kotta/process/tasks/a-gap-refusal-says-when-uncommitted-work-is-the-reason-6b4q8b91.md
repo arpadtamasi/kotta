@@ -1,7 +1,7 @@
 ---
 id: T-01m0xraxm6k5mbbr266b4q8b91
 title: A gap refusal says when uncommitted work is the reason
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -14,7 +14,7 @@ blocks: []
 spec:
   - IF-01m0f0wn8994dzf9z1sdygxa04
   - UC-01m0fpqfxjvet99wbz0v1ag64q
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-26'
 updated_at: '2026-08-26'
@@ -25,6 +25,12 @@ coverage:
     - IF-01m0f0wn8994dzf9z1sdygxa04
   'The report stays deterministic and still writes nothing. The added sentence is derived from the same repository, the exit status is decided by the same rule as before, and a passing report gains nothing.':
     - UC-01m0fpqfxjvet99wbz0v1ag64q
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 4dda185b6717638d87221f53ead41c112b668dd3
 ---
 ## Outcome
 
