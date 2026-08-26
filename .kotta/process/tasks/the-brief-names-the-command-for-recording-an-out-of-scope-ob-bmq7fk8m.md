@@ -1,7 +1,7 @@
 ---
 id: T-01m0v2d804h1pk95y4bmq7fk8m
 title: The brief names the command for recording an out-of-scope observation
-status: active
+status: review
 origin: human
 types:
   - feature
@@ -64,3 +64,27 @@ None.
 ## Execution notes
 
 The header is assembled in `briefTask` in `src/commands/task.ts`; the boundary sentence is the paragraph beginning "This brief is the complete intent context". `tests/integration/brief-reachability.test.ts` covers the `- kotta:` line and is where this belongs.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| The brief's fixed header names the observation command, so the boundary rule states both what to do and how. | run: npx vitest run tests/integration/brief-reachability.test.ts -t 'names the call it depends on' — verified: exit 0 at 91b3044 |
+| The brief stays deterministic: two runs on the same workspace produce identical bytes. | run: npx vitest run tests/integration/brief-reachability.test.ts tests/integration/task-execute.test.ts -t 'brief' — verified: exit 0 at 91b3044 |
+
+### Verification performed
+
+The brief's fixed header names the observation command, so the boundary rule states both what to do and how.: run: npx vitest run tests/integration/brief-reachability.test.ts -t 'names the call it depends on'
+The brief stays deterministic: two runs on the same workspace produce identical bytes.: run: npx vitest run tests/integration/brief-reachability.test.ts tests/integration/task-execute.test.ts -t 'brief'
+
+### Deviations
+
+One change beyond the stated Scope, which the task's own Constraints required: the fixed header no longer counts toward largestSection. The constraint said it must not, and it did — adding two lines made a nonsensical warning ('split the header') marginally likelier. Its size stays visible in sections; only the number that carries advice excludes it.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
