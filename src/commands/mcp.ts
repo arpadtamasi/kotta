@@ -12,6 +12,7 @@ import { recordTaskMessage } from "./conversation.js";
 import { briefTask, defineTask, newTask, reviewTask, startTask, validateTask } from "./task.js";
 import { newObservation } from "./observation.js";
 import { statusCommand } from "./status.js";
+import { sweep } from "./sweep.js";
 import { listCommand } from "./list.js";
 import { showCommand } from "./show.js";
 import { OBSERVATION_ORIGINS, entityStates } from "../filesystem/entities.js";
@@ -80,6 +81,28 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     try {
       const result = statusCommand(root);
       return toolResult(result as unknown as ToolPayload, `Kotta has ${result.data.activeTasks.length} active, ${result.data.definedTasks.length} defined, and ${result.data.reviewTasks.length} review tasks.`);
+    } catch (error) { return toolError(error); }
+  });
+
+  define("workspace_sweep", {
+    title: "Report what has stopped in the Kotta workspace",
+    description: "Derive the unfinished work and why it stopped: each item carries the reason and the one action that would move it. Reads only; writes nothing.",
+    inputSchema: {
+      stalledHours: z.number().optional(),
+      undispositionedDays: z.number().optional(),
+    },
+    annotations: readOnly,
+  }, async ({ stalledHours, undispositionedDays }) => {
+    try {
+      const result = sweep(root, {
+        ...(stalledHours === undefined ? {} : { stalledHours }),
+        ...(undispositionedDays === undefined ? {} : { undispositionedDays }),
+      });
+      const { items, counts } = result.data;
+      const summary = items.length
+        ? `${items.length} stopped: ${Object.entries(counts).map(([category, count]) => `${category} ${count}`).join(", ")}.`
+        : "Nothing has stopped.";
+      return toolResult(result as unknown as ToolPayload, summary);
     } catch (error) { return toolError(error); }
   });
 

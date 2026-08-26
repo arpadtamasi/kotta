@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **`kotta sweep` answers what has stopped, and why.** `status` gives three counts; the question
+  actually asked — *what is not finished, and why* — was re-derived by hand every time, six times
+  in one session. Sweep derives it from tasks, batches, observations, claims and Git, and gives
+  each item the reason it stopped and the one action that would move it: `waiting-on-you`,
+  `stalled`, `undeclared-deviation`, `dangling-batch`, `never-started`, `drift`,
+  `undispositioned`, ranked by what standing still costs and oldest first inside each. It writes
+  nothing, runs where `validate` refuses, names the threshold whenever an age decided, and keeps
+  the default to a screen — a category with more than three shows the oldest and counts the rest
+  by name, with `--json` carrying everything. Asked for as T-019 on 2026-08-01.
+
+  Its first honest run on this workspace found what it was built to find: two approvals proposed
+  three weeks ago that the work went around and nothing can now close
+  (F-01m0yta2mqnm3pw84vg6rrrhtc), and 29 tasks closed with a declared deviation that no
+  observation records (F-01m0ytmp2fpw8kzn5n17sdgc5a).
+
 ### Fixed
 
 - **A noticing the human made is recorded as the human's.** 146 of Kotta's own 150 observations

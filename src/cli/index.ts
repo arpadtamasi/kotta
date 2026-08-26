@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { initCommand } from "../commands/init.js";
+import { sweep, SWEEP_CATEGORIES, type SweepItem } from "../commands/sweep.js";
 import { REPLACE_RULES_REMEDY, type WorkspaceAgentsState } from "../commands/agents.js";
 import { expandOperations } from "../core/operations.js";
 import { briefTask, cancelTask, closeTask, defineTask, newTask, reopenTask, reviewTask, startTask, validateTask } from "../commands/task.js";
@@ -45,6 +46,42 @@ type ProjectAgentsSummary = { path: string; state: "created" | "linked" | "migra
  * What happened to the rules file, and — when the project's own AGENTS.md was left alone — the exact
  * line to add, so the agent asking the human can quote it instead of inventing one.
  */
+/**
+ * Short by default, because a sweep that has to be scrolled fails at the thing it exists for. An
+ * empty category is omitted rather than printed as a zero, and `--json` is where completeness lives
+ * (UC-01m0f0wn89m98wpkqq8e5c9p6p).
+ */
+function renderSweep(result: unknown): string {
+  const data = (result as { data: { items: SweepItem[]; thresholds: { stalledHours: number; undispositionedDays: number }; unreadable: string[] } }).data;
+  if (!data.items.length) {
+    return `Nothing has stopped. Thresholds: ${data.thresholds.stalledHours}h without a commit, ${data.thresholds.undispositionedDays}d undispositioned.`;
+  }
+  const lines: string[] = [];
+  // A sweep that has to be scrolled fails at the thing it exists for, and a category can run to
+  // dozens. The oldest few are shown and the rest are counted — named, never silently dropped.
+  const SHOWN_PER_CATEGORY = 3;
+  for (const category of SWEEP_CATEGORIES) {
+    const group = data.items.filter((item) => item.category === category);
+    if (!group.length) continue;
+    lines.push(`${category} (${group.length})`);
+    for (const item of group.slice(0, SHOWN_PER_CATEGORY)) {
+      const age = item.ageDays === null ? "" : ` · ${item.ageDays}d`;
+      lines.push(`  ${displayId(item.id)}${age}  ${truncate(item.title, 52)}`);
+      lines.push(`      ${item.reason}`);
+      lines.push(`      → ${item.action}`);
+    }
+    const hidden = group.length - SHOWN_PER_CATEGORY;
+    if (hidden > 0) lines.push(`  … ${hidden} more, oldest first; kotta sweep --json for all of them`);
+  }
+  if (data.unreadable.length) lines.push(`${data.unreadable.length} entities could not be read; sweep reports them and does not stop.`);
+  return lines.join("\n");
+}
+
+/** A title long enough to recognise, short enough to keep one item to one line. */
+function truncate(text: string, width: number): string {
+  return text.length <= width ? text : `${text.slice(0, width - 1)}…`;
+}
+
 function agentsLines(agents: AgentsSummary | undefined, project: ProjectAgentsSummary | undefined, pointer: string | null | undefined): string[] {
   const lines: string[] = [];
   if (agents) {
@@ -392,6 +429,16 @@ defineCommand(null, "init", renderInit)
   .option("--link-agents", "Link the project's AGENTS.md to the workspace rules, migrating a recognized legacy Kotta prelude after the human said yes")
   .option("--json")
   .action((options: { projectName?: string; linkAgents?: boolean; json?: boolean }) => print(initCommand(options.projectName, { linkAgents: options.linkAgents }), Boolean(options.json)));
+
+defineCommand(null, "sweep", renderSweep)
+  .description("Report what has stopped, why, and the one action that would move it")
+  .option("--stalled-hours <hours>", "Hours without a commit after which an active task counts as stalled")
+  .option("--undispositioned-days <days>", "Days in new after which an observation counts as undispositioned")
+  .option("--json")
+  .action((options: { stalledHours?: string; undispositionedDays?: string; json?: boolean }) => print(sweep(undefined, {
+    ...(options.stalledHours === undefined ? {} : { stalledHours: Number(options.stalledHours) }),
+    ...(options.undispositionedDays === undefined ? {} : { undispositionedDays: Number(options.undispositionedDays) }),
+  }), Boolean(options.json)));
 
 defineCommand(null, "validate")
   .description("Validate the Kotta workspace")
