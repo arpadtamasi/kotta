@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdnv5fjechrfqwphvrrgqx
 title: 'Entities are named to humans by title, not ULID'
-status: review
+status: done
 origin: human
 types:
   - ui
@@ -41,6 +41,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 48ec42f76392f360a0124d24b7162a4e394ab2c3
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-26T18:02:05.486Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 # T-01m0jdnv5fjechrfqwphvrrgqx — Entities are named to humans by title, not ULID
 

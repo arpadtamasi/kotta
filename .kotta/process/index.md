@@ -20,7 +20,7 @@ None.
 
 ## Review
 
-- entities-are-named-to-humans-by-title-not-ulid-phvrrgqx
+None.
 
 ## Blocked
 
