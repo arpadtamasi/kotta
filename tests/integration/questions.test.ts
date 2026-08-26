@@ -178,17 +178,22 @@ describe("an entity's open questions", () => {
 
   test("Kotta's own entities keep validating: none of them gains a question it did not write", () => {
     const root = resolve(".");
-    // Every entity here says "None." or an equivalent denial today; the enumeration is empty for
-    // them, so nothing in this repository changed meaning when the gate started reading it.
+    // The property, not a snapshot of who asks what today: the parse invents nothing. An entity is
+    // listed as asking exactly when its own section says something other than a denial, which is
+    // the same text the literal check refused before this existed - so no entity in this
+    // repository changed meaning when the gate started reading the enumeration.
+    const denial = /^(?:none|n\/a|no open decisions)\.?$/i;
     const directory = join(root, ".kotta/process/tasks");
-    const asking = readdirSync(directory).filter((name) => name.endsWith(".md")).filter((name) => {
+    for (const name of readdirSync(directory).filter((file) => file.endsWith(".md"))) {
       const content = readFileSync(join(directory, name), "utf8");
       const id = /^id:\s*(\S+)/m.exec(content)?.[1] ?? name;
-      return parseOpenQuestions(id, content).length > 0;
-    });
-    // The one exception is a backlog capture whose section denies with a trailing rationale, which
-    // the old literal check refused just as this one does: same entity, same outcome.
-    expect(asking.every((name) => name.startsWith("T-025-"))).toBe(true);
+      // Read the section independently of the parse under test: split on headings and take the body.
+      const written = content.split(/^## /m).find((part) => /^Open decisions\s*$/m.test(part.split("\n")[0]))
+        ?.split("\n").slice(1).join("\n").trim() ?? "";
+      const asks = parseOpenQuestions(id, content).length > 0;
+      expect(asks, `${name} asks ${asks ? "a question" : "nothing"} for: ${JSON.stringify(written.slice(0, 80))}`)
+        .toBe(written !== "" && !denial.test(written));
+    }
     expect(spawnSync("node", [cli, "validate"], { cwd: root, encoding: "utf8" }).status).toBe(0);
   });
 });
