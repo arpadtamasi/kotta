@@ -734,6 +734,12 @@ export function briefTask(id: string, options: { out?: string; warnTokens?: numb
     "coordinator's context. If the work cannot start from this brief plus the code in",
     "the worktree, that gap is a task defect — record it, do not silently widen",
     "the context.",
+    // A rule stated without its means is a rule the agent cannot keep
+    // (BR-01m0r52vex4j22266nepm5yq8s, BR-01m0fp2hdkqz08arp5ebt122r9): the header says work outside
+    // this task's scope is recorded, so it names the call that records it, in the invocation that
+    // was just proved to reach Kotta from here.
+    "Anything you notice outside this task's scope is recorded, never silently fixed:",
+    `${invocationLine()} observation new --title "…" --type <type> --evidence "…"`,
   ].join("\n");
 
   const parts: { name: string; text: string }[] = [
@@ -753,7 +759,12 @@ export function briefTask(id: string, options: { out?: string; warnTokens?: numb
 
   const brief = parts.map((part) => part.text).join("\n\n") + "\n";
   const sectionSizes: BriefSection[] = parts.map((part) => ({ name: part.name, characters: part.text.length }));
-  const largestSection = [...sectionSizes].sort((a, b) => b.characters - a.characters)[0]?.name ?? "header";
+  // The warning's advice is "split it or sharpen it", which is advice about task content. The
+  // header is fixed text the CLI owns and grows with Kotta, not with the task, so naming it as the
+  // largest section would answer a question the reader cannot act on. It stays in `sections`, where
+  // its size is visible, and out of the one number that carries advice.
+  const measured = sectionSizes.filter((section) => section.name !== "header");
+  const largestSection = [...measured].sort((a, b) => b.characters - a.characters)[0]?.name ?? "header";
   const tokens = estimateTokens(brief);
   const warnTokens = options.warnTokens ?? 12000;
   const warning = tokens > warnTokens
