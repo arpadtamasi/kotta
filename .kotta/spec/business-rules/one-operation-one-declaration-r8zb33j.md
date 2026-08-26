@@ -6,7 +6,7 @@ title: "One operation, one declaration"
 
 ## Rule
 
-Every operation Kotta exposes is declared once, with a surface-independent identity, and each surface is a projection of that declaration: the CLI command name and the MCP tool name are two spellings of one entry, and a mode of one service stays a flag on its operation rather than becoming a second one. An entity-parameterised family is declared once with the entities it covers and expands deterministically. An entry may carry a renderer, so per-operation output is a declared property rather than an exception beside the registry. Neither surface may carry an operation the declaration does not name.
+Every operation Kotta exposes is declared once, with a surface-independent identity, and each surface is a projection of that declaration: the CLI command name and the MCP tool name are two spellings of one entry, and a mode of one service stays a flag on its operation rather than becoming a second one. An entity-parameterised family is declared once with the entities it covers and expands deterministically. An entry may carry a renderer, so per-operation output is a declared property rather than an exception beside the registry. Neither surface may carry an operation the declaration does not name. Where a declaration states that an operation is absent from a surface, the stated reason is part of the declaration and not commentary on it: it may not contradict an accepted node, and a reason that does is the declaration being wrong rather than the rule being excepted.
 
 ## Rationale
 
