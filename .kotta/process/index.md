@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- batch-execution-matches-its-own-wave-rules-2eqpd0tg
+None.
 
 ## Active tasks
 
-None.
+- batch-execution-matches-its-own-wave-rules-2eqpd0tg
 
 ## Review
 

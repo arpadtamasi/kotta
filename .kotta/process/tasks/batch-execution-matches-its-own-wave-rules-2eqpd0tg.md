@@ -1,7 +1,7 @@
 ---
 id: T-01m0jdntvbbp5rbj6t2eqpd0tg
 title: Batch execution matches its own wave rules
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -14,7 +14,7 @@ blocks: []
 spec:
   - UC-01m0f0wn89jebbfp6rjr0fxqh1
   - BR-01m0pw5bc7b1rkg5dct5qgdkmb
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-21'
 updated_at: '2026-08-26'
@@ -28,6 +28,12 @@ coverage:
     - UC-01m0f0wn89jebbfp6rjr0fxqh1
   'A release with no budget left changes nothing — no claim, no branch, no worktree, no lifecycle event for a member it did not start.':
     - UC-01m0f0wn89jebbfp6rjr0fxqh1
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: a5ea9e550268d54052c22a4a91e29239988beb74
 ---
 # T-01m0jdntvbbp5rbj6t2eqpd0tg — Batch execution matches its own wave rules
 
