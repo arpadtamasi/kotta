@@ -1,7 +1,7 @@
 ---
 id: T-01m0yh0wjar1yaj6n9mfe3ng4r
 title: Attaching an observation names the task it attaches to
-status: active
+status: review
 origin: human
 types:
   - bug
@@ -86,3 +86,31 @@ None.
 `validatePayload` in `src/commands/approval.ts` scopes `observation.resolve` to `disposition` and `spec`; the task joins it under the same per-disposition rule that keeps `spec` to amend-spec.
 
 The CLI option sits beside `--spec` in `src/cli/index.ts`; the surface snapshot will move by exactly that line.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| Attaching names its task. `observation resolve --disposition attach-to-existing-task` takes the task it attaches to, and the resolved observation records it — the same way amend-spec records the nodes it amended. | run: npx vitest run tests/integration/observation.test.ts -t 'records the task it attaches to' — verified: exit 0 at 8d3fd27 |
+| A disposition whose meaning is a reference is refused without one. Attaching with no task, or with a task that does not resolve, is refused by name and changes nothing — and no other disposition accepts a task. | run: npx vitest run tests/integration/observation.test.ts -t 'is refused without a task' — verified: exit 0 at 8d3fd27 |
+| The chat surface carries the same requirement. `approval_request` with `observation.resolve` accepts the task for this disposition and refuses without it, on the same service the CLI reaches. | run: npx vitest run tests/integration/mcp.test.ts -t 'attaching an observation' — verified: exit 0 at 8d3fd27 |
+| The 61 links already lost stay lost, visibly. Resolutions recorded before this carry no task and are not back-filled by guessing; the report of an observation says which task it attached to, or that none was recorded. | run: npx vitest run tests/integration/observation.test.ts -t 'predates the requirement' — verified: exit 0 at 8d3fd27 |
+
+### Verification performed
+
+Attaching names its task. `observation resolve --disposition attach-to-existing-task` takes the task it attaches to, and the resolved observation records it — the same way amend-spec records the nodes it amended.: run: npx vitest run tests/integration/observation.test.ts -t 'records the task it attaches to'
+A disposition whose meaning is a reference is refused without one. Attaching with no task, or with a task that does not resolve, is refused by name and changes nothing — and no other disposition accepts a task.: run: npx vitest run tests/integration/observation.test.ts -t 'is refused without a task'
+The chat surface carries the same requirement. `approval_request` with `observation.resolve` accepts the task for this disposition and refuses without it, on the same service the CLI reaches.: run: npx vitest run tests/integration/mcp.test.ts -t 'attaching an observation'
+The 61 links already lost stay lost, visibly. Resolutions recorded before this carry no task and are not back-filled by guessing; the report of an observation says which task it attached to, or that none was recorded.: run: npx vitest run tests/integration/observation.test.ts -t 'predates the requirement'
+
+### Deviations
+
+None.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.

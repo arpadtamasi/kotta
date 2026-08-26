@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- attaching-an-observation-names-the-task-it-attaches-to-mfe3ng4r
+None.
 
 ## Review
 
-None.
+- attaching-an-observation-names-the-task-it-attaches-to-mfe3ng4r
 
 ## Blocked
 
