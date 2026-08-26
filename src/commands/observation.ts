@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { findRepositoryRoot, regenerateIndex, processPath } from "../filesystem/workspace.js";
-import { findTask, listEntities, stateFromEntityFile } from "../filesystem/entities.js";
+import { canonicalEntityId, findTask, listEntities, stateFromEntityFile } from "../filesystem/entities.js";
 import { entityFilename, filenameMatchesId, mintId } from "../core/identity.js";
 import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
 import { newTask } from "./task.js";
@@ -99,7 +99,7 @@ export function validateObservation(id: string, repositoryRoot?: string) {
   return { ok: errors.length === 0, command: "observation validate", data: { id, state: observation.state, duplicates }, errors };
 }
 
-export function resolveObservation(id: string, disposition: string, approved: boolean, repositoryRoot?: string, options: { approvalRecorded?: boolean; locked?: boolean; commit?: boolean; spec?: string[]; receipt?: ApprovalReceipt } = {}) {
+export function resolveObservation(id: string, disposition: string, approved: boolean, repositoryRoot?: string, options: { approvalRecorded?: boolean; locked?: boolean; commit?: boolean; spec?: string[]; task?: string; receipt?: ApprovalReceipt } = {}) {
   if (!(OBSERVATION_DISPOSITIONS as readonly string[]).includes(disposition)) throw new Error(`Unknown disposition '${disposition}'.`);
   if (!approved) throw new Error("Human approval is required to resolve a observation.");
   // The amend-spec exit records which specification nodes the amendment touched; every other
@@ -109,6 +109,15 @@ export function resolveObservation(id: string, disposition: string, approved: bo
     if (!spec.length) throw new Error("Disposition 'amend-spec' requires --spec naming at least one amended specification node; the resolution has to record what the amendment touched.");
   } else if (spec.length) {
     throw new Error(`--spec applies only to the amend-spec disposition, not '${disposition}'.`);
+  }
+  // A disposition whose meaning is a reference is not recorded without the reference
+  // (SM-01m0f0wn892ntx934by9gwednb). Attaching said a noticing was folded into work that already
+  // exists and stored no trace of which: 61 resolutions, 61 lost links.
+  const attached = (options.task ?? "").trim();
+  if (disposition === "attach-to-existing-task") {
+    if (!attached) throw new Error("Disposition 'attach-to-existing-task' requires --task naming the task this observation was folded into; attaching without it records nothing.");
+  } else if (attached) {
+    throw new Error(`--task applies only to the attach-to-existing-task disposition, not '${disposition}'.`);
   }
   const requestedRoot = repositoryRoot ?? findRepositoryRoot();
   const resolveInControlPlane = (root: string) => {
@@ -122,8 +131,18 @@ export function resolveObservation(id: string, disposition: string, approved: bo
       const missing = spec.filter((reference) => !findSpecNode(root, reference));
       if (missing.length) throw new Error(`Observation ${id} names specification ${missing.length === 1 ? "node" : "nodes"} that ${missing.length === 1 ? "does" : "do"} not exist: ${missing.join(", ")}.`);
     }
+    // The same promise the spec reference holds: a named task that resolves to nothing would make
+    // the reference decoration, so it is refused by name before anything is written. The short id
+    // the operator may have typed is canonicalised, so the record holds one unambiguous reference.
+    let attachedTask: string | undefined;
+    if (attached) {
+      // Canonicalise first: the short id is what `task list` prints, so it is what an operator
+      // types, and only the full one resolves to a stored task.
+      attachedTask = canonicalEntityId(root, "task", attached);
+      findTask(root, attachedTask);
+    }
     const entity = parseMarkdown(readFileSync(observation.path, "utf8"));
-    let taskId: string | undefined;
+    let taskId: string | undefined = attachedTask;
     if (disposition === "create-task") {
       const created = newTask({ title: String(entity.data.title), type: "feature", profiles: [] }, root);
       taskId = created.data.id;

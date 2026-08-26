@@ -34,6 +34,12 @@ export function showCommand(entity: ListableEntity, id: string, repositoryRoot?:
     if (Array.isArray(value) && !value.length) continue;
     facts[key] = Array.isArray(value) ? value.map(String).join(", ") : String(value);
   }
+  // Attaching means a task, and 61 resolutions recorded before that was required name none. Their
+  // link is not recoverable — inferring one would manufacture a reference the record never had — so
+  // the absence is stated rather than shown as silence (SM-01m0f0wn892ntx934by9gwednb).
+  if (entity === "observation" && parsed.data.disposition === "attach-to-existing-task" && !facts.task) {
+    facts.task = "not recorded; this resolution predates the requirement to name it";
+  }
   const title = typeof parsed.data.title === "string" ? parsed.data.title.trim() : "";
   const superseded = entity === "decision" ? supersededTasks(root, canonical) : [];
   return { ok: true, command: `${entity} show`, data: { entity, id: canonical, state: found.state, resolution: found.resolution, path: found.path, title, facts, body: parsed.content.trim(), superseded } };
