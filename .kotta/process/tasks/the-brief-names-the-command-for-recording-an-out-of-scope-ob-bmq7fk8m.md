@@ -1,7 +1,7 @@
 ---
 id: T-01m0v2d804h1pk95y4bmq7fk8m
 title: The brief names the command for recording an out-of-scope observation
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -30,6 +30,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 6a3d0209261e5f281a075343fc3872d127ee1062
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-26T09:01:24.009Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 

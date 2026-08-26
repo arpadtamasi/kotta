@@ -20,7 +20,7 @@ None.
 
 ## Review
 
-- the-brief-names-the-command-for-recording-an-out-of-scope-ob-bmq7fk8m
+None.
 
 ## Blocked
 
