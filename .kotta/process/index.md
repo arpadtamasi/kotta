@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- the-constant-ceremony-promise-is-counted-not-assumed-zd2yk5vs
+None.
 
 ## Review
 
-None.
+- the-constant-ceremony-promise-is-counted-not-assumed-zd2yk5vs
 
 ## Blocked
 

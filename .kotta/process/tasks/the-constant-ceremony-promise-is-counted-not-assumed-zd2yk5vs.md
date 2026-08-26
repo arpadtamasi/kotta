@@ -1,7 +1,7 @@
 ---
 id: T-01m0jkmw2rxxwj4jfvzd2yk5vs
 title: 'The constant-ceremony promise is counted, not assumed'
-status: active
+status: review
 origin: human
 types:
   - workflow
@@ -90,3 +90,31 @@ Measured before defining, on this workspace: 109 closed tasks, 54 carrying a rec
 by the date they closed, every task closed on or after 2026-08-21 carries one — 46 of 46 — and the
 55 without predate the receipt mechanism entirely. The promise is kept today; nothing proves it
 stays kept, and the raw ratio is the kind of number that reads as a violation when it is history.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A spec-covered task walked from captured intent to done crosses exactly one human gate. The walk is performed, not described, and a second gate on that path fails it. | run: npx vitest run tests/integration/proportionate-ceremony.test.ts -t "one refuses" — verified: exit 0 at 0511d9c |
+| Every gated transition on that walk records an approval receipt naming who approved, when, and on what basis; a transition that reaches its terminal state without one fails. | run: npx vitest run tests/integration/proportionate-ceremony.test.ts -t "different exit" — verified: exit 0 at 0511d9c |
+| Captured intent reaches an executing agent in at most three steps, and the steps are counted from the commands actually invoked rather than from the documentation. | run: npx vitest run tests/integration/proportionate-ceremony.test.ts -t "offered without approval first" — verified: exit 0 at 0511d9c |
+| Where this workspace's own history cannot meet the promise, the boundary is named and dated rather than the failing entities being quietly excluded from the count. | run: npx vitest run tests/integration/proportionate-ceremony.test.ts -t "since that exit first recorded one\|does not count" — verified: exit 0 at 0511d9c |
+
+### Verification performed
+
+A spec-covered task walked from captured intent to done crosses exactly one human gate. The walk is performed, not described, and a second gate on that path fails it.: run: npx vitest run tests/integration/proportionate-ceremony.test.ts -t "one refuses"
+Every gated transition on that walk records an approval receipt naming who approved, when, and on what basis; a transition that reaches its terminal state without one fails.: run: npx vitest run tests/integration/proportionate-ceremony.test.ts -t "different exit"
+Captured intent reaches an executing agent in at most three steps, and the steps are counted from the commands actually invoked rather than from the documentation.: run: npx vitest run tests/integration/proportionate-ceremony.test.ts -t "offered without approval first"
+Where this workspace's own history cannot meet the promise, the boundary is named and dated rather than the failing entities being quietly excluded from the count.: run: npx vitest run tests/integration/proportionate-ceremony.test.ts -t "since that exit first recorded one|does not count"
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
