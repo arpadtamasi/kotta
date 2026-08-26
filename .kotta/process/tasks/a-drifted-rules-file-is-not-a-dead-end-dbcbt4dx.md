@@ -1,7 +1,7 @@
 ---
 id: T-01m0xp4sph61ykf0y0dbcbt4dx
 title: A drifted rules file is not a dead end
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -14,7 +14,7 @@ blocks: []
 spec:
   - BR-01m0f1djtb5dkb76tjzq4x3ffh
   - IF-01m0f0wn8994dzf9z1sdygxa04
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-26'
 updated_at: '2026-08-26'
@@ -27,6 +27,12 @@ coverage:
     - BR-01m0f1djtb5dkb76tjzq4x3ffh
   'No test reaches past the tool to reconcile. The suite no longer writes `.kotta/.kotta-generated.json` by hand to leave drift, because it no longer has to.':
     - BR-01m0f1djtb5dkb76tjzq4x3ffh
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: efd314eaf811308b6adc86c33524cc5d41b95554
 ---
 ## Outcome
 

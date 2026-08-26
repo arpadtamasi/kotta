@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- a-drifted-rules-file-is-not-a-dead-end-dbcbt4dx
+None.
 
 ## Active tasks
 
-None.
+- a-drifted-rules-file-is-not-a-dead-end-dbcbt4dx
 
 ## Review
 
