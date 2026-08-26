@@ -123,12 +123,18 @@ function renderTaskStart(result: unknown): string {
     }
 
 function renderBatchStart(result: unknown): string {
-      const data = (result as { data: { id: unknown; starts: Array<{ id: unknown; startRef: unknown; startCommit: unknown }>; waiting: unknown[]; failures: Array<{ id: unknown; message: unknown }>; coordinator: { branch: unknown; commit: unknown } } }).data;
-      const lines = [`Batch ${String(data.id)} coordinator ${String(data.coordinator.branch)} at ${String(data.coordinator.commit)}.`];
-      for (const start of data.starts) lines.push(`Started ${String(start.id)} from ${String(start.startRef)} at ${String(start.startCommit)}.`);
-      for (const failure of data.failures) lines.push(`Failed ${String(failure.id)}: ${String(failure.message)}`);
-      if (data.waiting.length) lines.push(`Waiting: ${data.waiting.map(String).join(", ")}.`);
-      if (!data.starts.length && !data.waiting.length) lines.push("No tasks were dispatched; every member is done.");
+      const data = (result as { data: { id: unknown; title?: unknown; starts: Array<{ id: unknown; startRef: unknown; startCommit: unknown }>; running: unknown[]; waiting: unknown[]; budget: { configured: number; running: number; released: number; held: number }; failures: Array<{ id: unknown; message: unknown }>; coordinator: { branch: unknown; commit: unknown } } }).data;
+      const lines = [`Batch ${namedWithId(data.title, String(data.id))} coordinator ${String(data.coordinator.branch)} at ${String(data.coordinator.commit)}.`];
+      for (const start of data.starts) lines.push(`Started ${displayId(String(start.id))} from ${String(start.startRef)} at ${String(start.startCommit)}.`);
+      for (const failure of data.failures) lines.push(`Failed ${displayId(String(failure.id))}: ${String(failure.message)}`);
+      if (data.running.length) lines.push(`Running: ${data.running.map((id) => displayId(String(id))).join(", ")}.`);
+      if (data.waiting.length) lines.push(`Waiting: ${data.waiting.map((id) => displayId(String(id))).join(", ")}.`);
+      // The budget is why a release started less than it could, so it is named rather than left to
+      // be inferred from a shorter list than the reader expected.
+      if (data.budget.held > 0) {
+        lines.push(`Held: ${data.budget.held} eligible, and the batch already carries ${data.budget.running} of its ${data.budget.configured}.`);
+      }
+      if (!data.starts.length && !data.waiting.length && !data.running.length) lines.push("No tasks were dispatched; every member is done.");
       return lines.join("\n");
     }
 

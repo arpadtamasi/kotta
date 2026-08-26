@@ -278,10 +278,16 @@ export function startBatch(id: string, agent: string) {
   const done = new Set(ids.filter((taskId) => findTask(root, taskId).state === "done"));
   // A started task lives in its own worktree; the root checkout still shows it as defined, so ask the effective state.
   const defined = ids.filter((taskId) => resolveEffectiveTask(root, taskId, (task) => task.state).value === "defined");
-  let executable = defined.filter((taskId) => (dependencies.get(taskId) ?? [])
+  const eligible = defined.filter((taskId) => (dependencies.get(taskId) ?? [])
     .every((dependency) => batchDependencySatisfied(root, dependency, id, coordinatorCommit)));
-  if (data.execution.mode === "sequential") executable = executable.slice(0, 1);
-  executable = executable.slice(0, Math.max(1, Number(data.execution.parallelism ?? 1)));
+  // Parallelism bounds how many members the batch holds at once, not how many one release may
+  // start (D-01m0zhkpw7v7pq322pg5nycf1d, UC-01m0f0wn89jebbfp6rjr0fxqh1). Members already running
+  // are read from the same effective state the eligibility filter above reads, so a member cannot
+  // be invisible to one and visible to the other.
+  const running = ids.filter((taskId) => resolveEffectiveTask(root, taskId, (task) => task.state).value === "active");
+  const configured = Math.max(1, Number(data.execution.parallelism ?? 1));
+  const budget = Math.max(0, (data.execution.mode === "sequential" ? 1 : configured) - running.length);
+  const executable = eligible.slice(0, budget);
   const started: string[] = [];
   const starts: Array<{ id: string; startRef: string; startCommit: string }> = [];
   const failures: Array<{ id: string; message: string }> = [];
@@ -312,8 +318,13 @@ export function startBatch(id: string, agent: string) {
     ok: failures.length === 0,
     command: "batch start",
     data: {
-      id, started, starts,
-      waiting: ids.filter((taskId) => !started.includes(taskId) && !done.has(taskId)),
+      id, title: entityTitle(batch.path), started, starts,
+      // A rendering never claims more than the result carries (BR-01m0pw5bc7b1rkg5dct5qgdkmb):
+      // work the batch is already carrying is running, and only what it has not released waits.
+      running,
+      waiting: ids.filter((taskId) => !started.includes(taskId) && !done.has(taskId) && !running.includes(taskId)),
+      // Named so a reader can tell "nothing was eligible" from "the batch is already full".
+      budget: { configured, running: running.length, released: started.length, held: Math.max(0, eligible.length - executable.length) },
       failures,
       coordinator: { branch: coordinator.branch, commit: coordinatorCommit, base_branch: coordinator.base_branch, worktree: coordinator.worktree, action: coordinatorAction },
     },
