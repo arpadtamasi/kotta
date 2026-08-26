@@ -1,0 +1,17 @@
+{
+  "id": "E-01m0zdh18bw74vbd5cfthd3npy",
+  "entity": "T-01kzm9d428z8jrhe2773762nan",
+  "task": "T-01kzm9d428z8jrhe2773762nan",
+  "kind": "approval",
+  "approval_id": "E-01m0zdh18bw74vbd5cfthd3npy",
+  "phase": "proposed",
+  "action": "task.cancel",
+  "payload": {
+    "resolution": "cancelled",
+    "reason": "A title-only capture with no specification demand behind it, and not a product capability: reviewing how Kotta is actually used is the working method these sessions already follow - it produced the disposition rule BR-01m0xt48tjhkd5pxv30p6c7a46 on 2026-08-26 - not a deliverable the tool owes anyone. Retired on the operator's decision after the backlog was read against the accepted spec.",
+    "superseded_by": null,
+    "surface": "cli"
+  },
+  "source_message": null,
+  "created_at": "2026-08-26T16:12:52.363Z"
+}
