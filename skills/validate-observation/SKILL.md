@@ -10,11 +10,17 @@ Treat a observation as evidence awaiting disposition, not as a task. Use the `ko
 1. Read the observation and inspect the cited files, tests, logs, or reproduction.
 2. Search new and resolved observations, tasks, and decisions for outcome-equivalent duplicates or related work.
 3. State the concrete observation separately from predicted impact. Calibrate confidence and severity to the available evidence.
-4. Recommend the smallest suitable disposition: amend the specification, create task, attach to
-   existing task, investigate, accept risk, reject, or merge duplicate. `amend-spec` is the
-   primary constructive exit when the noticing changes the accepted agreement: the amended spec nodes
-   are shaped by hand and land on the base branch, the resolution names them (`--spec <node…>`), and
-   the tasks follow from the landed delta rather than from resolve itself.
+4. Decide the disposition by asking what the accepted specification would have to say for this not
+   to happen again (BR-01m0xt48tjhkd5pxv30p6c7a46). Sketch the remedy first, then read it against
+   the spec: if it adds behaviour no node states — a capability, an obligation, a refusal — that
+   sentence is the answer and the disposition is `amend-spec`. Do not ask instead whether some rule
+   already mentions the area; a rule can exist and still promise nothing about the remedy. A plain
+   task is for a promise that is already complete and was simply failed, and that case is argued in
+   the recommendation rather than assumed.
+   The exits are: amend the specification, create task, attach to existing task, investigate,
+   accept risk, reject, or merge duplicate. `amend-spec` is the primary constructive one: the
+   amended spec nodes are shaped by hand and land on the base branch, the resolution names them
+   (`--spec <node…>`), and the tasks follow from the landed delta rather than from resolve itself.
 5. Run `kotta observation validate <observation-id>` and present its result.
 6. Obtain the required human decision before creating scheduled work or accepting a trade-off.
    Record an explicitly approved durable trade-off with `kotta decision create --from <draft.md> --approve`; never hand-edit `.kotta/process/decisions/`.

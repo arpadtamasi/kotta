@@ -1,0 +1,17 @@
+{
+  "entity": "T-01m0xr5wpzz28wrbj8yxjjr948",
+  "task": "T-01m0xr5wpzz28wrbj8yxjjr948",
+  "kind": "approval",
+  "approval_id": "E-01m0xr9h56za6s9k1bvccef6w4",
+  "phase": "applied",
+  "action": "task.cancel",
+  "payload": {
+    "resolution": "duplicate",
+    "reason": "Minted by the wrong disposition: F-01m0tnv8vmjjjack09xt7w25zf was resolved as create-task when the work it describes was already done, so the right exit was attach-to-existing-task pointing at T-01m0xp4sph61ykf0y0dbcbt4dx. That task shipped kotta sync --replace-rules, the named remedy in sync and status, the release-path correction, and a guard against the manifest hand-edit returning.",
+    "superseded_by": "T-01m0xp4sph61ykf0y0dbcbt4dx",
+    "surface": "cli"
+  },
+  "source_message": "E-01m0xr9h56sjg4ajffpxnq28z9",
+  "id": "E-01m0xr9h56dfe3eze6nn4nffds",
+  "created_at": "2026-08-26T00:42:31.974Z"
+}

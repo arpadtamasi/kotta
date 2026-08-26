@@ -133,6 +133,22 @@ function readableRepositoryFiles(root: string, ref: string, workspace: string): 
   });
 }
 
+/**
+ * Paths the working tree holds uncommitted that could carry the evidence this report went looking
+ * for: the accepted specification itself, or any file outside the workspace, which is where
+ * evidence lives. Deliberately not read — the report's subject is what landed, and claiming an
+ * unread file is the evidence would be the overclaim BR-01m0pw5bc7b1rkg5dct5qgdkmb forbids.
+ */
+function uncommittedEvidencePaths(root: string, workspace: string): string[] {
+  const status = git(root, ["status", "--porcelain"]);
+  if (!status) return [];
+  return status.split(/\r?\n/).filter(Boolean)
+    // Porcelain v1: two status columns, a space, then the path; a rename carries `old -> new`.
+    .map((line) => line.slice(3).split(" -> ").at(-1)!.replace(/^"|"$/g, ""))
+    .filter((path) => path.startsWith(`${workspace}/spec/`) || !path.startsWith(`${workspace}/`))
+    .sort();
+}
+
 function lastSpecLanding(root: string, ref: string, workspace: string): { commit: string | null; changedPaths: Set<string> } {
   const commit = git(root, ["log", "-1", "--format=%H", ref, "--", `${workspace}/spec`]) || null;
   if (!commit) return { commit: null, changedPaths: new Set() };
@@ -303,10 +319,19 @@ export function gapReport(repositoryRoot: string): GapReportResult {
   // Every accepted promise is kept or admitted (BR-01m0qtshfqhcrrqtz051zm9svr). A promise with no
   // evidence and no stated reason is the one thing this read refuses over: the count of unaccounted
   // promises could otherwise only grow, because nothing in the workflow ever had to look at it.
+  // The read is of the base branch by design, so evidence that is written but not committed is
+  // invisible to it and the refusal reads as a real defect. Naming that cost a diagnosis four
+  // times in three days (F-01m0sm78y2b1vpg1msj98cvwxz); a refusal names its corrective action
+  // (IF-01m0f0wn8994dzf9z1sdygxa04, UC-01m0fpqfxjvet99wbz0v1ag64q), and here the action is a
+  // commit, not a fix.
+  const uncommitted = promises.length ? uncommittedEvidencePaths(repositoryRoot, workspace) : [];
+  const pending = uncommitted.length
+    ? ` This report reads ${baseBranch}@${commit.slice(0, 7)}, and ${uncommitted.length} path${uncommitted.length === 1 ? " is" : "s are"} uncommitted in the working tree (${uncommitted.slice(0, 3).join(", ")}${uncommitted.length > 3 ? ", …" : ""}). If the evidence is among them, commit it and read again.`
+    : "";
   const errors = [
     ...promises.map((node) => ({
       code: "UNADMITTED_PROMISE",
-      message: `${node.title} (${node.form}) has no evidence and admits no gap. Looked for ${node.evidenceSought}. Implement it, or admit the gap in its frontmatter: accepted: ["<kind>: <reason>"], where <kind> is one of ${ADMISSION_KINDS.join(", ")}.`,
+      message: `${node.title} (${node.form}) has no evidence and admits no gap. Looked for ${node.evidenceSought}. Implement it, or admit the gap in its frontmatter: accepted: ["<kind>: <reason>"], where <kind> is one of ${ADMISSION_KINDS.join(", ")}.${pending}`,
       path: node.path,
     })),
     ...unkinded.map((node) => ({

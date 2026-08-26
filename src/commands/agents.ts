@@ -19,7 +19,7 @@ import { findRepositoryRoot, workspaceDirectoryName, workspacePath } from "../fi
 export const WORKSPACE_AGENTS_FILE = "AGENTS.md";
 export const PROJECT_AGENTS_FILE = "AGENTS.md";
 
-export type WorkspaceAgentsState = "created" | "updated" | "unchanged" | "drifted";
+export type WorkspaceAgentsState = "created" | "updated" | "unchanged" | "drifted" | "replaced";
 export type ProjectAgentsState = "created" | "linked" | "migrated" | "already-linked";
 
 function packageRoot(): string {
@@ -82,10 +82,29 @@ function writeGenerated(root: string, files: Record<string, string>): void {
 export interface WorkspaceAgentsResult {
   path: string;
   state: WorkspaceAgentsState;
+  /** On `replaced`, how many lines of the discarded copy there were, so the report can say. */
+  discardedLines?: number;
+}
+
+/**
+ * The one sentence a drifted file is missing: how to stop being drifted. A verdict with no remedy
+ * is what left this repository's own rules file behind its template for two days
+ * (F-01m0tnv8vmjjjack09xt7w25zf, IF-01m0f0wn8994dzf9z1sdygxa04). Drift is a state to leave
+ * (BR-01m0f1djtb5dkb76tjzq4x3ffh): this names the one command that leaves it.
+ */
+export const REPLACE_RULES_REMEDY = "To discard those edits and take Kotta's copy, run 'kotta sync --replace-rules'; to keep them, move them into the project's own AGENTS.md, which Kotta never writes.";
+
+export interface SyncAgentsOptions {
+  /**
+   * Take Kotta's copy, discarding whatever the file holds. Deliberate by construction: the same
+   * rule that promises an edited file survives (BR-01m0f1djtb5dkb76tjzq4x3ffh) is the one this
+   * overrides, so nothing sets it implicitly.
+   */
+  replace?: boolean;
 }
 
 /** Write or refresh the workspace rules file, never replacing one that was edited by hand. */
-export function syncWorkspaceAgents(repositoryRoot?: string): WorkspaceAgentsResult {
+export function syncWorkspaceAgents(repositoryRoot?: string, options: SyncAgentsOptions = {}): WorkspaceAgentsResult {
   const root = repositoryRoot ?? findRepositoryRoot();
   const path = workspacePath(root, WORKSPACE_AGENTS_FILE);
   const rendered = renderAgentsFile(root);
@@ -98,7 +117,12 @@ export function syncWorkspaceAgents(repositoryRoot?: string): WorkspaceAgentsRes
       writeGenerated(root, { ...generated, [WORKSPACE_AGENTS_FILE]: digest(rendered) });
       return { path, state: "unchanged" };
     }
-    if (generated[WORKSPACE_AGENTS_FILE] !== digest(current)) return { path, state: "drifted" };
+    if (generated[WORKSPACE_AGENTS_FILE] !== digest(current)) {
+      if (!options.replace) return { path, state: "drifted" };
+      writeFileSync(path, rendered);
+      writeGenerated(root, { ...generated, [WORKSPACE_AGENTS_FILE]: digest(rendered) });
+      return { path, state: "replaced", discardedLines: current.split(/\r?\n/).length };
+    }
     writeFileSync(path, rendered);
     writeGenerated(root, { ...generated, [WORKSPACE_AGENTS_FILE]: digest(rendered) });
     return { path, state: "updated" };

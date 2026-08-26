@@ -1,13 +1,19 @@
 ---
 id: F-01m0tnv8vmjjjack09xt7w25zf
 title: The release step leaves the generated rules file permanently drifted
-status: new
+status: resolved
 origin: agent
 observation_type: inconsistency
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-24'
+disposition: create-task
+resolved_at: '2026-08-26T00:40:32.793Z'
+approved_by: cli
+approved_at: '2026-08-26T00:40:32.793Z'
+approval_basis: 'CLI --approve: observation.resolve'
+task: T-01m0xr5wpzz28wrbj8yxjjr948
 ---
 # F-01m0tnv8vmjjjack09xt7w25zf — The release step leaves the generated rules file permanently drifted
 

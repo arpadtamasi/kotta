@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- **A gap refusal says when uncommitted work is the reason.** `kotta gap` reads the accepted
+  specification on the base branch, deliberately — the agreement is what landed, not what is being
+  typed. So a wave that lands a spec node together with the code naming it fails until the commit
+  exists, and the refusal explained none of that: it named the node, named the id it looked for,
+  and said the evidence was missing. It cost a diagnosis four times in three days. When the report
+  refuses and the working tree holds uncommitted paths that could carry the evidence, the refusal
+  now names the ref it read, what is uncommitted, and that committing settles it — without
+  claiming those files are the evidence, which it has not read. A clean tree adds nothing, and the
+  verdict is unchanged either way.
+
+- **A drifted rules file is no longer a dead end.** Kotta promises to keep `.kotta/AGENTS.md`
+  current and to report a *hand-edited* copy as drifted rather than replacing it. Releasing 0.9.0
+  broke both halves at once: the bump edited the one interpolated line by hand instead of letting
+  Kotta write it, so Kotta's own edit read as the operator's, the recorded hash went stale, and
+  every `sync` since reported drift and left the file behind its template. Nothing named a way out
+  — the two that existed were deleting the file, or rewriting `.kotta/.kotta-generated.json` by
+  hand, which is the sort of edit these rules forbid and which the suite itself was doing.
+  `kotta sync --replace-rules` now takes Kotta's copy deliberately, reporting how many lines it
+  discarded, and both `sync` and `status` name it when they report drift. The maintainer-release
+  section says the bump runs `kotta sync` rather than editing the file.
+
 ### Added
 
 - **Recording a decision reaches the calling chat.** Five of Kotta's six approval-carrying

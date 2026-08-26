@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { initCommand } from "../commands/init.js";
+import { REPLACE_RULES_REMEDY, type WorkspaceAgentsState } from "../commands/agents.js";
 import { expandOperations } from "../core/operations.js";
 import { briefTask, cancelTask, closeTask, defineTask, newTask, reopenTask, reviewTask, startTask, validateTask } from "../commands/task.js";
 import { executeTask, formatExecution } from "../commands/execute.js";
@@ -37,7 +38,7 @@ function print(result: unknown, json: boolean): void {
   if (typeof result === "object" && result && "ok" in result && (result as { ok: unknown }).ok === false) process.exitCode = 1;
 }
 
-type AgentsSummary = { path: string; state: "created" | "updated" | "unchanged" | "drifted" } | null;
+type AgentsSummary = { path: string; state: WorkspaceAgentsState; discardedLines?: number } | null;
 type ProjectAgentsSummary = { path: string; state: "created" | "linked" | "migrated" | "already-linked"; line: string } | null;
 
 /**
@@ -47,7 +48,8 @@ type ProjectAgentsSummary = { path: string; state: "created" | "linked" | "migra
 function agentsLines(agents: AgentsSummary | undefined, project: ProjectAgentsSummary | undefined, pointer: string | null | undefined): string[] {
   const lines: string[] = [];
   if (agents) {
-    if (agents.state === "drifted") lines.push(`Rules: ${agents.path} was edited; it was left alone and not refreshed.`);
+    if (agents.state === "drifted") lines.push(`Rules: ${agents.path} was edited; it was left alone and not refreshed. ${REPLACE_RULES_REMEDY}`);
+    else if (agents.state === "replaced") lines.push(`Rules: ${agents.path} was rewritten from Kotta's template; ${agents.discardedLines ?? 0} lines of local edits were discarded.`);
     else if (agents.state !== "unchanged") lines.push(`Rules: ${agents.state} ${agents.path}.`);
   }
   if (project) {
@@ -122,7 +124,7 @@ function renderStatus(result: unknown): string {
       // The rules an agent reads are as silent a failure as an absent skill: an old copy still
       // parses, and nothing else in the workspace would notice it moved.
       if (data.rules && !data.rules.present) lines.push(`Rules: ${data.rules.path} is missing. Run 'kotta sync'.`);
-      else if (data.rules && data.rules.drifted) lines.push(`Rules: ${data.rules.path} differs from the shipped version.`);
+      else if (data.rules && data.rules.drifted) lines.push(`Rules: ${data.rules.path} differs from the shipped version. ${REPLACE_RULES_REMEDY}`);
       // Which checkout answered, and why that one: a command that silently picks a writer the
       // reader did not expect is the failure the single-checkout rule has to stay visible about.
       if (data.controlPlane?.mode === "single") lines.push(`Control plane: this checkout, the only one, on ${data.controlPlane.branch ?? "a detached HEAD"}.`);
@@ -409,8 +411,9 @@ defineCommand(null, "gap", renderGapReport, "gap report")
 defineCommand(null, "sync", renderSync)
   .description("Install the skills Kotta ships and refresh the workspace rules file")
   .option("--link-agents", "Link the project's AGENTS.md to the workspace rules, migrating a recognized legacy Kotta prelude after the human said yes")
+  .option("--replace-rules", "Discard local edits to the workspace rules file and take Kotta's copy; without this an edited file is never replaced")
   .option("--json")
-  .action((options: { linkAgents?: boolean; json?: boolean }) => print(syncCommand({ linkAgents: options.linkAgents }), Boolean(options.json)));
+  .action((options: { linkAgents?: boolean; replaceRules?: boolean; json?: boolean }) => print(syncCommand({ linkAgents: options.linkAgents, replaceRules: options.replaceRules }), Boolean(options.json)));
 
 defineCommand("task", "list", renderEntityList)
   .description("List tasks with their state and title")

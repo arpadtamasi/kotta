@@ -120,6 +120,11 @@ terminal. `kotta ui` only displays the resulting canonical state and timeline.
    a silent fix: `kotta observation new --title "…" --type <type> --evidence "…"`.
 3. **An observation is not a task.** It is dispositioned by `kotta observation validate <id>`
    and a human-approved `kotta observation resolve <id> --disposition <disposition> --approve`.
+   Before choosing, ask what the accepted specification would have to say for this not to happen
+   again. If the remedy adds behaviour no node states — a capability, an obligation, a refusal —
+   that sentence is the answer, the disposition is `amend-spec`, and the work follows from the
+   landed delta. A plain task is for a promise that is already complete and was simply failed;
+   that case is argued, not assumed.
 4. **Do not invent product intent or accepted trade-offs.** Ask the human. Durable answers are
    recorded with `kotta decision create --from <file> --approve`, or from the calling chat through
    `approval_request` with `decision.create`, which carries the draft's text into the question.
