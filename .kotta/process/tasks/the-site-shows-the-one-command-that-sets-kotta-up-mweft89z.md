@@ -1,7 +1,7 @@
 ---
 id: T-01m120nshrccnwnejdmweft89z
 title: The site shows the one command that sets Kotta up
-status: review
+status: done
 origin: human
 types:
   - docs
@@ -28,6 +28,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 0726d426aac018636cb2f5641cc3e0f4878b7fea
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-27T22:37:07.957Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 # T-01m120nshrccnwnejdmweft89z — The site shows the one command that sets Kotta up
 

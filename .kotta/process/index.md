@@ -20,7 +20,7 @@ None.
 
 ## Review
 
-- the-site-shows-the-one-command-that-sets-kotta-up-mweft89z
+None.
 
 ## Blocked
 
