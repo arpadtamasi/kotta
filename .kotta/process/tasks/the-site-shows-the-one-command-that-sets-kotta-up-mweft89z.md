@@ -1,7 +1,7 @@
 ---
 id: T-01m120nshrccnwnejdmweft89z
 title: The site shows the one command that sets Kotta up
-status: defined
+status: active
 origin: human
 types:
   - docs
@@ -13,7 +13,7 @@ depends_on: []
 blocks: []
 spec:
   - BR-01m0zx29x1nvccpr4xwyhjr153
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-27'
 updated_at: '2026-08-27'
@@ -22,6 +22,12 @@ coverage:
     - BR-01m0zx29x1nvccpr4xwyhjr153
   No published surface instructs a reader to run a sequence that one Kotta command already performs.:
     - BR-01m0zx29x1nvccpr4xwyhjr153
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 0726d426aac018636cb2f5641cc3e0f4878b7fea
 ---
 # T-01m120nshrccnwnejdmweft89z — The site shows the one command that sets Kotta up
 

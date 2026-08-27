@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- the-site-shows-the-one-command-that-sets-kotta-up-mweft89z
+None.
 
 ## Active tasks
 
-None.
+- the-site-shows-the-one-command-that-sets-kotta-up-mweft89z
 
 ## Review
 
