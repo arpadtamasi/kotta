@@ -3,13 +3,19 @@ id: F-01m0zpg89ydwy8q0ygtg485bq5
 title: >-
   An acceptance condition described a batch state no operator can reach, and the
   deviation that declared it has no record of its own
-status: new
+status: resolved
 origin: agent
 observation_type: inconsistency
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-26'
+disposition: create-task
+resolved_at: '2026-08-27T16:24:22.166Z'
+approved_by: cli
+approved_at: '2026-08-27T16:24:22.166Z'
+approval_basis: 'CLI --approve: observation.resolve'
+task: T-01m120jsvqwswpkdvhdz0jhh5j
 ---
 # F-01m0zpg89ydwy8q0ygtg485bq5 — An acceptance condition described a batch state no operator can reach, and the deviation that declared it has no record of its own
 
