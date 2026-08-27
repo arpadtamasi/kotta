@@ -1,7 +1,7 @@
 ---
 id: T-01m0jkmw2rxxwj4jfvzd2yk5vs
 title: 'The constant-ceremony promise is counted, not assumed'
-status: review
+status: done
 origin: human
 types:
   - workflow
@@ -16,7 +16,7 @@ spec:
 branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-21'
-updated_at: '2026-08-26'
+updated_at: '2026-08-27'
 coverage:
   'A spec-covered task walked from captured intent to done crosses exactly one human gate. The walk is performed, not described, and a second gate on that path fails it.':
     - QA-01m0fp2hdkq55yrx9qr5t8pweh
@@ -32,6 +32,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 95263309e7d10caebf356b5151db488f05a5b6cb
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-27T22:37:06.503Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 # T-01m0jkmw2rxxwj4jfvzd2yk5vs — The constant-ceremony promise is counted, not assumed
 
