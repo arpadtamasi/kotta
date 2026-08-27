@@ -1,7 +1,7 @@
 ---
 id: T-01m120nshrccnwnejdmweft89z
 title: The site shows the one command that sets Kotta up
-status: active
+status: review
 origin: human
 types:
   - docs
@@ -79,3 +79,27 @@ None.
 
 Noticed by the operator reading the site's own install block on 2026-08-26 and asking whether the
 second command was needed. It was not, and had not been for some time.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| The site shows one Kotta command where it showed a pinned third-party installer, and the command it shows is the one that also writes the rules file every agent in the project reads. | run: npx vitest run tests/integration/published-install-line.test.ts -t "one Kotta command already does" — verified: exit 0 at 8699072 |
+| No published surface instructs a reader to run a sequence that one Kotta command already performs. | run: npx playwright test --config site/playwright.config.ts -g "approved content task" — verified: exit 0 at 8699072 |
+
+### Verification performed
+
+The site shows one Kotta command where it showed a pinned third-party installer, and the command it shows is the one that also writes the rules file every agent in the project reads.: run: npx vitest run tests/integration/published-install-line.test.ts -t "one Kotta command already does"
+No published surface instructs a reader to run a sequence that one Kotta command already performs.: run: npx playwright test --config site/playwright.config.ts -g "approved content task"
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.

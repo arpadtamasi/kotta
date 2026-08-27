@@ -16,11 +16,12 @@ None.
 
 ## Active tasks
 
-- the-site-shows-the-one-command-that-sets-kotta-up-mweft89z
+None.
 
 ## Review
 
 - the-constant-ceremony-promise-is-counted-not-assumed-zd2yk5vs
+- the-site-shows-the-one-command-that-sets-kotta-up-mweft89z
 
 ## Blocked
 
