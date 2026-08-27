@@ -3,13 +3,20 @@ id: F-01m0zxf1gb9phvg48ee445zj0k
 title: >-
   Nothing states when a durable answer needs a decision record as well as a
   specification sentence
-status: new
+status: resolved
 origin: human
 observation_type: inconsistency
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-26'
+disposition: amend-spec
+resolved_at: '2026-08-27T16:43:32.877Z'
+approved_by: cli
+approved_at: '2026-08-27T16:43:32.877Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - E-01m0f0wn891kye4debkab1g2f7
 ---
 # F-01m0zxf1gb9phvg48ee445zj0k — Nothing states when a durable answer needs a decision record as well as a specification sentence
 

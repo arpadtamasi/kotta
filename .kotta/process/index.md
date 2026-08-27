@@ -29,4 +29,3 @@ None.
 ## New observations
 
 - F-021-finding-metadata-is-single-valued-in-practice-severity-confi
-- nothing-states-when-a-durable-answer-needs-a-decision-record-e445zj0k
