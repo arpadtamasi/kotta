@@ -3,13 +3,19 @@ id: F-01m0zn0d24hjbva47xdp1kb6m1
 title: >-
   batch start dirties the workspace it just checked, so the first start of a
   clean batch always refuses
-status: new
+status: resolved
 origin: agent
 observation_type: defect
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-26'
+disposition: create-task
+resolved_at: '2026-08-27T16:24:17.758Z'
+approved_by: cli
+approved_at: '2026-08-27T16:24:17.758Z'
+approval_basis: 'CLI --approve: observation.resolve'
+task: T-01m120jngp2qxx4ma317w38j1q
 ---
 # F-01m0zn0d24hjbva47xdp1kb6m1 — batch start dirties the workspace it just checked, so the first start of a clean batch always refuses
 
