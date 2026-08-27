@@ -25,4 +25,4 @@ status (new/resolved), origin (human/agent), observation_type (bug, technical-de
 
 ## Invariants
 
-Stays "new" until validated and human-dispositioned. Never becomes scheduled work by itself. The disposition carries its justification.
+Stays "new" until validated and human-dispositioned. Never becomes scheduled work by itself. The disposition carries its justification. Every attribute an observation carries is a judgement someone made about this observation: the party capturing it gives it a value, or the attribute does not exist. A field the tool fills with the same constant on every capture records nothing, reads as information, and costs the attention of everyone who trusts it.

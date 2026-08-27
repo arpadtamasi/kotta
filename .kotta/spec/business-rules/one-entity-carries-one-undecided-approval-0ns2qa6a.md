@@ -6,7 +6,7 @@ title: "One entity carries one undecided approval"
 
 ## Rule
 
-An entity may carry at most one approval that has been put to the human and not yet answered. While a proposal on an entity has reached no terminal phase - applied, rejected, cancelled or failed - a second proposal on that same entity is refused, and the refusal names the action already waiting. Repeating an identical request, identified by the caller's own request id, returns the approval already recorded rather than creating a second one.
+An entity may carry at most one approval that has been put to the human and not yet answered. While a proposal on an entity has reached no terminal phase - applied, rejected, cancelled or failed - a second proposal on that same entity is refused, and the refusal names the action already waiting. Repeating an identical request, identified by the caller's own request id, returns the approval already recorded rather than creating a second one. A proposal is also withdrawable: where the work reached its outcome another way, the question can be retired with its reason, so an unanswered proposal does not outlive the entity it was about. Withdrawal is not an answer - it records that the question stopped having a subject, and the human's yes was never given.
 
 ## Rationale
 

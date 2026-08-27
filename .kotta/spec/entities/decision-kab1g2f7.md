@@ -14,6 +14,8 @@ accepted:
 
 A durable, human-approved answer to a product or process question - the ADR of the workspace. Decisions are the memory that keeps agents from re-asking or inventing intent.
 
+A decision answers a question; the specification states what is true because of it. Where the answer changes what the product promises, the promise lands in the specification and the decision keeps what the specification deliberately does not carry: that the alternatives were defensible, and that a human chose between them. Where the answer promises nothing about the product - how the work is carried out, which of two equivalent shapes was taken - the decision is the whole record. An answer that changed a promise never lives only in a decision; and an answer a task is waiting on is never recorded only in the specification, because an entity's open question is resolved by naming the decision that settled it.
+
 ## Identity
 
 D- plus sequential number or ULID; the canonical filename is the identity alone, so titles cannot race around it.
