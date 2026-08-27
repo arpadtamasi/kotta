@@ -3,13 +3,18 @@ id: F-01m0zeac76djkj1jm6f8ytwx3k
 title: >-
   A migration-proof test pinned the workspace's entities instead of the
   property, so writing any new question broke it
-status: new
+status: resolved
 origin: agent
 observation_type: defect
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-26'
+disposition: reject
+resolved_at: '2026-08-27T16:24:24.885Z'
+approved_by: cli
+approved_at: '2026-08-27T16:24:24.885Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0zeac76djkj1jm6f8ytwx3k — A migration-proof test pinned the workspace's entities instead of the property, so writing any new question broke it
 
