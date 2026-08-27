@@ -3,13 +3,18 @@ id: F-01m0ypea8kn7shamp4a0t798a8
 title: >-
   Severity and confidence are written as constants, so nothing about them is a
   judgement
-status: new
+status: resolved
 origin: human
 observation_type: process
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-26'
+disposition: merge-duplicate
+resolved_at: '2026-08-27T16:24:22.901Z'
+approved_by: cli
+approved_at: '2026-08-27T16:24:22.902Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0ypea8kn7shamp4a0t798a8 — Severity and confidence are written as constants, so nothing about them is a judgement
 
