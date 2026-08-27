@@ -42,6 +42,15 @@ describe("every published install line names the declared version", () => {
     expect(drifted.map(({ surface, named }) => `${surface.path}: ${named.join(", ")}`)).toEqual([]);
   });
 
+  test("no published surface tells a reader to run what one Kotta command already does", () => {
+    // `kotta init` installs the shipped skills and writes the rules file every agent reads. A page
+    // that sends a first visitor through a pinned third-party installer instead shows them a path
+    // that does less, under the words "verified setup" (BR-01m0zx29x1nvccpr4xwyhjr153).
+    const site = readFileSync(resolve("site/index.html"), "utf8");
+    expect(site, "the site's way in is Kotta's own command").toContain("kotta init");
+    expect(site, "and not a pinned installer that leaves the rules file out").not.toMatch(/npx\s+skills@/);
+  });
+
   test("the site's own test compares against the package rather than a second copy of the number", () => {
     const spec = readFileSync(resolve("site/tests/site.spec.ts"), "utf8");
     expect(spec).toContain("declaredVersion()");

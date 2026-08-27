@@ -43,7 +43,10 @@ test("renders the approved content task in order", async ({ page }) => {
   await expect(page.locator("tbody tr")).toHaveCount(5);
   await expect(page.locator("tbody th")).toHaveText(["Agent chat", "Issue tracker", "Agent runtime", "Spec generator", "Kotta"]);
   await expect(page.locator("#install")).toContainText(`@arpadtamasi/kotta@${declaredVersion()}`);
-  await expect(page.locator("#install")).toContainText("npx skills@1.5.20 add arpadtamasi/kotta");
+  // One Kotta command, not a pinned third-party installer that leaves out the rules file
+  // (BR-01m0zx29x1nvccpr4xwyhjr153).
+  await expect(page.locator("#install")).toContainText("kotta init");
+  await expect(page.locator("#install")).not.toContainText("npx skills@");
   await expect(page.locator("#install")).toContainText("/setup-kotta");
   await expect(page.locator("#install")).toContainText("/define-task");
   expect([...responseTypes.entries()].find(([path]) => path.endsWith(".css"))?.[1]).toContain("text/css");
