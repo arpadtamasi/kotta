@@ -1,13 +1,20 @@
 ---
 id: F-01m0yta2mqnm3pw84vg6rrrhtc
 title: 'A proposed approval outlives its entity, and nothing can close it'
-status: new
+status: resolved
 origin: agent
 observation_type: gap
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-26'
+disposition: amend-spec
+resolved_at: '2026-08-27T16:43:32.163Z'
+approved_by: cli
+approved_at: '2026-08-27T16:43:32.163Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - BR-01m0vqr9k5ypcztw4v0ns2qa6a
 ---
 # F-01m0yta2mqnm3pw84vg6rrrhtc — A proposed approval outlives its entity, and nothing can close it
 
