@@ -1,13 +1,20 @@
 ---
 id: F-01m0ytmp2fpw8kzn5n17sdgc5a
 title: 29 closed tasks declared a deviation that no observation records
-status: new
+status: resolved
 origin: agent
 observation_type: gap
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-26'
+disposition: amend-spec
+resolved_at: '2026-08-27T16:43:31.320Z'
+approved_by: cli
+approved_at: '2026-08-27T16:43:31.320Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - UC-01m0f0wn89dy38s6whbfa0jafn
 ---
 # F-01m0ytmp2fpw8kzn5n17sdgc5a — 29 closed tasks declared a deviation that no observation records
 
