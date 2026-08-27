@@ -33,4 +33,3 @@ None.
 - a-migration-proof-test-pinned-the-workspace-s-entities-inste-f8ytwx3k
 - a-proposed-approval-outlives-its-entity-and-nothing-can-clos-g6rrrhtc
 - nothing-states-when-a-durable-answer-needs-a-decision-record-e445zj0k
-- observation-create-from-the-chat-deadlocks-on-its-own-lock-w-m96mmdaw

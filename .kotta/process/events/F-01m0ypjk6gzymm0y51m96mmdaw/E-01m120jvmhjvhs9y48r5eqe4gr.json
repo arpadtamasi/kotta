@@ -1,0 +1,15 @@
+{
+  "entity": "F-01m0ypjk6gzymm0y51m96mmdaw",
+  "task": null,
+  "kind": "approval",
+  "approval_id": "E-01m120jvmgs7mrqw16jm6tth73",
+  "phase": "applied",
+  "action": "observation.resolve",
+  "payload": {
+    "disposition": "reject",
+    "surface": "cli"
+  },
+  "source_message": "E-01m120jvmghfybg3e8rr4jscr2",
+  "id": "E-01m120jvmhjvhs9y48r5eqe4gr",
+  "created_at": "2026-08-27T16:24:23.953Z"
+}

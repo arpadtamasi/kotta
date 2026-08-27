@@ -3,13 +3,18 @@ id: F-01m0ypjk6gzymm0y51m96mmdaw
 title: >-
   observation_create from the chat deadlocks on its own lock when no task is
   named
-status: new
+status: resolved
 origin: agent
 observation_type: bug
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-26'
+disposition: reject
+resolved_at: '2026-08-27T16:24:23.896Z'
+approved_by: cli
+approved_at: '2026-08-27T16:24:23.896Z'
+approval_basis: 'CLI --approve: observation.resolve'
 ---
 # F-01m0ypjk6gzymm0y51m96mmdaw — observation_create from the chat deadlocks on its own lock when no task is named
 
