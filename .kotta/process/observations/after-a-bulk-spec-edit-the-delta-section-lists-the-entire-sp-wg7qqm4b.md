@@ -3,13 +3,19 @@ id: F-01m0t75ff4eg3nm0gtwg7qqm4b
 title: >-
   After a bulk spec edit the delta section lists the entire specification as the
   latest landing
-status: new
+status: resolved
 origin: agent
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-24'
+disposition: create-task
+resolved_at: '2026-08-27T16:24:21.342Z'
+approved_by: cli
+approved_at: '2026-08-27T16:24:21.342Z'
+approval_basis: 'CLI --approve: observation.resolve'
+task: T-01m120js1qey632tbv5can43ed
 ---
 # F-01m0t75ff4eg3nm0gtwg7qqm4b — After a bulk spec edit the delta section lists the entire specification as the latest landing
 
