@@ -3,13 +3,20 @@ id: F-021
 title: >-
   Finding metadata is single-valued in practice — severity, confidence and
   origin carry no information, and discovered_during is empty 62% of the time
-status: new
+status: resolved
 origin: agent
 observation_type: process
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-01'
+disposition: amend-spec
+resolved_at: '2026-08-27T16:43:33.603Z'
+approved_by: cli
+approved_at: '2026-08-27T16:43:33.603Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - E-01m0f0wn89cry06jvtwtmpk4fr
 ---
 # F-021 — Finding metadata is single-valued in practice — severity, confidence and origin carry no information, and discovered_during is empty 62% of the time
 

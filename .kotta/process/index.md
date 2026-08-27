@@ -28,4 +28,4 @@ None.
 
 ## New observations
 
-- F-021-finding-metadata-is-single-valued-in-practice-severity-confi
+None.
