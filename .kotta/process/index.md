@@ -32,3 +32,4 @@ None.
 - F-021-finding-metadata-is-single-valued-in-practice-severity-confi
 - a-proposed-approval-outlives-its-entity-and-nothing-can-clos-g6rrrhtc
 - nothing-states-when-a-durable-answer-needs-a-decision-record-e445zj0k
+- the-site-tells-a-visitor-to-install-the-skills-with-a-pinned-xv5b9q5p
