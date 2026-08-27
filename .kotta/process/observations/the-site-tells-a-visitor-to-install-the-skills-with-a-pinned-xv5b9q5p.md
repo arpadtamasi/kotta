@@ -3,13 +3,20 @@ id: F-01m120k6vp17wv04gfxv5b9q5p
 title: >-
   The site tells a visitor to install the skills with a pinned third-party
   command, when one Kotta command does that and more
-status: new
+status: resolved
 origin: human
 observation_type: inconsistency
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-27'
+disposition: amend-spec
+resolved_at: '2026-08-27T16:42:23.686Z'
+approved_by: cli
+approved_at: '2026-08-27T16:42:23.686Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - BR-01m0zx29x1nvccpr4xwyhjr153
 ---
 # F-01m120k6vp17wv04gfxv5b9q5p — The site tells a visitor to install the skills with a pinned third-party command, when one Kotta command does that and more
 
