@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- a-batch-releases-its-first-wave-without-accusing-the-operato-yw9zb522
+None.
 
 ## Active tasks
 
-None.
+- a-batch-releases-its-first-wave-without-accusing-the-operato-yw9zb522
 
 ## Review
 

@@ -1,7 +1,7 @@
 ---
 id: T-01m13p40gan8r94m8byw9zb522
 title: A batch releases its first wave without accusing the operator
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -14,7 +14,7 @@ blocks: []
 spec:
   - BR-01m0f0wn89r5np2yce79y2pctq
   - UC-01m0f0wn89jebbfp6rjr0fxqh1
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-28'
 updated_at: '2026-08-28'
@@ -25,6 +25,12 @@ coverage:
     - UC-01m0f0wn89jebbfp6rjr0fxqh1
   'No refusal blames the operator for a change Kotta made: a dirty-tree refusal names changes the operator can actually see and account for.':
     - BR-01m0f0wn89r5np2yce79y2pctq
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: e3f18386f5e9562a829febf31cb2496f8a3fcef6
 ---
 # T-01m13p40gan8r94m8byw9zb522 — A batch releases its first wave without accusing the operator
 
