@@ -67,6 +67,32 @@ describe("deviation reconciliation (F-019)", () => {
       .toContain("the diagram was skipped");
   });
 
+  test("a declared command is evidence, not narrative, however it names its test", () => {
+    // run: values are executed and receipted at submission (BR-01m0m33yxt2vqxb3jvqc186ssy). A test
+    // file named for deviations is a filename, not a confession (F-01m14kfk04mj4dbwzy2ba65js0).
+    const condition = "A task whose subject is deviations still validates.";
+    const path = task({
+      acceptance: condition,
+      deviations: "None.",
+      verification: `${condition}: run: npx vitest run tests/integration/deviation-reconciliation.test.ts -t "own subject is deviations" — verified: exit 0 at abc1234`,
+    });
+
+    expect(codes(path)).not.toContain("DEVIATION_MISMATCH");
+  });
+
+  test("prose beside a declared command is still read", () => {
+    const condition = "A task whose subject is deviations still validates.";
+    const path = task({
+      acceptance: condition,
+      deviations: "None.",
+      verification: `One deviation: the diagram was skipped.\n${condition}: run: npx vitest run x — verified: exit 0 at abc1234`,
+    });
+
+    expect(codes(path)).toContain("DEVIATION_MISMATCH");
+    expect(validateTaskFile(path).errors.find((error) => error.code === "DEVIATION_MISMATCH")?.message)
+      .toContain("the diagram was skipped");
+  });
+
   test("a declared deviation list passes however often the word appears", () => {
     const path = task({
       deviations: "The diagram was skipped; the task allowed text only.",

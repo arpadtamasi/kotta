@@ -84,7 +84,13 @@ function validateTask(path: string, expectedState?: string, requireDefinition = 
       // (F-01m14h0t8ehy2yc37y8tn71ete). The conditions are stripped first, by the same list
       // coverage parses, so what is left is what the agent wrote about the run.
       const conditions = acceptanceConditions(entity.content);
-      const written = (line: string) => conditions.reduce((rest, condition) => rest.split(condition).join(" "), line);
+      // A declared command is machine evidence — executed at submission and receipted with its exit
+      // status (BR-01m0m33yxt2vqxb3jvqc186ssy) — not the agent's account of the run, which is what
+      // this check reads. Scanning it read a test filename as a confession
+      // (F-01m14kfk04mj4dbwzy2ba65js0).
+      const written = (line: string) => conditions
+        .reduce((rest, condition) => rest.split(condition).join(" "), line)
+        .replace(/\brun:\s.*$/, " ");
       const quoted = (declarations.get("verification performed") ?? "").split(/\r?\n/)
         .find((line) => DEVIATION_MARKER.test(written(line).replace(DENIED_DEVIATION, "")));
       if (quoted) errors.push({ code: "DEVIATION_MISMATCH", message: `${id} declares no deviations while the verification narrative names one: "${quoted.trim().slice(0, 120)}".`, path });
