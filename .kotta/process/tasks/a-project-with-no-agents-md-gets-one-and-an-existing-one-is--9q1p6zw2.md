@@ -3,7 +3,7 @@ id: T-01m14azk11h5gk58vv9q1p6zw2
 title: >-
   A project with no AGENTS.md gets one, and an existing one is joined with a
   sentence
-status: active
+status: review
 origin: human
 types:
   - feature
@@ -90,3 +90,31 @@ None.
 ## Execution notes
 
 Found by the operator on their own first project, minutes after `kotta init`.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| kotta init in a repository with no AGENTS.md creates it carrying the reference, without a flag and without asking: there is nothing to protect, and the rules reach the agents that will work there. | run: npx vitest run tests/integration/sync.test.ts -t "without a flag and without asking" — verified: exit 0 at 2e698cb |
+| What Kotta writes into a project file says what the reference is. A bare pointer line is never what a reader is left with, whether the file was created or appended to. | run: npx vitest run tests/integration/sync.test.ts -t "says what the reference is" — verified: exit 0 at 2e698cb |
+| An existing AGENTS.md is still only appended to after an explicit yes, idempotently, and every prior byte survives in order. | run: npx vitest run tests/integration/sync.test.ts -t "leaves an existing project file alone\|changes nothing" — verified: exit 0 at 2e698cb |
+| The shipped setup skill carries the judgement path: an agent that has read the project file places the reference where it belongs in that document, shows the diff, and applies it on the human yes. | run: grep -q "you.. place the reference" skills/setup-kotta/SKILL.md — verified: exit 0 at 2e698cb |
+
+### Verification performed
+
+kotta init in a repository with no AGENTS.md creates it carrying the reference, without a flag and without asking: there is nothing to protect, and the rules reach the agents that will work there.: run: npx vitest run tests/integration/sync.test.ts -t "without a flag and without asking"
+What Kotta writes into a project file says what the reference is. A bare pointer line is never what a reader is left with, whether the file was created or appended to.: run: npx vitest run tests/integration/sync.test.ts -t "says what the reference is"
+An existing AGENTS.md is still only appended to after an explicit yes, idempotently, and every prior byte survives in order.: run: npx vitest run tests/integration/sync.test.ts -t "leaves an existing project file alone|changes nothing"
+The shipped setup skill carries the judgement path: an agent that has read the project file places the reference where it belongs in that document, shows the diff, and applies it on the human yes.: run: grep -q "you.. place the reference" skills/setup-kotta/SKILL.md
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
