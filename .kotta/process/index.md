@@ -12,7 +12,7 @@ None.
 
 ## Defined tasks
 
-None.
+- a-declared-command-is-evidence-not-narrative-s07bmca5
 
 ## Active tasks
 
