@@ -14,4 +14,4 @@ The rules must reach every project without a human copying them by hand - they o
 
 ## Scope
 
-kotta init and kotta sync, including sync --link-agents. Skill installation follows the same drift rule: a byte-identical copy is updated, an edited one is reported and left alone, and another tool's file under the same name is never overwritten.
+kotta init and kotta sync, including sync --link-agents, and kotta migrate, which refreshes the same file as it carries a workspace forward and is bound by the same drift rule. Skill installation follows the same drift rule: a byte-identical copy is updated, an edited one is reported and left alone, and another tool's file under the same name is never overwritten.
