@@ -1,13 +1,20 @@
 ---
 id: F-01m144jsf1nqhmt9v4a1g16nc7
 title: The gap ratchet meets a spec-first project as a wall on its first day
-status: new
+status: resolved
 origin: human
 observation_type: risk
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-28'
+disposition: amend-spec
+resolved_at: '2026-08-28T13:32:44.773Z'
+approved_by: cli
+approved_at: '2026-08-28T13:32:44.773Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - BR-01m0qtshfqhcrrqtz051zm9svr
 ---
 # F-01m144jsf1nqhmt9v4a1g16nc7 — The gap ratchet meets a spec-first project as a wall on its first day
 
