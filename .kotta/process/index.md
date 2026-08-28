@@ -20,7 +20,6 @@ None.
 
 ## Review
 
-- a-project-with-no-agents-md-gets-one-and-an-existing-one-is--9q1p6zw2
 - init-says-what-it-wrote-and-what-to-commit-bsxmnmpc
 
 ## Blocked

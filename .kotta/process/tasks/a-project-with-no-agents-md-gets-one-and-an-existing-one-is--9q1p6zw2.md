@@ -3,7 +3,7 @@ id: T-01m14azk11h5gk58vv9q1p6zw2
 title: >-
   A project with no AGENTS.md gets one, and an existing one is joined with a
   sentence
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -34,6 +34,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: adfc2fcf10951d3ae7c338e325b2843191a57276
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-28T15:41:49.100Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 # T-01m14azk11h5gk58vv9q1p6zw2 — A project with no AGENTS.md gets one, and an existing one is joined with a sentence
 
