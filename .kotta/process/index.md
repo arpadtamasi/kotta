@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- init-says-what-it-wrote-and-what-to-commit-bsxmnmpc
+None.
 
 ## Active tasks
 
-None.
+- init-says-what-it-wrote-and-what-to-commit-bsxmnmpc
 
 ## Review
 

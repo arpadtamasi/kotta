@@ -1,7 +1,7 @@
 ---
 id: T-01m14enxw9tbbgv2kbbsxmnmpc
 title: Init says what it wrote and what to commit
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -13,7 +13,7 @@ depends_on: []
 blocks: []
 spec:
   - BR-01m0f0wn89r5np2yce79y2pctq
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-28'
 updated_at: '2026-08-28'
@@ -22,6 +22,12 @@ coverage:
     - BR-01m0f0wn89r5np2yce79y2pctq
   'Init still commits nothing, and every mutation after it still commits the canonical state it writes.':
     - BR-01m0f0wn89r5np2yce79y2pctq
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 6acc6e60999c3e5e3303375415e7566ff78dd61e
 ---
 # T-01m14enxw9tbbgv2kbbsxmnmpc — Init says what it wrote and what to commit
 
