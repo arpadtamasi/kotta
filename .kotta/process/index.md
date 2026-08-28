@@ -29,4 +29,4 @@ None.
 
 ## New observations
 
-- kotta-init-leaves-everything-it-wrote-untracked-so-the-next--yaejv9dx
+None.

@@ -3,13 +3,20 @@ id: F-01m14bxc55dpeg5zbjyaejv9dx
 title: >-
   kotta init leaves everything it wrote untracked, so the next command that
   checks the tree refuses
-status: new
+status: resolved
 origin: agent
 observation_type: defect
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-28'
+disposition: amend-spec
+resolved_at: '2026-08-28T14:56:10.841Z'
+approved_by: cli
+approved_at: '2026-08-28T14:56:10.841Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - BR-01m0f0wn89r5np2yce79y2pctq
 ---
 # F-01m14bxc55dpeg5zbjyaejv9dx — kotta init leaves everything it wrote untracked, so the next command that checks the tree refuses
 
