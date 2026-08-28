@@ -1,7 +1,7 @@
 ---
 id: T-01m14j3afm6f2mqagd11zjbvw2
 title: A task whose subject is deviations can still validate
-status: review
+status: done
 origin: human
 types:
   - bug
@@ -32,6 +32,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: ad33633146aad45a20a594fbf530ee59a20e1d90
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-28T16:32:57.570Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 # T-01m14j3afm6f2mqagd11zjbvw2 — A task whose subject is deviations can still validate
 
