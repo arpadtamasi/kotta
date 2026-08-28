@@ -1,7 +1,7 @@
 ---
 id: T-01m120jsvqwswpkdvhdz0jhh5j
 title: A batch start report drops the outcome it can never observe
-status: defined
+status: active
 origin: observation
 types:
   - bug
@@ -14,7 +14,7 @@ blocks: []
 spec:
   - BR-01m0pw5bc7b1rkg5dct5qgdkmb
   - UC-01m0f0wn89jebbfp6rjr0fxqh1
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-27'
 updated_at: '2026-08-28'
@@ -24,6 +24,12 @@ coverage:
     - BR-01m0pw5bc7b1rkg5dct5qgdkmb
   'Completing the last member of a started batch completes the batch, and a start after that is refused by name rather than answered with an empty dispatch.':
     - UC-01m0f0wn89jebbfp6rjr0fxqh1
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 67ca11106988e3b5cfb0dae37c654f042df166f3
 ---
 ## Outcome
 

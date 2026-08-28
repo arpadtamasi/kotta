@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- a-batch-start-report-drops-the-outcome-it-can-never-observe-dz0jhh5j
+None.
 
 ## Active tasks
 
-None.
+- a-batch-start-report-drops-the-outcome-it-can-never-observe-dz0jhh5j
 
 ## Review
 
