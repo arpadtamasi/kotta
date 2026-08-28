@@ -143,6 +143,23 @@ function renderBatchStart(result: unknown): string {
       return lines.join("\n");
     }
 
+/**
+ * A create-task disposition mints work, so the result names it — and when the disposition named no
+ * title, says whose name the work is carrying and how to give it its own
+ * (BR-01m0f0wn898xd4tr7j7t9bsjy7).
+ */
+function renderObservationResolved(result: unknown): string {
+      const data = (result as { data: { id: unknown; title?: unknown; disposition: unknown; taskId?: unknown; inheritedTitle?: unknown } }).data;
+      const lines = [`kotta observation resolve: ${namedWithId(data.title, String(data.id))}. Disposition: ${String(data.disposition)}.`];
+      if (typeof data.taskId === "string") lines.push(`Captured ${namedWithId(data.inheritedTitle ?? data.title, data.taskId)} in the backlog.`);
+      if (typeof data.inheritedTitle === "string") {
+        lines.push(
+          `That capture is named for what was noticed, not for what will be done. Give it the work's own name with --task-title, or at 'kotta task define'.`,
+        );
+      }
+      return lines.join("\n");
+    }
+
 function renderEntityList(result: unknown): string {
   return formatList(result as ListResult);
 }
@@ -645,13 +662,14 @@ defineCommand("observation", "link <id>")
   .action((id: string, options: { discoveredDuring: string; json?: boolean }) =>
     print(linkObservation(id, options.discoveredDuring), Boolean(options.json)));
 
-defineCommand("observation", "resolve <id>")
+defineCommand("observation", "resolve <id>", renderObservationResolved)
   .requiredOption("--disposition <disposition>")
   .option("--spec <spec...>", "Specification nodes the amendment touched (amend-spec only)")
   .option("--task <task>", "The task this observation was folded into (attach-to-existing-task only)")
+  .option("--task-title <title>", "The name of the work the capture will carry (create-task only)")
   .option("--approve")
   .option("--json")
-  .action((id: string, options: { disposition: string; spec?: string[]; task?: string; approve?: boolean; json?: boolean }) => print(resolveObservation(id, options.disposition, Boolean(options.approve), undefined, { spec: options.spec, task: options.task }), Boolean(options.json)));
+  .action((id: string, options: { disposition: string; spec?: string[]; task?: string; taskTitle?: string; approve?: boolean; json?: boolean }) => print(resolveObservation(id, options.disposition, Boolean(options.approve), undefined, { spec: options.spec, task: options.task, title: options.taskTitle }), Boolean(options.json)));
 
 defineCommand("decision", "list", renderEntityList)
   .description("List decisions with their state and title")

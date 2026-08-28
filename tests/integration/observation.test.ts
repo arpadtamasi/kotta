@@ -337,3 +337,58 @@ describe("joining an observation to the task it came from", () => {
     expect(recordOf(root, observationId).discovered_during).toBeNull();
   });
 });
+
+/**
+ * An observation and the task it feeds are named apart (BR-01m0f0wn898xd4tr7j7t9bsjy7): one says
+ * what was noticed, the other what will be done. Reported from the field on two captures at once,
+ * both filed under the symptom sentence they inherited.
+ */
+describe("a capture born from an observation", () => {
+  const noticed = (root: string) => {
+    const created = run(root, ["observation", "new", "--title", "Two callers disagree about the permission check", "--type", "inconsistency", "--evidence", "src/a.ts and src/b.ts differ"]) as { data: { id: string; path: string } };
+    return created.data;
+  };
+
+  test("is named for the work when the disposition names it, and the observation keeps its own", () => {
+    const root = initRepository("kotta-observation-work-title-");
+    const observation = noticed(root);
+
+    const resolved = run(root, ["observation", "resolve", observation.id, "--disposition", "create-task", "--task-title", "One permission check, named by both callers", "--approve"]) as { data: { taskId: string; inheritedTitle?: string } };
+
+    const taskFile = join(root, ".kotta/process/tasks", `one-permission-check-named-by-both-callers-${resolved.data.taskId.slice(-8)}.md`);
+    expect(matter(readFileSync(taskFile, "utf8")).data.title).toBe("One permission check, named by both callers");
+    expect(resolved.data.inheritedTitle).toBeUndefined();
+    // The noticing keeps its own name; only the work was renamed.
+    const observationFile = join(root, ".kotta/process/observations", basename(observation.path));
+    expect(matter(readFileSync(observationFile, "utf8")).data.title).toBe("Two callers disagree about the permission check");
+  });
+
+  test("is still created without a title, and the result says whose name it carries and what replaces it", () => {
+    const root = initRepository("kotta-observation-inherited-title-");
+    const observation = noticed(root);
+
+    const output = attempt(root, ["observation", "resolve", observation.id, "--disposition", "create-task", "--approve"]);
+    expect(output.status, output.stderr).toBe(0);
+    const resolved = JSON.parse(output.stdout) as { data: { taskId: string; inheritedTitle?: string } };
+    expect(resolved.data.taskId).toMatch(/^T-[0-9a-hjkmnp-tv-z]{26}$/);
+    expect(resolved.data.inheritedTitle).toBe("Two callers disagree about the permission check");
+
+    // The human-readable surface says it too: this is a state to leave, and the way out is named.
+    const secondRoot = initRepository("kotta-observation-inherited-say-");
+    const second = noticed(secondRoot);
+    const said = spawnSync("node", [cli, "observation", "resolve", second.id, "--disposition", "create-task", "--approve"], { cwd: secondRoot, encoding: "utf8" });
+    expect(said.status, said.stderr).toBe(0);
+    expect(said.stdout).toContain("named for what was noticed, not for what will be done");
+    expect(said.stdout).toContain("--task-title");
+  });
+
+  test("a title belongs to create-task alone, the way spec and task already do", () => {
+    const root = initRepository("kotta-observation-title-scope-");
+    const observation = noticed(root);
+
+    const refusal = attempt(root, ["observation", "resolve", observation.id, "--disposition", "accept-risk", "--task-title", "Something else", "--approve"]);
+    expect(refusal.status).toBe(1);
+    expect(refusal.stdout + refusal.stderr).toContain("--task-title applies only to the create-task disposition");
+    expect(matter(readFileSync(join(root, ".kotta/process/observations", basename(observation.path)), "utf8")).data.status).toBe("new");
+  });
+});

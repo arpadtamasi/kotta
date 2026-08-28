@@ -29,6 +29,9 @@ Treat a observation as evidence awaiting disposition, not as a task. Use the `ko
    give the human the CLI fallback: `kotta observation resolve <observation-id> --disposition
    <disposition> --approve` with any command-required references. For `amend-spec`, name the amended
    nodes: `kotta observation resolve <observation-id> --disposition amend-spec --spec <node…>
-   --approve`, only after the amended specification has landed on the base branch.
+   --approve`, only after the amended specification has landed on the base branch. For `create-task`,
+   name the work rather than letting it inherit the noticing's title: `--task-title "<what will be
+   done>"` (`title` in the approval payload). The observation is named for the symptom; the task is
+   named for the remedy, and the name reaches every list and every gate question from there on.
 
 Never silently expand the task during which the issue was discovered. A created task begins in backlog unless an explicit, separately validated defined transition is authorized.

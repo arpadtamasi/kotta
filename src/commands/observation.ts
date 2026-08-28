@@ -155,7 +155,7 @@ export function validateObservation(id: string, repositoryRoot?: string) {
   return { ok: errors.length === 0, command: "observation validate", data: { id, state: observation.state, duplicates }, errors };
 }
 
-export function resolveObservation(id: string, disposition: string, approved: boolean, repositoryRoot?: string, options: { approvalRecorded?: boolean; locked?: boolean; commit?: boolean; spec?: string[]; task?: string; receipt?: ApprovalReceipt } = {}) {
+export function resolveObservation(id: string, disposition: string, approved: boolean, repositoryRoot?: string, options: { approvalRecorded?: boolean; locked?: boolean; commit?: boolean; spec?: string[]; task?: string; title?: string; receipt?: ApprovalReceipt } = {}) {
   if (!(OBSERVATION_DISPOSITIONS as readonly string[]).includes(disposition)) throw new Error(`Unknown disposition '${disposition}'.`);
   if (!approved) throw new Error("Human approval is required to resolve a observation.");
   // The amend-spec exit records which specification nodes the amendment touched; every other
@@ -174,6 +174,13 @@ export function resolveObservation(id: string, disposition: string, approved: bo
     if (!attached) throw new Error("Disposition 'attach-to-existing-task' requires --task naming the task this observation was folded into; attaching without it records nothing.");
   } else if (attached) {
     throw new Error(`--task applies only to the attach-to-existing-task disposition, not '${disposition}'.`);
+  }
+  // An observation's title says what was noticed; a task's says what will be done
+  // (BR-01m0f0wn898xd4tr7j7t9bsjy7). The one disposition that mints a task is the one that may
+  // name it, scoped exactly as spec and task are above.
+  const workTitle = (options.title ?? "").trim();
+  if (workTitle && disposition !== "create-task") {
+    throw new Error(`--task-title applies only to the create-task disposition, not '${disposition}'.`);
   }
   const requestedRoot = repositoryRoot ?? findRepositoryRoot();
   const resolveInControlPlane = (root: string) => {
@@ -200,7 +207,7 @@ export function resolveObservation(id: string, disposition: string, approved: bo
     const entity = parseMarkdown(readFileSync(observation.path, "utf8"));
     let taskId: string | undefined = attachedTask;
     if (disposition === "create-task") {
-      const created = newTask({ title: String(entity.data.title), type: "feature", profiles: [] }, root);
+      const created = newTask({ title: workTitle || String(entity.data.title), type: "feature", profiles: [] }, root);
       taskId = created.data.id;
       const task = findTask(root, taskId);
       const taskEntity = parseMarkdown(readFileSync(task.path, "utf8"));
@@ -222,7 +229,17 @@ export function resolveObservation(id: string, disposition: string, approved: bo
       ...(disposition === "amend-spec" ? { spec } : {}),
     }, typeof entity.data.discovered_during === "string" ? entity.data.discovered_during : null);
     if (options.commit !== false) commitControlState(root, `chore(kotta): resolve ${id}`);
-    return { ok: true, command: "observation resolve", data: { id, title: entityTitle(observation.path), disposition, taskId, spec: disposition === "amend-spec" ? spec : undefined } };
+    return {
+      ok: true,
+      command: "observation resolve",
+      data: {
+        id, title: entityTitle(observation.path), disposition, taskId,
+        spec: disposition === "amend-spec" ? spec : undefined,
+        // Naming the state and the way out of it, rather than leaving the operator to notice that
+        // the work is filed under the name of the symptom.
+        inheritedTitle: disposition === "create-task" && !workTitle ? String(entity.data.title) : undefined,
+      },
+    };
   };
   return options.locked ? resolveInControlPlane(requestedRoot) : withControlPlaneMutation(requestedRoot, resolveInControlPlane, { requireClean: false });
 }

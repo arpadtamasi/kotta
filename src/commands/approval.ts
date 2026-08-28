@@ -76,7 +76,7 @@ function validatePayload(action: ApprovalAction, payload: Record<string, unknown
   if (action === "observation.resolve") {
     const disposition = typeof payload.disposition === "string" ? payload.disposition : "";
     if (!OBSERVATION_DISPOSITIONS.has(disposition)) throw new Error("observation.resolve requires one explicit valid disposition.");
-    if (Object.keys(payload).some((key) => !["disposition", "spec", "task"].includes(key))) throw new Error("observation.resolve accepts only the scoped disposition, spec and task payload.");
+    if (Object.keys(payload).some((key) => !["disposition", "spec", "task", "title"].includes(key))) throw new Error("observation.resolve accepts only the scoped disposition, spec, task and title payload.");
     // amend-spec is the one disposition that carries references: it must name at least one amended
     // specification node, and no other disposition may.
     if (disposition === "amend-spec") {
@@ -93,6 +93,12 @@ function validatePayload(action: ApprovalAction, payload: Record<string, unknown
       }
     } else if (payload.task !== undefined) {
       throw new Error("observation.resolve accepts task only with the attach-to-existing-task disposition.");
+    }
+    // The third reference scoped to one disposition: the name the minted work will carry, which
+    // only create-task has anything to name (BR-01m0f0wn898xd4tr7j7t9bsjy7).
+    if (payload.title !== undefined) {
+      if (disposition !== "create-task") throw new Error("observation.resolve accepts title only with the create-task disposition.");
+      if (!(typeof payload.title === "string" && payload.title.trim())) throw new Error("observation.resolve with a title requires it to name the work.");
     }
     return;
   }
@@ -209,6 +215,7 @@ function apply(root: string, proposal: KottaEvent, receipt: ApprovalReceipt): un
       commit: false,
       spec: Array.isArray(payload.spec) ? payload.spec.map(String) : undefined,
       task: typeof payload.task === "string" ? payload.task : undefined,
+      title: typeof payload.title === "string" ? payload.title : undefined,
       receipt,
     });
     case "task.close": return closeTask(proposal.entity, true, root, { locked: true, commit: false, approvalRecorded: true, receipt });

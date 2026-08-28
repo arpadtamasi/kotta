@@ -370,6 +370,8 @@ Options:
                                (amend-spec only)
   --task <task>                The task this observation was folded into
                                (attach-to-existing-task only)
+  --task-title <title>         The name of the work the capture will carry
+                               (create-task only)
   --approve
   --json
   -h, --help                   display help for command

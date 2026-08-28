@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **A capture born from an observation is named for the work, not the symptom.** `create-task`
+  minted the task with the observation's own title, so a sentence describing what was noticed
+  became the name of what will be done — through the backlog list, every gate question and every
+  summary a human reads, until someone retitled it at define. Reported from the field on two
+  captures at once. The disposition now carries a title for the work, on both surfaces
+  (`--task-title`, and `title` in the approval payload, scoped to `create-task` exactly as `spec`
+  is to `amend-spec` and `task` to `attach-to-existing-task`). Omitting it still creates the
+  capture — a remedy that is not yet worded is worth capturing — but the result then says whose
+  name the work is carrying and what replaces it, rather than leaving it to be noticed.
+
 - **A batch start report no longer claims an outcome it can never observe.** The release report
   ended with `No tasks were dispatched; every member is done.` — a line no result reaching that
   renderer can support: closing or cancelling a task completes every open batch holding it, and a
