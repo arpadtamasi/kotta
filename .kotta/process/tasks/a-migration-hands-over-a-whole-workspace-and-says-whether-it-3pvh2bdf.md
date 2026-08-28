@@ -1,7 +1,7 @@
 ---
 id: T-01m14mgyrv00b7ye5r3pvh2bdf
 title: 'A migration hands over a whole workspace, and says whether it holds'
-status: active
+status: review
 origin: human
 types:
   - bug
@@ -90,3 +90,31 @@ None.
 
 Both gaps came from the same field report: a `kotta migrate` in another repository reported success,
 and the agent that read the workspace afterwards was still working from the old rules.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A migration that writes brings the rules file to what this Kotta would write, so the migrated workspace instructs agents from the running package and not from the shape it left. | run: npx vitest run tests/integration/migrate.test.ts -t "arrives with the records" — verified: exit 0 at 10ad69d |
+| A hand-edited rules file is not replaced by a migration: it is reported as drifted, with the one command that discards those edits. | run: npx vitest run tests/integration/migrate.test.ts -t "reported, not replaced" — verified: exit 0 at 10ad69d |
+| A migration reports whether the workspace it produced satisfies validation, and names what failed when it does not. | run: npx vitest run tests/integration/migrate.test.ts -t "produced validates\|named as broken" — verified: exit 0 at 10ad69d |
+| A dry run writes nothing: neither the rules file nor anything else changes, and it still says what the migration would do. | run: npx vitest run tests/integration/migrate.test.ts -t "dry run plans the rules refresh" — verified: exit 0 at 10ad69d |
+
+### Verification performed
+
+A migration that writes brings the rules file to what this Kotta would write, so the migrated workspace instructs agents from the running package and not from the shape it left.: run: npx vitest run tests/integration/migrate.test.ts -t "arrives with the records"
+A hand-edited rules file is not replaced by a migration: it is reported as drifted, with the one command that discards those edits.: run: npx vitest run tests/integration/migrate.test.ts -t "reported, not replaced"
+A migration reports whether the workspace it produced satisfies validation, and names what failed when it does not.: run: npx vitest run tests/integration/migrate.test.ts -t "produced validates|named as broken"
+A dry run writes nothing: neither the rules file nor anything else changes, and it still says what the migration would do.: run: npx vitest run tests/integration/migrate.test.ts -t "dry run plans the rules refresh"
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+F-01m14tm0e00hbnn6r5rqtt5twrk — a command summarised as validation promotes a batch and commits, found because migrate's new validation step silently committed the working tree until it was made report-only.
+
+### Known concerns
+
+Not declared.

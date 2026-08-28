@@ -16,11 +16,12 @@ None.
 
 ## Active tasks
 
-- a-migration-hands-over-a-whole-workspace-and-says-whether-it-3pvh2bdf
+None.
 
 ## Review
 
 - a-declared-command-is-evidence-not-narrative-s07bmca5
+- a-migration-hands-over-a-whole-workspace-and-says-whether-it-3pvh2bdf
 
 ## Blocked
 
