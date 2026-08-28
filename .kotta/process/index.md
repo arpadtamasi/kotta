@@ -29,3 +29,4 @@ None.
 ## New observations
 
 - an-agent-had-to-read-kotta-s-compiled-cli-to-learn-what-a-sp-man0jzwt
+- kotta-migrate-carries-the-workspace-forward-and-leaves-the-r-b0dyqct4
