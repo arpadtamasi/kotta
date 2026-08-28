@@ -1,7 +1,7 @@
 ---
 id: T-01m14khqarazb07kcss07bmca5
 title: 'A declared command is evidence, not narrative'
-status: active
+status: review
 origin: human
 types:
   - bug
@@ -87,3 +87,29 @@ None.
 The previous fix was right about where the false positive came from and incomplete about how far it
 reached. The case that proves it is the task that made it, which is the shortest possible feedback
 loop and the reason it was found within the hour.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A declared command is not scanned as narrative: an evidence line whose run: command names a test file or filter about deviations does not make the task confess to one. | run: npx vitest run tests/integration/deviation-reconciliation.test.ts -t "evidence, not narrative" — verified: exit 0 at 92dbde0 |
+| Prose evidence is still scanned, and the case F-019 exists for still fails: a narrative admitting a deviation beside a denying field is refused and quoted. | run: npx vitest run tests/integration/deviation-reconciliation.test.ts -t "prose beside a declared command" — verified: exit 0 at 92dbde0 |
+| This workspace validates, including the two tasks whose own subject is deviations. | run: npx vitest run tests/integration/questions.test.ts -t "keep validating" — verified: exit 0 at 92dbde0 |
+
+### Verification performed
+
+A declared command is not scanned as narrative: an evidence line whose run: command names a test file or filter about deviations does not make the task confess to one.: run: npx vitest run tests/integration/deviation-reconciliation.test.ts -t "evidence, not narrative"
+Prose evidence is still scanned, and the case F-019 exists for still fails: a narrative admitting a deviation beside a denying field is refused and quoted.: run: npx vitest run tests/integration/deviation-reconciliation.test.ts -t "prose beside a declared command"
+This workspace validates, including the two tasks whose own subject is deviations.: run: npx vitest run tests/integration/questions.test.ts -t "keep validating"
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.

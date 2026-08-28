@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- a-declared-command-is-evidence-not-narrative-s07bmca5
+None.
 
 ## Review
 
-None.
+- a-declared-command-is-evidence-not-narrative-s07bmca5
 
 ## Blocked
 
