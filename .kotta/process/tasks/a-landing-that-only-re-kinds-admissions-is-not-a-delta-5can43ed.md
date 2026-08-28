@@ -1,7 +1,7 @@
 ---
 id: T-01m120js1qey632tbv5can43ed
 title: A landing that only re-kinds admissions is not a delta
-status: defined
+status: active
 origin: observation
 types:
   - bug
@@ -13,7 +13,7 @@ depends_on: []
 blocks: []
 spec:
   - UC-01m0fpqfxjvet99wbz0v1ag64q
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-27'
 updated_at: '2026-08-28'
@@ -25,6 +25,12 @@ coverage:
     - UC-01m0fpqfxjvet99wbz0v1ag64q
   'Where a landing touched more nodes than it changed agreements in, the report says both numbers.':
     - UC-01m0fpqfxjvet99wbz0v1ag64q
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 1efb238a95bd23d8f2516b936d4839568b0307ab
 ---
 ## Outcome
 

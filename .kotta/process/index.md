@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- a-landing-that-only-re-kinds-admissions-is-not-a-delta-5can43ed
+None.
 
 ## Active tasks
 
-None.
+- a-landing-that-only-re-kinds-admissions-is-not-a-delta-5can43ed
 
 ## Review
 
