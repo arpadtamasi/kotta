@@ -8,7 +8,7 @@ origin: agent
 observation_type: inconsistency
 confidence: high
 severity: medium
-discovered_during: null
+discovered_during: T-01m0jdntvbbp5rbj6t2eqpd0tg
 created_at: '2026-08-26'
 disposition: create-task
 resolved_at: '2026-08-27T16:24:22.166Z'
