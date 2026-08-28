@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- a-capture-born-from-an-observation-is-named-for-the-work-not-32md14wp
+None.
 
 ## Active tasks
 
-None.
+- a-capture-born-from-an-observation-is-named-for-the-work-not-32md14wp
 
 ## Review
 

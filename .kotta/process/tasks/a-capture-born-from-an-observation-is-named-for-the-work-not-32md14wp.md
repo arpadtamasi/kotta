@@ -1,7 +1,7 @@
 ---
 id: T-01m14xe49h3afs5zpg32md14wp
 title: 'A capture born from an observation is named for the work, not the symptom'
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -14,7 +14,7 @@ blocks: []
 spec:
   - BR-01m0f0wn898xd4tr7j7t9bsjy7
   - UC-01m0f0wn89fpwvdh3gz31cdtn9
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-28'
 updated_at: '2026-08-28'
@@ -26,6 +26,12 @@ coverage:
     - BR-01m0f0wn898xd4tr7j7t9bsjy7
   'A title is refused with any other disposition, the way spec and task already are, and the refusal names the disposition it belongs to.':
     - UC-01m0f0wn89fpwvdh3gz31cdtn9
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 7ba74cc9d282da609bb42bd41a9a6c5d756a922f
 ---
 ## Outcome
 
