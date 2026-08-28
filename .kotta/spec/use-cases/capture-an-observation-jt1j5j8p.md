@@ -21,7 +21,7 @@ Something noticed during execution, review, or use: a possible bug, debt, risk, 
 
 ## Main success scenario
 
-The agent records the observation with its title, type, and concrete evidence, and continues its task inside the approved scope. The observation enters the new queue for later triage. A noticing the human made is recorded as the human's: the agent relaying what was said in the conversation says so, and the record carries that origin rather than the agent's. The most valuable noticings are the ones a person makes in passing, and a workspace that can only record its agents' loses them to the conversation they were said in.
+The agent records the observation with its title, type, and concrete evidence, and continues its task inside the approved scope. The observation enters the new queue for later triage. Where the noticing happened during a task, the record names that task - stated when the observation is written, or recorded afterwards on the observation that already exists, because a noticing and the naming of where it came from do not have to happen in the same breath. A link already recorded is never silently replaced: a second task is refused, naming the one the record holds. A noticing the human made is recorded as the human's: the agent relaying what was said in the conversation says so, and the record carries that origin rather than the agent's. The most valuable noticings are the ones a person makes in passing, and a workspace that can only record its agents' loses them to the conversation they were said in.
 
 ## Alternatives
 
