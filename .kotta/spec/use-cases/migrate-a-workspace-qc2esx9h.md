@@ -23,7 +23,7 @@ A workspace written under earlier names (.a-team/, findings/ready/packages, pre-
 
 ## Main success scenario
 
-A dry run lists every change without writing. The migration renames directories, statuses, and frontmatter fields; the id set before and after is compared and must be identical. The result is committed so derived readers see it. A second run reports the workspace already current.
+A dry run lists every change without writing. The migration renames directories, statuses, and frontmatter fields; the id set before and after is compared and must be identical. The result is committed so derived readers see it. A second run reports the workspace already current. A workspace arrives whole: the generated rules file is brought to the running package alongside the records, because it is the one document every agent in the project reads and a migration that leaves it behind keeps instructing them from the version it came from. And the migration says whether what it produced satisfies the rules of the shape it moved to — a report of success over a workspace its own validator would refuse claims more than the result carries.
 
 ## Alternatives
 

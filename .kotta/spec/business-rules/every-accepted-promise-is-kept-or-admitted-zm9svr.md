@@ -8,6 +8,8 @@ title: "Every accepted promise is kept or admitted"
 
 An accepted specification node either has evidence — code, a test, or a command definition naming it by its id — or it declares an accepted implementation gap saying why it does not yet. There is no third state. `kotta gap` refuses a workspace holding one: it names each node that is neither, says where evidence was sought, and exits non-zero. Admitting a gap does not dispose of a promise. It is a readable statement that the promise stands and is not yet kept, and removing the admission is part of the work that keeps it.
 
+A promise whose work has not begun is not an unaccounted one. Where an agreement lands before the code that keeps it - the order this project's own shaping advises - the ratchet asks what is true of each node, not whether it is implemented yet, and a workspace that has just written its specification is not refused for having written it. What the ratchet exists to stop is a promise nobody has accounted for, and "the work has not started" is an accounting.
+
 ## Rationale
 
 Coverage already binds the front of the lifecycle: a task cannot become defined until every acceptance condition cites a node that has landed. Nothing bound the other end, so the number of accepted promises with no evidence could only grow. On the day this rule was written it stood at 108 of 119 nodes; eleven were named anywhere in the repository.

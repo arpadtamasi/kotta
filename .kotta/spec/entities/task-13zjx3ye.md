@@ -19,6 +19,8 @@ accepted:
 
 The unit of work: one bounded, executable slice of the accepted specification, with an observable outcome, acceptance conditions, and verification. The unit of delegation, and the asset the workspace accumulates.
 
+A task's title states the outcome that ends the work, never the symptom that prompted it. A task minted from an observation therefore does not inherit that observation's title: the two kinds say opposite things by construction, and a backlog titled by symptoms is a list of complaints rather than of work.
+
 ## Identity
 
 T- plus a time-sortable 26-character ULID, minted without coordination; identifiers created before that rule keep their sequential form forever. Filename: slug plus short id suffix.

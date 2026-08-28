@@ -21,7 +21,7 @@ A workspace with the form registry installed. A conversation exploring goals, ac
 
 ## Main success scenario
 
-A workshop recognizes the forms present in the conversation, drafts nodes under the spec namespace with minted ids and frontmatter edges, and reports what remains dangling. Traceability asks exactly the registered question for each unanswered required edge; explicitly accepted gaps stay silent with their reason. Landing the shaped nodes on the base branch, on a human yes, is the acceptance of the changed agreement.
+A workshop recognizes the forms present in the conversation, drafts nodes under the spec namespace with minted ids and frontmatter edges, and reports what remains dangling. What a form requires is answerable before a node exists: the registry states the fields, headings and edges of each form, and Kotta describes them on demand, so an author learns the shape from the tool rather than from reading its implementation. Identifiers are minted by Kotta, not written by hand: an author asking for a node gets one already carrying its id and its form's skeleton. Traceability asks exactly the registered question for each unanswered required edge; explicitly accepted gaps stay silent with their reason. Landing the shaped nodes on the base branch, on a human yes, is the acceptance of the changed agreement.
 
 ## Alternatives
 
