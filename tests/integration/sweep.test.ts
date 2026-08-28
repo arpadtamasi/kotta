@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import matter from "gray-matter";
@@ -129,6 +129,33 @@ describe("sweep answers what has stopped", () => {
 
     expect(categoriesFor(root, id)).toEqual([]);
   });
+
+  test("an observation captured during the task clears it, without reopening or an edit by hand", () => {
+    const root = fixture("linked");
+    const id = definedTask(root, "Ship the exporter");
+    attempt(root, ["task", "start", id, "--agent", "codex", "--json"]);
+    const worktree = join(root, ".worktrees", id);
+    writeFileSync(join(worktree, "done.md"), "# Done\n");
+    git(worktree, "add", "."); git(worktree, "commit", "-m", "feat: deliver");
+    // Reviewed with a deviation and the prose section left saying nothing — the shape thirty tasks
+    // in this repository are in.
+    attempt(worktree, ["task", "review", id, "--evidence", "delivered", "--deviations", "Skipped the diagram; text only.", "--json"]);
+    git(root, "merge", "--no-ff", `feat/${id}-ship-the-exporter`, "-m", "merge");
+    attempt(root, ["task", "close", id, "--approve", "--json"]);
+    expect(categoriesFor(root, id), "reported while nothing records it").toEqual(["undeclared-deviation"]);
+
+    // The action the item names, run exactly as printed.
+    const item = sweep(root).data.items.find((candidate) => candidate.id === id)!;
+    expect(item.action).toContain(`--discovered-during ${id}`);
+    expect(attempt(root, ["observation", "new", "--title", "The diagram is missing", "--type", "technical-debt",
+      "--evidence", "The exporter shipped without it.", "--discovered-during", id, "--json"]).status).toBe(0);
+
+    // Cleared: no reopen, no file edited by hand, and the task's own prose still says nothing.
+    expect(categoriesFor(root, id)).toEqual([]);
+    const stored = readdirSync(join(root, ".kotta/process/tasks")).find((name) => name.includes(id.slice(-8)))!;
+    expect(readFileSync(join(root, ".kotta/process/tasks", stored), "utf8")).toContain("Skipped the diagram");
+    expect(git(root, "status", "--porcelain")).toBe("");
+  }, 120_000);
 
   test("undispositioned: an observation left in new past the threshold", () => {
     const root = fixture("undispositioned");

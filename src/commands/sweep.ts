@@ -162,18 +162,29 @@ export function sweep(repositoryRoot?: string, overrides: Partial<SweepThreshold
   }
 
   // 3. undeclared-deviation — the review said it deviated and recorded that nowhere else.
+  //
+  // "Nowhere else" is the link an observation carries, not only the prose written beside the
+  // deviation at review time (UC-01m0f0wn89dy38s6whbfa0jafn). That section is written once, at
+  // submission; on a done task nothing can change it, so reading it alone made this category
+  // unclearable by the very command the item recommends.
+  const recordedDuring = new Set(observations
+    .map(({ path }) => String(frontmatter(path).discovered_during ?? "").trim())
+    .filter(Boolean));
   for (const task of tasks.filter(({ state }) => state === "done")) {
     let body = "";
     try { body = matter(readFileSync(task.path, "utf8")).content; } catch { continue; }
     const deviations = reviewSection(body, "Deviations");
     if (declaredNothing(deviations)) continue;
+    // Either record answers it: the prose an agent wrote at review, or an observation naming the
+    // task it was discovered during. Nothing accounted for before becomes an item now.
     if (!declaredNothing(reviewSection(body, "Observations created"))) continue;
+    if (recordedDuring.has(task.id)) continue;
     items.push({
       category: "undeclared-deviation",
       id: task.id,
       title: task.title,
       reason: "closed with a declared deviation that no observation records",
-      action: `kotta observation new --title "…" --type <type> --evidence "…" for what the deviation left behind`,
+      action: `kotta observation new --title "…" --type <type> --evidence "…" --discovered-during ${task.id} for what the deviation left behind`,
       ageDays: daysSince(String(frontmatter(task.path).updated_at ?? ""), clock),
     });
   }
