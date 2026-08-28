@@ -208,3 +208,46 @@ describe("batch close", () => {
     expect(git(root, "status", "--porcelain")).toBe("");
   });
 });
+
+/**
+ * A rendering never claims more than the result carries (BR-01m0pw5bc7b1rkg5dct5qgdkmb), and
+ * `batch start` once ended with `No tasks were dispatched; every member is done.` — a line no
+ * result reaching it can support. Completing the last member completes the batch
+ * (UC-01m0f0wn89jebbfp6rjr0fxqh1), and a completed batch is refused before any report exists. The
+ * only way to observe that line was to write a stored status by hand, which the rules forbid; so
+ * this states positively what the supported commands do instead.
+ */
+describe("a batch whose last member finished", () => {
+  test("completes, and starting it again is refused by name rather than reported as an empty dispatch", () => {
+    const root = workspaceRepository("last-member");
+    const task = definedTask(root, "Only slice");
+    const created = run(root, ["batch", "new", "--title", "One member", "--goal", "Ship the slice"]) as { data: { id: string; path: string } };
+    const batchId = created.data.id;
+    const filename = basename(created.data.path);
+    run(root, ["batch", "add", batchId, task.id]);
+    commitIfDirty(root, "define batch");
+
+    const dispatch = run(root, ["batch", "start", batchId, "--agent", "codex"]) as { data: { started: string[] } };
+    expect(dispatch.data.started).toEqual([task.id]);
+    expect(status(batchFile(root, filename))).toBe("active");
+
+    const branch = `feat/${task.id}-only-slice`;
+    const worktree = join(root, ".worktrees", task.id);
+    writeFileSync(join(worktree, `${task.id}.md`), `# ${task.id}\n`);
+    git(worktree, "add", ".");
+    git(worktree, "commit", "-m", `feat: ${task.id}`);
+    run(worktree, ["task", "review", task.id, "--evidence", "verified", "--deviations", "None."]);
+    // A batch member integrates into its coordinator, not into the base branch.
+    const coordinator = join(root, ".worktrees/batches", batchId);
+    git(coordinator, "merge", "--no-ff", branch, "-m", `merge ${task.id}`);
+    run(root, ["task", "close", task.id, "--approve"]);
+
+    // The state the removed line described does not exist: the batch is already done here.
+    expect(status(batchFile(root, filename))).toBe("done");
+
+    const refusal = attempt(root, ["batch", "start", batchId, "--agent", "codex"]);
+    expect(refusal.status).toBe(1);
+    expect(refusal.stdout + refusal.stderr).toContain("must be defined or active");
+    expect(refusal.stdout + refusal.stderr).not.toContain("every member is done");
+  });
+});

@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **A batch start report no longer claims an outcome it can never observe.** The release report
+  ended with `No tasks were dispatched; every member is done.` — a line no result reaching that
+  renderer can support: closing or cancelling a task completes every open batch holding it, and a
+  completed batch is refused before a report exists. Reaching the line took a hand-written status,
+  which is the one thing the rules forbid. The line is gone, and what does happen is stated
+  positively: the last member closes, the batch completes, and a start after that is refused by
+  name. Recorded as F-01m0zpg89ydwy8q0ygtg485bq5, from a deviation declared at review.
+
 - **A migration hands over a whole workspace, and says whether it holds.** `kotta migrate` carried
   the records forward and left two things behind. The generated rules file stayed as it arrived, so
   a migrated workspace kept instructing every agent in the project from the vocabulary, the commands

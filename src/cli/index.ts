@@ -140,7 +140,6 @@ function renderBatchStart(result: unknown): string {
       if (data.budget.held > 0) {
         lines.push(`Held: ${data.budget.held} eligible, and the batch already carries ${data.budget.running} of its ${data.budget.configured}.`);
       }
-      if (!data.starts.length && !data.waiting.length && !data.running.length) lines.push("No tasks were dispatched; every member is done.");
       return lines.join("\n");
     }
 
