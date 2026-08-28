@@ -331,7 +331,7 @@ export function gapReport(repositoryRoot: string): GapReportResult {
   const errors = [
     ...promises.map((node) => ({
       code: "UNADMITTED_PROMISE",
-      message: `${node.title} (${node.form}) has no evidence and admits no gap. Looked for ${node.evidenceSought}. Implement it, or admit the gap in its frontmatter: accepted: ["<kind>: <reason>"], where <kind> is one of ${ADMISSION_KINDS.join(", ")}.${pending}`,
+      message: `${node.title} (${node.form}) has no evidence and admits no gap. Looked for ${node.evidenceSought}. Name that id where the promise is kept - a promise kept without naming it is still unaccounted for (D-01m14bh1g2pk1fdwm9wpsmx9zg) - or admit the gap in its frontmatter: accepted: ["<kind>: <reason>"], where <kind> is one of ${ADMISSION_KINDS.join(", ")}.${pending}`,
       path: node.path,
     })),
     ...unkinded.map((node) => ({

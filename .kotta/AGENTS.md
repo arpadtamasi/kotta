@@ -67,7 +67,7 @@ it — the item then stays where it stood, so the reasoning survives the answer.
 unresolved choice may instead use `None`, `N/A`, or `No open decisions` (with or without a final
 period); that is the empty enumeration. Defining is refused while any question is unanswered, and
 it names which ones. `kotta questions [<id>]` lists them for one entity or for the whole workspace.
-Coverage is named, never inferred: each acceptance bullet either contains a referenced spec id or
+A promise is evidenced by citation: the code, test or command definition that keeps an accepted spec node names that node's id, so `kotta gap` can find it in one pass. Keeping a promise without naming it leaves it unaccounted for. Coverage is named, never inferred: each acceptance bullet either contains a referenced spec id or
 has an exact-text entry in frontmatter `coverage` mapping it to one or more ids from `spec`. If the
 accepted specification does not promise a condition, record an observation and amend the spec;
 never widen the task to make the validator pass. The validated coverage map travels in the brief.

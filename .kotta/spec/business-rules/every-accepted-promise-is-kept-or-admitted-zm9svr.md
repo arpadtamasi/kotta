@@ -8,6 +8,8 @@ title: "Every accepted promise is kept or admitted"
 
 An accepted specification node either has evidence — code, a test, or a command definition naming it by its id — or it declares an accepted implementation gap saying why it does not yet. There is no third state. `kotta gap` refuses a workspace holding one: it names each node that is neither, says where evidence was sought, and exits non-zero. Admitting a gap does not dispose of a promise. It is a readable statement that the promise stands and is not yet kept, and removing the admission is part of the work that keeps it.
 
+A promise is evidenced by citation: the site that keeps it names the node id, and the report looks for that identifier and nothing else, because the check has to be fast and exact (D-01m14bh1g2pk1fdwm9wpsmx9zg). Naming the node is therefore a term of the agreement, not a habit of this repository: a task that keeps a promise without citing it leaves the promise unaccounted for, however well the code behaves, and the refusal asks for the citation rather than for an implementation the reader may already have written.
+
 A promise whose work has not begun is not an unaccounted one. Where an agreement lands before the code that keeps it - the order this project's own shaping advises - the ratchet asks what is true of each node, not whether it is implemented yet, and a workspace that has just written its specification is not refused for having written it. What the ratchet exists to stop is a promise nobody has accounted for, and "the work has not started" is an accounting.
 
 ## Rationale
