@@ -1,7 +1,7 @@
 ---
 id: T-01m13p40gan8r94m8byw9zb522
 title: A batch releases its first wave without accusing the operator
-status: review
+status: done
 origin: human
 types:
   - bug
@@ -31,6 +31,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: e3f18386f5e9562a829febf31cb2496f8a3fcef6
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-28T09:21:37.054Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 # T-01m13p40gan8r94m8byw9zb522 — A batch releases its first wave without accusing the operator
 
