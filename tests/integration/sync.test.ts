@@ -305,7 +305,7 @@ describe("the workspace rules file", () => {
     expect(result.data.pointer).toBe("@.kotta/AGENTS.md");
   });
 
-  test("--link-agents appends one line and keeps every prior byte in order", () => {
+  test("--link-agents appends a section that says what the reference is, and keeps every prior byte in order", () => {
     const own = "# Our rules\n\nRun the linter before pushing.\n";
     writeFileSync(projectAgents(), own);
     run(["init"]);
@@ -314,9 +314,12 @@ describe("the workspace rules file", () => {
 
     expect(linked.data.projectAgents.state).toBe("linked");
     const after = readFileSync(projectAgents(), "utf8");
-    expect(after.startsWith(own)).toBe(true);
+    expect(after.startsWith(own), "every prior byte survives in order").toBe(true);
     expect(after.trimEnd().endsWith("@.kotta/AGENTS.md")).toBe(true);
-    expect(after.split("\n").filter((line) => line.trim()).length).toBe(own.split("\n").filter((line) => line.trim()).length + 1);
+    // Never a bare pointer: a reader who meets the line alone has been told nothing
+    // (BR-01m0f1djtb5dkb76tjzq4x3ffh, D-01m13v4eqfhv5213paeqdn4tbm).
+    expect(after).toContain("## Kotta");
+    expect(after).toMatch(/rules its\n?agents follow/);
   });
 
   test("--link-agents migrates a legacy inline Kotta prelude and preserves the project section byte-for-byte", () => {
@@ -369,14 +372,40 @@ describe("the workspace rules file", () => {
     expect(readFileSync(projectAgents(), "utf8").startsWith(own)).toBe(true);
   });
 
-  test("--link-agents creates the file when the project has none", () => {
-    run(["init"]);
+  test("init creates the project file when there is none, without a flag and without asking", () => {
     expect(existsSync(projectAgents())).toBe(false);
 
-    const created = run(["sync", "--link-agents"]) as { data: { projectAgents: { state: string } } };
+    const initialised = run(["init"]) as { data: { projectAgents: { state: string; line: string } | null } };
 
-    expect(created.data.projectAgents.state).toBe("created");
-    expect(readFileSync(projectAgents(), "utf8")).toBe("@.kotta/AGENTS.md\n");
+    // Nothing was protected, and rules nobody reads are not installed
+    // (BR-01m0f1djtb5dkb76tjzq4x3ffh, D-01m13v4eqfhv5213paeqdn4tbm).
+    expect(initialised.data.projectAgents?.state).toBe("created");
+    const written = readFileSync(projectAgents(), "utf8");
+    expect(written).toContain("@.kotta/AGENTS.md");
+    expect(written).toContain("## Kotta");
+  });
+
+  test("init leaves an existing project file alone, and names what would join it", () => {
+    const own = "# Our rules\n\nRun the linter before pushing.\n";
+    writeFileSync(projectAgents(), own);
+
+    const initialised = run(["init"]) as { data: { projectAgents: unknown; pointer: string } };
+
+    expect(initialised.data.projectAgents, "an existing file is never written unasked").toBeNull();
+    expect(readFileSync(projectAgents(), "utf8"), "byte for byte").toBe(own);
+    expect(initialised.data.pointer).toBe("@.kotta/AGENTS.md");
+  });
+
+  test("--link-agents over the file init created changes nothing", () => {
+    // init now creates an absent project file itself, so this flag meets a file that already
+    // points at the rules; the case it used to cover is asserted above.
+    run(["init"]);
+    const before = readFileSync(projectAgents(), "utf8");
+
+    const linked = run(["sync", "--link-agents"]) as { data: { projectAgents: { state: string } } };
+
+    expect(linked.data.projectAgents.state).toBe("already-linked");
+    expect(readFileSync(projectAgents(), "utf8")).toBe(before);
   });
 
   test("linking twice changes nothing, and a reworded pointer is not duplicated", () => {

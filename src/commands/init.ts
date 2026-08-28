@@ -1,5 +1,7 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { initializeWorkspace } from "../filesystem/workspace.js";
-import { linkProjectAgents, pointerLine, syncWorkspaceAgents } from "./agents.js";
+import { PROJECT_AGENTS_FILE, linkProjectAgents, pointerLine, syncWorkspaceAgents } from "./agents.js";
 import { syncSkills } from "./sync.js";
 
 /**
@@ -16,6 +18,9 @@ export function initCommand(projectName?: string, options: { linkAgents?: boolea
   const result = initializeWorkspace({ projectName });
   const skills = syncSkills();
   const agents = syncWorkspaceAgents(result.root);
-  const projectAgents = options.linkAgents ? linkProjectAgents(result.root) : null;
+  // An absent project file is created unasked; an existing one is still only touched with the flag
+  // (BR-01m0f1djtb5dkb76tjzq4x3ffh, D-01m13v4eqfhv5213paeqdn4tbm).
+  const projectFileMissing = !existsSync(join(result.root, PROJECT_AGENTS_FILE));
+  const projectAgents = options.linkAgents || projectFileMissing ? linkProjectAgents(result.root) : null;
   return { ok: true, command: "init", data: { root: result.root, skills: skills.data, agents, projectAgents, pointer: pointerLine(result.root) } };
 }

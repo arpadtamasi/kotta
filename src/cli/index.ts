@@ -94,7 +94,10 @@ function agentsLines(agents: AgentsSummary | undefined, project: ProjectAgentsSu
   if (project) {
     if (project.state === "already-linked") lines.push(`${project.path} already points at the rules.`);
     else if (project.state === "migrated") lines.push(`Migrated Kotta's legacy inline rules in ${project.path} to ${project.line}; preserved the project section.`);
-    else lines.push(`Added one line to ${project.path}: ${project.line}`);
+    // A rendering never claims more than the result carries (BR-01m0pw5bc7b1rkg5dct5qgdkmb):
+    // creating a file the project did not have is not the same act as appending to one it wrote.
+    else if (project.state === "created") lines.push(`The project had no AGENTS.md; Kotta created ${project.path} pointing at the rules with ${project.line}.`);
+    else lines.push(`Added a Kotta section to ${project.path}, pointing at the rules with ${project.line}.`);
   } else if (agents && pointer) {
     lines.push(`Kotta did not touch the project's AGENTS.md. To point it at the rules, ask the human, then re-run with --link-agents; the line is: ${pointer}`);
   }

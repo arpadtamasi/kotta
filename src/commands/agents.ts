@@ -147,6 +147,23 @@ export function pointerLine(repositoryRoot?: string): string {
   return `@${workspaceDirectoryName(root)}/${WORKSPACE_AGENTS_FILE}`;
 }
 
+/**
+ * What Kotta writes into a project's own file. Never a bare pointer: a reader who meets
+ * `@.kotta/AGENTS.md` alone after the last line of someone's conventions has been told nothing
+ * (BR-01m0f1djtb5dkb76tjzq4x3ffh, D-01m13v4eqfhv5213paeqdn4tbm). An agent that has read the
+ * document places this better; this is the deterministic path, for environments that have none.
+ */
+function pointerBlock(line: string): string {
+  return [
+    "## Kotta",
+    "",
+    "Work in this repository is defined, executed, reviewed and closed through Kotta. The rules its",
+    "agents follow are kept with the workspace and included here:",
+    "",
+    line,
+  ].join("\n");
+}
+
 export interface ProjectAgentsResult {
   path: string;
   state: ProjectAgentsState;
@@ -193,7 +210,8 @@ export function linkProjectAgents(repositoryRoot?: string): ProjectAgentsResult 
   const target = `${workspaceDirectoryName(root)}/${WORKSPACE_AGENTS_FILE}`;
 
   if (!existsSync(path)) {
-    writeFileSync(path, `${line}\n`);
+    // Nothing to protect, and rules nobody reads are not installed: this path asks no one.
+    writeFileSync(path, `${pointerBlock(line)}\n`);
     return { path, state: "created", line };
   }
 
@@ -209,6 +227,6 @@ export function linkProjectAgents(repositoryRoot?: string): ProjectAgentsResult 
   }
   if (current.includes(target)) return { path, state: "already-linked", line };
   const separator = current.endsWith("\n\n") ? "" : current.endsWith("\n") ? "\n" : "\n\n";
-  writeFileSync(path, `${current}${separator}${line}\n`);
+  writeFileSync(path, `${current}${separator}${pointerBlock(line)}\n`);
   return { path, state: "linked", line };
 }
