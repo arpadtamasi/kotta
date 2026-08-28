@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- **A migration hands over a whole workspace, and says whether it holds.** `kotta migrate` carried
+  the records forward and left two things behind. The generated rules file stayed as it arrived, so
+  a migrated workspace kept instructing every agent in the project from the vocabulary, the commands
+  and the install line of the version it came from — found in the field, where an agent asked right
+  after a migration answered from the old rules. And the migration reported success while knowing
+  only that no identifier was lost: a workspace its own validator would refuse could be reported as
+  migrated, and the operator met the refusal at the next command. A migration that writes now brings
+  the rules file to the running package's copy through the same writer `sync` uses, so a hand-edited
+  file is reported as drifted with the one command that discards those edits, never replaced. It
+  then validates what it produced and says so, naming what failed — as a report, never a refusal:
+  the records moved either way, and an invalid result is still a migrated result. A dry run plans
+  the refresh and performs neither it nor the validation.
+
 ## [0.10.0] - 2026-08-26
 
 0.9.0 was tagged but never reached the registry, so npm's latest stayed at 0.7.0 while the rules

@@ -188,8 +188,16 @@ export function updateBatchTasks(id: string, taskId: string, action: "add" | "re
   return { ok: true, command: `batch ${action}`, data: { id, taskId, tasks } };
 }
 
-export function validateBatch(id: string, repositoryRoot?: string) {
+/**
+ * Validation is the transition for a batch (SM-01m0f0wn89m2xwd4z4mk9p71d5), so validating one
+ * ordinarily promotes and commits it. `transition: false` asks for the report alone: `migrate`
+ * says whether the workspace it produced holds (UC-01m0f0wn89x00jkpqpqc2esx9h), and a migration
+ * that advanced an entity's lifecycle and committed on its way past would be doing something else
+ * entirely.
+ */
+export function validateBatch(id: string, repositoryRoot?: string, options: { transition?: boolean } = {}) {
   const root = controlPlaneRoot(repositoryRoot ?? findRepositoryRoot());
+  const transition = options.transition !== false;
   const batch = findBatch(root, id);
   const entity = parseMarkdown(readFileSync(batch.path, "utf8"));
   const data = entity.data as BatchData;
@@ -220,7 +228,7 @@ export function validateBatch(id: string, repositoryRoot?: string) {
   // its members already carry, so grouping approves nothing and there is nothing here for a human
   // to approve; a batch that validates is defined, exactly as a covered task is.
   let state = batch.state;
-  if (!errors.length && state === "backlog") {
+  if (!errors.length && state === "backlog" && transition) {
     const open = subtreeTasks(batchTree(root, id))
       .map((taskId) => ({ id: taskId, state: findTask(root, taskId).state }))
       .filter((member) => !["backlog", "defined", "done"].includes(member.state));

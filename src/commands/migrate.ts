@@ -5,6 +5,8 @@ import { parseMarkdown, renderMarkdown } from "../core/markdown.js";
 import { readWorkspaceConfig } from "../core/config.js";
 import { LEGACY_WORKSPACE_DIRECTORY, PROCESS_DIRECTORIES, PROCESS_DIRECTORY, SPEC_DIRECTORY, WORKSPACE_DIRECTORIES, WORKSPACE_DIRECTORY, WORKSPACE_SCHEMA_VERSION, assertNotNewerWorkspace, bundledFormsDirectory, ensureIndexMergeAttribute, findRepositoryRoot, indexMergeAttribute, regenerateIndex, registeredSpecDirectories, syncWorkspaceForms, validateSpecDirectory, workspaceDirectoryName } from "../filesystem/workspace.js";
 import { TASK_STATES } from "../filesystem/entities.js";
+import { REPLACE_RULES_REMEDY, WORKSPACE_AGENTS_FILE, syncWorkspaceAgents } from "./agents.js";
+import { validateWorkspace } from "./validate.js";
 
 /**
  * `kotta migrate` — one command that carries a workspace from any older shape to the current one.
@@ -28,6 +30,18 @@ export type MigrationChange =
   | { kind: "rewrite"; path: string; fields: string[] }
   | { kind: "regenerate"; path: string };
 
+/** What became of the generated rules file the migration carried along. */
+export interface MigrateRules {
+  path: string;
+  state: "created" | "updated" | "unchanged" | "drifted" | "replaced";
+}
+
+/** Whether the workspace the migration produced satisfies the rules of the shape it moved to. */
+export interface MigrateValidation {
+  ok: boolean;
+  errors: Array<{ code: string; message: string; path?: string }>;
+}
+
 export interface MigrateData {
   root: string;
   workspace: string;
@@ -36,6 +50,10 @@ export interface MigrateData {
   changes: MigrationChange[];
   ids: string[];
   notes: string[];
+  /** Null when nothing was written: a dry run plans the refresh, it does not perform it. */
+  rules: MigrateRules | null;
+  /** Null when nothing was written: there is no produced workspace to judge. */
+  validation: MigrateValidation | null;
 }
 
 export interface MigrateResult {
@@ -461,7 +479,16 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
   if (!attributeCurrent) changes.push({ kind: "rewrite", path: ".gitattributes", fields: [`workspace index merge attribute → ${attribute}`] });
 
   const current = changes.length === 0;
-  if (!current) changes.push({ kind: "regenerate", path: `${WORKSPACE_DIRECTORY}/${PROCESS_DIRECTORY}/index.md` });
+  if (!current) {
+    changes.push({ kind: "regenerate", path: `${WORKSPACE_DIRECTORY}/${PROCESS_DIRECTORY}/index.md` });
+    // A workspace arrives whole (UC-01m0f0wn89x00jkpqpqc2esx9h). The records move to the current
+    // shape and the one document every agent in this project reads moves with them; a migration
+    // that leaves it behind keeps instructing them from the version it came from.
+    changes.push({ kind: "rewrite", path: `${WORKSPACE_DIRECTORY}/${WORKSPACE_AGENTS_FILE}`, fields: ["rules file → this Kotta's copy"] });
+  }
+
+  let rules: MigrateRules | null = null;
+  let validation: MigrateValidation | null = null;
 
   if (!dryRun && !current) {
     if (movesWorkspace) {
@@ -479,6 +506,9 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
     syncWorkspaceForms(root);
     ensureIndexMergeAttribute(root);
     regenerateIndex(root);
+    // The same writer `sync` uses, so drift is decided in one place: a hand-edited file is
+    // reported, never replaced (BR-01m0f1djtb5dkb76tjzq4x3ffh).
+    rules = syncWorkspaceAgents(root);
   }
 
   const finalWorkspace = dryRun ? workspace : join(root, workspaceDirectoryName(root));
@@ -486,10 +516,20 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
   const lost = idsBefore.filter((id) => !idsAfter.includes(id));
   if (lost.length) throw new Error(`Migration lost identifiers: ${lost.join(", ")}. Inspect ${finalWorkspace} before running anything else.`);
 
+  // A report of success over a workspace its own validator would refuse claims more than the result
+  // carries (UC-01m0f0wn89x00jkpqpqc2esx9h). The migration says so; it does not repair it, and an
+  // invalid result is still a migrated result — the operator is told, not blocked. It reads without
+  // transitioning: validation is a batch's promotion and commits it, and a migration that advanced
+  // a lifecycle and committed on its way past would be doing something other than migrating.
+  if (!dryRun && !current) {
+    const report = validateWorkspace(root, { transition: false });
+    validation = { ok: report.ok, errors: report.errors };
+  }
+
   return {
     ok: true,
     command: "migrate",
-    data: { root, workspace: finalWorkspace, dryRun, current, changes, ids: idsAfter, notes: baseRefNotes(root, current, dryRun) },
+    data: { root, workspace: finalWorkspace, dryRun, current, changes, ids: idsAfter, notes: baseRefNotes(root, current, dryRun), rules, validation },
   };
 }
 
@@ -524,6 +564,37 @@ export function formatMigration(result: MigrateResult): string {
     else lines.push(`  regenerate ${change.path}`);
   }
   lines.push(`  ${data.ids.length} identifiers, all unchanged (D-010: this is vocabulary, not identity).`);
+  for (const line of rulesLines(data.rules)) lines.push(line);
+  for (const line of validationLines(data.validation)) lines.push(line);
   for (const note of data.notes) lines.push(`\n${note}`);
   return lines.join("\n");
+}
+
+/** What the migration did with the rules file it carried along, in one line the operator can act on. */
+export function rulesLines(rules: MigrateRules | null): string[] {
+  if (!rules) return [];
+  if (rules.state === "drifted") {
+    return [
+      `\nThe rules file at ${rules.path} was edited by hand, so the migration left it alone — it still describes the shape this workspace came from.`,
+      REPLACE_RULES_REMEDY,
+    ];
+  }
+  if (rules.state === "unchanged") return [`  rules      ${rules.path} was already this Kotta's copy.`];
+  return [`  rules      ${rules.path} ${rules.state === "created" ? "written" : "brought to this Kotta's copy"}.`];
+}
+
+/**
+ * The migration says whether what it produced satisfies the rules of the shape it moved to. It
+ * reports; it never repairs, and it never turns a completed migration into a failure — the records
+ * moved either way, and the operator needs to know both facts.
+ */
+export function validationLines(validation: MigrateValidation | null): string[] {
+  if (!validation) return [];
+  if (validation.ok) return ["\nThe migrated workspace validates: 'kotta validate' finds nothing to report."];
+  const lines = [
+    `\nThe migration finished, but the workspace it produced does not validate: ${validation.errors.length} problem${validation.errors.length === 1 ? "" : "s"}. The records moved; these are what is left to fix.`,
+  ];
+  for (const error of validation.errors.slice(0, 10)) lines.push(`  ${error.code}  ${error.message}`);
+  if (validation.errors.length > 10) lines.push(`  ... and ${validation.errors.length - 10} more; run 'kotta validate' for the full report.`);
+  return lines;
 }

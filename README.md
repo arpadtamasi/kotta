@@ -670,6 +670,17 @@ both versions stated, and answered by upgrading Kotta: migration only ever carri
 forward, so `kotta migrate` refuses that direction instead of rewriting it back. A version that
 cannot be read is refused as neither.
 
+**The workspace arrives whole.** The rules file `.kotta/AGENTS.md` moves to the running package's
+copy alongside the records — it is the one document every agent in the project reads, and a
+migration that leaves it behind keeps instructing them from the version it came from. A
+hand-edited copy is reported as drifted and left alone, with the one command that discards those
+edits; the drift rule is the same one `kotta sync` follows.
+
+**The migration says whether what it produced holds.** When it writes, it validates the workspace it
+just produced and reports the result, naming what failed. It reports rather than repairs, and an
+invalid result is still a migrated result: the records moved either way, so the migration does not
+refuse after the fact. A dry run plans the rules refresh and performs neither it nor the validation.
+
 **Identifiers never move.** No id, no filename and no reference *value* changes — this is vocabulary,
 not identity (D-010). The command compares the id set before and after and refuses to lose one.
 

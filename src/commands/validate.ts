@@ -28,8 +28,13 @@ function duplicateIssues(located: Map<string, string[]>): Array<{ code: string; 
   return issues;
 }
 
-export function validateWorkspace() {
-  const root = controlPlaneRoot(findRepositoryRoot());
+/**
+ * Validate every record in one workspace. The root is a parameter because `migrate` reports the
+ * validity of what it just produced (UC-01m0f0wn89x00jkpqpqc2esx9h) and runs against the root it
+ * migrated, which in a test fixture is never the process's own repository.
+ */
+export function validateWorkspace(repositoryRoot?: string, options: { transition?: boolean } = {}) {
+  const root = controlPlaneRoot(repositoryRoot ?? findRepositoryRoot());
   const errors: Array<{ code: string; message: string; path?: string }> = [];
   if (!existsSync(workspacePath(root))) {
     return { ok: false, command: "validate", data: { tasks: 0 }, errors: [{ code: "WORKSPACE_NOT_FOUND", message: `No ${WORKSPACE_DIRECTORY_LABEL} workspace exists at ${root}. Run kotta init first.`, path: root }] };
@@ -84,7 +89,7 @@ export function validateWorkspace() {
       continue;
     }
     seenBatches.set(id, [...(seenBatches.get(id) ?? []), path]);
-    const report = validateBatch(id, root);
+    const report = validateBatch(id, root, options);
     if (!report.ok) errors.push(...report.errors.map((error) => ({ ...error, path })));
   }
   errors.push(...duplicateIssues(seenBatches));

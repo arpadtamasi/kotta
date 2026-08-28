@@ -566,3 +566,85 @@ describe("a workspace the size of a real one", () => {
     expect(run(root, ["migrate"]).data).toMatchObject({ current: true });
   }, 120_000);
 });
+
+/**
+ * A workspace arrives whole (UC-01m0f0wn89x00jkpqpqc2esx9h). Two things travel with the records: the
+ * one document every agent in the project reads, and an honest answer about whether what landed
+ * satisfies the rules of the shape it landed in.
+ */
+describe("a migration hands over a whole workspace, and says whether it holds", () => {
+  test("the rules file arrives with the records, as the running package writes it", () => {
+    const root = legacyRepository("rules-absent");
+    const output = invoke(root, ["migrate"]);
+
+    expect(output.status, output.stderr).toBe(0);
+    // What the migrated workspace instructs agents with is this Kotta's copy, not the shape it
+    // left: the current command names, the current workspace directory, the running install line.
+    const written = readFileSync(join(root, ".kotta/AGENTS.md"), "utf8");
+    expect(written).toContain("kotta status");
+    expect(written).toContain(".kotta/");
+    expect(written).toContain(`@arpadtamasi/kotta@${JSON.parse(readFileSync(resolve("package.json"), "utf8")).version}`);
+    expect(output.stdout).toContain(".kotta/AGENTS.md");
+
+    // And it is registered as Kotta's own, so the next sync refreshes it instead of reporting drift.
+    expect((run(root, ["sync"]).data as { agents: { state: string } }).agents.state).toBe("unchanged");
+  });
+
+  test("a hand-edited rules file is reported, not replaced, and the report names the way out", () => {
+    const root = legacyRepository("rules-drifted");
+    const edited = "# AGENTS.md\n\nOur own rules, written by hand.\n";
+    writeFileSync(join(root, ".a-team/AGENTS.md"), edited);
+
+    const output = invoke(root, ["migrate"]);
+
+    expect(output.status, output.stderr).toBe(0);
+    expect(readFileSync(join(root, ".kotta/AGENTS.md"), "utf8")).toBe(edited);
+    expect(output.stdout).toContain("was edited by hand");
+    expect(output.stdout).toContain("kotta sync --replace-rules");
+  });
+
+  test("the migration says the workspace it produced validates", () => {
+    const root = legacyRepository("reports-valid");
+    const output = invoke(root, ["migrate"]);
+
+    expect(output.status, output.stderr).toBe(0);
+    expect(output.stdout).toContain("The migrated workspace validates");
+    expect((run(root, ["validate"]) as { ok: boolean }).ok).toBe(true);
+  });
+
+  test("a migrated workspace that does not validate is reported as migrated and named as broken", () => {
+    const root = legacyRepository("reports-invalid");
+    // Migration moves vocabulary, never meaning: a reference to a task that was never there
+    // survives the move intact, and is exactly what the shape it moved to refuses.
+    write(join(root, ".a-team/backlog/T-009-dangling.md"), {
+      id: "T-009", title: "Dangling", status: "backlog", origin: "human", types: ["feature"], profiles: [],
+      priority: "medium", risk: "low", package: null, depends_on: ["T-404"], blocks: [],
+      created_at: "2026-07-09", updated_at: "2026-07-09",
+    }, TASK_BODY);
+
+    const output = invoke(root, ["migrate"]);
+
+    // The records moved either way: the migration reports, it does not repair and does not refuse.
+    expect(output.status, output.stderr).toBe(0);
+    expect(existsSync(join(root, ".kotta/process/tasks/T-009-dangling.md"))).toBe(true);
+    expect(output.stdout).toContain("does not validate");
+    expect(output.stdout).toContain("DANGLING_REFERENCE");
+    expect(output.stdout).toContain("T-404");
+
+    const result = run(root, ["migrate", "--dry-run"]).data as MigrateResult["data"];
+    expect(result.current).toBe(true);
+  });
+
+  test("a dry run plans the rules refresh, performs neither it nor the validation, and writes nothing", () => {
+    const root = legacyRepository("rules-dry-run");
+    const before = snapshot(root);
+
+    const result = run(root, ["migrate", "--dry-run"]).data as MigrateResult["data"];
+
+    expect(result.rules).toBeNull();
+    expect(result.validation).toBeNull();
+    expect(result.changes.some((change) => change.kind === "rewrite" && change.path === ".kotta/AGENTS.md")).toBe(true);
+    expect(snapshot(root)).toEqual(before);
+    expect(existsSync(join(root, ".kotta/AGENTS.md"))).toBe(false);
+  });
+});
