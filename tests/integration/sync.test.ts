@@ -389,7 +389,10 @@ describe("the workspace rules file", () => {
     // Writing it finishes Kotta's own installation; committing it is a change in the project's
     // history under the operator's name (D-01m14ccbcvntfbkwxty56sybak).
     const printed = execFileSync("node", [cli, "init"], { cwd: repository, encoding: "utf8" });
-    expect(printed).toContain("Commit it");
+    // Init writes a reviewable result and commits nothing, naming what it wrote
+    // (D-01m14ccbcvntfbkwxty56sybak, D-01m14dvygt52rpywdv818s5pe0).
+    expect(printed).toContain("Nothing here is committed yet");
+    expect(printed).toContain("the AGENTS.md it created for you");
     expect(execFileSync("git", ["status", "--porcelain", "--", "AGENTS.md"], { cwd: repository, encoding: "utf8" }).trim())
       .toBe("?? AGENTS.md");
   });

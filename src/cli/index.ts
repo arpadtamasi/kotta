@@ -99,8 +99,8 @@ function agentsLines(agents: AgentsSummary | undefined, project: ProjectAgentsSu
     // Kotta writes the project's file and never commits it: creating it finishes Kotta's own
     // installation, committing it makes a change in the project's history under the operator's
     // name (D-01m14ccbcvntfbkwxty56sybak). So the line that says it was written says to commit it.
-    else if (project.state === "created") lines.push(`The project had no AGENTS.md; Kotta created ${project.path} pointing at the rules with ${project.line}. Commit it — Kotta leaves the project's own files to you.`);
-    else lines.push(`Added a Kotta section to ${project.path}, pointing at the rules with ${project.line}. Commit it — Kotta leaves the project's own files to you.`);
+    else if (project.state === "created") lines.push(`The project had no AGENTS.md; Kotta created ${project.path} pointing at the rules with ${project.line}.`);
+    else lines.push(`Added a Kotta section to ${project.path}, pointing at the rules with ${project.line}.`);
   } else if (agents && pointer) {
     lines.push(`Kotta did not touch the project's AGENTS.md. To point it at the rules, ask the human, then re-run with --link-agents; the line is: ${pointer}`);
   }
@@ -206,9 +206,16 @@ function renderSync(result: unknown): string {
 function renderInit(result: unknown): string {
       const data = (result as { data: { root: unknown; skills?: { created: string[]; updated: string[]; unchanged: string[] }; agents?: AgentsSummary; projectAgents?: ProjectAgentsSummary; pointer?: string | null } }).data;
       const installed = data.skills ? data.skills.created.length + data.skills.updated.length + data.skills.unchanged.length : 0;
+      // Init writes a reviewable result, not a committed one, and every later mutation commits its
+      // own state (D-01m14dvygt52rpywdv818s5pe0). So the run that leaves the tree dirty is the run
+      // that says what to commit, and the refusal that would otherwise follow stops being a
+      // surprise.
+      const written = ["the workspace", ".gitignore and .gitattributes"];
+      if (data.projectAgents?.state === "created") written.push("the AGENTS.md it created for you");
       return [
         `Created workspace at ${String(data.root)}${installed ? `, and ${installed} skills are installed.` : "."}`,
         ...agentsLines(data.agents, data.projectAgents, data.pointer),
+        `Nothing here is committed yet. Look it over, then commit ${written.join(", ")} — every Kotta command after this one commits its own state.`,
       ].join("\n");
     }
 
