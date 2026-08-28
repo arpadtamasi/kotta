@@ -1,7 +1,7 @@
 ---
 id: T-01m13p40gan8r94m8byw9zb522
 title: A batch releases its first wave without accusing the operator
-status: active
+status: review
 origin: human
 types:
   - bug
@@ -90,3 +90,29 @@ None.
 
 Found on 2026-08-26 while testing the parallelism budget, reproduced on `main` unchanged, and
 recorded as F-01m0zn0d24hjbva47xdp1kb6m1 before this task existed.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| Every batch mutation commits the canonical state it wrote, so the workspace is as clean after it as before, and a second identical command is a no-op rather than a refusal. | run: npx vitest run tests/integration/batch-control-state.test.ts -t "as clean as they found it" — verified: exit 0 at 5c16432 |
+| A batch releases its first wave on its first invocation, from a workspace that was clean when the operator invoked it. | run: npx vitest run tests/integration/batch-control-state.test.ts -t "first invocation" — verified: exit 0 at 5c16432 |
+| No refusal blames the operator for a change Kotta made: a dirty-tree refusal names changes the operator can actually see and account for. | run: npx vitest run tests/integration/batch-control-state.test.ts -t "blames the operator" — verified: exit 0 at 5c16432 |
+
+### Verification performed
+
+Every batch mutation commits the canonical state it wrote, so the workspace is as clean after it as before, and a second identical command is a no-op rather than a refusal.: run: npx vitest run tests/integration/batch-control-state.test.ts -t "as clean as they found it"
+A batch releases its first wave on its first invocation, from a workspace that was clean when the operator invoked it.: run: npx vitest run tests/integration/batch-control-state.test.ts -t "first invocation"
+No refusal blames the operator for a change Kotta made: a dirty-tree refusal names changes the operator can actually see and account for.: run: npx vitest run tests/integration/batch-control-state.test.ts -t "blames the operator"
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.

@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- a-batch-releases-its-first-wave-without-accusing-the-operato-yw9zb522
+None.
 
 ## Review
 
-None.
+- a-batch-releases-its-first-wave-without-accusing-the-operato-yw9zb522
 
 ## Blocked
 
