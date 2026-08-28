@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- an-observation-can-be-joined-to-the-task-it-was-discovered-d-avpbw5g7
+None.
 
 ## Review
 
-None.
+- an-observation-can-be-joined-to-the-task-it-was-discovered-d-avpbw5g7
 
 ## Blocked
 
