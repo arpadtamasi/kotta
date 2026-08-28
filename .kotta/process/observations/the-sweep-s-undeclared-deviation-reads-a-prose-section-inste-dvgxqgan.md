@@ -3,13 +3,19 @@ id: F-01m1459gr68tzycg8fdvgxqgan
 title: >-
   The sweep's undeclared-deviation reads a prose section instead of the link, so
   doing the right thing never clears it
-status: new
+status: resolved
 origin: human
 observation_type: defect
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-28'
+disposition: create-task
+resolved_at: '2026-08-28T13:32:46.554Z'
+approved_by: cli
+approved_at: '2026-08-28T13:32:46.554Z'
+approval_basis: 'CLI --approve: observation.resolve'
+task: T-01m1495aj3zx7yhs04cd55hcbs
 ---
 # F-01m1459gr68tzycg8fdvgxqgan — The sweep's undeclared-deviation reads a prose section instead of the link, so doing the right thing never clears it
 
