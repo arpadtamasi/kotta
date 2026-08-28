@@ -3,7 +3,7 @@ id: T-01m14h2mkjtrb8bkxsavpbw5g7
 title: >-
   An observation can be joined to the task it was discovered during, after the
   fact
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -16,7 +16,7 @@ blocks: []
 spec:
   - UC-01m0f0wn89jqb5mpcjjt1j5j8p
   - UC-01m0f0wn89dy38s6whbfa0jafn
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-28'
 updated_at: '2026-08-28'
@@ -28,6 +28,12 @@ coverage:
     - UC-01m0f0wn89jqb5mpcjjt1j5j8p
   'The task named must exist, and the operation is on both surfaces, because a chat that can capture a noticing can name where it came from.':
     - UC-01m0f0wn89jqb5mpcjjt1j5j8p
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 99744e6b491b3eb4f341281aea137075f28eea0f
 ---
 # T-01m14h2mkjtrb8bkxsavpbw5g7 — An observation can be joined to the task it was discovered during, after the fact
 
