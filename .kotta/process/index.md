@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- a-task-whose-subject-is-deviations-can-still-validate-11zjbvw2
+None.
 
 ## Active tasks
 
-None.
+- a-task-whose-subject-is-deviations-can-still-validate-11zjbvw2
 
 ## Review
 

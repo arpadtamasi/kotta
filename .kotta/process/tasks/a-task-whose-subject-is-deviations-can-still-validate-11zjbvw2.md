@@ -1,7 +1,7 @@
 ---
 id: T-01m14j3afm6f2mqagd11zjbvw2
 title: A task whose subject is deviations can still validate
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -14,7 +14,7 @@ blocks: []
 spec:
   - BR-01m0pw5bc7b1rkg5dct5qgdkmb
   - UC-01m0f0wn89dy38s6whbfa0jafn
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-28'
 updated_at: '2026-08-28'
@@ -26,6 +26,12 @@ coverage:
     - UC-01m0f0wn89dy38s6whbfa0jafn
   'This workspace validates: kotta validate exits zero over its own records.':
     - BR-01m0pw5bc7b1rkg5dct5qgdkmb
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: ad33633146aad45a20a594fbf530ee59a20e1d90
 ---
 # T-01m14j3afm6f2mqagd11zjbvw2 — A task whose subject is deviations can still validate
 
