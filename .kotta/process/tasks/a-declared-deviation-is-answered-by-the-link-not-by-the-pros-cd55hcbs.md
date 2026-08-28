@@ -3,7 +3,7 @@ id: T-01m1495aj3zx7yhs04cd55hcbs
 title: >-
   A declared deviation is answered by the link, not by the prose it was written
   beside
-status: review
+status: done
 origin: observation
 types:
   - feature
@@ -35,6 +35,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 5f78b018a4abfd1949de5d71ca39e5ef5632f1c0
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-28T15:41:48.586Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 # T-01m1495aj3zx7yhs04cd55hcbs — A declared deviation is answered by the link, not by the prose it was written beside
 
