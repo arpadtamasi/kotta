@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- a-declared-deviation-is-answered-by-the-link-not-by-the-pros-cd55hcbs
+None.
 
 ## Review
 
-None.
+- a-declared-deviation-is-answered-by-the-link-not-by-the-pros-cd55hcbs
 
 ## Blocked
 

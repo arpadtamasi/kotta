@@ -3,7 +3,7 @@ id: T-01m1495aj3zx7yhs04cd55hcbs
 title: >-
   A declared deviation is answered by the link, not by the prose it was written
   beside
-status: active
+status: review
 origin: observation
 types:
   - feature
@@ -95,3 +95,29 @@ Shipped by this session on 2026-08-26 and reported from a live project the next 
 was minted by the create-task disposition and inherited the observation's title, which states the
 symptom; it is retitled here to the outcome, which is what the specification now requires of a task
 title.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| An observation captured with --discovered-during naming the closed task clears that task from the report, without the task being reopened or any file being edited by hand. | run: npx vitest run tests/integration/sweep.test.ts -t "clears it, without reopening" — verified: exit 0 at b010194 |
+| A task that declared a deviation and has no observation naming it is still reported, and the action it names is one the operator can actually take. | run: npx vitest run tests/integration/sweep.test.ts -t "no observation records" — verified: exit 0 at b010194 |
+| The prose an agent wrote at review time still counts: a task whose Observations created section names something is not reported, so nothing that was accounted for before becomes an item now. | run: npx vitest run tests/integration/sweep.test.ts -t "named an observation is not reported" — verified: exit 0 at b010194 |
+
+### Verification performed
+
+An observation captured with --discovered-during naming the closed task clears that task from the report, without the task being reopened or any file being edited by hand.: run: npx vitest run tests/integration/sweep.test.ts -t "clears it, without reopening"
+A task that declared a deviation and has no observation naming it is still reported, and the action it names is one the operator can actually take.: run: npx vitest run tests/integration/sweep.test.ts -t "no observation records"
+The prose an agent wrote at review time still counts: a task whose Observations created section names something is not reported, so nothing that was accounted for before becomes an item now.: run: npx vitest run tests/integration/sweep.test.ts -t "named an observation is not reported"
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
