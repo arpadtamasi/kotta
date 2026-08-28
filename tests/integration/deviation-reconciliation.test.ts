@@ -11,16 +11,18 @@ interface TaskOptions {
   resolution?: string;
   deviations: string;
   verification: string;
+  /** What the task promises. A task whose subject is deviations says the word here. */
+  acceptance?: string;
 }
 
-const task = ({ state = "done", resolution = "completed", deviations, verification }: TaskOptions) => {
+const task = ({ state = "done", resolution = "completed", deviations, verification, acceptance = "Documentation describes the flow." }: TaskOptions) => {
   const root = mkdtempSync(join(tmpdir(), "kotta-deviation-"));
   const directory = join(root, state);
   mkdirSync(directory, { recursive: true });
   const path = join(directory, "T-001-document-flow.md");
   const frontmatter = `---\nid: T-001\ntitle: Document flow\nstatus: ${state}\ntypes:\n  - documentation\nprofiles: []\n${state === "done" ? `resolution: ${resolution}\n` : ""}---\n`;
   const evidence = `\n## Review evidence\n\n| Acceptance condition | Evidence |\n|---|---|\n| Documentation describes the flow | flow.md inspected |\n\n### Verification performed\n\n${verification}\n\n### Deviations\n\n${deviations}\n\n### Observations created\n\nNot declared.\n\n### Known concerns\n\nNot declared.\n`;
-  writeFileSync(path, `${frontmatter}\n# T-001 — Document flow\n\n${SECTIONS}${evidence}`);
+  writeFileSync(path, `${frontmatter}\n# T-001 — Document flow\n\n${SECTIONS.replace("- Documentation describes the flow.", `- ${acceptance}`)}${evidence}`);
   return path;
 };
 
@@ -36,6 +38,33 @@ describe("deviation reconciliation (F-019)", () => {
   test("'Not declared.' plus a deviation in the narrative fails validation", () => {
     const path = task({ deviations: "Not declared.", verification: "flow.md inspected.\nOne deviation: the diagram was skipped." });
     expect(codes(path)).toContain("DEVIATION_MISMATCH");
+  });
+
+  test("a task whose own subject is deviations validates when it declares none", () => {
+    // Review evidence is stored as `<acceptance condition>: <evidence>`, so the condition text
+    // lands in the section this check scans. Reading it whole made a task about deviations
+    // impossible to validate (F-01m14h0t8ehy2yc37y8tn71ete).
+    const condition = "A task that declared a deviation and has no observation naming it is still reported.";
+    const path = task({
+      acceptance: condition,
+      deviations: "None.",
+      verification: `${condition}: run: npx vitest run tests/integration/sweep.test.ts`,
+    });
+
+    expect(codes(path)).not.toContain("DEVIATION_MISMATCH");
+  });
+
+  test("and the admission is still caught when it sits beside that very condition", () => {
+    const condition = "A task that declared a deviation and has no observation naming it is still reported.";
+    const path = task({
+      acceptance: condition,
+      deviations: "None.",
+      verification: `${condition}: run: npx vitest run x\nOne deviation: the diagram was skipped.`,
+    });
+
+    expect(codes(path), "the case F-019 exists for is untouched").toContain("DEVIATION_MISMATCH");
+    expect(validateTaskFile(path).errors.find((error) => error.code === "DEVIATION_MISMATCH")?.message)
+      .toContain("the diagram was skipped");
   });
 
   test("a declared deviation list passes however often the word appears", () => {

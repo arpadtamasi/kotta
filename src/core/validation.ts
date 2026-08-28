@@ -5,6 +5,7 @@ import { TASK_ID, filenameMatchesId } from "./identity.js";
 import { TASK_STATES } from "../filesystem/entities.js";
 import { parseMarkdown, sections, subsections } from "./markdown.js";
 import { receiptErrors } from "./approval-receipt.js";
+import { acceptanceConditions } from "./coverage.js";
 import { parseOpenQuestions, unresolvedQuestions } from "./questions.js";
 
 export interface ValidationIssue { code: string; message: string; path?: string }
@@ -77,7 +78,15 @@ function validateTask(path: string, expectedState?: string, requireDefinition = 
   if (state === "done" && !cancelled) {
     const declarations = subsections(bodySections.get("review evidence") ?? "");
     if (UNDECLARED_DEVIATIONS.test((declarations.get("deviations") ?? "").trim())) {
-      const quoted = (declarations.get("verification performed") ?? "").split(/\r?\n/).find((line) => DEVIATION_MARKER.test(line.replace(DENIED_DEVIATION, "")));
+      // Review evidence is stored as `<acceptance condition>: <evidence>`, so every condition text
+      // lands inside the section this scans. Reading it whole made a task about deviations
+      // impossible to validate — its own subject read as its confession
+      // (F-01m14h0t8ehy2yc37y8tn71ete). The conditions are stripped first, by the same list
+      // coverage parses, so what is left is what the agent wrote about the run.
+      const conditions = acceptanceConditions(entity.content);
+      const written = (line: string) => conditions.reduce((rest, condition) => rest.split(condition).join(" "), line);
+      const quoted = (declarations.get("verification performed") ?? "").split(/\r?\n/)
+        .find((line) => DEVIATION_MARKER.test(written(line).replace(DENIED_DEVIATION, "")));
       if (quoted) errors.push({ code: "DEVIATION_MISMATCH", message: `${id} declares no deviations while the verification narrative names one: "${quoted.trim().slice(0, 120)}".`, path });
     }
   }
