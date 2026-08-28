@@ -1,7 +1,7 @@
 ---
 id: T-01m14xe49h3afs5zpg32md14wp
 title: 'A capture born from an observation is named for the work, not the symptom'
-status: active
+status: review
 origin: human
 types:
   - bug
@@ -82,3 +82,29 @@ None.
 
 The remedy adds a sentence no node stated — that the two entities are named apart — so the spec
 delta landed first, on the rule that already says an observation is not a task.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A create-task disposition can name the work: the title it carries is the created capture's title, and the observation keeps its own. | run: npx vitest run tests/integration/observation.test.ts -t "named for the work when the disposition names it" — verified: exit 0 at dafd32b |
+| A disposition that names no title still creates the capture, and the result says the name is the observation's and what would replace it. | run: npx vitest run tests/integration/observation.test.ts -t "still created without a title" — verified: exit 0 at dafd32b |
+| A title is refused with any other disposition, the way spec and task already are, and the refusal names the disposition it belongs to. | run: npx vitest run tests/integration/observation.test.ts -t "belongs to create-task alone" — verified: exit 0 at dafd32b |
+
+### Verification performed
+
+A create-task disposition can name the work: the title it carries is the created capture's title, and the observation keeps its own.: run: npx vitest run tests/integration/observation.test.ts -t "named for the work when the disposition names it"
+A disposition that names no title still creates the capture, and the result says the name is the observation's and what would replace it.: run: npx vitest run tests/integration/observation.test.ts -t "still created without a title"
+A title is refused with any other disposition, the way spec and task already are, and the refusal names the disposition it belongs to.: run: npx vitest run tests/integration/observation.test.ts -t "belongs to create-task alone"
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
