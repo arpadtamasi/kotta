@@ -115,6 +115,10 @@ export function newBatch(options: { title: string; goal?: string; parallelism?: 
   const path = join(directory, filename);
   writeFileSync(path, renderMarkdown(data, content));
   regenerateIndex(root);
+  // A service that writes canonical state commits it (BR-01m0f0wn89r5np2yce79y2pctq): leaving the
+  // write uncommitted turns the workspace dirty behind the operator, and the next command refuses
+  // work they did not cause.
+  commitControlState(root, `chore(kotta): capture batch ${id}`);
   return { ok: true, command: "batch new", data: { id, title, path } };
 }
 
@@ -148,6 +152,7 @@ function updateChildBatches(root: string, id: string, childId: string, action: "
   entity.data.updated_at = new Date().toISOString().slice(0, 10);
   writeFileSync(batch.path, renderMarkdown(entity.data, entity.content));
   regenerateIndex(root);
+  commitControlState(root, `chore(kotta): ${action} child batch ${canonicalChild} ${action === "add" ? "to" : "from"} ${id}`);
   return { ok: true, command: `batch ${action}`, data: { id, batchId: canonicalChild, batches: children } };
 }
 
@@ -179,6 +184,7 @@ export function updateBatchTasks(id: string, taskId: string, action: "add" | "re
   writeFileSync(batch.path, renderMarkdown(entity.data, entity.content));
   writeFileSync(task.path, renderMarkdown(taskEntity.data, taskEntity.content));
   regenerateIndex(root);
+  commitControlState(root, `chore(kotta): ${action} ${taskId} ${action === "add" ? "to" : "from"} batch ${id}`);
   return { ok: true, command: `batch ${action}`, data: { id, taskId, tasks } };
 }
 
@@ -226,6 +232,9 @@ export function validateBatch(id: string, repositoryRoot?: string) {
       writeFileSync(batch.path, renderMarkdown(entity.data, entity.content));
       regenerateIndex(root);
       appendLifecycleEvent(root, id, "defined", "Batch validated; grouping carries no approval of its own.");
+      // startBatch validates before it checks the checkout, so an uncommitted promotion here is
+      // what the operator was blamed for (F-01m0zn0d24hjbva47xdp1kb6m1).
+      commitControlState(root, `chore(kotta): define batch ${id}`);
       state = "defined";
     }
   }

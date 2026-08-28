@@ -69,36 +69,20 @@ function batchOf(root: string, titles: string[], parallelism: string): { batch: 
   const tasks = titles.map((title) => definedTask(root, title));
   const batch = json<{ data: { id: string } }>(attempt(root, ["batch", "new", "--title", "Wave batch", "--goal", "Ship independent slices", "--parallelism", parallelism, "--json"])).data.id;
   for (const task of tasks) attempt(root, ["batch", "add", batch, task, "--json"]);
-  // Membership is control state Kotta commits itself; the index it regenerates alongside is not
-  // always in that commit, and `start` refuses a dirty tree. Commit the residue and prove it gone,
-  // so a fixture can never be mistaken for the behaviour under test.
-  git(root, "add", "-A");
-  if (git(root, "status", "--porcelain").trim()) git(root, "commit", "-m", "define batch");
+  // Every batch mutation commits what it wrote, so nothing is left for the fixture to tidy
+  // (BR-01m0f0wn89r5np2yce79y2pctq).
   expect(git(root, "status", "--porcelain"), "the fixture starts clean").toBe("");
   return { batch, tasks };
 }
 
-/**
- * One wave release.
- *
- * `batch start` writes control state after its own cleanliness check and before the first member's
- * start runs another, so the first invocation on a clean workspace refuses as dirty and leaves the
- * residue behind (F-01m0zn4hh2gd2b4dqhgdp1kb6m1). That is a defect of its own, recorded and out of
- * this task's scope; here the residue is committed and the identical command retried once, so what
- * the assertions measure is the budget and nothing else.
- */
+/** One wave release. */
 function release(root: string): StartResult {
   const batch = readdirSync(join(root, ".kotta/process/batches")).filter((name) => name.endsWith(".md"))[0];
   const id = /^id:\s*(\S+)/m.exec(readFileSync(join(root, ".kotta/process/batches", batch), "utf8"))![1];
-  for (let attempt_ = 0; attempt_ < 2; attempt_ += 1) {
-    const result = attempt(root, ["batch", "start", id, "--agent", "codex", "--json"]);
-    const parsed = JSON.parse(say(result)) as { ok?: boolean; data?: unknown; errors?: Array<{ message: string }> };
-    if (parsed.ok !== false && parsed.data !== undefined) return parsed as StartResult;
-    if (!parsed.errors?.some((error) => /Repository is dirty/.test(error.message))) throw new Error(`batch start refused: ${say(result)}`);
-    git(root, "add", "-A");
-    if (git(root, "status", "--porcelain").trim()) git(root, "commit", "-m", "F-dp1kb6m1 residue");
-  }
-  throw new Error("batch start refused as dirty twice");
+  const result = attempt(root, ["batch", "start", id, "--agent", "codex", "--json"]);
+  const parsed = JSON.parse(say(result)) as { ok?: boolean; data?: unknown };
+  if (parsed.ok === false || parsed.data === undefined) throw new Error(`batch start refused: ${say(result)}`);
+  return parsed as StartResult;
 }
 
 /** The same release, as the operator reads it. */
