@@ -1,7 +1,7 @@
 ---
 id: T-01m14mgyrv00b7ye5r3pvh2bdf
 title: 'A migration hands over a whole workspace, and says whether it holds'
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -14,7 +14,7 @@ blocks: []
 spec:
   - UC-01m0f0wn89x00jkpqpqc2esx9h
   - BR-01m0f1djtb5dkb76tjzq4x3ffh
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-28'
 updated_at: '2026-08-28'
@@ -28,6 +28,12 @@ coverage:
     - UC-01m0f0wn89x00jkpqpqc2esx9h
   'A dry run writes nothing: neither the rules file nor anything else changes, and it still says what the migration would do.':
     - UC-01m0f0wn89x00jkpqpqc2esx9h
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: d2720f6e3b2d7008202e31f078d7b487665fc57a
 ---
 ## Outcome
 
