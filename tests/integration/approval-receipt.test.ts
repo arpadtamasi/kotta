@@ -100,6 +100,13 @@ function status(path: string): string | undefined {
   return readFileSync(path, "utf8").match(/^status: (.+)$/m)?.[1];
 }
 
+/** Kotta commits the canonical state it writes (BR-01m0f0wn89r5np2yce79y2pctq), so a fixture
+ *  commits only what it changed itself — and an empty commit would fail. */
+function commitIfDirty(root: string, message: string): void {
+  git(root, "add", "-A");
+  if (git(root, "status", "--porcelain").trim()) git(root, "commit", "-m", message);
+}
+
 describe("every approval leaves a receipt", () => {
   test("closing a reviewed task stamps the receipt, shows it, and validates green", () => {
     const repository = fixture("kotta-receipt-close-");
@@ -176,7 +183,7 @@ describe("every approval leaves a receipt", () => {
     const batch = run(repository, ["batch", "new", "--title", "One slice", "--goal", "Ship the slice"]) as { data: { id: string; path: string } };
     run(repository, ["batch", "add", batch.data.id, task.id]);
     git(repository, "add", ".");
-    git(repository, "commit", "-m", "define batch");
+    commitIfDirty(repository, "define batch");
 
     run(repository, ["batch", "close", batch.data.id, "--approve"]);
     const batchPath = join(repository, ".kotta/process/batches", basename(batch.data.path));

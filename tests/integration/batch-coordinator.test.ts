@@ -50,7 +50,7 @@ function workspaceWithBatch(label: string, options: { tasks?: number } = {}) {
   for (const id of ids) run(root, ["batch", "add", batchId, id]);
   run(root, ["batch", "validate", batchId]);
   git(root, "add", ".");
-  git(root, "commit", "-m", "define batch");
+  commitIfDirty(root, "define batch");
   git(root, "remote", "add", "origin", remote);
   git(root, "push", "-u", "origin", "main");
   return { root, remote, ids, tasks, batchId };
@@ -79,6 +79,13 @@ function completeBatch(root: string, batchId: string, ids: string[]) {
     git(coordinator, "merge", "--no-ff", git(worktree, "branch", "--show-current"), "-m", `merge ${id}`);
     run(root, ["task", "close", id, "--approve"]);
   }
+}
+
+/** Kotta commits the canonical state it writes (BR-01m0f0wn89r5np2yce79y2pctq), so a fixture
+ *  commits only what it changed itself — and an empty commit would fail. */
+function commitIfDirty(root: string, message: string): void {
+  git(root, "add", "-A");
+  if (git(root, "status", "--porcelain").trim()) git(root, "commit", "-m", message);
 }
 
 describe("coordinator helpers", () => {

@@ -15,6 +15,13 @@ const run = (cwd: string, args: string[]) => {
 const git = (cwd: string, ...args: string[]) => execFileSync("git", args, { cwd, encoding: "utf8" });
 const attempt = (cwd: string, args: string[]) => spawnSync("node", [cli, ...args, "--json"], { cwd, encoding: "utf8" });
 
+/** Kotta commits the canonical state it writes (BR-01m0f0wn89r5np2yce79y2pctq), so a fixture
+ *  commits only what it changed itself — and an empty commit would fail. */
+function commitIfDirty(root: string, message: string): void {
+  git(root, "add", "-A");
+  if (git(root, "status", "--porcelain").trim()) git(root, "commit", "-m", message);
+}
+
 describe("dependency-aware batch", () => {
   test("creates a backlog batch and keeps task membership in sync", () => {
     const root = mkdtempSync(join(tmpdir(), "kotta-batch-membership-"));
@@ -57,7 +64,7 @@ describe("dependency-aware batch", () => {
     run(root, ["batch", "add", batchId, command.id]);
     writeFileSync(second, readFileSync(second, "utf8").replace("status: defined", "status: backlog"));
     expect(run(root, ["batch", "validate", batchId])).toMatchObject({ ok: true, command: "batch validate" });
-    git(root, "add", "."); git(root, "commit", "-m", "define batch");
+    git(root, "add", "."); commitIfDirty(root, "define batch");
 
     expect(run(root, ["batch", "validate", batchId])).toMatchObject({ ok: true, data: { waves: [[parser.id], [command.id]] } });
     expect(run(root, ["batch", "start", batchId, "--agent", "codex"])).toMatchObject({ ok: true, data: { started: [parser.id], waiting: [command.id] } });
@@ -123,7 +130,7 @@ function backlogBatchWithMembers(label: string, members: Array<"done" | "defined
   const created = run(root, ["batch", "new", "--title", `Batch ${label}`, "--goal", "Ship the slice"]) as { data: { id: string; path: string } };
   for (const task of tasks) run(root, ["batch", "add", created.data.id, task.id]);
   git(root, "add", ".");
-  git(root, "commit", "-m", "define batch");
+  commitIfDirty(root, "define batch");
   return { root, batchId: created.data.id, filename: basename(created.data.path), tasks };
 }
 
@@ -182,7 +189,7 @@ describe("batch close", () => {
     const filename = basename(created.data.path);
     run(root, ["batch", "add", batchId, task.id]);
     git(root, "add", ".");
-    git(root, "commit", "-m", "define batch");
+    commitIfDirty(root, "define batch");
 
     const branch = (run(root, ["task", "start", task.id, "--agent", "codex"]) as { data: { branch: string } }).data.branch;
     const worktree = join(root, ".worktrees", task.id);

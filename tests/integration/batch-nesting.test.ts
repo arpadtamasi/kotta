@@ -39,6 +39,13 @@ function task(root: string, title: string): { id: string; path: string } {
 const batch = (root: string, title: string): string =>
   (run(root, ["batch", "new", "--title", title, "--goal", `Deliver ${title}`]) as { data: { id: string } }).data.id;
 
+/** Kotta commits the canonical state it writes (BR-01m0f0wn89r5np2yce79y2pctq), so a fixture
+ *  commits only what it changed itself — and an empty commit would fail. */
+function commitIfDirty(root: string, message: string): void {
+  git(root, "add", "-A");
+  if (git(root, "status", "--porcelain").trim()) git(root, "commit", "-m", message);
+}
+
 describe("a batch that groups other batches", () => {
   test("reads as one work list, with dependencies ordered across children", () => {
     const root = repository("tree");
@@ -102,7 +109,7 @@ describe("a batch that groups other batches", () => {
     run(root, ["batch", "validate", leaf]);
     run(root, ["batch", "validate", parent]);
     git(root, "add", ".");
-    git(root, "commit", "-m", "define batches");
+    commitIfDirty(root, "define batches");
 
     const refused = attempt(root, ["batch", "start", parent, "--agent", "codex"]);
     expect(refused.status).not.toBe(0);
@@ -118,7 +125,7 @@ describe("a batch that groups other batches", () => {
     run(root, ["batch", "add", leaf, work.id]);
     run(root, ["batch", "add", parent, leaf]);
     git(root, "add", ".");
-    git(root, "commit", "-m", "compose the tree");
+    commitIfDirty(root, "compose the tree");
     run(root, ["task", "cancel", work.id, "--resolution", "cancelled", "--reason", "Retired to finish the leaf", "--approve"]);
 
     // The task is done, so the leaf completed itself; the parent still waits on nothing else.
@@ -139,7 +146,7 @@ describe("a batch that groups other batches", () => {
     run(root, ["batch", "add", parent, direct.id]);
     run(root, ["batch", "add", parent, child]);
     git(root, "add", ".");
-    git(root, "commit", "-m", "compose the tree");
+    commitIfDirty(root, "compose the tree");
 
     // The parent's last direct task finishes while the child batch is still open.
     run(root, ["task", "cancel", direct.id, "--resolution", "cancelled", "--reason", "Direct work retired", "--approve"]);
