@@ -3,13 +3,20 @@ id: F-01m148re552ezsd5q1js95eyer
 title: >-
   A task minted from an observation inherits a symptom for a title, where a task
   title states an outcome
-status: new
+status: resolved
 origin: human
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-28'
+disposition: amend-spec
+resolved_at: '2026-08-28T13:32:29.407Z'
+approved_by: cli
+approved_at: '2026-08-28T13:32:29.407Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - E-01m0f0wn898ayyrvy613zjx3ye
 ---
 # F-01m148re552ezsd5q1js95eyer — A task minted from an observation inherits a symptom for a title, where a task title states an outcome
 
