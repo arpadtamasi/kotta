@@ -3,13 +3,20 @@ id: F-01m13v4tgdzbp2h2kqman0jzwt
 title: >-
   An agent had to read Kotta's compiled CLI to learn what a specification node
   must contain
-status: new
+status: resolved
 origin: human
 observation_type: improvement
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-28'
+disposition: amend-spec
+resolved_at: '2026-08-28T13:32:28.788Z'
+approved_by: cli
+approved_at: '2026-08-28T13:32:28.788Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - UC-01m0f0wn89ny7vx515ke3ksnra
 ---
 # F-01m13v4tgdzbp2h2kqman0jzwt — An agent had to read Kotta's compiled CLI to learn what a specification node must contain
 
