@@ -63,8 +63,10 @@ describe("coordination-free identity (D-003, narrowed by D-010)", () => {
       const batch = run(path, ["batch", "new", "--title", `Batch ${label}`, "--goal", `Ship ${label}`]).data as { id: string };
       run(path, ["batch", "add", batch.id, task.id]);
       expect(git(path, "status", "--porcelain")).toBe("");
+      // Kotta commits the canonical state it writes (BR-01m0f0wn89r5np2yce79y2pctq), so the
+      // fixture commits only what it changed itself — an empty commit would fail.
       git(root, "add", "-A");
-      git(root, "commit", "-m", `chore: capture ${label}`);
+      if (git(root, "status", "--porcelain").trim()) git(root, "commit", "-m", `chore: capture ${label}`);
       return { label, task, observation, batch };
     });
 
