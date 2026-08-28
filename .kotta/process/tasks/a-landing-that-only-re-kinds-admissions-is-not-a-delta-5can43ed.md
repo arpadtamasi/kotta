@@ -1,7 +1,7 @@
 ---
 id: T-01m120js1qey632tbv5can43ed
 title: A landing that only re-kinds admissions is not a delta
-status: active
+status: review
 origin: observation
 types:
   - bug
@@ -78,3 +78,29 @@ None.
 
 Noticed while fixing the repetition in T-01m0t6y6mrz2qv285gqfanyvza and left alone as outside its
 scope; recorded as F-01m0t75ff4eg3nm0gtwg7qqm4b.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A landing that changed only nodes' admission bookkeeping produces no delta section: nothing moved, so nothing leads the report. | run: npx vitest run tests/integration/gap-report.test.ts -t "only re-kinds admissions moves nothing" — verified: exit 0 at e60d0c3 |
+| A landing that changed what a node promises still leads the report, and a node changed alongside bookkeeping-only neighbours is the one listed. | run: npx vitest run tests/integration/gap-report.test.ts -t "whose promise changed leads the report" — verified: exit 0 at e60d0c3 |
+| Where a landing touched more nodes than it changed agreements in, the report says both numbers. | run: npx vitest run tests/integration/gap-report.test.ts -t "both numbers are said" — verified: exit 0 at e60d0c3 |
+
+### Verification performed
+
+A landing that changed only nodes' admission bookkeeping produces no delta section: nothing moved, so nothing leads the report.: run: npx vitest run tests/integration/gap-report.test.ts -t "only re-kinds admissions moves nothing"
+A landing that changed what a node promises still leads the report, and a node changed alongside bookkeeping-only neighbours is the one listed.: run: npx vitest run tests/integration/gap-report.test.ts -t "whose promise changed leads the report"
+Where a landing touched more nodes than it changed agreements in, the report says both numbers.: run: npx vitest run tests/integration/gap-report.test.ts -t "both numbers are said"
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.

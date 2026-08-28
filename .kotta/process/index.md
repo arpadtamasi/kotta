@@ -16,13 +16,14 @@ None.
 
 ## Active tasks
 
-- a-landing-that-only-re-kinds-admissions-is-not-a-delta-5can43ed
+None.
 
 ## Review
 
 - a-batch-start-report-drops-the-outcome-it-can-never-observe-dz0jhh5j
 - a-capture-born-from-an-observation-is-named-for-the-work-not-32md14wp
 - a-declared-command-is-evidence-not-narrative-s07bmca5
+- a-landing-that-only-re-kinds-admissions-is-not-a-delta-5can43ed
 - a-migration-hands-over-a-whole-workspace-and-says-whether-it-3pvh2bdf
 
 ## Blocked
