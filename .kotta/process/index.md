@@ -28,5 +28,4 @@ None.
 
 ## New observations
 
-- a-successful-migrate-can-leave-a-workspace-that-does-not-val-swbsb9nw
 - the-sweep-s-undeclared-deviation-reads-a-prose-section-inste-dvgxqgan

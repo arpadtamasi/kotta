@@ -3,13 +3,20 @@ id: F-01m144k7r2xrzvpte7swbsb9nw
 title: >-
   A successful migrate can leave a workspace that does not validate, and says
   nothing about it
-status: new
+status: resolved
 origin: human
 observation_type: defect
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-28'
+disposition: amend-spec
+resolved_at: '2026-08-28T13:32:45.951Z'
+approved_by: cli
+approved_at: '2026-08-28T13:32:45.951Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - UC-01m0f0wn89x00jkpqpqc2esx9h
 ---
 # F-01m144k7r2xrzvpte7swbsb9nw — A successful migrate can leave a workspace that does not validate, and says nothing about it
 
