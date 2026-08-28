@@ -12,7 +12,7 @@ None.
 
 ## Defined tasks
 
-None.
+- an-observation-can-be-joined-to-the-task-it-was-discovered-d-avpbw5g7
 
 ## Active tasks
 
