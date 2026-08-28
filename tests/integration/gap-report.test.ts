@@ -103,3 +103,59 @@ describe("implementation gap report", () => {
     expect(git(root, "status", "--porcelain")).toBe("");
   });
 });
+
+/**
+ * The delta section exists so a fresh landing leads the report. Kinding every admission in one pass
+ * touched all 107 nodes and moved no agreement, and the section then listed the whole specification
+ * — implying 107 agreements nobody made (F-01m0t75ff4eg3nm0gtwg7qqm4b,
+ * UC-01m0fpqfxjvet99wbz0v1ag64q).
+ */
+describe("what counts as the latest spec delta", () => {
+  /** Rewrite one node's admission line, leaving its promise and every other field alone. */
+  function rekind(root: string, id: string, reason: string): void {
+    const directory = join(root, ".kotta/spec/glossary-terms");
+    const filename = readdirSync(directory).find((name) => readFileSync(join(directory, name), "utf8").includes(`id: ${id}`))!;
+    const path = join(directory, filename);
+    const source = readFileSync(path, "utf8");
+    const rewritten = source.includes("accepted:")
+      ? source.replace(/accepted:\n {2}- .*\n/, `accepted:\n  - "unexamined: ${reason}"\n`)
+      : source.replace(/^---\n/, `---\naccepted:\n  - "unexamined: ${reason}"\n`);
+    if (rewritten === source) throw new Error(`the fixture did not re-kind ${id}`);
+    writeFileSync(path, rewritten);
+  }
+
+  test("a landing that only re-kinds admissions moves nothing, so nothing leads the report", () => {
+    const root = fixture();
+    for (const id of [IMPLEMENTED, OLD_GAP, CHANGED_GAP, ACCEPTED_GAP]) rekind(root, id, "nobody has checked this yet");
+    git(root, "add", ".kotta/spec");
+    git(root, "commit", "-m", "kind every admission");
+
+    const report = run(root).json.data as { changedNodes: string[]; landingTouched: number; report: string };
+
+    expect(report.landingTouched).toBe(4);
+    expect(report.changedNodes).toEqual([]);
+    expect(report.report).not.toContain("## Latest accepted spec delta");
+  });
+
+  test("a node whose promise changed leads the report, and both numbers are said", () => {
+    const root = fixture();
+    for (const id of [IMPLEMENTED, OLD_GAP, ACCEPTED_GAP]) rekind(root, id, "nobody has checked this yet");
+    // One real amendment — the node's own words — landing in the same commit as three
+    // bookkeeping rewrites.
+    const directory = join(root, ".kotta/spec/glossary-terms");
+    const filename = readdirSync(directory).find((name) => readFileSync(join(directory, name), "utf8").includes(`id: ${CHANGED_GAP}`))!;
+    writeFileSync(join(directory, filename), readFileSync(join(directory, filename), "utf8")
+      .replace("Changed missing promise is observable.", "Changed missing promise is observable, and it is refused when it is not."));
+    git(root, "add", ".kotta/spec");
+    git(root, "commit", "-m", "kind three admissions and amend one promise");
+
+    const report = run(root).json.data as { changedNodes: string[]; landingTouched: number; report: string };
+
+    expect(report.landingTouched).toBe(4);
+    expect(report.changedNodes).toEqual([CHANGED_GAP]);
+    expect(report.report).toContain("## Latest accepted spec delta");
+    expect(report.report).toContain("touched 4 nodes and changed what 1 of them promise");
+    expect(report.report).toContain("Changed missing promise");
+    expect(report.report).not.toContain("- Implemented promise ·");
+  });
+});

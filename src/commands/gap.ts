@@ -52,6 +52,8 @@ export interface GapReportResult {
     baseBranch: string;
     commit: string;
     specLanding: string | null;
+    /** Nodes the landing commit touched, against the nodes whose agreement it actually moved. */
+    landingTouched: number;
     changedNodes: string[];
     nodes: GapNode[];
     promises: GapNode[];
@@ -149,14 +151,46 @@ function uncommittedEvidencePaths(root: string, workspace: string): string[] {
     .sort();
 }
 
-function lastSpecLanding(root: string, ref: string, workspace: string): { commit: string | null; changedPaths: Set<string> } {
+/**
+ * Did this landing move what the node promises, or only the bookkeeping about its evidence? An
+ * admission records which kind of gap a node has and why (BR-01m0swjgrreeby1pyfdzf4mf7d) - a
+ * statement about the instrument, not about the agreement. Kinding a hundred and seven admissions
+ * in one pass touched every node and changed no promise, and a delta that is the whole
+ * specification names nothing (UC-01m0fpqfxjvet99wbz0v1ag64q).
+ *
+ * A path added or removed by the landing is always a delta: there is no earlier agreement to
+ * compare, or no later one.
+ */
+function agreementChanged(root: string, before: string, after: string, path: string): boolean {
+  const read = (ref: string): string | null => {
+    try { return atRef(root, ref, path); }
+    catch { return null; }
+  };
+  const earlier = read(before);
+  const later = read(after);
+  if (earlier === null || later === null) return true;
+  const promise = (source: string): string => {
+    const entity = parseMarkdown(source);
+    const { accepted: _admission, ...rest } = entity.data as Record<string, unknown>;
+    return JSON.stringify([rest, entity.content]);
+  };
+  try { return promise(earlier) !== promise(later); }
+  // An unparseable node on either side is a change worth leading with, not one to swallow.
+  catch { return true; }
+}
+
+function lastSpecLanding(root: string, ref: string, workspace: string): { commit: string | null; touched: number; changedPaths: Set<string> } {
   const commit = git(root, ["log", "-1", "--format=%H", ref, "--", `${workspace}/spec`]) || null;
-  if (!commit) return { commit: null, changedPaths: new Set() };
+  if (!commit) return { commit: null, touched: 0, changedPaths: new Set() };
   const ancestry = git(root, ["rev-list", "--parents", "-n", "1", commit]).split(/\s+/);
-  const listed = ancestry.length > 1
-    ? git(root, ["diff", "--name-only", ancestry[1], commit, "--", `${workspace}/spec`])
+  const parent = ancestry.length > 1 ? ancestry[1] : null;
+  const listed = parent
+    ? git(root, ["diff", "--name-only", parent, commit, "--", `${workspace}/spec`])
     : git(root, ["ls-tree", "-r", "--name-only", commit, "--", `${workspace}/spec`]);
-  return { commit, changedPaths: new Set(listed ? listed.split(/\r?\n/).filter(Boolean) : []) };
+  const touchedPaths = listed ? listed.split(/\r?\n/).filter(Boolean) : [];
+  // A root landing has no earlier tree to compare against: every node in it is the first agreement.
+  const moved = parent ? touchedPaths.filter((path) => agreementChanged(root, parent, commit, path)) : touchedPaths;
+  return { commit, touched: touchedPaths.length, changedPaths: new Set(moved) };
 }
 
 /** The legacy spellings, kept reading so an existing workspace is not broken by the kinds. */
@@ -228,6 +262,11 @@ export function formatGapReport(data: GapReportResult["data"]): string {
   const changed = data.nodes.filter((node) => node.changed);
   if (changed.length) {
     lines.push("", "## Latest accepted spec delta");
+    // A landing that touched more nodes than it moved agreements in says both numbers: without
+    // them the shorter list reads as the whole landing (UC-01m0fpqfxjvet99wbz0v1ag64q).
+    if (data.landingTouched > changed.length) {
+      lines.push(`The landing touched ${data.landingTouched} nodes and changed what ${changed.length} of them promise; the rest moved only their own admission bookkeeping.`);
+    }
     for (const node of changed) {
       const accepted = data.acceptedGaps.find((entry) => entry.id === node.id);
       const status = node.evidence.length
@@ -307,6 +346,7 @@ export function gapReport(repositoryRoot: string): GapReportResult {
     baseBranch,
     commit,
     specLanding: landing.commit,
+    landingTouched: landing.touched,
     changedNodes: described.filter((node) => node.changed).map((node) => node.id),
     nodes: described,
     promises,

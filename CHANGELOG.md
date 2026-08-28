@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **A landing that only re-kinds admissions is not a delta.** `kotta gap` opened with every path
+  the last spec commit touched, so the pass that gave all 107 nodes an admission kind produced a
+  delta section listing the entire specification — implying 107 agreements nobody made, in the one
+  section that exists to lead the report. An admission says which kind of gap a node has and why:
+  bookkeeping about the evidence, not a change to what the node promises. The delta now compares
+  the two trees the section already reads and keeps the nodes whose own words or fields moved, and
+  where a landing touched more nodes than it changed agreements in, the report says both numbers.
+  A path the landing added or removed is always a delta. The analysis stays a read.
+
 - **A capture born from an observation is named for the work, not the symptom.** `create-task`
   minted the task with the observation's own title, so a sentence describing what was noticed
   became the name of what will be done — through the backlog list, every gate question and every
