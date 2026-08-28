@@ -1,7 +1,7 @@
 ---
 id: T-01m14enxw9tbbgv2kbbsxmnmpc
 title: Init says what it wrote and what to commit
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -28,6 +28,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 6acc6e60999c3e5e3303375415e7566ff78dd61e
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-28T15:41:49.597Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 # T-01m14enxw9tbbgv2kbbsxmnmpc — Init says what it wrote and what to commit
 
