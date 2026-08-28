@@ -63,7 +63,7 @@ function fixture(prefix: string): string {
   git(repository, "commit", "-m", "initial");
   run(repository, ["init"]);
   acceptFixtureSpec(repository);
-  git(repository, "add", ".gitattributes", ".gitignore");
+  git(repository, "add", ".gitattributes", ".gitignore", "AGENTS.md");
   git(repository, "commit", "-m", "initialize Kotta metadata");
   return repository;
 }

@@ -309,7 +309,7 @@ None.
 
     run(repository, ["init"]);
     acceptFixtureSpec(repository);
-    git(repository, "add", ".gitattributes", ".gitignore");
+    git(repository, "add", ".gitattributes", ".gitignore", "AGENTS.md");
     git(repository, "commit", "-m", "initialize Kotta metadata");
     const created = run(repository, ["task", "new", "--title", "Ship export", "--type", "feature", "--profile", "workflow"]) as { data: { id: string; path: string } };
     const id = created.data.id;

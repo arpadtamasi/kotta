@@ -385,6 +385,15 @@ describe("the workspace rules file", () => {
     expect(written).toContain("## Kotta");
   });
 
+  test("Kotta writes the project's file and calls on the operator to commit it", () => {
+    // Writing it finishes Kotta's own installation; committing it is a change in the project's
+    // history under the operator's name (D-01m14ccbcvntfbkwxty56sybak).
+    const printed = execFileSync("node", [cli, "init"], { cwd: repository, encoding: "utf8" });
+    expect(printed).toContain("Commit it");
+    expect(execFileSync("git", ["status", "--porcelain", "--", "AGENTS.md"], { cwd: repository, encoding: "utf8" }).trim())
+      .toBe("?? AGENTS.md");
+  });
+
   test("init leaves an existing project file alone, and names what would join it", () => {
     const own = "# Our rules\n\nRun the linter before pushing.\n";
     writeFileSync(projectAgents(), own);

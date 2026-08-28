@@ -22,7 +22,7 @@ const setup = () => {
   git(root, "add", "."); git(root, "commit", "-m", "initial");
   run(root, ["init"]);
   acceptFixtureSpec(root);
-  git(root, "add", ".gitattributes", ".gitignore"); git(root, "commit", "-m", "initialize Kotta metadata");
+  git(root, "add", ".gitattributes", ".gitignore", "AGENTS.md"); git(root, "commit", "-m", "initialize Kotta metadata");
   const created = (run(root, ["task", "new", "--title", "Document flow", "--type", "documentation"]) as { data: { id: string; path: string } }).data;
   const id = created.id;
   const path = created.path;

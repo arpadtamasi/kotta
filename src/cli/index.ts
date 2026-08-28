@@ -96,8 +96,11 @@ function agentsLines(agents: AgentsSummary | undefined, project: ProjectAgentsSu
     else if (project.state === "migrated") lines.push(`Migrated Kotta's legacy inline rules in ${project.path} to ${project.line}; preserved the project section.`);
     // A rendering never claims more than the result carries (BR-01m0pw5bc7b1rkg5dct5qgdkmb):
     // creating a file the project did not have is not the same act as appending to one it wrote.
-    else if (project.state === "created") lines.push(`The project had no AGENTS.md; Kotta created ${project.path} pointing at the rules with ${project.line}.`);
-    else lines.push(`Added a Kotta section to ${project.path}, pointing at the rules with ${project.line}.`);
+    // Kotta writes the project's file and never commits it: creating it finishes Kotta's own
+    // installation, committing it makes a change in the project's history under the operator's
+    // name (D-01m14ccbcvntfbkwxty56sybak). So the line that says it was written says to commit it.
+    else if (project.state === "created") lines.push(`The project had no AGENTS.md; Kotta created ${project.path} pointing at the rules with ${project.line}. Commit it — Kotta leaves the project's own files to you.`);
+    else lines.push(`Added a Kotta section to ${project.path}, pointing at the rules with ${project.line}. Commit it — Kotta leaves the project's own files to you.`);
   } else if (agents && pointer) {
     lines.push(`Kotta did not touch the project's AGENTS.md. To point it at the rules, ask the human, then re-run with --link-agents; the line is: ${pointer}`);
   }

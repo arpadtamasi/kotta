@@ -26,7 +26,7 @@ function fixture() {
   execFileSync("git", ["commit", "-m", "initial"], { cwd: root });
   run(root, ["init"]);
   acceptFixtureSpec(root);
-  execFileSync("git", ["add", ".gitattributes", ".gitignore"], { cwd: root });
+  execFileSync("git", ["add", ".gitattributes", ".gitignore", "AGENTS.md"], { cwd: root });
   execFileSync("git", ["commit", "-m", "initialize Kotta metadata"], { cwd: root });
   const created = (run(root, ["task", "new", "--title", "Document flow", "--type", "documentation"]) as { data: { id: string; path: string } }).data;
   run(root, ["task", "define", created.id, "--from", coveredDefinition(created.path, { outcome: "The flow is documented.", acceptance: [FIRST, SECOND], verification: "Inspect the rendered documentation." })]);

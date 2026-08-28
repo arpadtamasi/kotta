@@ -20,7 +20,7 @@ function repository(): string {
   writeFileSync(join(root, "README.md"), "fixture\n"); git(root, "add", "."); git(root, "commit", "-m", "initial");
   run(root, ["init"]);
   acceptFixtureSpec(root);
-  git(root, "add", ".gitattributes", ".gitignore"); git(root, "commit", "-m", "initialize Kotta metadata");
+  git(root, "add", ".gitattributes", ".gitignore", "AGENTS.md"); git(root, "commit", "-m", "initialize Kotta metadata");
   return root;
 }
 
