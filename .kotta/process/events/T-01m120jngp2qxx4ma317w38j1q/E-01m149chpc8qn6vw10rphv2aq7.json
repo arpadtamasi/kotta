@@ -1,0 +1,17 @@
+{
+  "entity": "T-01m120jngp2qxx4ma317w38j1q",
+  "task": "T-01m120jngp2qxx4ma317w38j1q",
+  "kind": "approval",
+  "approval_id": "E-01m149chpbq8ftwxe2z8skw96w",
+  "phase": "approved",
+  "action": "task.cancel",
+  "payload": {
+    "resolution": "duplicate",
+    "reason": "The work was carried out under a task written by hand for the same defect, closed and merged as a84c69a: every batch mutation now commits the canonical state it writes, so batch start releases its first wave on the first invocation. This task was minted by the create-task disposition on F-01m0zn0d24hjbva47xdp1kb6m1 and then forgotten, which is how the same defect came to have two tasks.",
+    "superseded_by": "T-01m13p40gan8r94m8byw9zb522",
+    "surface": "cli"
+  },
+  "source_message": "E-01m149chpcck6pffy37sv25v71",
+  "id": "E-01m149chpc8qn6vw10rphv2aq7",
+  "created_at": "2026-08-28T13:36:43.212Z"
+}

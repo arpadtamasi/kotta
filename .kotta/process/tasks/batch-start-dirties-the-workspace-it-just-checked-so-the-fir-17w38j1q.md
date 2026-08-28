@@ -3,7 +3,7 @@ id: T-01m120jngp2qxx4ma317w38j1q
 title: >-
   batch start dirties the workspace it just checked, so the first start of a
   clean batch always refuses
-status: backlog
+status: done
 origin: observation
 types:
   - feature
@@ -17,8 +17,20 @@ spec: []
 branch: null
 pull_request: null
 created_at: '2026-08-27'
-updated_at: '2026-08-27'
+updated_at: '2026-08-28'
 source_observation: F-01m0zn0d24hjbva47xdp1kb6m1
+resolution: duplicate
+cancellation_reason: >-
+  The work was carried out under a task written by hand for the same defect,
+  closed and merged as a84c69a: every batch mutation now commits the canonical
+  state it writes, so batch start releases its first wave on the first
+  invocation. This task was minted by the create-task disposition on
+  F-01m0zn0d24hjbva47xdp1kb6m1 and then forgotten, which is how the same defect
+  came to have two tasks.
+superseded_by: T-01m13p40gan8r94m8byw9zb522
+approved_by: cli
+approved_at: '2026-08-28T13:36:43.163Z'
+approval_basis: 'CLI --approve: task.cancel'
 ---
 # T-01m120jngp2qxx4ma317w38j1q — batch start dirties the workspace it just checked, so the first start of a clean batch always refuses
 
