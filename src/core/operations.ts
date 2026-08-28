@@ -72,6 +72,7 @@ export const OPERATIONS: readonly OperationDeclaration[] = [
   // Observations.
   { id: "observation.create", summary: "Capture something noticed, with evidence.", cli: ["observation", "new"], mcp: "observation_create" },
   { id: "observation.validate", summary: "Check an observation's sections and find duplicates.", cli: ["observation", "validate"], mcp: { absent: "Preparation for the disposition, which is itself gated through approval_request." } },
+  { id: "observation.link", summary: "Record the task an existing observation was discovered during.", cli: ["observation", "link"], mcp: "observation_link" },
   { id: "observation.resolve", summary: "Disposition an observation.", cli: ["observation", "resolve"], mcp: { absent: CHAT_GATED } },
 
   // Decisions.

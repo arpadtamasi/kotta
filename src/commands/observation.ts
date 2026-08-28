@@ -58,6 +58,41 @@ export function findObservation(root: string, id: string) {
   throw new Error(`Observation ${id} was not found.`);
 }
 
+/**
+ * Record, on an observation that already exists, the task it was discovered during
+ * (UC-01m0f0wn89jqb5mpcjjt1j5j8p). A noticing and the naming of where it came from do not have to
+ * happen in the same breath: written once at capture, the link left every observation captured
+ * without it unable to answer the deviation it was written for.
+ *
+ * The record is memory, not a mutable field. A link already held is never replaced silently — a
+ * different task is refused, naming the one on record; the same task again changes nothing.
+ */
+export function linkObservation(id: string, taskId: string, repositoryRoot?: string) {
+  const root = controlPlaneRoot(repositoryRoot ?? findRepositoryRoot());
+  return withControlPlaneMutation(root, () => {
+    const canonicalObservation = canonicalEntityId(root, "observation", id);
+    const observation = findObservation(root, canonicalObservation);
+    const canonicalTask = canonicalEntityId(root, "task", taskId);
+    findTask(root, canonicalTask);
+
+    const entity = parseMarkdown(readFileSync(observation.path, "utf8"));
+    const recorded = String(entity.data.discovered_during ?? "").trim();
+    if (recorded && recorded !== canonicalTask) {
+      throw new Error(`${canonicalObservation} already records ${recorded} as the task it was discovered during. A recorded link is never replaced; capture a new observation if this is a different noticing.`);
+    }
+    if (recorded === canonicalTask) {
+      return { ok: true as const, command: "observation link", data: { id: canonicalObservation, title: entityTitle(observation.path), task: canonicalTask, changed: false } };
+    }
+
+    entity.data.discovered_during = canonicalTask;
+    writeFileSync(observation.path, renderMarkdown(entity.data, entity.content));
+    regenerateIndex(root);
+    appendLifecycleEvent(root, canonicalObservation, String(entity.data.status ?? "new"), `Recorded as discovered during ${canonicalTask}.`, canonicalTask);
+    commitControlState(root, `chore(kotta): record ${canonicalObservation} as discovered during ${canonicalTask}`);
+    return { ok: true as const, command: "observation link", data: { id: canonicalObservation, title: entityTitle(observation.path), task: canonicalTask, changed: true } };
+  });
+}
+
 export function newObservation(options: { title: string; type: string; evidence: string; origin?: string; discoveredDuring?: string }, repositoryRoot?: string) {
   const requestedRoot = repositoryRoot ?? findRepositoryRoot();
   if (options.discoveredDuring) {

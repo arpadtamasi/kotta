@@ -10,7 +10,7 @@ const packageVersion = String((JSON.parse(readFileSync(fileURLToPath(new URL("..
 import { APPROVAL_ACTIONS, approvalDescription, approvalDetail, approvalEntity, decideApproval, failApproval, proposeApproval, type ApprovalAction, type ApprovalDecision } from "./approval.js";
 import { recordTaskMessage } from "./conversation.js";
 import { briefTask, defineTask, newTask, reviewTask, startTask, validateTask } from "./task.js";
-import { newObservation } from "./observation.js";
+import { linkObservation, newObservation } from "./observation.js";
 import { statusCommand } from "./status.js";
 import { sweep } from "./sweep.js";
 import { openQuestions } from "./questions.js";
@@ -123,6 +123,22 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
         ? `${open} open of ${total} across ${entities.length} ${entities.length === 1 ? "entity" : "entities"}.`
         : "No entity asks an open question.";
       return toolResult(result as unknown as ToolPayload, summary);
+    } catch (error) { return toolError(error); }
+  });
+
+  define("observation_link", {
+    title: "Record the task an observation was discovered during",
+    description: "Join an observation that already exists to the task the noticing happened during. A link already recorded is never replaced: a different task is refused, naming the one on record.",
+    inputSchema: {
+      id: z.string(),
+      discoveredDuring: z.string(),
+    },
+    annotations: localWrite,
+  }, async ({ id, discoveredDuring }) => {
+    try {
+      const result = linkObservation(id, discoveredDuring, root);
+      return toolResult(result as unknown as ToolPayload,
+        `${named(result.data.title, result.data.id)} ${result.data.changed ? "is now recorded as" : "was already recorded as"} discovered during ${discoveredDuring}.`);
     } catch (error) { return toolError(error); }
   });
 

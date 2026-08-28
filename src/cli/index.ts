@@ -11,7 +11,7 @@ import { expandOperations } from "../core/operations.js";
 import { briefTask, cancelTask, closeTask, defineTask, newTask, reopenTask, reviewTask, startTask, validateTask } from "../commands/task.js";
 import { executeTask, formatExecution } from "../commands/execute.js";
 import { statusCommand } from "../commands/status.js";
-import { newObservation, resolveObservation, validateObservation } from "../commands/observation.js";
+import { linkObservation, newObservation, resolveObservation, validateObservation } from "../commands/observation.js";
 import { closeBatch, finalizeBatch, newBatch, batchStatus, startBatch, updateBatchTasks, validateBatch } from "../commands/batch.js";
 import { validateWorkspace } from "../commands/validate.js";
 import { listClaims, releaseClaim } from "../commands/claim.js";
@@ -639,6 +639,13 @@ defineCommand("observation", "new")
 defineCommand("observation", "validate <id>")
   .option("--json")
   .action((id: string, options: { json?: boolean }) => print(validateObservation(id), Boolean(options.json)));
+defineCommand("observation", "link <id>")
+  .description("Record the task an existing observation was discovered during")
+  .requiredOption("--discovered-during <task>", "The task the noticing happened during")
+  .option("--json")
+  .action((id: string, options: { discoveredDuring: string; json?: boolean }) =>
+    print(linkObservation(id, options.discoveredDuring), Boolean(options.json)));
+
 defineCommand("observation", "resolve <id>")
   .requiredOption("--disposition <disposition>")
   .option("--spec <spec...>", "Specification nodes the amendment touched (amend-spec only)")
