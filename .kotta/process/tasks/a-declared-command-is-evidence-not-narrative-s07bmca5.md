@@ -1,7 +1,7 @@
 ---
 id: T-01m14khqarazb07kcss07bmca5
 title: 'A declared command is evidence, not narrative'
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -14,7 +14,7 @@ blocks: []
 spec:
   - UC-01m0f0wn89dy38s6whbfa0jafn
   - BR-01m0m33yxt2vqxb3jvqc186ssy
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-28'
 updated_at: '2026-08-28'
@@ -26,6 +26,12 @@ coverage:
     - UC-01m0f0wn89dy38s6whbfa0jafn
   'This workspace validates, including the two tasks whose own subject is deviations.':
     - UC-01m0f0wn89dy38s6whbfa0jafn
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 68b4badabd2d550156d0fe7abc323d60755cf326
 ---
 # T-01m14khqarazb07kcss07bmca5 — A declared command is evidence, not narrative
 
