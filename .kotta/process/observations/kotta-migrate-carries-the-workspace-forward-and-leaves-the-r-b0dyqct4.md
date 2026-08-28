@@ -1,13 +1,20 @@
 ---
 id: F-01m144jf15sczhjd1hb0dyqct4
 title: kotta migrate carries the workspace forward and leaves the rules file behind
-status: new
+status: resolved
 origin: human
 observation_type: defect
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-28'
+disposition: amend-spec
+resolved_at: '2026-08-28T13:32:45.337Z'
+approved_by: cli
+approved_at: '2026-08-28T13:32:45.337Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - UC-01m0f0wn89x00jkpqpqc2esx9h
 ---
 # F-01m144jf15sczhjd1hb0dyqct4 — kotta migrate carries the workspace forward and leaves the rules file behind
 
