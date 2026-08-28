@@ -3,7 +3,7 @@ id: T-01m1495aj3zx7yhs04cd55hcbs
 title: >-
   A declared deviation is answered by the link, not by the prose it was written
   beside
-status: defined
+status: active
 origin: observation
 types:
   - feature
@@ -16,7 +16,7 @@ blocks: []
 spec:
   - UC-01m0f0wn89dy38s6whbfa0jafn
   - UC-01m0f0wn89m98wpkqq8e5c9p6p
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-28'
 updated_at: '2026-08-28'
@@ -29,6 +29,12 @@ coverage:
     - UC-01m0f0wn89m98wpkqq8e5c9p6p
   'The prose an agent wrote at review time still counts: a task whose Observations created section names something is not reported, so nothing that was accounted for before becomes an item now.':
     - UC-01m0f0wn89m98wpkqq8e5c9p6p
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 5f78b018a4abfd1949de5d71ca39e5ef5632f1c0
 ---
 # T-01m1495aj3zx7yhs04cd55hcbs — A declared deviation is answered by the link, not by the prose it was written beside
 

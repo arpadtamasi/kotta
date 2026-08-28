@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- a-declared-deviation-is-answered-by-the-link-not-by-the-pros-cd55hcbs
+None.
 
 ## Active tasks
 
-None.
+- a-declared-deviation-is-answered-by-the-link-not-by-the-pros-cd55hcbs
 
 ## Review
 
