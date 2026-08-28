@@ -287,3 +287,53 @@ describe("the attach-to-existing-task disposition", () => {
     expect(run(root, ["validate"]), "and a record written before the requirement still validates").toMatchObject({ ok: true });
   });
 });
+
+describe("joining an observation to the task it came from", () => {
+  const capture = (root: string): string =>
+    (run(root, ["observation", "new", "--title", "The importer logs nothing", "--type", "bug", "--evidence", "Observed in the fixture."]) as { data: { id: string } }).data.id;
+  const someTask = (root: string, title: string): string =>
+    (run(root, ["task", "new", "--title", title, "--type", "bug"]) as { data: { id: string } }).data.id;
+  const recordOf = (root: string, id: string) =>
+    matter(readFileSync(join(root, ".kotta/process/observations", `the-importer-logs-nothing-${id.slice(-8)}.md`), "utf8")).data;
+
+  test("an observation written without the task is joined to it afterwards", () => {
+    const root = initRepository("kotta-observation-link-");
+    const taskId = someTask(root, "Repair the importer");
+    const observationId = capture(root);
+    expect(recordOf(root, observationId).discovered_during, "written without it").toBeNull();
+
+    // The short form is what a listing prints, so it is what an operator types.
+    const linked = run(root, ["observation", "link", observationId, "--discovered-during", `T-${taskId.slice(-8)}`]) as { ok: boolean; data: { task: string; changed: boolean } };
+
+    expect(linked.ok).toBe(true);
+    expect(linked.data, "canonicalised, and the record changed").toMatchObject({ task: taskId, changed: true });
+    expect(recordOf(root, observationId).discovered_during).toBe(taskId);
+  });
+
+  test("naming the same task again changes nothing, and a different one is refused by name", () => {
+    const root = initRepository("kotta-observation-relink-");
+    const taskId = someTask(root, "Repair the importer");
+    const other = someTask(root, "Repair the exporter");
+    const observationId = capture(root);
+    run(root, ["observation", "link", observationId, "--discovered-during", taskId]);
+
+    const again = run(root, ["observation", "link", observationId, "--discovered-during", taskId]) as { data: { changed: boolean } };
+    expect(again.data.changed, "idempotent").toBe(false);
+
+    // The record is memory: replacing a recorded link would lose the answer it already carried.
+    const refused = attempt(root, ["observation", "link", observationId, "--discovered-during", other]);
+    expect(refused.status).not.toBe(0);
+    expect(`${refused.stdout}${refused.stderr}`).toContain(taskId);
+    expect(recordOf(root, observationId).discovered_during).toBe(taskId);
+  });
+
+  test("the task named must exist", () => {
+    const root = initRepository("kotta-observation-link-missing-");
+    const observationId = capture(root);
+
+    const refused = attempt(root, ["observation", "link", observationId, "--discovered-during", "T-01m0c000000000000000000000"]);
+
+    expect(refused.status).not.toBe(0);
+    expect(recordOf(root, observationId).discovered_during).toBeNull();
+  });
+});

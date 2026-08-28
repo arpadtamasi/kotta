@@ -90,7 +90,10 @@ export function linkObservation(id: string, taskId: string, repositoryRoot?: str
     appendLifecycleEvent(root, canonicalObservation, String(entity.data.status ?? "new"), `Recorded as discovered during ${canonicalTask}.`, canonicalTask);
     commitControlState(root, `chore(kotta): record ${canonicalObservation} as discovered during ${canonicalTask}`);
     return { ok: true as const, command: "observation link", data: { id: canonicalObservation, title: entityTitle(observation.path), task: canonicalTask, changed: true } };
-  });
+    // Recording where a noticing came from is bookkeeping on the control plane, not a lifecycle
+    // transition: like capture and disposition, it must work from the dirty tree of a task in
+    // flight, which is exactly where the noticing happened.
+  }, { requireClean: false });
 }
 
 export function newObservation(options: { title: string; type: string; evidence: string; origin?: string; discoveredDuring?: string }, repositoryRoot?: string) {

@@ -307,6 +307,8 @@ Commands:
                            its body
   new [options]
   validate [options] <id>
+  link [options] <id>      Record the task an existing observation was
+                           discovered during
   resolve [options] <id>
   help [command]           display help for command
 
@@ -348,6 +350,16 @@ Usage: kotta observation validate [options] <id>
 Options:
   --json
   -h, --help  display help for command
+
+### kotta observation link
+Usage: kotta observation link [options] <id>
+
+Record the task an existing observation was discovered during
+
+Options:
+  --discovered-during <task>  The task the noticing happened during
+  --json
+  -h, --help                  display help for command
 
 ### kotta observation resolve
 Usage: kotta observation resolve [options] <id>
@@ -772,6 +784,31 @@ exports[`the surfaces Kotta exposes > the MCP tool surface, read from a live ser
     },
     "name": "observation_create",
     "title": "Capture a Kotta observation",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "discoveredDuring": {
+          "type": "string",
+        },
+        "id": {
+          "type": "string",
+        },
+      },
+      "required": [
+        "id",
+        "discoveredDuring",
+      ],
+      "type": "object",
+    },
+    "name": "observation_link",
+    "title": "Record the task an observation was discovered during",
   },
   {
     "annotations": {
