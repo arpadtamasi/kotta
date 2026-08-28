@@ -21,7 +21,6 @@ None.
 ## Review
 
 - a-task-whose-subject-is-deviations-can-still-validate-11zjbvw2
-- an-observation-can-be-joined-to-the-task-it-was-discovered-d-avpbw5g7
 
 ## Blocked
 

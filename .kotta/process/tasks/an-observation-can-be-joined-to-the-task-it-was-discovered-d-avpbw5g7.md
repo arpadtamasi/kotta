@@ -3,7 +3,7 @@ id: T-01m14h2mkjtrb8bkxsavpbw5g7
 title: >-
   An observation can be joined to the task it was discovered during, after the
   fact
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -34,6 +34,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 99744e6b491b3eb4f341281aea137075f28eea0f
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-28T16:32:57.106Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 # T-01m14h2mkjtrb8bkxsavpbw5g7 — An observation can be joined to the task it was discovered during, after the fact
 
