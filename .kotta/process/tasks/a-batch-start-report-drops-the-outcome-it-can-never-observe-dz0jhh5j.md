@@ -1,7 +1,7 @@
 ---
 id: T-01m120jsvqwswpkdvhdz0jhh5j
 title: A batch start report drops the outcome it can never observe
-status: active
+status: review
 origin: observation
 types:
   - bug
@@ -84,3 +84,27 @@ This came from a deviation declared at review on T-01m0jdntvbbp5rbj6t2eqpd0tg: a
 condition ended 'and a batch whose members are all done still says so', and the reachable half was
 what actually shipped. The deviation is recorded as F-01m0zpg89ydwy8q0ygtg485bq5; this closes the
 half that is a line of code.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| The batch start rendering no longer asserts that every member is done, because no result it can receive says that. | run: npx vitest run tests/integration/batch.test.ts -t "refused by name rather than reported as an empty dispatch" — verified: exit 0 at cfc9595 |
+| Completing the last member of a started batch completes the batch, and a start after that is refused by name rather than answered with an empty dispatch. | run: npx vitest run tests/integration/batch.test.ts -t "a batch whose last member finished" — verified: exit 0 at cfc9595 |
+
+### Verification performed
+
+The batch start rendering no longer asserts that every member is done, because no result it can receive says that.: run: npx vitest run tests/integration/batch.test.ts -t "refused by name rather than reported as an empty dispatch"
+Completing the last member of a started batch completes the batch, and a start after that is refused by name rather than answered with an empty dispatch.: run: npx vitest run tests/integration/batch.test.ts -t "a batch whose last member finished"
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
