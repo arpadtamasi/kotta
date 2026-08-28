@@ -86,7 +86,9 @@ function fixture(prefix: string): string {
   git(repository, "commit", "-m", "initial");
   run(repository, ["init"]);
   acceptFixtureSpec(repository);
-  git(repository, "add", ".gitattributes", ".gitignore");
+  // init now also creates the project's AGENTS.md where there is none
+  // (BR-01m0f1djtb5dkb76tjzq4x3ffh), and it leaves everything it wrote untracked.
+  git(repository, "add", ".gitattributes", ".gitignore", "AGENTS.md");
   git(repository, "commit", "-m", "initialize Kotta metadata");
   return repository;
 }
