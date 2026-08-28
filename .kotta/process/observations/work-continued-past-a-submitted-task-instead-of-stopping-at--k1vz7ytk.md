@@ -6,7 +6,7 @@ origin: agent
 observation_type: inconsistency
 confidence: high
 severity: medium
-discovered_during: null
+discovered_during: T-01m14enxw9tbbgv2kbbsxmnmpc
 created_at: '2026-08-28'
 ---
 # F-01m14eq1kjmxz28f01k1vz7ytk — Work continued past a submitted task instead of stopping at its boundary
