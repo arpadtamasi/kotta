@@ -1,7 +1,7 @@
 ---
 id: T-01m14j3afm6f2mqagd11zjbvw2
 title: A task whose subject is deviations can still validate
-status: active
+status: review
 origin: human
 types:
   - bug
@@ -92,3 +92,29 @@ None.
 
 Found by `kotta validate` going red the moment a task's subject collided with its vocabulary, which
 is the first time in twenty-six days it could have.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A task whose acceptance conditions are about deviations validates when it declares none, because the check reads what the agent wrote about the run and not the condition the evidence is keyed by. | run: npx vitest run tests/integration/deviation-reconciliation.test.ts -t "own subject is deviations" — verified: exit 0 at 2eef9d1 |
+| The case the check exists for still fails: a task whose evidence narrative admits a deviation while its Deviations field denies one is refused, and the refusal quotes the admission. | run: npx vitest run tests/integration/deviation-reconciliation.test.ts -t "still caught when it sits beside" — verified: exit 0 at 2eef9d1 |
+| This workspace validates: kotta validate exits zero over its own records. | run: npx vitest run tests/integration/questions.test.ts -t "keep validating" — verified: exit 0 at 2eef9d1 |
+
+### Verification performed
+
+A task whose acceptance conditions are about deviations validates when it declares none, because the check reads what the agent wrote about the run and not the condition the evidence is keyed by.: run: npx vitest run tests/integration/deviation-reconciliation.test.ts -t "own subject is deviations"
+The case the check exists for still fails: a task whose evidence narrative admits a deviation while its Deviations field denies one is refused, and the refusal quotes the admission.: run: npx vitest run tests/integration/deviation-reconciliation.test.ts -t "still caught when it sits beside"
+This workspace validates: kotta validate exits zero over its own records.: run: npx vitest run tests/integration/questions.test.ts -t "keep validating"
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
