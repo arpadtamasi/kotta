@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- a-project-with-no-agents-md-gets-one-and-an-existing-one-is--9q1p6zw2
+None.
 
 ## Active tasks
 
-None.
+- a-project-with-no-agents-md-gets-one-and-an-existing-one-is--9q1p6zw2
 
 ## Review
 

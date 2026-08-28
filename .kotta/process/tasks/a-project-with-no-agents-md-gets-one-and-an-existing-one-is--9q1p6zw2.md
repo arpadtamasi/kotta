@@ -3,7 +3,7 @@ id: T-01m14azk11h5gk58vv9q1p6zw2
 title: >-
   A project with no AGENTS.md gets one, and an existing one is joined with a
   sentence
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -15,7 +15,7 @@ depends_on: []
 blocks: []
 spec:
   - BR-01m0f1djtb5dkb76tjzq4x3ffh
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-28'
 updated_at: '2026-08-28'
@@ -28,6 +28,12 @@ coverage:
     - BR-01m0f1djtb5dkb76tjzq4x3ffh
   'The shipped setup skill carries the judgement path: an agent that has read the project file places the reference where it belongs in that document, shows the diff, and applies it on the human yes.':
     - BR-01m0f1djtb5dkb76tjzq4x3ffh
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: adfc2fcf10951d3ae7c338e325b2843191a57276
 ---
 # T-01m14azk11h5gk58vv9q1p6zw2 — A project with no AGENTS.md gets one, and an existing one is joined with a sentence
 
