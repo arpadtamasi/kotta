@@ -1,0 +1,18 @@
+{
+  "entity": "F-01m14b7q7fjzcw3py1p9dse950",
+  "task": null,
+  "kind": "approval",
+  "approval_id": "E-01m14bj76pzm7yfcvpgecn83nn",
+  "phase": "approved",
+  "action": "observation.resolve",
+  "payload": {
+    "disposition": "amend-spec",
+    "spec": [
+      "BR-01m0qtshfqhcrrqtz051zm9svr"
+    ],
+    "surface": "cli"
+  },
+  "source_message": "E-01m14bj76pdmx5fgcc8859kz1b",
+  "id": "E-01m14bj76pmv2r97kxsxa8dd2p",
+  "created_at": "2026-08-28T14:14:46.230Z"
+}

@@ -28,4 +28,4 @@ None.
 
 ## New observations
 
-- the-gap-measures-whether-a-node-id-is-cited-not-whether-the--p9dse950
+None.
