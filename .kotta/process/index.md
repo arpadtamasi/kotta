@@ -16,12 +16,13 @@ None.
 
 ## Active tasks
 
-- the-board-shows-the-agreement-not-only-its-execution-ykprv97p
+None.
 
 ## Review
 
 - an-author-asking-for-a-spec-node-gets-one-minted-and-shaped-26tb72fv
 - the-board-s-commands-come-from-the-declaration-like-every-ot-dzyt7gn2
+- the-board-shows-the-agreement-not-only-its-execution-ykprv97p
 
 ## Blocked
 

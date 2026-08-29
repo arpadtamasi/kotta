@@ -1,7 +1,7 @@
 ---
 id: T-01m165x8k9vwg5160eykprv97p
 title: 'The board shows the agreement, not only its execution'
-status: active
+status: review
 origin: human
 types:
   - feature
@@ -90,3 +90,31 @@ None.
 
 Implementation began before this task existed — the operator's report was answered at the keyboard
 and the claim came after. Declared at review rather than tidied away.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| The board reads the specification: every node of every registered form is in what it serves, and the forms come from the registry rather than from a list in code. | run: npx vitest run tests/ui/board-spec.test.tsx -t "read at all" — verified: exit 0 at ba3a182 |
+| A task names the accepted nodes it executes and the map from each acceptance condition to the nodes that carry it, where the task is read. | run: npx vitest run tests/ui/board-spec.test.tsx -t "maps each condition\|no coverage says so" — verified: exit 0 at ba3a182 |
+| Every specification reference the board shows is named by its title and opens the node itself, including the ones an amend-spec observation names. | run: npx vitest run tests/ui/board-spec.test.tsx -t "opens the node it names" — verified: exit 0 at ba3a182 |
+| An opened node shows what it promises and what leans on it: its form, its file, its admission as written, its sections, and the tasks that execute it. | run: npx vitest run tests/ui/board-spec.test.tsx -t "what leans on it" — verified: exit 0 at ba3a182 |
+
+### Verification performed
+
+The board reads the specification: every node of every registered form is in what it serves, and the forms come from the registry rather than from a list in code.: run: npx vitest run tests/ui/board-spec.test.tsx -t "read at all"
+A task names the accepted nodes it executes and the map from each acceptance condition to the nodes that carry it, where the task is read.: run: npx vitest run tests/ui/board-spec.test.tsx -t "maps each condition|no coverage says so"
+Every specification reference the board shows is named by its title and opens the node itself, including the ones an amend-spec observation names.: run: npx vitest run tests/ui/board-spec.test.tsx -t "opens the node it names"
+An opened node shows what it promises and what leans on it: its form, its file, its admission as written, its sections, and the tasks that execute it.: run: npx vitest run tests/ui/board-spec.test.tsx -t "what leans on it"
+
+### Deviations
+
+Implementation began before this task existed. The operator reported the gap at sight, I answered it at the keyboard, and the capture, definition and claim came after the code was written and committed. The record is therefore accurate about what was built and wrong about the order it was built in; nothing here was hidden to make the sequence look clean.
+
+### Observations created
+
+F-01m16xxxxx — a specification id cited in prose is unchecked, so a broken reference lands green; found when I wrote a wrong id into the very spec sentence this task covers and kotta validate stayed silent.
+
+### Known concerns
+
+This wave makes the specification legible where a task is read; it gives it no view of its own. The rail still names the derivation chain as observations, tasks, batches, when the real chain runs observations to spec to tasks, and 141 nodes remain unreachable except through a task that happens to name them.
