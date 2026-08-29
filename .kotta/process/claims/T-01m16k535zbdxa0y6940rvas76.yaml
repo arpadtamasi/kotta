@@ -1,9 +1,0 @@
-task: T-01m16k535zbdxa0y6940rvas76
-agent: claude
-branch: claude/graft-kottara-837884
-worktree: .
-execution_mode: inherited
-origin: adopted
-start_ref: HEAD
-start_commit: e45f5211c2fc58840e498823d8182e67d9ba5722
-started_at: 2026-08-29T11:06:16.129Z

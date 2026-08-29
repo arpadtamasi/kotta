@@ -20,7 +20,7 @@ None.
 
 ## Review
 
-- a-resolution-names-the-work-it-made-or-the-work-it-joined-ne-40rvas76
+None.
 
 ## Blocked
 

@@ -3,7 +3,7 @@ id: T-01m16k535zbdxa0y6940rvas76
 title: >-
   A resolution names the work it made, or the work it joined — never the wrong
   one
-status: review
+status: done
 origin: human
 types:
   - bug
@@ -32,6 +32,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: e45f5211c2fc58840e498823d8182e67d9ba5722
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-29T12:21:20.410Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
