@@ -3,13 +3,20 @@ id: F-01m14vswkyez6x7kerqtt5twrk
 title: >-
   A command summarised as validation promotes a batch and commits, and nothing
   in its description says so
-status: new
+status: resolved
 origin: agent
 observation_type: inconsistency
 confidence: high
 severity: medium
 discovered_during: T-01m14mgyrv00b7ye5r3pvh2bdf
 created_at: '2026-08-28'
+disposition: amend-spec
+resolved_at: '2026-08-29T13:33:05.833Z'
+approved_by: cli
+approved_at: '2026-08-29T13:33:05.833Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - BR-01m0nsyasfnjc9s4073r8zb33j
 ---
 # F-01m14vswkyez6x7kerqtt5twrk — A command summarised as validation promotes a batch and commits, and nothing in its description says so
 

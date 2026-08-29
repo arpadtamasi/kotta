@@ -28,7 +28,6 @@ None.
 
 ## New observations
 
-- a-command-summarised-as-validation-promotes-a-batch-and-comm-qtt5twrk
 - a-deviation-that-left-nothing-behind-has-no-way-to-say-so-so-55bjebmy
 - a-specification-id-cited-in-prose-is-unchecked-so-a-broken-r-xpn7wxwy
 - the-board-bundle-is-a-committed-build-artifact-and-nothing-c-36zyrkp9
