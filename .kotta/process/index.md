@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- a-resolution-names-the-work-it-made-or-the-work-it-joined-ne-40rvas76
+None.
 
 ## Review
 
-None.
+- a-resolution-names-the-work-it-made-or-the-work-it-joined-ne-40rvas76
 
 ## Blocked
 

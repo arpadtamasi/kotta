@@ -3,7 +3,7 @@ id: T-01m16k535zbdxa0y6940rvas76
 title: >-
   A resolution names the work it made, or the work it joined — never the wrong
   one
-status: active
+status: review
 origin: human
 types:
   - bug
@@ -88,3 +88,27 @@ None.
 
 Found by using it: three bookkeeping resolutions the operator approved printed a sentence that was
 false about all three.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| Attaching an observation to work that already exists is not reported as capturing new work, and the line names the task it was folded into. | run: npx vitest run tests/integration/observation.test.ts -t "not reported as capturing new work" — verified: exit 0 at 1228cfe |
+| A capture reports the name the created task actually carries, whether the disposition supplied it or it fell back to the observation's. | run: npx vitest run tests/integration/observation.test.ts -t "named for the work when the disposition names it\|still created without a title" — verified: exit 0 at 1228cfe |
+
+### Verification performed
+
+Attaching an observation to work that already exists is not reported as capturing new work, and the line names the task it was folded into.: run: npx vitest run tests/integration/observation.test.ts -t "not reported as capturing new work"
+A capture reports the name the created task actually carries, whether the disposition supplied it or it fell back to the observation's.: run: npx vitest run tests/integration/observation.test.ts -t "named for the work when the disposition names it|still created without a title"
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
