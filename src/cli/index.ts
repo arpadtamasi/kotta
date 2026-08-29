@@ -150,10 +150,16 @@ function renderBatchStart(result: unknown): string {
  * (BR-01m0f0wn898xd4tr7j7t9bsjy7).
  */
 function renderObservationResolved(result: unknown): string {
-      const data = (result as { data: { id: unknown; title?: unknown; disposition: unknown; taskId?: unknown; inheritedTitle?: unknown } }).data;
+      const data = (result as { data: { id: unknown; title?: unknown; disposition: unknown; taskId?: unknown; taskTitle?: unknown; taskTitleInherited?: unknown } }).data;
       const lines = [`kotta observation resolve: ${namedWithId(data.title, String(data.id))}. Disposition: ${String(data.disposition)}.`];
-      if (typeof data.taskId === "string") lines.push(`Captured ${namedWithId(data.inheritedTitle ?? data.title, data.taskId)} in the backlog.`);
-      if (typeof data.inheritedTitle === "string") {
+      // Two dispositions end at a task and they end there differently. Branching on the id alone
+      // reported an attachment as a capture — a creation that never happened, named with the
+      // observation's title beside the existing task's id (BR-01m0pw5bc7b1rkg5dct5qgdkmb).
+      if (typeof data.taskId === "string") {
+        const named = namedWithId(data.taskTitle, data.taskId);
+        lines.push(data.disposition === "create-task" ? `Captured ${named} in the backlog.` : `Folded into ${named}.`);
+      }
+      if (data.taskTitleInherited === true) {
         lines.push(
           `That capture is named for what was noticed, not for what will be done. Give it the work's own name with --task-title, or at 'kotta task define'.`,
         );

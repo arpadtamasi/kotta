@@ -357,7 +357,9 @@ describe("a capture born from an observation", () => {
 
     const taskFile = join(root, ".kotta/process/tasks", `one-permission-check-named-by-both-callers-${resolved.data.taskId.slice(-8)}.md`);
     expect(matter(readFileSync(taskFile, "utf8")).data.title).toBe("One permission check, named by both callers");
-    expect(resolved.data.inheritedTitle).toBeUndefined();
+    expect(resolved.data.taskTitleInherited).toBe(false);
+    // The result carries the task's own name, so no surface has to borrow the observation's.
+    expect(resolved.data.taskTitle).toBe("One permission check, named by both callers");
     // The noticing keeps its own name; only the work was renamed.
     const observationFile = join(root, ".kotta/process/observations", basename(observation.path));
     expect(matter(readFileSync(observationFile, "utf8")).data.title).toBe("Two callers disagree about the permission check");
@@ -369,9 +371,10 @@ describe("a capture born from an observation", () => {
 
     const output = attempt(root, ["observation", "resolve", observation.id, "--disposition", "create-task", "--approve"]);
     expect(output.status, output.stderr).toBe(0);
-    const resolved = JSON.parse(output.stdout) as { data: { taskId: string; inheritedTitle?: string } };
+    const resolved = JSON.parse(output.stdout) as { data: { taskId: string; taskTitle?: string; taskTitleInherited?: boolean } };
     expect(resolved.data.taskId).toMatch(/^T-[0-9a-hjkmnp-tv-z]{26}$/);
-    expect(resolved.data.inheritedTitle).toBe("Two callers disagree about the permission check");
+    expect(resolved.data.taskTitleInherited).toBe(true);
+    expect(resolved.data.taskTitle).toBe("Two callers disagree about the permission check");
 
     // The human-readable surface says it too: this is a state to leave, and the way out is named.
     const secondRoot = initRepository("kotta-observation-inherited-say-");
@@ -380,6 +383,22 @@ describe("a capture born from an observation", () => {
     expect(said.status, said.stderr).toBe(0);
     expect(said.stdout).toContain("named for what was noticed, not for what will be done");
     expect(said.stdout).toContain("--task-title");
+  });
+
+  test("attaching to work that already exists is not reported as capturing new work", () => {
+    const root = initRepository("kotta-observation-attach-line-");
+    const created = run(root, ["task", "new", "--title", "One permission check, named by both callers", "--type", "bug"]) as { data: { id: string } };
+    const observation = noticed(root);
+
+    const said = spawnSync("node", [cli, "observation", "resolve", observation.id, "--disposition", "attach-to-existing-task", "--task", created.data.id, "--approve"], { cwd: root, encoding: "utf8" });
+
+    expect(said.status, said.stderr).toBe(0);
+    // Nothing was created, so nothing is announced as created; the line names the task joined.
+    expect(said.stdout).not.toContain("Captured");
+    expect(said.stdout).not.toContain("in the backlog");
+    expect(said.stdout).toContain("Folded into One permission check, named by both callers");
+    // And never the observation's own name beside the other entity's id.
+    expect(said.stdout).not.toContain("Folded into Two callers disagree");
   });
 
   test("a title belongs to create-task alone, the way spec and task already do", () => {

@@ -206,9 +206,16 @@ export function resolveObservation(id: string, disposition: string, approved: bo
     }
     const entity = parseMarkdown(readFileSync(observation.path, "utf8"));
     let taskId: string | undefined = attachedTask;
+    // The two constructive exits both end at a task, and they end there differently: one minted it,
+    // the other named work that already existed. What the result says about the task is read from
+    // the task, so a rendering cannot claim a creation that did not happen
+    // (BR-01m0pw5bc7b1rkg5dct5qgdkmb).
+    let taskTitle: string | undefined;
+    if (attachedTask) taskTitle = entityTitle(findTask(root, attachedTask).path);
     if (disposition === "create-task") {
       const created = newTask({ title: workTitle || String(entity.data.title), type: "feature", profiles: [] }, root);
       taskId = created.data.id;
+      taskTitle = created.data.title;
       const task = findTask(root, taskId);
       const taskEntity = parseMarkdown(readFileSync(task.path, "utf8"));
       taskEntity.data.origin = "observation";
@@ -234,10 +241,11 @@ export function resolveObservation(id: string, disposition: string, approved: bo
       command: "observation resolve",
       data: {
         id, title: entityTitle(observation.path), disposition, taskId,
+        /** The task's own name, so a surface never has to borrow the observation's for it. */
+        taskTitle,
+        /** Whether that name is the observation's, because the disposition supplied none. */
+        taskTitleInherited: disposition === "create-task" && !workTitle,
         spec: disposition === "amend-spec" ? spec : undefined,
-        // Naming the state and the way out of it, rather than leaving the operator to notice that
-        // the work is filed under the name of the symptom.
-        inheritedTitle: disposition === "create-task" && !workTitle ? String(entity.data.title) : undefined,
       },
     };
   };

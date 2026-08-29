@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- **A resolution names the work it made, or the work it joined — never the wrong one.** Resolving an
+  observation with `attach-to-existing-task` printed `Captured <the observation's title> (<the
+  existing task's id>) in the backlog.` Nothing was captured: the noticing was folded into work that
+  already existed, and the two halves of the line named different entities. The renderer branched on
+  a task id being present, which both constructive dispositions set — one because it minted a task,
+  the other because it named one — and the result carried no title for either, so even a capture
+  reported the observation's name rather than the name a `--task-title` had just given the work. The
+  result now carries the task's own title, read from the task, and says whether that title was
+  inherited; the line reads `Folded into …` for an attachment and `Captured … in the backlog.` for a
+  capture. Only the spoken line was ever wrong — every record on disk was correct.
+
 - **The board no longer hands the operator a command that does not exist.** It printed
   `kotta task sign <id> --approve` in two places — the empty *What runs next?* panel and the CLI
   fallback sheet — and running it answers `unknown command 'sign'`. `sign` became `define` in a
