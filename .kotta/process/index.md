@@ -16,11 +16,12 @@ None.
 
 ## Active tasks
 
-- the-board-s-commands-come-from-the-declaration-like-every-ot-dzyt7gn2
+None.
 
 ## Review
 
 - an-author-asking-for-a-spec-node-gets-one-minted-and-shaped-26tb72fv
+- the-board-s-commands-come-from-the-declaration-like-every-ot-dzyt7gn2
 
 ## Blocked
 

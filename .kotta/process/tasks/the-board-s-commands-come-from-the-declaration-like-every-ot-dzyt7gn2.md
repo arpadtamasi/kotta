@@ -1,7 +1,7 @@
 ---
 id: T-01m160z5twbnc4vr09dzyt7gn2
 title: 'The board''s commands come from the declaration, like every other surface''s'
-status: active
+status: review
 origin: human
 types:
   - bug
@@ -82,3 +82,27 @@ None.
 Reported by the operator, at sight, as "A kotta ui még a régi!". Recorded as
 F-01m16dp6xspd9kj3d4pe6rqcre, whose amend-spec delta extended the declaration rule to any surface
 that puts a command in front of a human.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| Every command the board prints is one the operation registry declares, and the two sites that named a removed one name the current one instead. | run: npx vitest run tests/ui/board-commands.test.ts -t "operation registry declares\|removed word is gone" — verified: exit 0 at c05de61 |
+| A command the board prints that no declaration carries fails the suite, naming the command and where it is printed — so the next rename cannot pass the board by. | run: npx vitest run tests/ui/board-commands.test.ts -t "never an empty walk" — verified: exit 0 at c05de61 |
+
+### Verification performed
+
+Every command the board prints is one the operation registry declares, and the two sites that named a removed one name the current one instead.: run: npx vitest run tests/ui/board-commands.test.ts -t "operation registry declares|removed word is gone"
+A command the board prints that no declaration carries fails the suite, naming the command and where it is printed — so the next rename cannot pass the board by.: run: npx vitest run tests/ui/board-commands.test.ts -t "never an empty walk"
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+F-01m16k4rk5f8p3d47r36zyrkp9 — the board bundle is a committed build artifact and nothing checks that it matches its source; found because the fix stayed invisible in the served board until ui-dist was rebuilt by hand.
+
+### Known concerns
+
+The guard proves each printed command exists; it does not prove the options and arguments beside it are current. A test that parsed those would be re-implementing commander against the same source, so the boundary is deliberate: the command path is checked, its flags are not.
