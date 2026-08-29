@@ -21,7 +21,7 @@ GET serves state and the event timeline; the selected URL is printed and opened.
 
 ## Invariants
 
-Deliberately read-only: every mutation endpoint answers 405; actions and approvals stay in the calling chat. State derives from named refs through Git plumbing, never from the working-tree HEAD; in-flight worktrees appear as overlay with provenance and disagreement surfaces as drift.
+Deliberately read-only: every mutation endpoint answers 405; actions and approvals stay in the calling chat. What it serves is what its source says: the built page is carried in the repository so a checkout can run the board without a build step, and a copy that no longer matches the source it was built from is drift the suite reports by name. A correction that reaches the source and not the served page has not reached the reader. State derives from named refs through Git plumbing, never from the working-tree HEAD; in-flight worktrees appear as overlay with provenance and disagreement surfaces as drift.
 
 ## Failures
 
