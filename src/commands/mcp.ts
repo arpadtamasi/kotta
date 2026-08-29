@@ -11,6 +11,7 @@ import { APPROVAL_ACTIONS, approvalDescription, approvalDetail, approvalEntity, 
 import { recordTaskMessage } from "./conversation.js";
 import { briefTask, defineTask, newTask, reviewTask, startTask, validateTask } from "./task.js";
 import { linkObservation, newObservation } from "./observation.js";
+import { newSpecNode } from "./spec.js";
 import { statusCommand } from "./status.js";
 import { sweep } from "./sweep.js";
 import { openQuestions } from "./questions.js";
@@ -208,6 +209,25 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
         return created;
       }, { requireClean: false });
       return toolResult(result as unknown as ToolPayload, `Created ${named(result.data.title, result.data.id)} at ${result.data.path}.`);
+    } catch (error) { return toolError(error); }
+  });
+
+  // Shaping happens in the calling chat, where the workshops run. A chat that could not mint would
+  // leave the promise unkept exactly where an author asks for a node
+  // (UC-01m0f0wn89ny7vx515ke3ksnra). No control-plane mutation: a draft is not lifecycle state, and
+  // it is deliberately left uncommitted for the human yes that lands it.
+  define("spec_create", {
+    title: "Draft a Kotta specification node",
+    description: "Mint a specification node of a registered form and write its skeleton: the id, the declared form, a section per required heading and a field per required edge. Returns the path and what is left to answer. Nothing is committed; landing the node on the base branch is the human's acceptance of the changed agreement. An unregistered form is refused by naming the ones the workspace registers.",
+    inputSchema: {
+      form: z.string().min(1),
+      title: z.string().min(1),
+    },
+    annotations: localWrite,
+  }, async ({ form, title }) => {
+    try {
+      const result = newSpecNode({ form, title }, root);
+      return toolResult(result as unknown as ToolPayload, `Drafted ${named(result.data.title, result.data.id)} as a ${result.data.form} at ${result.data.path}.`);
     } catch (error) { return toolError(error); }
   });
 

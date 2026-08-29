@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **`kotta spec new` mints and scaffolds a specification node.** The accepted use case says
+  identifiers are minted by Kotta, not written by hand, and that an author asking for a node gets
+  one already carrying its id and its form's skeleton. There was no `kotta spec` command at all:
+  every one of this workspace's 141 nodes was written by hand, 26-character id included, in a
+  repository whose own rule is that identifiers are the machine's. `kotta spec new <form> --title
+  "…"` (and `spec_create` from the calling chat, where the workshops run) mints the id from the
+  form's declared prefix, places the file under the form's directory in the filename shape the form
+  declares, and lays out a section per required heading and a field per required edge — with each
+  edge's own registered question beside it, saying which this node answers itself and which another
+  node answers by pointing here. Everything comes from the registry, so a project's own form is
+  served with nothing added in code. An unregistered form is refused by naming the ones there are,
+  and nothing is written. The scaffold is a draft: nothing is committed, because a shaped node
+  becomes the agreement when it lands on the base branch on a human yes — and the result says that
+  until it is filled in, `kotta validate` names each unanswered part with its form's own question.
+
 ### Fixed
 
 - **A landing that only re-kinds admissions is not a delta.** `kotta gap` opened with every path

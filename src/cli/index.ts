@@ -21,6 +21,7 @@ import { canonicalEntityId, type ListableEntity } from "../filesystem/entities.j
 import { resolveWorkspaceLocation, uiCommand } from "../commands/ui.js";
 import { createDecision } from "../commands/decision.js";
 import { formatMigration, migrateWorkspace } from "../commands/migrate.js";
+import { formatSpecNew, newSpecNode, type SpecNewResult } from "../commands/spec.js";
 import { WorkspaceShapeError, assertCurrentWorkspaceShape, findRepositoryRoot } from "../filesystem/workspace.js";
 import { commitControlState, controlPlaneRoot, withControlPlaneMutation } from "../git/control-plane.js";
 import { mcpCommand } from "../commands/mcp.js";
@@ -412,6 +413,7 @@ program.hook("preAction", (_program, action) => {
 const GROUP_DESCRIPTIONS: Record<string, string> = {
   task: "Create and transition tasks",
   observation: "Capture and disposition observations",
+  spec: "Draft specification nodes from the registered forms",
   decision: "Record durable human decisions",
   batch: "Validate and execute coordinated batches",
   claim: "Inspect and recover execution claims",
@@ -682,6 +684,13 @@ defineCommand("decision", "show <id>", renderEntityShow)
   .description("Show one decision: its state, its set facts and its body")
   .option("--json")
   .action((id: string, options: { json?: boolean }) => print(showCommand("decision", id), Boolean(options.json)));
+defineCommand("spec", "new", (result: unknown) => formatSpecNew(result as SpecNewResult))
+  .description("Mint and scaffold a specification node from its registered form")
+  .argument("<form>", "A form id the workspace registry declares")
+  .requiredOption("--title <title>", "What the node is called wherever a human reads it")
+  .option("--json")
+  .action((form: string, options: { title: string; json?: boolean }) => print(newSpecNode({ form, title: options.title }), Boolean(options.json)));
+
 defineCommand("decision", "create", renderDecisionCreated)
   .description("Validate and atomically record a durable decision")
   .requiredOption("--from <path>", "Markdown decision source")

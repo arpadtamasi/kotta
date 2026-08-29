@@ -75,6 +75,9 @@ export const OPERATIONS: readonly OperationDeclaration[] = [
   { id: "observation.link", summary: "Record the task an existing observation was discovered during.", cli: ["observation", "link"], mcp: "observation_link" },
   { id: "observation.resolve", summary: "Disposition an observation.", cli: ["observation", "resolve"], mcp: { absent: CHAT_GATED } },
 
+  // Specification. Shaping has no lifecycle: a node is drafted, then landed on a human yes.
+  { id: "spec.create", summary: "Mint and scaffold a specification node from its registered form.", cli: ["spec", "new"], mcp: "spec_create" },
+
   // Decisions.
   { id: "decision.create", summary: "Publish a durable human decision.", cli: ["decision", "create"], mcp: { absent: CHAT_GATED } },
 

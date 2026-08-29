@@ -63,6 +63,24 @@ export function mintId(prefix: EntityPrefix, now: number = Date.now()): string {
   return `${prefix}-${encodeTime(now)}${encodeRandom()}`;
 }
 
+/**
+ * A specification node's filename, in the shape every registered form declares:
+ * `<slug>-<last 8 id characters>.md`. Kept apart from `entityFilename`, whose legacy branch exists
+ * for sequential process ids that specification never had.
+ */
+export function specFilename(id: string, slug: string): string {
+  return `${slug || "untitled"}-${id.slice(-SHORT_ID_LENGTH)}.md`;
+}
+
+/**
+ * The same identifier for a specification node, whose prefix is declared by its form in the
+ * registry rather than compiled in here (UC-01m0f0wn89ny7vx515ke3ksnra). One body, so a spec id and
+ * a process id are the same kind of thing and neither is written by hand.
+ */
+export function mintSpecId(prefix: string, now: number = Date.now()): string {
+  return `${prefix}-${encodeTime(now)}${encodeRandom()}`;
+}
+
 /** Sortable immutable event identity; events are not user-facing entities. */
 export function mintEventId(now: number = Date.now()): string {
   return `E-${encodeTime(now)}${encodeRandom()}`;
