@@ -1028,3 +1028,39 @@ code { font-family: var(--font-mono); }
 .spec-panel__row { display: grid; gap: var(--space-1); }
 .spec-panel__condition { margin: 0; font-size: 12px; line-height: 1.5; }
 .spec-panel__carriers { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+
+/* ══ The specification, as a destination ═══════════════
+   Grouped by the form that declares each node; the admission is shown as what it is — a statement
+   about the evidence, not about the agreement — and the three kinds never merge into one total. */
+.spec-group { margin-top: var(--space-4); }
+.spec-group__head {
+  display: flex; align-items: baseline; gap: var(--space-1);
+  font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted);
+  padding: 0 var(--space-4) var(--space-1); border-bottom: 1px solid var(--line-soft);
+}
+.spec-group__head span { font-family: var(--font-mono); font-size: 10px; }
+.spec-row {
+  display: grid; grid-template-columns: 1fr auto; gap: var(--space-4); align-items: center; width: 100%;
+  font: inherit; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line-soft);
+  /* The same gutter every other row in the board keeps, so the last word never touches the edge. */
+  padding: 11px var(--space-4); cursor: pointer;
+}
+.spec-row:hover { background: color-mix(in srgb, var(--color-text) 5%, transparent); }
+.spec-row__title { min-width: 0; }
+.spec-row:focus-visible { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+.spec-row__title { font-size: 13px; line-height: 1.4; }
+.spec-row__meta { display: flex; align-items: center; gap: var(--space-1); flex-wrap: wrap; justify-content: flex-end; }
+.spec-row__leaning { font-size: 11px; color: var(--text-muted); }
+.tag.admission { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+/* Three kinds, three weights: nobody looked, the instrument cannot see it, the work is not done. */
+.admission-structural { color: var(--text-muted); border: 1px solid var(--line-soft); }
+.admission-unexamined { color: var(--color-text); border: 1px solid var(--color-text); }
+.admission-unimplemented { color: var(--color-bg); background: var(--color-accent); }
+.filters__search {
+  font: inherit; font-size: 12px; padding: 3px 6px; margin-left: auto;
+  border: 1px solid var(--line-soft); border-radius: 2px; background: var(--color-bg); color: var(--color-text);
+}
+.filters__search:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 1px; }
+.spec-edge { display: grid; grid-template-columns: 90px 1fr; gap: var(--space-2); align-items: start; margin-top: var(--space-1); }
+.spec-edge__field { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); padding-top: 5px; }
+

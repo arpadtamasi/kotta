@@ -275,6 +275,14 @@ export function readWorkspace(workspaceOption: string) {
       path: entry.repoPath,
       // The admission, kept as written: which kind of gap it records and why, or nothing at all.
       accepted: Array.isArray(parsed.data.accepted) ? parsed.data.accepted.map(String) : [],
+      // Every frontmatter field that names other nodes, under the name its form gave it. Reserved
+      // fields are the node's own identity; anything else a form declares is an edge, so a
+      // project's own form is traversed with nothing added here.
+      edges: Object.fromEntries(Object.entries(parsed.data as Record<string, unknown>)
+        .filter(([field]) => !["id", "form", "title", "accepted"].includes(field))
+        .map(([field, value]) => [field, (Array.isArray(value) ? value : [value])
+          .filter((entry): entry is string => typeof entry === "string" && /^[A-Za-z]{1,4}-[0-9a-hjkmnp-tv-z]{26}$/.test(entry))])
+        .filter(([, ids]) => (ids as string[]).length)),
       sections: sectionObject(parsed.content),
     };
   })).filter((node) => node.id).sort((left, right) => left.title.localeCompare(right.title) || left.id.localeCompare(right.id));

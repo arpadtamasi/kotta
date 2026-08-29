@@ -23,6 +23,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **The specification has a view of its own, and the derivation chain names it.** The previous wave
+  made the agreement legible where a task is read and left it with no way in: 141 nodes were
+  reachable only through a task that happened to name one, and the rail called the flow
+  *Observations · Tasks · Batches* when the chain the product runs is observations →
+  specification → tasks — `amend-spec` is the primary constructive disposition and coverage against
+  an accepted node is what makes a task defined, so the middle term was the one omitted. The rail
+  now names it in its true position, and the specification is a destination: every node listed under
+  the form that declares it, searchable by title, filterable by form. The three admission kinds are
+  counted and filtered apart — never as one total, because "nobody looked" and "many sites realise
+  this and none can name it" ask for opposite work — and each row says whether any task executes the
+  node. An opened node shows the edges it answers, the nodes that answer it, and the tasks that
+  execute it, each named by title and opening what it names. No form name, edge name or prefix is
+  compiled into the board: all three come from the registry the workspace carries, so a project's
+  own form is listed and traversed with nothing added here. The board stays read-only; computing
+  the gap remains `kotta gap`'s work, and what the board shows is what each node itself records.
+
 - **The board shows the agreement, not only its execution.** Opened at sight by the operator: *"the
   spec isn't even on it."* `src/commands/ui.ts` held no occurrence of `spec` — the board's data layer
   never opened `.kotta/spec/`, so 141 nodes across 11 forms were absent, and the board's `Task` type

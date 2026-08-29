@@ -47,7 +47,11 @@ type Observation = {
 };
 type Decision = { id: string; title: string; date: string | null; sections: Record<string, string> };
 /** One accepted specification node, as its form declares it. */
-type SpecNode = { id: string; form: string; title: string; path: string; accepted: string[]; sections: Record<string, string> };
+type SpecNode = {
+  id: string; form: string; title: string; path: string; accepted: string[]; sections: Record<string, string>;
+  /** The edges this node answers, by the field its form names them in. */
+  edges?: Record<string, string[]>;
+};
 type SpecForm = { id: string; directory: string; title: string };
 type Diagnostic = { entity: string; id: string; worktree: string; message: string };
 type KottaEvent = {
@@ -68,7 +72,7 @@ export type Workspace = {
 };
 
 /** The rail's five destinations. `running` is an overlay over any of them, not a sixth destination. */
-export type View = "home" | "observations" | "tasks" | "batches" | "decisions";
+export type View = "home" | "observations" | "spec" | "tasks" | "batches" | "decisions";
 
 /* Reporting leaves the workspace: the board never writes a report, it hands off to GitHub. */
 const BUG_REPORT_URL = "https://github.com/arpadtamasi/kotta/issues/new?template=bug.yml";
@@ -468,10 +472,16 @@ export function BrandMark({ size = 22 }: { size?: number }) {
 export function Rail({ view, onView, board, running, onWatch, refreshed }: {
   view: View; onView: (v: View) => void; board: Board | null; running: boolean; onWatch: () => void; refreshed: number;
 }) {
+  // The chain the product runs, not a shorter one: amend-spec is the primary constructive
+  // disposition and coverage against an accepted node is what makes a task defined, so the
+  // specification stands between what was noticed and what is executed. A rendering never claims
+  // more than the result carries (BR-01m0pw5bc7b1rkg5dct5qgdkmb), and a chain missing its middle
+  // term claims a shape the workspace does not have.
   const chain: Array<{ id: View; step: string; label: string; sub: string; count: number | null }> = [
     { id: "observations", step: "01", label: "Observations", sub: "new information", count: board ? board.undisposed.length : null },
-    { id: "tasks", step: "02", label: "Tasks", sub: "agreements", count: board ? board.tasks.length : null },
-    { id: "batches", step: "03", label: "Batches", sub: "sequencing", count: board ? board.batches.length : null },
+    { id: "spec", step: "02", label: "Specification", sub: "the agreement", count: board ? board.spec.length : null },
+    { id: "tasks", step: "03", label: "Tasks", sub: "execution", count: board ? board.tasks.length : null },
+    { id: "batches", step: "04", label: "Batches", sub: "sequencing", count: board ? board.batches.length : null },
   ];
   const runningCount = board ? board.running.length : 0;
   const batchCount = board ? board.activeBatches.length : 0;
@@ -874,6 +884,95 @@ export function DecisionsView({ board, onOpen }: { board: Board; onOpen: (id: st
   </div>;
 }
 
+/* ══ Specification ═════════════════════════════════════
+   The agreement, reachable on its own. Before this, a node could only be found through a task that
+   happened to name it (IF-01m0f0wn898ggsdxa0kh6t6tnw). */
+
+/** Which of the three situations an admission records, or none (BR-01m0swjgrreeby1pyfdzf4mf7d). */
+export const ADMISSION_KINDS = ["structural", "unexamined", "unimplemented"] as const;
+export type AdmissionKind = typeof ADMISSION_KINDS[number];
+export type SpecFilter = "all" | AdmissionKind | "kept";
+
+/** The kind an admission names, read from its own text; an unkinded admission is not one of them. */
+export function admissionKind(node: { accepted: string[] }): AdmissionKind | null {
+  for (const line of node.accepted) {
+    const named = ADMISSION_KINDS.find((kind) => line.trim().toLowerCase().startsWith(`${kind}:`));
+    if (named) return named;
+  }
+  return null;
+}
+
+export function SpecView({ board, filter, form, query, onFilter, onForm, onQuery, onOpen }: {
+  board: Board; filter: SpecFilter; form: string; query: string;
+  onFilter: (f: SpecFilter) => void; onForm: (form: string) => void; onQuery: (query: string) => void; onOpen: (id: string) => void;
+}) {
+  const term = query.trim().toLowerCase();
+  const kindOf = new Map(board.spec.map((node) => [node.id, admissionKind(node)]));
+  const rows = board.spec
+    .filter((node) => form === "all" || node.form === form)
+    .filter((node) => filter === "all" || (filter === "kept" ? kindOf.get(node.id) === null : kindOf.get(node.id) === filter))
+    .filter((node) => !term || node.title.toLowerCase().includes(term) || node.id.toLowerCase().includes(term));
+
+  // Counted apart, never as one total: the three ask for opposite work, and "nobody looked" is not
+  // the same debt as "many sites realise this and none can name it".
+  const counts = (predicate: (node: (typeof board.spec)[number]) => boolean) => board.spec.filter(predicate).length;
+  const filters: Array<{ key: SpecFilter; label: string; count: number }> = [
+    { key: "all", label: "all", count: board.spec.length },
+    { key: "kept", label: "no admission", count: counts((node) => kindOf.get(node.id) === null) },
+    ...ADMISSION_KINDS.map((kind) => ({ key: kind as SpecFilter, label: kind, count: counts((node) => kindOf.get(node.id) === kind) })),
+  ];
+  // The forms come from the registry the workspace carries; none is named here.
+  const forms = [...new Set(board.spec.map((node) => node.form))].sort();
+  const executedBy = new Map<string, number>();
+  for (const task of board.tasks) for (const id of task.spec ?? []) executedBy.set(id, (executedBy.get(id) ?? 0) + 1);
+
+  const grouped = forms
+    .filter((name) => rows.some((node) => node.form === name))
+    .map((name) => ({ form: name, nodes: rows.filter((node) => node.form === name) }));
+
+  return <div className="view">
+    <div className="view__head">
+      <div>
+        <h2>Specification</h2>
+        <p>The agreement tasks execute — {board.spec.length} nodes across {forms.length} forms.</p>
+      </div>
+    </div>
+    <div className="filters">
+      <span className="filters__label">admission</span>
+      {filters.map((f) => <button key={f.key} type="button" className={`filter ${filter === f.key ? "is-active" : ""}`}
+        aria-pressed={filter === f.key} onClick={() => onFilter(f.key)}>{f.label}<span>{f.count}</span></button>)}
+    </div>
+    <div className="filters">
+      <span className="filters__label">form</span>
+      <button type="button" className={`filter ${form === "all" ? "is-active" : ""}`} aria-pressed={form === "all"} onClick={() => onForm("all")}>all<span>{board.spec.length}</span></button>
+      {forms.map((name) => <button key={name} type="button" className={`filter ${form === name ? "is-active" : ""}`}
+        aria-pressed={form === name} onClick={() => onForm(name)}>{name}<span>{board.spec.filter((node) => node.form === name).length}</span></button>)}
+      <input type="search" className="filters__search" value={query} placeholder="find by title" aria-label="Find a specification node by title"
+        onChange={(event) => onQuery(event.target.value)} />
+    </div>
+    {rows.length === 0 && <p className="view__empty">No node matches. {board.spec.length === 0
+      ? <>This workspace has no specification yet. One is drafted with <code>kotta spec new &lt;form&gt; --title &quot;…&quot;</code>.</>
+      : "Widen the filters, or clear the search."}</p>}
+    {grouped.map((group) => <section key={group.form} className="spec-group">
+      <div className="spec-group__head">{group.form}<span>{group.nodes.length}</span></div>
+      {group.nodes.map((node) => {
+        const kind = kindOf.get(node.id);
+        const leaning = executedBy.get(node.id) ?? 0;
+        return <EntityButton key={node.id} id={node.id} className="spec-row" onOpen={onOpen}>
+          <span className="spec-row__title">{node.title}</span>
+          <span className="spec-row__meta">
+            <Tail id={node.id} />
+            {kind
+              ? <span className={`tag admission admission-${kind}`}>{kind}</span>
+              : <span className="tag tag-neutral">no admission</span>}
+            <span className="spec-row__leaning">{leaning ? `${leaning} task${leaning === 1 ? "" : "s"} execute${leaning === 1 ? "s" : ""} it` : "no task names it"}</span>
+          </span>
+        </EntityButton>;
+      })}
+    </section>)}
+  </div>;
+}
+
 /* ══ Derivation ════════════════════════════════════════
    `came from` and `goes with` name their target by title; a link with nothing behind
    it is drawn as `dangling reference` — the one place a bare id is the message. */
@@ -1240,18 +1339,48 @@ function TaskTabs({ task, workspace, board, onOpen, jump }: { task: Task; worksp
   </>;
 }
 
-/** Which tasks lean on this node — the direction the specification itself may never point. */
-function SpecDependants({ id, board, onOpen }: { id: string; board: Board; onOpen: (id: string) => void }) {
-  const leaning = board.tasks.filter((task) => (task.spec ?? []).includes(id));
-  if (!leaning.length) return null;
-  return <section className="drawer__section">
-    <div className="drawer__section-head">Executed by</div>
-    <div className="spec-panel__refs">
-      {leaning.map((task) => <EntityButton key={task.id} id={task.id} className="spec-ref" onOpen={onOpen}>
-        {task.title}<Tail id={task.id} />
-      </EntityButton>)}
-    </div>
-  </section>;
+/**
+ * A node's place in the graph: the edges it answers, the nodes that answer it, and the tasks that
+ * execute it — the last being the direction the specification itself may never point. Edge names
+ * come from the node's own frontmatter, so a project's own form is traversed with nothing added.
+ */
+function SpecNeighbours({ node, board, onOpen }: { node: SpecNode; board: Board; onOpen: (id: string) => void }) {
+  const leaning = board.tasks.filter((task) => (task.spec ?? []).includes(node.id));
+  const outgoing = Object.entries(node.edges ?? {}).filter(([, ids]) => ids.length);
+  const incoming = board.spec.flatMap((other) => other.id === node.id ? [] : Object
+    .entries(other.edges ?? {})
+    .filter(([, ids]) => ids.includes(node.id))
+    .map(([field]) => ({ other, field })));
+  if (!leaning.length && !outgoing.length && !incoming.length) return null;
+
+  const ref = (id: string) => <EntityButton key={id} id={id} className="spec-ref" onOpen={onOpen}>
+    {titleOf(id) ?? id}<Tail id={id} />
+  </EntityButton>;
+
+  return <>
+    {outgoing.length > 0 && <section className="drawer__section">
+      <div className="drawer__section-head">Answers</div>
+      {outgoing.map(([field, ids]) => <div key={field} className="spec-edge">
+        <span className="spec-edge__field">{field}</span>
+        <span className="spec-panel__refs">{ids.map(ref)}</span>
+      </div>)}
+    </section>}
+    {incoming.length > 0 && <section className="drawer__section">
+      <div className="drawer__section-head">Answered by</div>
+      {incoming.map(({ other, field }) => <div key={`${other.id}-${field}`} className="spec-edge">
+        <span className="spec-edge__field">{field}</span>
+        <span className="spec-panel__refs">{ref(other.id)}</span>
+      </div>)}
+    </section>}
+    {leaning.length > 0 && <section className="drawer__section">
+      <div className="drawer__section-head">Executed by</div>
+      <div className="spec-panel__refs">
+        {leaning.map((task) => <EntityButton key={task.id} id={task.id} className="spec-ref" onOpen={onOpen}>
+          {task.title}<Tail id={task.id} />
+        </EntityButton>)}
+      </div>
+    </section>}
+  </>;
 }
 
 export function EntityDrawer({ id, workspace, board, onClose, onOpen }: {
@@ -1310,7 +1439,7 @@ export function EntityDrawer({ id, workspace, board, onClose, onOpen }: {
             <div className="dangling__kind">state drift</div>
             {drift.map((d, i) => <div key={i} className="contra__line">{d.message} · {d.worktree}</div>)}
           </div>}
-          {node && <SpecDependants id={node.id} board={board} onOpen={onOpen} />}
+          {node && <SpecNeighbours node={node} board={board} onOpen={onOpen} />}
           {task ? <TaskTabs key={task.id} task={task} workspace={workspace} board={board} onOpen={onOpen} jump={jump} /> : <>
             <dl className="drawer__fields">
               {fields.map(([key, value]) => <div key={key}>
@@ -1606,6 +1735,9 @@ export function CliSheet({ onClose }: { onClose: () => void }) {
       ["kotta observation new --title … --type …", "record what was noticed"],
       ["kotta observation resolve <id> --disposition … --approve", "reject it, or turn it into a task"],
     ] },
+    { label: "specification", rows: [
+      ['kotta spec new <form> --title "…"', "mint a node and lay out its form's skeleton"],
+    ] },
     { label: "tasks", rows: [
       ["kotta task define <id> --from <file>", "backlog → defined; every acceptance condition maps to accepted spec"],
       ["kotta task execute <id> --agent codex", "run a defined task in a fresh context"],
@@ -1661,6 +1793,9 @@ export function App() {
   const [obsFilter, setObsFilter] = useState<ObsFilter>("new");
   const [obsSort, setObsSort] = useState<ObservationSort>("created-desc");
   const [batchFilter, setBatchFilter] = useState<BatchStatus | "all">("all");
+  const [specFilter, setSpecFilter] = useState<SpecFilter>("all");
+  const [specForm, setSpecForm] = useState<string>("all");
+  const [specQuery, setSpecQuery] = useState<string>("");
   const [batchSort, setBatchSort] = useState<CreatedSort>("created-desc");
   const [query, setQuery] = useState("");
 
@@ -1718,6 +1853,8 @@ export function App() {
         {view === "observations" && board && <ObservationsView board={board} filter={obsFilter} sort={obsSort} onFilter={setObsFilter} onSort={setObsSort} onOpen={setDetailId} />}
         {view === "tasks" && board && <TasksView board={board} filter={taskFilter} sort={taskSort} onFilter={setTaskFilter} onSort={setTaskSort} query={query} onQuery={setQuery} onOpen={setDetailId} />}
         {view === "batches" && board && <BatchesView board={board} filter={batchFilter} sort={batchSort} onFilter={setBatchFilter} onSort={setBatchSort} onOpen={setDetailId} />}
+        {view === "spec" && board && <SpecView board={board} filter={specFilter} form={specForm} query={specQuery}
+          onFilter={setSpecFilter} onForm={setSpecForm} onQuery={setSpecQuery} onOpen={setDetailId} />}
         {view === "decisions" && board && <DecisionsView board={board} onOpen={setDetailId} />}
       </main>
     </div>
