@@ -28,7 +28,6 @@ None.
 
 ## New observations
 
-- a-deviation-that-left-nothing-behind-has-no-way-to-say-so-so-55bjebmy
 - a-specification-id-cited-in-prose-is-unchecked-so-a-broken-r-xpn7wxwy
 - the-board-bundle-is-a-committed-build-artifact-and-nothing-c-36zyrkp9
 - the-board-shows-no-specification-at-all-so-the-agreement-tas-5zpq8ft7

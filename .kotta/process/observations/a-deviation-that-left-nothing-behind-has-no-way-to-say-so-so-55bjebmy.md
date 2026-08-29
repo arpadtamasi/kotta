@@ -3,13 +3,20 @@ id: F-01m14zy142ex24a3q355bjebmy
 title: >-
   A deviation that left nothing behind has no way to say so, so the sweep list
   can only grow
-status: new
+status: resolved
 origin: agent
 observation_type: inconsistency
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-28'
+disposition: amend-spec
+resolved_at: '2026-08-29T13:33:07.682Z'
+approved_by: cli
+approved_at: '2026-08-29T13:33:07.682Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - UC-01m0f0wn89m98wpkqq8e5c9p6p
 ---
 # F-01m14zy142ex24a3q355bjebmy — A deviation that left nothing behind has no way to say so, so the sweep list can only grow
 
