@@ -3,13 +3,20 @@ id: F-01m160xnbayygms7y1pe6rqcre
 title: >-
   The board hands the operator a command that no longer exists, because a third
   surface prints commands nothing derives or checks
-status: new
+status: resolved
 origin: agent
 observation_type: inconsistency
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-29'
+disposition: amend-spec
+resolved_at: '2026-08-29T05:47:39.145Z'
+approved_by: cli
+approved_at: '2026-08-29T05:47:39.145Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - BR-01m0nsyasfnjc9s4073r8zb33j
 ---
 # F-01m160xnbayygms7y1pe6rqcre — The board hands the operator a command that no longer exists, because a third surface prints commands nothing derives or checks
 
