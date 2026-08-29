@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- **The board no longer hands the operator a command that does not exist.** It printed
+  `kotta task sign <id> --approve` in two places — the empty *What runs next?* panel and the CLI
+  fallback sheet — and running it answers `unknown command 'sign'`. `sign` became `define` in a
+  rename the CLI, the MCP tools, the skills and the rules file all followed; the board did not, and
+  its prose was inverted with it (*"shape a backlog task until it validates, then define it"*, when
+  defining is what validates). Both sites now name `kotta task define <id> --from <file>`.
+  The reason it survived a whole rename is the part that is now closed: the other two surfaces are
+  derived from one operation registry and their totality is asserted as a set comparison, while the
+  board's commands were literals nothing read. A check now reads the board's own source — not a list
+  kept beside it — and fails naming the file, the line, the command and the text whenever the board
+  prints one no declaration carries. Being read-only kept it from acting on the stale word; it did
+  not keep it from handing that word to a human, and the declaration rule now says so.
+
 ### Added
 
 - **`kotta spec new` mints and scaffolds a specification node.** The accepted use case says

@@ -638,8 +638,8 @@ export function HomeView({ workspace, board, error, onView, onOpen, onRetry }: {
         {board && !board.menu.length && <p className="band__empty">
           Nothing defined to run. {emptyWorkspace
             ? "This workspace is empty — write the first task with the CLI:"
-            : "Shape a backlog task until it validates, then define it:"}
-          <br /><code>{emptyWorkspace ? 'kotta task new --title "…" --type feature' : "kotta task sign <id> --approve"}</code>
+            : "Define a backlog task against the specification it executes; valid coverage is what makes it defined:"}
+          <br /><code>{emptyWorkspace ? 'kotta task new --title "…" --type feature' : "kotta task define <id> --from <file>"}</code>
         </p>}
         {board?.menu.map((item, index) => <div key={item.id} className={`menu ${index === 0 ? "is-first" : ""}`}>
           <div className="menu__top">
@@ -1531,7 +1531,7 @@ export function CliSheet({ onClose }: { onClose: () => void }) {
       ["kotta observation resolve <id> --disposition … --approve", "reject it, or turn it into a task"],
     ] },
     { label: "tasks", rows: [
-      ["kotta task sign <id> --approve", "backlog → defined; validates the task"],
+      ["kotta task define <id> --from <file>", "backlog → defined; every acceptance condition maps to accepted spec"],
       ["kotta task execute <id> --agent codex", "run a defined task in a fresh context"],
       ["kotta task close <id> --approve", "review → done"],
     ] },
