@@ -1,7 +1,7 @@
 ---
 id: T-01m16e7jx4e1pfj2gefvj6e0xc
 title: 'The specification has a view of its own, and the derivation chain names it'
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -34,6 +34,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: d83bef5ab3b4806c809238315be645acde59e5a5
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-29T11:04:52.461Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 

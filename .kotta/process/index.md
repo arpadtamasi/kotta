@@ -20,7 +20,7 @@ None.
 
 ## Review
 
-- the-specification-has-a-view-of-its-own-and-the-derivation-c-fvj6e0xc
+None.
 
 ## Blocked
 
