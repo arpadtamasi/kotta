@@ -34,5 +34,6 @@ None.
 - a-task-about-deviations-cannot-pass-validation-because-the-c-8tn71ete
 - stripping-the-acceptance-condition-was-not-enough-the-eviden-2ba65js0
 - the-board-bundle-is-a-committed-build-artifact-and-nothing-c-36zyrkp9
+- the-board-shows-no-specification-at-all-so-the-agreement-tas-5zpq8ft7
 - the-task-an-observation-was-discovered-during-can-only-be-re-fbqdj4t7
 - work-continued-past-a-submitted-task-instead-of-stopping-at--k1vz7ytk
