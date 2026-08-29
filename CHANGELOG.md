@@ -23,6 +23,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **The board shows the agreement, not only its execution.** Opened at sight by the operator: *"the
+  spec isn't even on it."* `src/commands/ui.ts` held no occurrence of `spec` — the board's data layer
+  never opened `.kotta/spec/`, so 141 nodes across 11 forms were absent, and the board's `Task` type
+  carried neither `spec` nor `coverage`, leaving the gate that lets a task become defined invisible
+  on the one visual surface. The single trace of the specification anywhere was the observation
+  drawer printing bare ids for an `amend-spec` disposition, with no title and nothing to open.
+  The board now reads the specification through the form registry, from the same base ref as
+  everything else. A task shows the accepted nodes it executes and the map from each acceptance
+  condition to the nodes that carry it, beside its brief. Every reference is named by its title and
+  opens the node, which shows its form, its file, its admission as written, its sections, and the
+  tasks that execute it — the direction the specification itself may never point. No specification
+  prefix is compiled into the board: a project's own form declares its own, so a minted id is
+  recognised by shape and resolved by lookup. A specification view of its own is the next wave; this
+  is what stops its absence from misleading.
+
 - **`kotta spec new` mints and scaffolds a specification node.** The accepted use case says
   identifiers are minted by Kotta, not written by hand, and that an author asking for a node gets
   one already carrying its id and its form's skeleton. There was no `kotta spec` command at all:
