@@ -1,7 +1,7 @@
 ---
 id: T-01m0jkmvpprxkh1x0526tb72fv
 title: 'An author asking for a spec node gets one, minted and shaped'
-status: active
+status: review
 origin: human
 types:
   - feature
@@ -81,3 +81,29 @@ None.
 A scaffold makes `kotta validate` red on its own node, by design: the missing sections and edges are
 exactly the form's registered questions, asked where the author will answer them. The result says so
 rather than letting the red arrive unexplained.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| An author asking for a node gets a file already carrying its minted id, its declared form, and a section for every heading and a field for every edge the form requires. | run: npx vitest run tests/integration/spec-new.test.ts -t "minted id, its form, and the shape\|form the project registered itself" — verified: exit 0 at da9fa95 |
+| An unknown or absent form is refused by naming every form the registry registers, and nothing is written. | run: npx vitest run tests/integration/spec-new.test.ts -t "unregistered form is refused" — verified: exit 0 at da9fa95 |
+| The scaffold is a draft, not an agreement: nothing is committed, and the result says that validation now asks the form's own registered question for each part still unanswered. | run: npx vitest run tests/integration/spec-new.test.ts -t "scaffold is a draft" — verified: exit 0 at da9fa95 |
+
+### Verification performed
+
+An author asking for a node gets a file already carrying its minted id, its declared form, and a section for every heading and a field for every edge the form requires.: run: npx vitest run tests/integration/spec-new.test.ts -t "minted id, its form, and the shape|form the project registered itself"
+An unknown or absent form is refused by naming every form the registry registers, and nothing is written.: run: npx vitest run tests/integration/spec-new.test.ts -t "unregistered form is refused"
+The scaffold is a draft, not an agreement: nothing is committed, and the result says that validation now asks the form's own registered question for each part still unanswered.: run: npx vitest run tests/integration/spec-new.test.ts -t "scaffold is a draft"
+
+### Deviations
+
+Two beyond the stated Scope, both because the promise would otherwise stay unkept where it is actually kept. (1) The operation registry admits no third state: an operation declares an MCP tool or a reasoned absence, and there is no honest reason for the calling chat — where the workshops run and where an author asks for a node — not to have this one, so spec_create exists beside the CLI command. (2) The eight workshop skills each told an agent to write the node and mint its id by hand; they now ask Kotta for it. Those are the texts an executing agent reads, and leaving them would have left 141 hand-typed ids joined by more.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
