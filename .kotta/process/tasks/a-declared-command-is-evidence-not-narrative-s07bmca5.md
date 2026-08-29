@@ -1,7 +1,7 @@
 ---
 id: T-01m14khqarazb07kcss07bmca5
 title: 'A declared command is evidence, not narrative'
-status: review
+status: done
 origin: human
 types:
   - bug
@@ -17,7 +17,7 @@ spec:
 branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-28'
-updated_at: '2026-08-28'
+updated_at: '2026-08-29'
 coverage:
   'A declared command is not scanned as narrative: an evidence line whose run: command names a test file or filter about deviations does not make the task confess to one.':
     - BR-01m0m33yxt2vqxb3jvqc186ssy
@@ -32,6 +32,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 68b4badabd2d550156d0fe7abc323d60755cf326
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-29T01:20:54.709Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 # T-01m14khqarazb07kcss07bmca5 — A declared command is evidence, not narrative
 
