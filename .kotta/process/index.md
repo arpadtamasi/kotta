@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- the-board-shows-the-agreement-not-only-its-execution-ykprv97p
+None.
 
 ## Active tasks
 
-None.
+- the-board-shows-the-agreement-not-only-its-execution-ykprv97p
 
 ## Review
 

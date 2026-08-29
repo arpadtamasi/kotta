@@ -1,7 +1,7 @@
 ---
 id: T-01m165x8k9vwg5160eykprv97p
 title: 'The board shows the agreement, not only its execution'
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -14,7 +14,7 @@ blocks: []
 spec:
   - IF-01m0f0wn898ggsdxa0kh6t6tnw
   - BR-01m0f0wn89c50fe1mz5yn1nw85
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-29'
 updated_at: '2026-08-29'
@@ -28,6 +28,12 @@ coverage:
     - BR-01m0f0wn89c50fe1mz5yn1nw85
   'An opened node shows what it promises and what leans on it: its form, its file, its admission as written, its sections, and the tasks that execute it.':
     - IF-01m0f0wn898ggsdxa0kh6t6tnw
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 2c99b0fb90a420ca0e1b9823c417e31cec6f0ddb
 ---
 ## Outcome
 
