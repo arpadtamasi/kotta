@@ -12,7 +12,7 @@ None.
 
 ## Defined tasks
 
-None.
+- an-author-asking-for-a-spec-node-gets-one-minted-and-shaped-26tb72fv
 
 ## Active tasks
 
