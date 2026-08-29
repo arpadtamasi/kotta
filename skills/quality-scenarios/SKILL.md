@@ -29,7 +29,7 @@ Ask which decision the number supports, what baseline exists, how representative
 and what happens when the measure is missed. Draft a complete provisional scenario first and mark
 unsupported values as assumptions. Never hand the user six empty quality-attribute fields.
 
-Write the node under `.kotta/spec/quality-attributes/` with the registered identity and filename. Supply
+Ask Kotta for the node — `kotta spec new quality-attribute --title "…"`, or `spec_create` from the chat — and fill in the sections it lays out; identifiers and filenames are minted, never typed. Supply
 verification through an example whose `subjects` contains the quality-attribute id. Keep tooling and
 dashboard details in the example or prose; the canonical claim is the measured response.
 

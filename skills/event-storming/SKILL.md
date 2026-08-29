@@ -32,8 +32,7 @@ rejects a transition, and whether repeated commands are safe. Draft the discover
 conversation, label uncertain policies, and ask targeted follow-ups. Never begin with empty entity
 or state tables.
 
-Write nodes under `.kotta/spec/entities/` and `.kotta/spec/state-machines/` with their registered identity and
-filename conventions. Keep attributes semantic; defer storage types and indexes unless they are
+Ask Kotta for each node — `kotta spec new entity --title "…"` and `kotta spec new state-machine --title "…"`, or `spec_create` from the chat — and fill in the sections it lays out; identifiers and filenames are minted, never typed. Keep attributes semantic; defer storage types and indexes unless they are
 domain constraints.
 
 ## When not to use

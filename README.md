@@ -334,6 +334,25 @@ A form's `directory` is relative to `spec/`: `directory: goals` means
 `.kotta/spec/goals/`. Projects may add forms and edit specification nodes without changing
 TypeScript. Lifecycle mutations under `process/` still go through the CLI or MCP services.
 
+Identifiers are minted by Kotta here too — a specification id is never typed by hand:
+
+```bash
+kotta spec new use-case --title "Export a report"
+```
+
+It reads the form from the registry and writes the node under that form's directory, in the
+filename shape the form declares, carrying its minted id, its declared form, a section for every
+required heading and a field for every outgoing edge — each with the edge's own registered
+question beside it, saying which this node answers itself and which another node answers by
+pointing at it. A form the project registered itself is served the same way, with nothing about
+it compiled in; an unregistered name is refused by listing the forms there are. The calling chat
+reaches the same operation as `spec_create`.
+
+What it writes is a draft, and nothing is committed: a shaped node becomes the agreement when it
+lands on the base branch on a human yes. Until it is filled in, `kotta validate` names each
+unanswered section and edge with the form's own question — the scaffold and the validator are the
+two halves of one authoring loop.
+
 One entity is one stable file. Lifecycle state lives in the frontmatter `status` field alone, so
 a transition is a one-line edit in place — a file never moves between directories, and two
 branches that transition the same entity meet as an ordinary merge conflict on the status line,

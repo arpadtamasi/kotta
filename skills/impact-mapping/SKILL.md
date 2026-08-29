@@ -39,9 +39,9 @@ actor, settle the role boundary, goals, responsibilities, and at least one story
 references its id. Keep a human name out of the title unless the individual, rather than the role,
 is truly the actor.
 
-Write each node beneath its registered directory. Mint a coordination-free id in the registered
-prefix and ULID shape. Name the file `<slug>-<last 8 id characters>.md`; keep the full id in
-frontmatter.
+Ask Kotta for each node — `kotta spec new <form> --title "…"`, or `spec_create` from the chat — and
+fill in the sections it lays out. The id, the directory and the filename come from the form's own
+registry entry; none of them is typed by hand.
 
 ## When not to use
 

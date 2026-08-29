@@ -29,7 +29,7 @@ Ask for real values, boundary values, observable outcomes, and the business cons
 violation. Draft a plausible case from stated facts first, then ask narrow questions about remaining
 ambiguity. Never ask the user to fill a blank Given/When/Then card.
 
-Write nodes under `.kotta/spec/business-rules/` and `.kotta/spec/examples/`. Let the example's `subjects`
+Ask Kotta for each node — `kotta spec new business-rule --title "…"` and `kotta spec new example --title "…"`, or `spec_create` from the chat — and fill in the sections it lays out; identifiers and filenames are minted, never typed. Let the example's `subjects`
 edge be canonical; do not mirror it onto the proved nodes. Keep setup facts in Given, the single
 event under When, and externally observable results under Then.
 

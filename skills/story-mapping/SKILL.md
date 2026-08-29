@@ -33,8 +33,7 @@ Draft from the conversation immediately. Record assumptions under Notes and foll
 questions. Never ask the user to complete a blank story-card template. Use an existing actor id;
 create an actor node only when the role itself needs definition.
 
-Write the node under `.kotta/spec/user-stories/` using the registered ULID and slug-plus-short-id
-filename. Supply `actor` directly. Supply evidence with an `example` node whose `subjects` contains
+Ask Kotta for the node — `kotta spec new user-story --title "…"`, or `spec_create` from the chat — and fill in the sections it lays out; identifiers and filenames are minted, never typed. Supply `actor` directly. Supply evidence with an `example` node whose `subjects` contains
 the story id; do not add a second reciprocal edge.
 
 ## When not to use

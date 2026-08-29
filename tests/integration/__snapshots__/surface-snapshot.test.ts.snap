@@ -30,6 +30,8 @@ Commands:
   observation                 Capture and disposition observations
   decision                    Record durable human decisions
   batch                       Validate and execute coordinated batches
+  spec                        Draft specification nodes from the registered
+                              forms
   claim                       Inspect and recover execution claims
   integrate [options] <host>  Connect Kotta to a calling agent host
   mcp [options]               Serve Kotta tools to the calling chat over stdio
@@ -530,6 +532,32 @@ Options:
   --json
   -h, --help  display help for command
 
+### kotta spec
+Usage: kotta spec [options] [command]
+
+Draft specification nodes from the registered forms
+
+Options:
+  -h, --help            display help for command
+
+Commands:
+  new [options] <form>  Mint and scaffold a specification node from its
+                        registered form
+  help [command]        display help for command
+
+### kotta spec new
+Usage: kotta spec new [options] <form>
+
+Mint and scaffold a specification node from its registered form
+
+Arguments:
+  form             A form id the workspace registry declares
+
+Options:
+  --title <title>  What the node is called wherever a human reads it
+  --json
+  -h, --help       display help for command
+
 ### kotta claim
 Usage: kotta claim [options] [command]
 
@@ -860,6 +888,33 @@ exports[`the surfaces Kotta exposes > the MCP tool surface, read from a live ser
     },
     "name": "observation_show",
     "title": "Show one Kotta observation",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "form": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "title": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "form",
+        "title",
+      ],
+      "type": "object",
+    },
+    "name": "spec_create",
+    "title": "Draft a Kotta specification node",
   },
   {
     "annotations": {
