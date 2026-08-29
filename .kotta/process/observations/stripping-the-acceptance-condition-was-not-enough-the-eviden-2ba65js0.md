@@ -3,13 +3,19 @@ id: F-01m14khpxg95vz68nc2ba65js0
 title: >-
   Stripping the acceptance condition was not enough: the evidence command names
   the word too
-status: new
+status: resolved
 origin: agent
 observation_type: defect
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-28'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-29T11:05:16.190Z'
+approved_by: cli
+approved_at: '2026-08-29T11:05:16.190Z'
+approval_basis: 'CLI --approve: observation.resolve'
+task: T-01m14khqarazb07kcss07bmca5
 ---
 # F-01m14khpxg95vz68nc2ba65js0 — Stripping the acceptance condition was not enough: the evidence command names the word too
 

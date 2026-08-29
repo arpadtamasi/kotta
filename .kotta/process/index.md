@@ -31,7 +31,6 @@ None.
 - a-command-summarised-as-validation-promotes-a-batch-and-comm-qtt5twrk
 - a-deviation-that-left-nothing-behind-has-no-way-to-say-so-so-55bjebmy
 - a-specification-id-cited-in-prose-is-unchecked-so-a-broken-r-xpn7wxwy
-- stripping-the-acceptance-condition-was-not-enough-the-eviden-2ba65js0
 - the-board-bundle-is-a-committed-build-artifact-and-nothing-c-36zyrkp9
 - the-board-shows-no-specification-at-all-so-the-agreement-tas-5zpq8ft7
 - the-task-an-observation-was-discovered-during-can-only-be-re-fbqdj4t7
