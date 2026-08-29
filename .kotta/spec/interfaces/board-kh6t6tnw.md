@@ -9,7 +9,7 @@ accepted:
 
 ## Purpose
 
-A local web projection of canonical state and history - tasks, observations, batches, runs, and per-task timelines - for the human's eyes.
+A local web projection of canonical state and history - the specification, tasks, observations, batches, runs, and per-task timelines - for the human's eyes. The specification belongs in that list because it is what the rest of it is for: a task executes an accepted agreement, and a board that shows the execution and not the agreement shows the half that cannot be judged on its own.
 
 ## Preconditions
 
@@ -17,7 +17,7 @@ An initialized workspace with its state committed to the configured base ref; a 
 
 ## Postconditions
 
-GET serves state and the event timeline; the selected URL is printed and opened. Restarting reconstructs the same timeline from the stored events. A task that ended at done is shown with the resolution that ended it, so retired work does not read as delivered work.
+GET serves state and the event timeline; the selected URL is printed and opened. A task names the accepted nodes it executes and the map from each acceptance condition to the nodes that carry it, so the gate that let it become defined is legible where the task is read. Every specification reference a surface shows is named by its title and leads to the node itself, the way every other entity is named (BR-01m0f0wn89jwyd6yq5yn1nw85); a bare id standing alone is the reader being handed the key instead of the door. Restarting reconstructs the same timeline from the stored events. A task that ended at done is shown with the resolution that ended it, so retired work does not read as delivered work.
 
 ## Invariants
 
