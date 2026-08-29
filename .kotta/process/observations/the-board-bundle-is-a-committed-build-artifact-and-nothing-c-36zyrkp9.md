@@ -3,13 +3,20 @@ id: F-01m1615epghxzw5g1p36zyrkp9
 title: >-
   The board bundle is a committed build artifact, and nothing checks that it
   matches its source
-status: new
+status: resolved
 origin: agent
 observation_type: inconsistency
 confidence: high
 severity: medium
 discovered_during: T-01m160z5twbnc4vr09dzyt7gn2
 created_at: '2026-08-29'
+disposition: amend-spec
+resolved_at: '2026-08-29T13:33:09.284Z'
+approved_by: cli
+approved_at: '2026-08-29T13:33:09.284Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - IF-01m0f0wn898ggsdxa0kh6t6tnw
 ---
 # F-01m1615epghxzw5g1p36zyrkp9 — The board bundle is a committed build artifact, and nothing checks that it matches its source
 
