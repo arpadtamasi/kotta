@@ -1,7 +1,7 @@
 ---
 id: T-01m160z5twbnc4vr09dzyt7gn2
 title: 'The board''s commands come from the declaration, like every other surface''s'
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -13,7 +13,7 @@ depends_on: []
 blocks: []
 spec:
   - BR-01m0nsyasfnjc9s4073r8zb33j
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-29'
 updated_at: '2026-08-29'
@@ -22,6 +22,12 @@ coverage:
     - BR-01m0nsyasfnjc9s4073r8zb33j
   'A command the board prints that no declaration carries fails the suite, naming the command and where it is printed — so the next rename cannot pass the board by.':
     - BR-01m0nsyasfnjc9s4073r8zb33j
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 34cfd13620aec61906488b042abbc8cccbe22404
 ---
 ## Outcome
 

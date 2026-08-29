@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- the-board-s-commands-come-from-the-declaration-like-every-ot-dzyt7gn2
+None.
 
 ## Active tasks
 
-None.
+- the-board-s-commands-come-from-the-declaration-like-every-ot-dzyt7gn2
 
 ## Review
 
