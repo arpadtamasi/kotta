@@ -3,7 +3,7 @@ id: T-01m16k535zbdxa0y6940rvas76
 title: >-
   A resolution names the work it made, or the work it joined — never the wrong
   one
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -16,7 +16,7 @@ blocks: []
 spec:
   - BR-01m0pw5bc7b1rkg5dct5qgdkmb
   - BR-01m0f0wn898xd4tr7j7t9bsjy7
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-29'
 updated_at: '2026-08-29'
@@ -26,6 +26,12 @@ coverage:
   'A capture reports the name the created task actually carries, whether the disposition supplied it or it fell back to the observation''s.':
     - BR-01m0pw5bc7b1rkg5dct5qgdkmb
     - BR-01m0f0wn898xd4tr7j7t9bsjy7
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: e45f5211c2fc58840e498823d8182e67d9ba5722
 ---
 ## Outcome
 

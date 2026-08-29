@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- a-resolution-names-the-work-it-made-or-the-work-it-joined-ne-40rvas76
+None.
 
 ## Active tasks
 
-None.
+- a-resolution-names-the-work-it-made-or-the-work-it-joined-ne-40rvas76
 
 ## Review
 
