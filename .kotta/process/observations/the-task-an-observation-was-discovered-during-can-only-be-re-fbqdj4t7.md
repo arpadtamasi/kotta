@@ -3,13 +3,19 @@ id: F-01m14h1kd901k9mq2kfbqdj4t7
 title: >-
   The task an observation was discovered during can only be recorded when it is
   created
-status: new
+status: resolved
 origin: agent
 observation_type: defect
 confidence: high
 severity: medium
 discovered_during: T-01m14enxw9tbbgv2kbbsxmnmpc
 created_at: '2026-08-28'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-29T11:05:17.676Z'
+approved_by: cli
+approved_at: '2026-08-29T11:05:17.676Z'
+approval_basis: 'CLI --approve: observation.resolve'
+task: T-01m14h2mkjtrb8bkxsavpbw5g7
 ---
 # F-01m14h1kd901k9mq2kfbqdj4t7 — The task an observation was discovered during can only be recorded when it is created
 
