@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-08-29
+
 ### Fixed
 
 - **A resolution names the work it made, or the work it joined — never the wrong one.** Resolving an
