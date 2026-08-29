@@ -12,7 +12,7 @@ None.
 
 ## Defined tasks
 
-None.
+- the-board-s-commands-come-from-the-declaration-like-every-ot-dzyt7gn2
 
 ## Active tasks
 
