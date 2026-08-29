@@ -3,13 +3,19 @@ id: F-01m165gwkr13ve210p5zpq8ft7
 title: >-
   The board shows no specification at all, so the agreement tasks execute is the
   one thing a reader cannot see
-status: new
+status: resolved
 origin: human
 observation_type: gap
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-29'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-29T13:33:13.920Z'
+approved_by: cli
+approved_at: '2026-08-29T13:33:13.920Z'
+approval_basis: 'CLI --approve: observation.resolve'
+task: T-01m165x8k9vwg5160eykprv97p
 ---
 # F-01m165gwkr13ve210p5zpq8ft7 — The board shows no specification at all, so the agreement tasks execute is the one thing a reader cannot see
 
