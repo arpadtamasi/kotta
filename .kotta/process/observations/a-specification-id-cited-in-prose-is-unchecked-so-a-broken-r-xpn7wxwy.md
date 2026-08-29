@@ -3,13 +3,20 @@ id: F-01m1661vt9r2cghptxxpn7wxwy
 title: >-
   A specification id cited in prose is unchecked, so a broken reference lands
   green
-status: new
+status: resolved
 origin: agent
 observation_type: inconsistency
 confidence: high
 severity: medium
 discovered_during: T-01m165x8k9vwg5160eykprv97p
 created_at: '2026-08-29'
+disposition: amend-spec
+resolved_at: '2026-08-29T13:33:11.076Z'
+approved_by: cli
+approved_at: '2026-08-29T13:33:11.076Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - UC-01m0f0wn89ny7vx515ke3ksnra
 ---
 # F-01m1661vt9r2cghptxxpn7wxwy — A specification id cited in prose is unchecked, so a broken reference lands green
 

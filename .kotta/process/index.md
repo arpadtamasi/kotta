@@ -28,6 +28,5 @@ None.
 
 ## New observations
 
-- a-specification-id-cited-in-prose-is-unchecked-so-a-broken-r-xpn7wxwy
 - the-board-shows-no-specification-at-all-so-the-agreement-tas-5zpq8ft7
 - work-continued-past-a-submitted-task-instead-of-stopping-at--k1vz7ytk
