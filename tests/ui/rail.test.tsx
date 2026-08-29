@@ -41,7 +41,10 @@ describe("Rail", () => {
   it("draws the derivation chain with its numbers and subtitles", () => {
     renderRail();
     expect(screen.getByText("derivation chain")).toBeDefined();
-    for (const [step, label, sub] of [["01", "Observations", "new information"], ["02", "Tasks", "agreements"], ["03", "Batches", "sequencing"]]) {
+    // The chain the product runs: amend-spec is the primary constructive disposition and coverage
+    // against an accepted node is what makes a task defined, so the specification stands between
+    // what was noticed and what is executed. This list pinned it without its middle term.
+    for (const [step, label, sub] of [["01", "Observations", "new information"], ["02", "Specification", "the agreement"], ["03", "Tasks", "execution"], ["04", "Batches", "sequencing"]]) {
       const entry = screen.getByRole("button", { name: new RegExp(`${step}.*${label}.*${sub}`) });
       expect(entry).toBeDefined();
     }
