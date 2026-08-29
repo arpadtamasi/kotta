@@ -1,7 +1,7 @@
 ---
 id: T-01m160z5twbnc4vr09dzyt7gn2
 title: 'The board''s commands come from the declaration, like every other surface''s'
-status: review
+status: done
 origin: human
 types:
   - bug
@@ -28,6 +28,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 34cfd13620aec61906488b042abbc8cccbe22404
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-29T11:04:49.367Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 

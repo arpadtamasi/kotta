@@ -20,7 +20,6 @@ None.
 
 ## Review
 
-- the-board-s-commands-come-from-the-declaration-like-every-ot-dzyt7gn2
 - the-board-shows-the-agreement-not-only-its-execution-ykprv97p
 - the-specification-has-a-view-of-its-own-and-the-derivation-c-fvj6e0xc
 
