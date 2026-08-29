@@ -1,7 +1,7 @@
 ---
 id: T-01m14xe49h3afs5zpg32md14wp
 title: 'A capture born from an observation is named for the work, not the symptom'
-status: review
+status: done
 origin: human
 types:
   - bug
@@ -17,7 +17,7 @@ spec:
 branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-28'
-updated_at: '2026-08-28'
+updated_at: '2026-08-29'
 coverage:
   'A create-task disposition can name the work: the title it carries is the created capture''s title, and the observation keeps its own.':
     - BR-01m0f0wn898xd4tr7j7t9bsjy7
@@ -32,6 +32,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 7ba74cc9d282da609bb42bd41a9a6c5d756a922f
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-29T01:21:06.040Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
