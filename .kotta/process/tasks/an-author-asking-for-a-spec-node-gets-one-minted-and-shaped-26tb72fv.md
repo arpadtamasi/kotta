@@ -1,7 +1,7 @@
 ---
 id: T-01m0jkmvpprxkh1x0526tb72fv
 title: 'An author asking for a spec node gets one, minted and shaped'
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -30,6 +30,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: c32895b13b99bde075687c1c307c0ed55532fb92
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-29T11:04:47.506Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
