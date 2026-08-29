@@ -20,7 +20,6 @@ None.
 
 ## Review
 
-- a-batch-start-report-drops-the-outcome-it-can-never-observe-dz0jhh5j
 - a-capture-born-from-an-observation-is-named-for-the-work-not-32md14wp
 - a-landing-that-only-re-kinds-admissions-is-not-a-delta-5can43ed
 

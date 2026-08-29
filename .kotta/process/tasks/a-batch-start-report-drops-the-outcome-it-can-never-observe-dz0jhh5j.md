@@ -1,7 +1,7 @@
 ---
 id: T-01m120jsvqwswpkdvhdz0jhh5j
 title: A batch start report drops the outcome it can never observe
-status: review
+status: done
 origin: observation
 types:
   - bug
@@ -17,7 +17,7 @@ spec:
 branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-27'
-updated_at: '2026-08-28'
+updated_at: '2026-08-29'
 source_observation: F-01m0zpg89ydwy8q0ygtg485bq5
 coverage:
   'The batch start rendering no longer asserts that every member is done, because no result it can receive says that.':
@@ -30,6 +30,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 67ca11106988e3b5cfb0dae37c654f042df166f3
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-29T01:21:04.421Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
