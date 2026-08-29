@@ -1,7 +1,7 @@
 ---
 id: T-01m14mgyrv00b7ye5r3pvh2bdf
 title: 'A migration hands over a whole workspace, and says whether it holds'
-status: review
+status: done
 origin: human
 types:
   - bug
@@ -17,7 +17,7 @@ spec:
 branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-28'
-updated_at: '2026-08-28'
+updated_at: '2026-08-29'
 coverage:
   'A migration that writes brings the rules file to what this Kotta would write, so the migrated workspace instructs agents from the running package and not from the shape it left.':
     - UC-01m0f0wn89x00jkpqpqc2esx9h
@@ -34,6 +34,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: d2720f6e3b2d7008202e31f078d7b487665fc57a
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-29T01:21:02.648Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
