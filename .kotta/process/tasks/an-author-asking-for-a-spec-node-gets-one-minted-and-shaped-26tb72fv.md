@@ -1,7 +1,7 @@
 ---
 id: T-01m0jkmvpprxkh1x0526tb72fv
 title: 'An author asking for a spec node gets one, minted and shaped'
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -13,7 +13,7 @@ depends_on: []
 blocks: []
 spec:
   - UC-01m0f0wn89ny7vx515ke3ksnra
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-21'
 updated_at: '2026-08-29'
@@ -24,6 +24,12 @@ coverage:
     - UC-01m0f0wn89ny7vx515ke3ksnra
   'The scaffold is a draft, not an agreement: nothing is committed, and the result says that validation now asks the form''s own registered question for each part still unanswered.':
     - UC-01m0f0wn89ny7vx515ke3ksnra
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: c32895b13b99bde075687c1c307c0ed55532fb92
 ---
 ## Outcome
 

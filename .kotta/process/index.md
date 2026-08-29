@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- an-author-asking-for-a-spec-node-gets-one-minted-and-shaped-26tb72fv
+None.
 
 ## Active tasks
 
-None.
+- an-author-asking-for-a-spec-node-gets-one-minted-and-shaped-26tb72fv
 
 ## Review
 
