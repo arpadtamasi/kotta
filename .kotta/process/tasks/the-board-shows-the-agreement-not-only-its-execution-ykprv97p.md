@@ -1,7 +1,7 @@
 ---
 id: T-01m165x8k9vwg5160eykprv97p
 title: 'The board shows the agreement, not only its execution'
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -34,6 +34,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 2c99b0fb90a420ca0e1b9823c417e31cec6f0ddb
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-29T11:04:51.065Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 

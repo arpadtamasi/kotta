@@ -20,7 +20,6 @@ None.
 
 ## Review
 
-- the-board-shows-the-agreement-not-only-its-execution-ykprv97p
 - the-specification-has-a-view-of-its-own-and-the-derivation-c-fvj6e0xc
 
 ## Blocked
