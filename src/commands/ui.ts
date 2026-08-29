@@ -9,7 +9,7 @@ import { sections } from "../core/markdown.js";
 import { parseOpenQuestions } from "../core/questions.js";
 import { findTask, idFromFilename } from "../filesystem/entities.js";
 import { ENV_PREFIX, readEnv } from "../core/env.js";
-import { PROCESS_DIRECTORY, WORKSPACE_DIRECTORIES, WORKSPACE_SCHEMA_VERSION, flatWorkspaceEntries, hasWorkspace, legacyStateDirectories, v4StateDirectories, workspaceDirectoryName, workspaceSchemaVersion, workspaceShapeStanding } from "../filesystem/workspace.js";
+import { PROCESS_DIRECTORY, SPEC_DIRECTORY, WORKSPACE_DIRECTORIES, WORKSPACE_SCHEMA_VERSION, flatWorkspaceEntries, hasWorkspace, legacyStateDirectories, v4StateDirectories, workspaceDirectoryName, workspaceSchemaVersion, workspaceShapeStanding } from "../filesystem/workspace.js";
 import type { KottaEvent } from "../core/events.js";
 
 function git(root: string, args: string[]): { ok: boolean; out: string } {
@@ -246,8 +246,41 @@ export function readWorkspace(workspaceOption: string) {
   const claims = claimPaths.map((path) => parse((useBase ? (refFiles?.get(path) ?? readFileFromRef(projectRoot, base, path)) : readFileSync(join(projectRoot, path), "utf8")) ?? "{}") as Record<string, unknown>);
   const claimByTask = new Map(claims.map((claim) => [String(claim.task ?? ""), claim]));
   const tasksWithClaims = tasks.map((task) => ({ ...task, claim: claimByTask.get(String((task as Record<string, unknown>).id ?? "")) ?? null }));
+  // The specification is what the rest of this is for (IF-01m0f0wn898ggsdxa0kh6t6tnw): a task
+  // executes an accepted agreement, and a board that shows only the execution shows the half that
+  // cannot be judged on its own. The form registry decides which directories hold nodes, exactly as
+  // it does for the CLI — no form name is compiled here.
+  const specForms = (useBase
+    ? (refFiles ? [...refFiles.keys()].filter((path) => path.startsWith(`${workspaceDirectory}/${SPEC_DIRECTORY}/forms/`) && path.endsWith(".yaml"))
+      : listFilesFromRef(projectRoot, base, workspaceDirectory, `${SPEC_DIRECTORY}/forms`, ".yaml"))
+    : (() => {
+        const directory = join(workspace, SPEC_DIRECTORY, "forms");
+        return existsSync(directory) ? readdirSync(directory).filter((name) => name.endsWith(".yaml")).map((name) => `${workspaceDirectory}/${SPEC_DIRECTORY}/forms/${name}`) : [];
+      })())
+    .map((path) => parse((useBase ? (refFiles?.get(path) ?? readFileFromRef(projectRoot, base, path)) : readFileSync(join(projectRoot, path), "utf8")) ?? "{}") as Record<string, unknown>)
+    .flatMap((form) => {
+      const id = String(form.id ?? "").trim();
+      const directory = String((form.directory ?? "") as string).trim();
+      return id && directory ? [{ id, directory, title: String(form.description ?? id).trim() }] : [];
+    })
+    .sort((left, right) => left.id.localeCompare(right.id));
+
+  const spec = specForms.flatMap((form) => gather(`${SPEC_DIRECTORY}/${form.directory}`).map((entry) => {
+    const parsed = matter(readMd(entry.repoPath, entry.fromRef));
+    const id = String(parsed.data.id ?? "").trim();
+    return {
+      id,
+      form: String(parsed.data.form ?? form.id).trim(),
+      title: String(parsed.data.title ?? id).trim(),
+      path: entry.repoPath,
+      // The admission, kept as written: which kind of gap it records and why, or nothing at all.
+      accepted: Array.isArray(parsed.data.accepted) ? parsed.data.accepted.map(String) : [],
+      sections: sectionObject(parsed.content),
+    };
+  })).filter((node) => node.id).sort((left, right) => left.title.localeCompare(right.title) || left.id.localeCompare(right.id));
+
   const notices = readNotices(projectRoot, workspace, useBase, base, tasks.length + batches.length + observations.length);
-  return { workspace, project: migration?.project ?? config.project?.name ?? "Kotta workspace", migration, tasks: tasksWithClaims, batches, observations, decisions, events, claims, diagnostics, notices, generatedAt: new Date().toISOString() };
+  return { workspace, project: migration?.project ?? config.project?.name ?? "Kotta workspace", migration, tasks: tasksWithClaims, batches, observations, decisions, events, claims, spec, specForms, diagnostics, notices, generatedAt: new Date().toISOString() };
 }
 
 /** Entity files sitting in the working tree, under any historical shape — the counterweight to the ref read. */

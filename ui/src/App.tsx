@@ -26,6 +26,10 @@ type Task = {
   source_observation?: string | null; assigned_agent?: string | null; worktree?: string | null;
   execution_mode?: "fresh" | "inherited"; branch?: string | null; pull_request?: string | null; created_at?: string | null; updated_at?: string | null; sections: Record<string, string>;
   questions?: OpenQuestion[];
+  /* The agreement this task executes, and the map from each acceptance condition to the nodes that
+     carry it. Both were already in the payload and nothing read them. */
+  spec?: string[];
+  coverage?: Record<string, string[]>;
   claim?: Claim | null;
   migration?: { legacy_id: string; legacy_title: string; lane: string; legacy_status: string; backlog_section: string; story_points: number | null; ready_candidate: boolean; split: boolean; status_correction?: string | null; source_file: string } | null;
 };
@@ -42,6 +46,9 @@ type Observation = {
   disposition?: string; spec?: string[]; sections: Record<string, string>; questions?: OpenQuestion[];
 };
 type Decision = { id: string; title: string; date: string | null; sections: Record<string, string> };
+/** One accepted specification node, as its form declares it. */
+type SpecNode = { id: string; form: string; title: string; path: string; accepted: string[]; sections: Record<string, string> };
+type SpecForm = { id: string; directory: string; title: string };
 type Diagnostic = { entity: string; id: string; worktree: string; message: string };
 type KottaEvent = {
   id: string; entity: string; task: string | null; kind: "message" | "turn-failed" | "lifecycle" | "approval"; created_at: string;
@@ -54,6 +61,8 @@ export type Workspace = {
   tasks: Task[]; batches: Batch[]; observations: Observation[]; decisions?: Decision[]; diagnostics?: Diagnostic[];
   events?: KottaEvent[];
   claims?: Claim[];
+  spec?: SpecNode[];
+  specForms?: SpecForm[];
   /* What the reader has to say about itself before the page is believed — see WorkspaceNotices. */
   notices?: string[];
 };
@@ -76,9 +85,12 @@ type ObservationSort = CreatedSort | "severity-desc" | "severity-asc";
 
 /* Identity is mixed for good (D-010): sequential ids stay, minted ones are `<type>-<26 char ULID>`. */
 const MINTED_BODY = "[0-9a-hjkmnp-tv-z]{26}";
-const ENTITY_SOURCE = `(?:O-\\d+(?:\\.\\d+)?|[TFPD]-\\d+|[TFPD]-${MINTED_BODY})`;
+/* A specification prefix is declared by its form, which the project owns, so no list of them is
+   written here: any minted id is recognised by shape and resolved by lookup, and one that resolves
+   to nothing renders exactly as it does today (IF-01m0f0wn898ggsdxa0kh6t6tnw). */
+const ENTITY_SOURCE = `(?:O-\\d+(?:\\.\\d+)?|[TFPD]-\\d+|[A-Za-z]{1,4}-${MINTED_BODY})`;
 const ENTITY_PATTERN = new RegExp(`\\b${ENTITY_SOURCE}\\b`, "g");
-const MINTED_ID = new RegExp(`^[TFPD]-${MINTED_BODY}$`);
+const MINTED_ID = new RegExp(`^[A-Za-z]{1,4}-${MINTED_BODY}$`);
 /* Non-global twin of ENTITY_PATTERN: `.test` on a /g regex carries lastIndex between calls. */
 const ID_TEST = new RegExp(`^${ENTITY_SOURCE}$`);
 
@@ -95,7 +107,10 @@ function entityLabel(id: string): string {
 function titleOf(id: string): string | null {
   return entityTitles.get(id) ?? null;
 }
-function stampSuffix(id: string): "t" | "f" | "p" | "d" {
+const specIds = new Set<string>();
+function stampSuffix(id: string): "t" | "f" | "p" | "d" | "s" {
+  // Specification first: its prefixes are the project's to declare, so membership decides, not shape.
+  if (specIds.has(id)) return "s";
   if (/^P-/.test(id)) return "p";
   if (/^F-/.test(id)) return "f";
   if (/^D-/.test(id)) return "d";
@@ -286,7 +301,11 @@ export function readBoard(workspace: Workspace): Board {
   for (const execution of executions) latestExecutionByTask.set(execution.task, execution);
   // Every surface names an entity by its title, so the title index is part of reading the board.
   entityTitles.clear();
-  for (const entity of [...tasks, ...batches, ...observations, ...decisions]) entityTitles.set(entity.id, entity.title);
+  const spec = workspace.spec ?? [];
+  for (const entity of [...tasks, ...batches, ...observations, ...decisions, ...spec]) entityTitles.set(entity.id, entity.title);
+  specIds.clear();
+  for (const node of spec) specIds.add(node.id);
+  const specById = new Map(spec.map((node) => [node.id, node]));
 
   // The three queues are the human decisions surfaced directly in chat.
   const undisposed = observations.filter((f) => f.status === "new");
@@ -373,7 +392,7 @@ export function readBoard(workspace: Workspace): Board {
   });
 
   return {
-    tasks, batches, observations, decisions, taskById, batchById, observationById, subtreeTasks, executions, latestExecutionByTask,
+    tasks, batches, observations, decisions, spec, specById, taskById, batchById, observationById, subtreeTasks, executions, latestExecutionByTask,
     undisposed, inReview, closable, defined, running, activeBatches,
     queues, queueTotal: undisposed.length + inReview.length + closable.length, contradictions, menu,
   };
@@ -930,7 +949,9 @@ export function DerivationPanel({ id, board, onOpen }: { id: string; board: Boar
       ? <div className="deriv__spec">
           <p className="deriv__spec-lead">Amended the specification — the agreement changed here:</p>
           <ul className="deriv__spec-nodes">
-            {amended.map((node) => <li key={node} className="deriv__spec-node"><code>{displayId(node)}</code></li>)}
+            {amended.map((amendedId) => <li key={amendedId} className="deriv__spec-node">
+              <EntityButton id={amendedId} className="spec-ref" onOpen={onOpen}>{titleOf(amendedId) ?? amendedId}<Tail id={amendedId} /></EntityButton>
+            </li>)}
           </ul>
         </div>
       : !became
@@ -1102,6 +1123,39 @@ function TaskSection({ label, value, onOpen, domId }: { label: string; value?: s
   </section>;
 }
 
+/**
+ * What the task executes, and the gate that let it become defined: every acceptance condition maps
+ * to accepted specification nodes, and until now the board showed neither
+ * (IF-01m0f0wn898ggsdxa0kh6t6tnw, F-01m16qq0dngj5qqc0r5zpq8ft7). A reference is named by its title
+ * and opens the node; a bare id standing alone is the reader being handed the key instead of the
+ * door.
+ */
+function SpecPanel({ task, board, onOpen }: { task: Task; board: Board; onOpen: (id: string) => void }) {
+  const referenced = task.spec ?? [];
+  const coverage = Object.entries(task.coverage ?? {});
+  if (!referenced.length && !coverage.length) return null;
+
+  const node = (id: string) => <EntityButton key={id} id={id} className="spec-ref" onOpen={onOpen}>
+    {titleOf(id) ?? id}<Tail id={id} />
+  </EntityButton>;
+
+  return <section className="spec-panel">
+    <div className="drawer__section-head">Specification it executes</div>
+    {referenced.length > 0
+      ? <div className="spec-panel__refs">{referenced.map(node)}</div>
+      : <p className="spec-panel__empty">No accepted node is named. This task predates the coverage gate.</p>}
+    {coverage.length > 0 && <>
+      <div className="spec-panel__kicker">Each condition, and what carries it</div>
+      <ul className="spec-panel__map">
+        {coverage.map(([condition, ids]) => <li key={condition} className="spec-panel__row">
+          <p className="spec-panel__condition">{condition}</p>
+          <div className="spec-panel__carriers">{(ids ?? []).map(node)}</div>
+        </li>)}
+      </ul>
+    </>}
+  </section>;
+}
+
 function TaskTabs({ task, workspace, board, onOpen, jump }: { task: Task; workspace: Workspace; board: Board; onOpen: (id: string) => void; jump?: Jump | null }) {
   const tabs = ["brief", "context", "activity"] as const;
   type Tab = typeof tabs[number];
@@ -1161,6 +1215,7 @@ function TaskTabs({ task, workspace, board, onOpen, jump }: { task: Task; worksp
         <TaskSection label="Goal" value={goal} onOpen={onOpen} />
         <TaskSection label="Expected output" value={outcome} onOpen={onOpen} />
         <TaskSection label="Success conditions" value={section("acceptance")} onOpen={onOpen} />
+        <SpecPanel task={task} board={board} onOpen={onOpen} />
         <TaskSection label="Constraints" value={section("constraints")} onOpen={onOpen} />
         <TaskSection label="Verification" value={section("verification")} onOpen={onOpen} />
       </div>}
@@ -1185,6 +1240,20 @@ function TaskTabs({ task, workspace, board, onOpen, jump }: { task: Task; worksp
   </>;
 }
 
+/** Which tasks lean on this node — the direction the specification itself may never point. */
+function SpecDependants({ id, board, onOpen }: { id: string; board: Board; onOpen: (id: string) => void }) {
+  const leaning = board.tasks.filter((task) => (task.spec ?? []).includes(id));
+  if (!leaning.length) return null;
+  return <section className="drawer__section">
+    <div className="drawer__section-head">Executed by</div>
+    <div className="spec-panel__refs">
+      {leaning.map((task) => <EntityButton key={task.id} id={task.id} className="spec-ref" onOpen={onOpen}>
+        {task.title}<Tail id={task.id} />
+      </EntityButton>)}
+    </div>
+  </section>;
+}
+
 export function EntityDrawer({ id, workspace, board, onClose, onOpen }: {
   id: string; workspace: Workspace; board: Board; onClose: () => void; onOpen: (id: string) => void;
 }) {
@@ -1194,8 +1263,9 @@ export function EntityDrawer({ id, workspace, board, onClose, onOpen }: {
   const batch = board.batchById.get(id);
   const observation = board.observationById.get(id);
   const decision = board.decisions.find((d) => d.id === id);
-  const entity = task ?? batch ?? observation ?? decision;
-  const kind = task ? "task" : batch ? "batch" : observation ? "observation" : decision ? "decision" : "entity";
+  const node = board.specById.get(id);
+  const entity = task ?? batch ?? observation ?? decision ?? node;
+  const kind = task ? "task" : batch ? "batch" : observation ? "observation" : decision ? "decision" : node ? node.form : "entity";
   const drift = (workspace.diagnostics ?? []).filter((d) => d.id === id);
   const questions = (task ?? batch ?? observation)?.questions ?? [];
 
@@ -1217,6 +1287,11 @@ export function EntityDrawer({ id, workspace, board, onClose, onOpen }: {
       ["age", entityAge(batch.created_at, batch.updated_at)]);
   } else if (decision) {
     fields.push(["age", decision.date ? relativeTime(decision.date) : "date unavailable"]);
+  } else if (node) {
+    // An admission is a statement about the evidence, not about the agreement, so it is shown as
+    // what it is: which kind of gap this node records, and why (BR-01m0swjgrreeby1pyfdzf4mf7d).
+    fields.push(["form", node.form], ["file", node.path]);
+    for (const admission of node.accepted) fields.push(["admitted", admission]);
   }
 
   return <div className="scrim" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
@@ -1235,6 +1310,7 @@ export function EntityDrawer({ id, workspace, board, onClose, onOpen }: {
             <div className="dangling__kind">state drift</div>
             {drift.map((d, i) => <div key={i} className="contra__line">{d.message} · {d.worktree}</div>)}
           </div>}
+          {node && <SpecDependants id={node.id} board={board} onOpen={onOpen} />}
           {task ? <TaskTabs key={task.id} task={task} workspace={workspace} board={board} onOpen={onOpen} jump={jump} /> : <>
             <dl className="drawer__fields">
               {fields.map(([key, value]) => <div key={key}>
