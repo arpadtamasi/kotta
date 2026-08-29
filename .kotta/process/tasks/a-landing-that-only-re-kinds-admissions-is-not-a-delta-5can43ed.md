@@ -1,7 +1,7 @@
 ---
 id: T-01m120js1qey632tbv5can43ed
 title: A landing that only re-kinds admissions is not a delta
-status: review
+status: done
 origin: observation
 types:
   - bug
@@ -16,7 +16,7 @@ spec:
 branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-27'
-updated_at: '2026-08-28'
+updated_at: '2026-08-29'
 source_observation: F-01m0t75ff4eg3nm0gtwg7qqm4b
 coverage:
   'A landing that changed only nodes'' admission bookkeeping produces no delta section: nothing moved, so nothing leads the report.':
@@ -31,6 +31,10 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 1efb238a95bd23d8f2516b936d4839568b0307ab
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-29T01:21:07.551Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
