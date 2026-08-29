@@ -3,13 +3,19 @@ id: F-01m14gjxmfp1h1fctz8tn71ete
 title: >-
   A task about deviations cannot pass validation, because the check reads its
   subject as its confession
-status: new
+status: resolved
 origin: agent
 observation_type: defect
 confidence: high
 severity: medium
 discovered_during: T-01m1495aj3zx7yhs04cd55hcbs
 created_at: '2026-08-28'
+disposition: attach-to-existing-task
+resolved_at: '2026-08-29T11:05:14.721Z'
+approved_by: cli
+approved_at: '2026-08-29T11:05:14.721Z'
+approval_basis: 'CLI --approve: observation.resolve'
+task: T-01m14j3afm6f2mqagd11zjbvw2
 ---
 # F-01m14gjxmfp1h1fctz8tn71ete — A task about deviations cannot pass validation, because the check reads its subject as its confession
 
