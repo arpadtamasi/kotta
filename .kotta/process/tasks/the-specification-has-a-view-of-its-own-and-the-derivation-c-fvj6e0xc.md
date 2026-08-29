@@ -1,7 +1,7 @@
 ---
 id: T-01m16e7jx4e1pfj2gefvj6e0xc
 title: 'The specification has a view of its own, and the derivation chain names it'
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -15,7 +15,7 @@ spec:
   - IF-01m0f0wn898ggsdxa0kh6t6tnw
   - BR-01m0pw5bc7b1rkg5dct5qgdkmb
   - BR-01m0swjgrreeby1pyfdzf4mf7d
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-29'
 updated_at: '2026-08-29'
@@ -28,6 +28,12 @@ coverage:
     - BR-01m0swjgrreeby1pyfdzf4mf7d
   'A node shows the edges it answers and the ones that answer it, each named by title and opening the node it names.':
     - IF-01m0f0wn898ggsdxa0kh6t6tnw
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: d83bef5ab3b4806c809238315be645acde59e5a5
 ---
 ## Outcome
 

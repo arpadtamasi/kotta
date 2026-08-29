@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- the-specification-has-a-view-of-its-own-and-the-derivation-c-fvj6e0xc
+None.
 
 ## Active tasks
 
-None.
+- the-specification-has-a-view-of-its-own-and-the-derivation-c-fvj6e0xc
 
 ## Review
 
