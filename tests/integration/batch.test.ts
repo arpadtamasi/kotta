@@ -26,6 +26,11 @@ describe("dependency-aware batch", () => {
   test("creates a backlog batch and keeps task membership in sync", () => {
     const root = mkdtempSync(join(tmpdir(), "kotta-batch-membership-"));
     git(root, "init", "-b", "main");
+    // Kotta commits the canonical state it writes, so a fixture needs an identity to commit with.
+    // Without one this passes on any machine that has a global git identity and fails on a clean
+    // runner — which is where it failed, silently, for a day and a half.
+    git(root, "config", "user.name", "Kotta Test");
+    git(root, "config", "user.email", "test@example.com");
     writeFileSync(join(root, "README.md"), "fixture\n");
     run(root, ["init"]);
     acceptFixtureSpec(root);
