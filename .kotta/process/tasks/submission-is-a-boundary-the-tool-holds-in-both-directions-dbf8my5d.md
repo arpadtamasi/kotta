@@ -1,7 +1,7 @@
 ---
 id: T-01m199skkmpg216qgkdbf8my5d
 title: 'Submission is a boundary the tool holds, in both directions'
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -31,6 +31,10 @@ branch_origin: adopted
 start_ref: HEAD
 start_commit: 72ce691a84189b7e2f5f72edf5323b03a71f750a
 review_commit: 8148786f3acd762d81e43fd423c238996295708d
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-30T16:48:18.551Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
