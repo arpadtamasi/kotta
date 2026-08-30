@@ -3,7 +3,7 @@ id: T-01m1ac3k3h718pjf70tressnp6
 title: >-
   The committed board bundle matches its source, or the suite says which file
   does not
-status: active
+status: review
 origin: human
 types:
   - feature
@@ -33,6 +33,7 @@ execution_mode: inherited
 branch_origin: created
 start_ref: HEAD
 start_commit: e56e81cd9f06266a75d6a7b566b5cb21f582e64e
+review_commit: 1a05b7d545f0a64e335c00435553d42207522b03
 ---
 # T-01m1ac3k3h718pjf70tressnp6 — The committed board bundle matches its source, or the suite says which file does not
 
@@ -97,3 +98,29 @@ None.
 consecutive builds and a `diff -r` against `ui-dist/` are identical, filenames included. The
 comparison belongs in a helper the test can drive against a deliberately mutated copy — otherwise
 the failing case is never exercised and only the passing one is.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A committed bundle that no longer matches a build of its source fails the suite, naming every file that differs, is missing or is extra, and the one command that regenerates it. | run: npx vitest run tests/integration/board-bundle.test.ts -t "reported by name, with the command\|reported as missing\|reported as extra" — verified: exit 0 at 1a05b7d |
+| The check builds the source itself into a scratch directory, so it cannot pass because the suite was run without building first, and it never writes to the committed bundle. | run: npx vitest run tests/integration/board-bundle.test.ts -t "builds the source itself\|runner's environment does not reach" — verified: exit 0 at 1a05b7d |
+| The bundle committed today is proved to match its source, by that same build rather than by assertion. | run: npx vitest run tests/integration/board-bundle.test.ts -t "is what a build of ui/ produces" — verified: exit 0 at 1a05b7d |
+
+### Verification performed
+
+A committed bundle that no longer matches a build of its source fails the suite, naming every file that differs, is missing or is extra, and the one command that regenerates it.: run: npx vitest run tests/integration/board-bundle.test.ts -t "reported by name, with the command|reported as missing|reported as extra"
+The check builds the source itself into a scratch directory, so it cannot pass because the suite was run without building first, and it never writes to the committed bundle.: run: npx vitest run tests/integration/board-bundle.test.ts -t "builds the source itself|runner's environment does not reach"
+The bundle committed today is proved to match its source, by that same build rather than by assertion.: run: npx vitest run tests/integration/board-bundle.test.ts -t "is what a build of ui/ produces"
+
+### Deviations
+
+None.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Dogfooded against the real repository rather than only against fixtures: changing one string in ui/src/App.tsx without rebuilding made the suite fail, naming the new file, the stale one and index.html, with 'npm run build:ui' as the fix; reverted, tree clean. One real staleness fails three checks rather than one — the three that each assert the committed copy matches the built one. That is honest duplication, not noise, and the four simulated-drift cases are independent of it. The bundle's reproducibility is now load-bearing: two builds produce byte-identical, identically named files today, and if that ever stops being true this check is where it surfaces.
