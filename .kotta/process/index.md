@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- a-deviation-that-left-nothing-behind-has-a-way-to-say-so-dvhtr3s5
+None.
 
 ## Active tasks
 
-None.
+- a-deviation-that-left-nothing-behind-has-a-way-to-say-so-dvhtr3s5
 
 ## Review
 

@@ -1,7 +1,7 @@
 ---
 id: T-01m19v5wx9wd9pf77rdvhtr3s5
 title: A deviation that left nothing behind has a way to say so
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -14,7 +14,8 @@ blocks: []
 spec:
   - UC-01m0f0wn89m98wpkqq8e5c9p6p
   - BR-01m0f0wn898xd4tr7j7t9bsjy7
-branch: null
+branch: >-
+  feat/T-01m19v5wx9wd9pf77rdvhtr3s5-a-deviation-that-left-nothing-behind-has-a-way-to-say-so
 pull_request: null
 created_at: '2026-08-30'
 updated_at: '2026-08-30'
@@ -26,6 +27,12 @@ coverage:
   'Settling is refused where it would be a lie: a task that declared no deviation, a task that has not ended, and one already settled.':
     - UC-01m0f0wn89m98wpkqq8e5c9p6p
     - BR-01m0f0wn898xd4tr7j7t9bsjy7
+assigned_agent: claude
+worktree: .worktrees/T-01m19v5wx9wd9pf77rdvhtr3s5
+execution_mode: inherited
+branch_origin: created
+start_ref: HEAD
+start_commit: 5289436c7ad64864c7bca84ec4634dd4c9812c51
 ---
 ## Outcome
 
