@@ -8,6 +8,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **A specification id cited in prose resolves, or the workspace does not validate.** The
+  specification has long said that a citation resolving to nothing is a broken reference wherever it
+  stands; nothing read prose. `validateSpecWorkspace` checked frontmatter edges and stopped there,
+  so a mistyped business-rule id landed inside an accepted sentence on 2026-08-28 and `kotta
+  validate` reported completed — it was found by a person re-reading the sentence. Every
+  specification node's body is now read for ids, and one naming neither a specification node nor a
+  decision record is reported as `SPEC_PROSE_DANGLING_CITATION`, naming the file, the id and the
+  heading it stands under. What counts as a citation comes from the form registry, so a form
+  registered today is read today and no list in the code has to be edited; longer prefixes are
+  tried first, so `EX-` is never misread as `E-`. Decisions resolve in both id forms, which is why
+  the five nodes that cite decision records in prose stay silent. A citation inside a fenced block
+  is still a citation: a fence is a place a reader looks, not a place to hide a broken reference.
+  Nothing is repaired — this reports, and a human corrects.
+
 - **Every sweep item has a way to leave it, including the finding that nothing was left behind.**
   `undeclared-deviation` offered exactly one exit: write an observation. For a deviation that was an
   interpretation argued and accepted at review — a port range explained, a changelog entry — that
