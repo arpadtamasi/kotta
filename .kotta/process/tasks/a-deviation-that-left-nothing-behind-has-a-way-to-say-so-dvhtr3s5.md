@@ -1,7 +1,7 @@
 ---
 id: T-01m19v5wx9wd9pf77rdvhtr3s5
 title: A deviation that left nothing behind has a way to say so
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -34,6 +34,10 @@ branch_origin: created
 start_ref: HEAD
 start_commit: 5289436c7ad64864c7bca84ec4634dd4c9812c51
 review_commit: 6a4b4fc3ad97e4d87542a59a2bb0da4b3f61cc02
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-30T18:47:57.987Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
