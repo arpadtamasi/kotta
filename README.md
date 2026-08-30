@@ -589,6 +589,11 @@ render a real component from `ui/src/` with `@testing-library/react` in `jsdom`,
 what the user sees plus how the surface reacts to a click or an input. No browser is started —
 `site/tests` is the separate Playwright suite, run with `npm run test:site`.
 
+The board's built bundle is tracked in `ui-dist/` so a checkout runs `kotta ui` without a build
+step, and the suite builds `ui/` and compares the result with it — a bundle that no longer matches
+its source fails by name, with `npm run build:ui` as the fix. Regenerate and commit it in the same
+change as any edit under `ui/src/`.
+
 To add a UI test, copy [`tests/ui/done-stage.test.tsx`](tests/ui/done-stage.test.tsx). The
 first line, `// @vitest-environment jsdom`, is what puts that file in a browser-like
 environment; everything without it stays in Node, so a CLI test can never drift into `jsdom`.
