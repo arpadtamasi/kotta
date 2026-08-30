@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- the-committed-board-bundle-matches-its-source-or-the-suite-s-tressnp6
+None.
 
 ## Active tasks
 
-None.
+- the-committed-board-bundle-matches-its-source-or-the-suite-s-tressnp6
 
 ## Review
 

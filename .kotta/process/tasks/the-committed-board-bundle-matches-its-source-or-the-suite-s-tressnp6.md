@@ -3,7 +3,7 @@ id: T-01m1ac3k3h718pjf70tressnp6
 title: >-
   The committed board bundle matches its source, or the suite says which file
   does not
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -15,7 +15,8 @@ depends_on: []
 blocks: []
 spec:
   - IF-01m0f0wn898ggsdxa0kh6t6tnw
-branch: null
+branch: >-
+  feat/T-01m1ac3k3h718pjf70tressnp6-the-committed-board-bundle-matches-its-source-or-the-suite-s
 pull_request: null
 created_at: '2026-08-30'
 updated_at: '2026-08-30'
@@ -26,6 +27,12 @@ coverage:
     - IF-01m0f0wn898ggsdxa0kh6t6tnw
   'The bundle committed today is proved to match its source, by that same build rather than by assertion.':
     - IF-01m0f0wn898ggsdxa0kh6t6tnw
+assigned_agent: claude
+worktree: .worktrees/T-01m1ac3k3h718pjf70tressnp6
+execution_mode: inherited
+branch_origin: created
+start_ref: HEAD
+start_commit: e56e81cd9f06266a75d6a7b566b5cb21f582e64e
 ---
 # T-01m1ac3k3h718pjf70tressnp6 — The committed board bundle matches its source, or the suite says which file does not
 
