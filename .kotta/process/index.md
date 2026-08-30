@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- submission-is-a-boundary-the-tool-holds-in-both-directions-dbf8my5d
+None.
 
 ## Review
 
-None.
+- submission-is-a-boundary-the-tool-holds-in-both-directions-dbf8my5d
 
 ## Blocked
 

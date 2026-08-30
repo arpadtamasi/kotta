@@ -1,7 +1,7 @@
 ---
 id: T-01m199skkmpg216qgkdbf8my5d
 title: 'Submission is a boundary the tool holds, in both directions'
-status: active
+status: review
 origin: human
 types:
   - feature
@@ -30,6 +30,7 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 72ce691a84189b7e2f5f72edf5323b03a71f750a
+review_commit: 8148786f3acd762d81e43fd423c238996295708d
 ---
 ## Outcome
 
@@ -89,3 +90,29 @@ None.
 
 This is the half of yesterday that is still only good intentions: the sentence landed, the tool
 does not hold it. Both instances it would have caught were mine.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A submission records the commit it stands on, always — not only when a declared check happened to run. | run: npx vitest run tests/integration/submission-boundary.test.ts -t "recorded even when no declared check ran" — verified: exit 0 at 8148786 |
+| Work that lands on a task's branch after its submission is reported, named by commit, wherever the human meets that task — the sweep and the close gate. | run: npx vitest run tests/integration/submission-boundary.test.ts -t "named by commit in the sweep\|named at the close gate\|says nothing when nothing landed" — verified: exit 0 at 8148786 |
+| A claim that accounted for nothing is said at submission: when no commit landed between the start and the submission, the record says the work predates the claim. | run: npx vitest run tests/integration/submission-boundary.test.ts -t "a claim that accounted for nothing" — verified: exit 0 at 8148786 |
+
+### Verification performed
+
+A submission records the commit it stands on, always — not only when a declared check happened to run.: run: npx vitest run tests/integration/submission-boundary.test.ts -t "recorded even when no declared check ran"
+Work that lands on a task's branch after its submission is reported, named by commit, wherever the human meets that task — the sweep and the close gate.: run: npx vitest run tests/integration/submission-boundary.test.ts -t "named by commit in the sweep|named at the close gate|says nothing when nothing landed"
+A claim that accounted for nothing is said at submission: when no commit landed between the start and the submission, the record says the work predates the claim.: run: npx vitest run tests/integration/submission-boundary.test.ts -t "a claim that accounted for nothing"
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.
