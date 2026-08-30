@@ -6,7 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-## [0.11.0] - 2026-08-29
+## [0.11.1] - 2026-08-30
+
+0.11.0 was tagged but never reached the registry: its release run failed the test gate on a fixture
+that had never set a git identity, which passed on any machine carrying a global one and failed on a
+clean runner. The same gate had been failing every push for a day and a half without anyone here
+reading a CI result. 0.11.1 carries everything 0.11.0 was meant to, and the fixture fix with it.
+
 
 ### Fixed
 

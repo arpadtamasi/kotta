@@ -121,7 +121,7 @@ installed skills differently.
 Install the public CLI and confirm the exact version:
 
 ```bash
-npm install --global @arpadtamasi/kotta@0.11.0
+npm install --global @arpadtamasi/kotta@0.11.1
 kotta --version
 ```
 
