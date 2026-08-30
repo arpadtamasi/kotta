@@ -1,7 +1,7 @@
 ---
 id: T-01m19v5wx9wd9pf77rdvhtr3s5
 title: A deviation that left nothing behind has a way to say so
-status: active
+status: review
 origin: human
 types:
   - feature
@@ -33,6 +33,7 @@ execution_mode: inherited
 branch_origin: created
 start_ref: HEAD
 start_commit: 5289436c7ad64864c7bca84ec4634dd4c9812c51
+review_commit: 6a4b4fc3ad97e4d87542a59a2bb0da4b3f61cc02
 ---
 ## Outcome
 
@@ -89,3 +90,29 @@ None.
 The disposition that asked for this read all 19 items first. The sentence it landed is the one this
 executes: every item the sweep raises has a way to leave it, including the finding that nothing was
 left behind.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A declared deviation that left nothing behind can be recorded as such, with the reason it left nothing, and the sweep stops raising it. | run: npx vitest run tests/integration/deviation-settled.test.ts -t "takes it out of the sweep" — verified: exit 0 at 6a4b4fc |
+| The record says who settled it and when, and never claims a human approval that was not given. | run: npx vitest run tests/integration/deviation-settled.test.ts -t "claims no approval" — verified: exit 0 at 6a4b4fc |
+| Settling is refused where it would be a lie: a task that declared no deviation, a task that has not ended, and one already settled. | run: npx vitest run tests/integration/deviation-settled.test.ts -t "cannot be settled\|not settled twice\|not a reason" — verified: exit 0 at 6a4b4fc |
+
+### Verification performed
+
+A declared deviation that left nothing behind can be recorded as such, with the reason it left nothing, and the sweep stops raising it.: run: npx vitest run tests/integration/deviation-settled.test.ts -t "takes it out of the sweep"
+The record says who settled it and when, and never claims a human approval that was not given.: run: npx vitest run tests/integration/deviation-settled.test.ts -t "claims no approval"
+Settling is refused where it would be a lie: a task that declared no deviation, a task that has not ended, and one already settled.: run: npx vitest run tests/integration/deviation-settled.test.ts -t "cannot be settled|not settled twice|not a reason"
+
+### Deviations
+
+None.
+
+### Observations created
+
+F-xhd61x8s — the published task schema forbids six fields the tool itself writes. Found while declaring deviation_settled in schemas/task.schema.json; review_commit, branch_origin, start_ref, start_commit, cancellation_reason and superseded_by are all written and none declared, under additionalProperties: false.
+
+### Known concerns
+
+The refusal for a task that has not ended is state !== "done", because done is where every ending lands — completed and retired alike carry it, with the resolution saying which. A cancelled task is therefore not refused by that guard; it is refused by the next one, since it never went through review and declared no deviation. The BR the third condition covers (an observation is not a task) stays unexamined: this enforces one sliver of it — settling cannot stand in for capturing a real finding — not the whole rule.

@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- a-deviation-that-left-nothing-behind-has-a-way-to-say-so-dvhtr3s5
+None.
 
 ## Review
 
-None.
+- a-deviation-that-left-nothing-behind-has-a-way-to-say-so-dvhtr3s5
 
 ## Blocked
 
