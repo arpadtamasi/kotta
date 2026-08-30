@@ -19,7 +19,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   merge and a deliverable that legitimately predates its claim are both honest, and a refusal firing
   on those would cost more than the silence did. A task that recorded no commit reports nothing —
   the 132 tasks closed before this are not retroactively accused. Both failures it would have caught
-  were the agent's own, on 2026-08-29.
+  were the agent's own, on 2026-08-29. A commit whose whole diff is Kotta's own process records is
+  not work past the boundary: where the control plane and the execution branch are one branch — the
+  adopted single checkout every hosted session has — the submission commits itself one commit after
+  the commit it recorded, and without that exclusion the report fired on every task. A commit
+  touching anything else, `spec/` included, is still reported, even when it touches records too.
 
 ## [0.11.1] - 2026-08-30
 

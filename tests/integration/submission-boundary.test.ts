@@ -117,6 +117,42 @@ describe("work that lands after the submission", () => {
   });
 });
 
+describe("Kotta's own records after a submission", () => {
+  test("are not work past the boundary, however many commits they take", () => {
+    const { root, id, worktree, filename } = submitted("bookkeeping");
+    const submittedAt = String(taskData(root, filename).review_commit);
+
+    // Exactly the shape an adopted single checkout produces on every submission: Kotta writes its
+    // own lifecycle records on the same branch, one commit after the one it recorded.
+    const records = join(worktree, ".kotta/process");
+    execFileSync("mkdir", ["-p", records]);
+    writeFileSync(join(records, "note.md"), "bookkeeping\n");
+    git(worktree, "add", ".");
+    git(worktree, "commit", "-m", "chore(kotta): submit for review");
+    expect(git(worktree, "rev-parse", "HEAD").trim()).not.toBe(submittedAt);
+
+    const swept = run(root, ["sweep"]).data as { items: Array<{ id: string; category: string; reason: string }> };
+    const waiting = swept.items.find((item) => item.id === id && item.category === "waiting-on-you")!;
+
+    expect(waiting.reason).toBe("submitted for review; nothing moves until it is accepted or sent back");
+  });
+
+  test("do not hide a commit that touches anything else, even in the same commit", () => {
+    const { root, id, worktree } = submitted("mixed");
+    const records = join(worktree, ".kotta/process");
+    execFileSync("mkdir", ["-p", records]);
+    writeFileSync(join(records, "note.md"), "bookkeeping\n");
+    writeFileSync(join(worktree, "slice.ts"), "export const slice = 'changed';\n");
+    git(worktree, "add", ".");
+    git(worktree, "commit", "-m", "chore(kotta): records and code together");
+
+    const swept = run(root, ["sweep"]).data as { items: Array<{ id: string; category: string; reason: string }> };
+    const waiting = swept.items.find((item) => item.id === id && item.category === "waiting-on-you")!;
+
+    expect(waiting.reason).toContain("1 commit landed");
+  });
+});
+
 describe("a claim that accounted for nothing", () => {
   test("is said at submission, where the record can still be corrected", () => {
     const { reviewed } = submitted("unaccounted", { commitUnderClaim: false });

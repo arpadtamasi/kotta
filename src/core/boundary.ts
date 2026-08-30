@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { git } from "../git/git.js";
-import { processPath } from "../filesystem/workspace.js";
+import { PROCESS_DIRECTORY, processPath, workspaceDirectoryName } from "../filesystem/workspace.js";
 
 /**
  * Submission is a boundary and the tool holds it (SM-01m0f0wn89gjy6dbk1j6fjpv6j).
@@ -44,6 +44,26 @@ function between(root: string, from: string, to: string): string[] {
   }
 }
 
+/**
+ * Kotta writing its own records is not the agent continuing work. Where the control plane and the
+ * execution branch are one branch — the adopted single checkout every hosted session has — the
+ * submission commits itself one commit after the commit it recorded, so without this the boundary
+ * fires on every task and a report that fires on everything is one nobody reads
+ * (BR-01m0pw5bc7b1rkg5dct5qgdkmb).
+ *
+ * The process namespace alone: a commit touching `spec/` changes the agreement and stays reported.
+ */
+function onlyProcessRecords(root: string, commit: string): boolean {
+  const prefix = `${workspaceDirectoryName(root)}/${PROCESS_DIRECTORY}/`;
+  try {
+    const changed = git(root, ["show", "--name-only", "--format=", commit]).split(/\r?\n/).filter(Boolean);
+    return changed.length > 0 && changed.every((path) => path.startsWith(prefix));
+  } catch {
+    // Unreadable is not innocent: a commit that cannot be inspected stays reported.
+    return false;
+  }
+}
+
 function resolvable(root: string, revision: string): boolean {
   try { return Boolean(git(root, ["rev-parse", "--verify", `${revision}^{commit}`])); }
   catch { return false; }
@@ -61,7 +81,7 @@ export function submissionBoundary(root: string, data: Record<string, unknown>):
     reviewCommit,
     startCommit,
     branch,
-    beyond: head ? between(root, reviewCommit, head) : [],
+    beyond: head ? between(root, reviewCommit, head).filter((commit) => !onlyProcessRecords(root, commit)) : [],
     // The claim accounted for something when at least one commit landed inside it.
     accountedFor: startCommit && resolvable(root, startCommit) ? between(root, startCommit, reviewCommit).length > 0 : null,
   };
