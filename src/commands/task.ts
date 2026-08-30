@@ -4,6 +4,7 @@ import { join, resolve } from "node:path";
 import { parse as parseYaml, stringify } from "yaml";
 import { findRepositoryRoot, regenerateIndex, workspaceDirectoryName, processPath } from "../filesystem/workspace.js";
 import { canonicalEntityId, entityTitle, findTask, listEntities } from "../filesystem/entities.js";
+import { beyondSubmissionNote, submissionBoundary, unaccountedClaimNote } from "../core/boundary.js";
 import { batchSubtreeComplete, batchTree, subtreeTasks } from "../filesystem/batches.js";
 import { entityFilename, mintId } from "../core/identity.js";
 import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
@@ -404,7 +405,12 @@ export function reviewTask(id: string, evidence: ReviewEvidenceInput, pullReques
   const runnable = preparedEvidence.entries
     .map((entry) => ({ check: entry.check, command: declaredCommand(entry.evidence) }))
     .filter((entry): entry is { check: string; command: string } => entry.command !== null);
-  const verifiedAt = runnable.length ? git(executionRoot, ["rev-parse", "HEAD"]).slice(0, 7) : null;
+  // The commit this submission stands on, recorded whether or not a declared check happened to run:
+  // without it, "after the submission" and "during the claim" are not questions the workspace can
+  // answer (SM-01m0f0wn89gjy6dbk1j6fjpv6j).
+  const submittedAt = git(executionRoot, ["rev-parse", "HEAD"]);
+  entity.data.review_commit = submittedAt;
+  const verifiedAt = runnable.length ? submittedAt.slice(0, 7) : null;
   for (const entry of runnable) {
     const outcome = spawnSync(entry.command, { cwd: executionRoot, shell: true, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
     if (outcome.status !== 0) {
@@ -421,6 +427,8 @@ export function reviewTask(id: string, evidence: ReviewEvidenceInput, pullReques
   if (canonical.path !== destination) unlinkSync(canonical.path);
   if (legacy && !existsSync(canonicalClaim)) writeFileSync(canonicalClaim, readFileSync(legacyClaim, "utf8"));
   regenerateIndex(root);
+  const boundary = submissionBoundary(root, entity.data);
+  const unaccounted = unaccountedClaimNote(boundary);
   const verificationNote = runnable.length ? ` ${runnable.length} declared check${runnable.length === 1 ? "" : "s"} verified at ${verifiedAt}.` : "";
   appendLifecycleEvent(root, id, "review", `${pullRequest ? `Submitted for review in ${pullRequest}.` : "Submitted for review."}${verificationNote}`);
   commitControlState(root, `chore(kotta): submit ${id} for review`);
@@ -438,7 +446,7 @@ export function reviewTask(id: string, evidence: ReviewEvidenceInput, pullReques
     git(executionRoot, ["add", workspaceDirectoryName(executionRoot)]);
     git(executionRoot, ["commit", "-m", `chore(kotta): move ${id} lifecycle to control plane`]);
   }
-  return { ok: true, command: "task review", data: { id, title: entityTitle(task.path), pullRequest: pullRequest ?? null, controlRoot: root, adoptedLegacyState: legacy } };
+  return { ok: true, command: "task review", data: { id, title: entityTitle(task.path), pullRequest: pullRequest ?? null, controlRoot: root, adoptedLegacyState: legacy, reviewCommit: submittedAt, unaccountedClaim: unaccounted } };
   });
 }
 
@@ -456,6 +464,11 @@ export function closeTask(id: string, approved: boolean, repositoryRoot?: string
   const integrationTarget = coordinator && git(root, ["branch", "--list", coordinator]) ? coordinator : "HEAD";
   const merged = git(root, ["branch", "--merged", integrationTarget]).split(/\r?\n/).map((line) => line.replace(/^[*+]?\s*/, "")).includes(branch);
   if (!merged) throw new Error(`Branch ${branch} is not merged into ${integrationTarget === "HEAD" ? "the control branch" : `batch coordinator ${integrationTarget}`}.`);
+  // What the human is accepting is the submission, and the submission names one commit. Work that
+  // landed after it is reported here rather than refused: an honest instance exists — a branch that
+  // took its base back through a merge — and a refusal firing on that costs more than the silence
+  // does. Never accepted in silence is the rule (SM-01m0f0wn89gjy6dbk1j6fjpv6j).
+  const beyond = beyondSubmissionNote(submissionBoundary(root, entity.data));
   const adopted = entity.data.branch_origin === "adopted";
   const worktree = adopted ? root : join(root, ".worktrees", id);
   if (existsSync(worktree) && git(worktree, ["status", "--porcelain"])) throw new Error(`Worktree ${worktree} contains uncommitted changes; refusing cleanup.`);
@@ -483,7 +496,7 @@ export function closeTask(id: string, approved: boolean, repositoryRoot?: string
     }
   }
   if (options.commit !== false) commitControlState(root, `chore(kotta): close ${id}`);
-  return { ok: true, command: "task close", data: { id, title: entityTitle(task.path), resolution: "completed", controlRoot: root, adopted, preserved: adopted ? { branch, worktree } : null } };
+  return { ok: true, command: "task close", data: { id, title: entityTitle(task.path), resolution: "completed", controlRoot: root, adopted, preserved: adopted ? { branch, worktree } : null, beyondSubmission: beyond } };
   };
   return options.locked ? close(callerRoot) : withControlPlaneMutation(callerRoot, close);
 }

@@ -4,6 +4,7 @@ import { parse } from "yaml";
 import matter from "gray-matter";
 import { readWorkspaceConfig } from "../core/config.js";
 import { readEvents } from "../core/events.js";
+import { beyondSubmissionNote, submissionBoundary } from "../core/boundary.js";
 import { listEntities, findTask } from "../filesystem/entities.js";
 import { findRepositoryRoot, processPath } from "../filesystem/workspace.js";
 import { controlPlaneRoot } from "../git/control-plane.js";
@@ -115,13 +116,20 @@ export function sweep(repositoryRoot?: string, overrides: Partial<SweepThreshold
 
   // 1. waiting-on-you — a human gate holding the work, from either side.
   for (const task of tasks.filter(({ state }) => state === "review")) {
+    const data = frontmatter(task.path);
+    // Submission is a boundary (SM-01m0f0wn89gjy6dbk1j6fjpv6j): a reader who is about to accept
+    // this task should meet the work that arrived after the evidence was written, here, before the
+    // gate rather than after it.
+    const beyond = beyondSubmissionNote(submissionBoundary(root, data));
     items.push({
       category: "waiting-on-you",
       id: task.id,
       title: task.title,
-      reason: "submitted for review; nothing moves until it is accepted or sent back",
+      reason: beyond
+        ? `submitted for review, and ${beyond.charAt(0).toLowerCase()}${beyond.slice(1)}`
+        : "submitted for review; nothing moves until it is accepted or sent back",
       action: `kotta task close ${task.id} --approve, or kotta task reopen ${task.id} --approve`,
-      ageDays: daysSince(String(frontmatter(task.path).updated_at ?? ""), clock),
+      ageDays: daysSince(String(data.updated_at ?? ""), clock),
     });
   }
   for (const pending of pendingApprovals(root)) {

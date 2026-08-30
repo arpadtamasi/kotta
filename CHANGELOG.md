@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- **Submission is a boundary the tool holds, in both directions.** The state machine said so; nothing
+  enforced it, because the record had no anchor — the commit a submission stands on was computed for
+  the evidence table only when a `run:` check happened to be declared, printed into prose, and
+  forgotten. A submission now records that commit always, and the boundary is read from it in both
+  directions. Work that lands on a task's branch after its submission is named by commit in the
+  sweep, before the gate, and again at the close, so a human never accepts it in silence. A claim
+  that committed nothing between its start and its submission is said at submission, where the
+  record can still be corrected. Nothing is refused: a branch that took its base back through a
+  merge and a deliverable that legitimately predates its claim are both honest, and a refusal firing
+  on those would cost more than the silence did. A task that recorded no commit reports nothing —
+  the 132 tasks closed before this are not retroactively accused. Both failures it would have caught
+  were the agent's own, on 2026-08-29.
+
 ## [0.11.1] - 2026-08-30
 
 0.11.0 was tagged but never reached the registry: its release run failed the test gate on a fixture

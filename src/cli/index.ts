@@ -314,6 +314,22 @@ function renderFailure(command: string, result: unknown): string {
  * on (BR-01m0f0wn89c50fe1mz5yn1nw85): `kotta task close completed.` told the reader neither which
  * task closed nor how, which is the same failure as printing an id, in its weakest form.
  */
+/** A close names what it is accepting, including the work that arrived after the submission. */
+function renderTaskClosed(result: unknown): string {
+      const data = (result as { data: { id: unknown; title?: unknown; resolution?: unknown; beyondSubmission?: unknown } }).data;
+      const lines = [`kotta task close: ${namedWithId(data.title, String(data.id))}. Resolution: ${String(data.resolution ?? "completed")}.`];
+      if (typeof data.beyondSubmission === "string") lines.push(data.beyondSubmission);
+      return lines.join("\n");
+    }
+
+/** A submission says when the claim it closes accounted for nothing. */
+function renderTaskReviewed(result: unknown): string {
+      const data = (result as { data: { id: unknown; title?: unknown; unaccountedClaim?: unknown } }).data;
+      const lines = [`kotta task review: ${namedWithId(data.title, String(data.id))}.`];
+      if (typeof data.unaccountedClaim === "string") lines.push(data.unaccountedClaim);
+      return lines.join("\n");
+    }
+
 function completion(command: string, result: unknown): string {
   const data = (result as { data?: { id?: unknown; title?: unknown; state?: unknown; resolution?: unknown } }).data;
   const id = typeof data?.id === "string" ? data.id : "";
@@ -602,7 +618,7 @@ defineCommand("task", "execute <id>")
     process.stdout.write(options.json ? `${JSON.stringify(result)}\n` : `${formatExecution(result)}\n`);
     if (!result.ok) process.exitCode = 1;
   });
-defineCommand("task", "review <id>")
+defineCommand("task", "review <id>", renderTaskReviewed)
   .requiredOption("--evidence <evidence>", "Evidence text, or repeat '<exact check>=<evidence>' for a named mapping", (value: string, previous: string[]) => [...previous, value], [])
   .option("--pull-request <identifier>")
   .option("--deviations <text>", "Declared deviations from the task; omitted means 'Not declared.'")
@@ -610,7 +626,7 @@ defineCommand("task", "review <id>")
   .option("--known-concerns <text>", "Known concerns left open; omitted means 'Not declared.'")
   .option("--json")
   .action((id: string, options: { evidence: string[]; pullRequest?: string; deviations?: string; observationsCreated?: string; knownConcerns?: string; json?: boolean }) => print(reviewTask(id, options.evidence, options.pullRequest, { deviations: options.deviations, observationsCreated: options.observationsCreated, knownConcerns: options.knownConcerns }), Boolean(options.json)));
-defineCommand("task", "close <id>")
+defineCommand("task", "close <id>", renderTaskClosed)
   .option("--approve")
   .option("--json")
   .action((id: string, options: { approve?: boolean; json?: boolean }) => print(closeTask(id, Boolean(options.approve)), Boolean(options.json)));
