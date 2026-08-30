@@ -5,6 +5,7 @@ import matter from "gray-matter";
 import { readWorkspaceConfig } from "../core/config.js";
 import { readEvents } from "../core/events.js";
 import { beyondSubmissionNote, submissionBoundary } from "../core/boundary.js";
+import { declaredNothing, reviewSection } from "../core/review-sections.js";
 import { listEntities, findTask } from "../filesystem/entities.js";
 import { findRepositoryRoot, processPath } from "../filesystem/workspace.js";
 import { controlPlaneRoot } from "../git/control-plane.js";
@@ -69,22 +70,6 @@ function frontmatter(path: string): Record<string, unknown> {
   } catch {
     return {};
   }
-}
-
-/** One section of a task's review evidence, trimmed; empty when the section is absent. */
-function reviewSection(body: string, heading: string): string {
-  const lines = body.split(/\r?\n/);
-  const start = lines.findIndex((line) => line.trim() === `### ${heading}`);
-  if (start < 0) return "";
-  const rest = lines.slice(start + 1);
-  const end = rest.findIndex((line) => line.startsWith("#"));
-  return (end < 0 ? rest : rest.slice(0, end)).join("\n").trim();
-}
-
-/** Text a caller wrote to say there was nothing to declare. */
-function declaredNothing(text: string): boolean {
-  const normalised = text.toLowerCase().replace(/[.\s]+$/, "");
-  return !normalised || normalised === "none" || normalised === "not declared" || normalised === "n/a";
 }
 
 export interface SweepResult {
@@ -187,12 +172,16 @@ export function sweep(repositoryRoot?: string, overrides: Partial<SweepThreshold
     // task it was discovered during. Nothing accounted for before becomes an item now.
     if (!declaredNothing(reviewSection(body, "Observations created"))) continue;
     if (recordedDuring.has(task.id)) continue;
+    // A third answer, written after the fact: the deviation left nothing behind, and someone said
+    // so with a reason (UC-01m0f0wn89dy38s6whbfa0jafn). Without it this category had no exit for
+    // the honest case, so it could only grow.
+    if (frontmatter(task.path).deviation_settled) continue;
     items.push({
       category: "undeclared-deviation",
       id: task.id,
       title: task.title,
       reason: "closed with a declared deviation that no observation records",
-      action: `kotta observation new --title "…" --type <type> --evidence "…" --discovered-during ${task.id} for what the deviation left behind`,
+      action: `kotta observation new --title "…" --type <type> --evidence "…" --discovered-during ${task.id} for what the deviation left behind, or kotta task settle ${task.id} --reason "…" if it left nothing`,
       ageDays: daysSince(String(frontmatter(task.path).updated_at ?? ""), clock),
     });
   }

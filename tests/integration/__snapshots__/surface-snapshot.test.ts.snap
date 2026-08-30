@@ -161,6 +161,7 @@ Commands:
   brief [options] <id>     Assemble the minimal execution context for a task
                            (D-009)
   reopen [options] <id>
+  settle [options] <id>    Record that a declared deviation left nothing behind
   help [command]           display help for command
 
 ### kotta task list
@@ -294,6 +295,16 @@ Options:
   --approve
   --json
   -h, --help  display help for command
+
+### kotta task settle
+Usage: kotta task settle [options] <id>
+
+Record that a declared deviation left nothing behind
+
+Options:
+  --reason <reason>  Why the deviation left nothing behind
+  --json
+  -h, --help         display help for command
 
 ### kotta observation
 Usage: kotta observation [options] [command]
@@ -1073,6 +1084,33 @@ exports[`the surfaces Kotta exposes > the MCP tool surface, read from a live ser
     },
     "name": "task_message_record",
     "title": "Record visible task conversation",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "openWorldHint": false,
+      "readOnlyHint": false,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "type": "string",
+        },
+        "reason": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "id",
+        "reason",
+      ],
+      "type": "object",
+    },
+    "name": "task_settle_deviation",
+    "title": "Settle a declared deviation",
   },
   {
     "annotations": {

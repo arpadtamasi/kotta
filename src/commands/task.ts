@@ -5,6 +5,7 @@ import { parse as parseYaml, stringify } from "yaml";
 import { findRepositoryRoot, regenerateIndex, workspaceDirectoryName, processPath } from "../filesystem/workspace.js";
 import { canonicalEntityId, entityTitle, findTask, listEntities } from "../filesystem/entities.js";
 import { beyondSubmissionNote, submissionBoundary, unaccountedClaimNote } from "../core/boundary.js";
+import { declaredNothing, reviewSection } from "../core/review-sections.js";
 import { batchSubtreeComplete, batchTree, subtreeTasks } from "../filesystem/batches.js";
 import { entityFilename, mintId } from "../core/identity.js";
 import { parseMarkdown, renderMarkdown, sections } from "../core/markdown.js";
@@ -448,6 +449,58 @@ export function reviewTask(id: string, evidence: ReviewEvidenceInput, pullReques
   }
   return { ok: true, command: "task review", data: { id, title: entityTitle(task.path), pullRequest: pullRequest ?? null, controlRoot: root, adoptedLegacyState: legacy, reviewCommit: submittedAt, unaccountedClaim: unaccounted } };
   });
+}
+
+/**
+ * Record that a closed task's declared deviation left nothing behind.
+ *
+ * The sweep raises a declared deviation that no observation records, and offered exactly one way
+ * out: write an observation. For a deviation that was an interpretation argued and accepted at
+ * review, that is inventing work about nothing, so the honest operator leaves the item — and a
+ * report whose only exit is to create work can only grow (UC-01m0f0wn89m98wpkqq8e5c9p6p).
+ *
+ * This is bookkeeping about an acceptance the review already carried, not a new gate: no approval
+ * receipt is stamped, and the record names the actor rather than an approver. The reason is
+ * required, because "nothing was left behind" without saying why is the same silence the item
+ * exists to break.
+ */
+export function settleDeviation(id: string, reason: string, repositoryRoot?: string, options: { actor?: string; commit?: boolean } = {}) {
+  const requestedRoot = repositoryRoot ?? findRepositoryRoot();
+  return withControlPlaneMutation(requestedRoot, (root) => {
+    const task = findTask(root, id);
+    // `done` is where every ending lands — completed and retired alike carry it, with the
+    // resolution saying which. A task still in flight can change what its deviation left behind,
+    // so there is nothing to settle yet.
+    if (task.state !== "done") {
+      throw new Error(`Task ${id} is ${task.state}; a deviation is settled after the work ended, not while it is still open.`);
+    }
+    const stated = reason.trim();
+    if (!stated) throw new Error("A settled deviation requires --reason saying why it left nothing behind; the sweep item exists to break exactly that silence.");
+
+    const entity = parseMarkdown(readFileSync(task.path, "utf8"));
+    if (entity.data.deviation_settled) throw new Error(`Task ${id} already records a settled deviation. A record is written once; reopen the question in an observation if it turns out to be wrong.`);
+
+    // The refusals keep this from becoming a cheaper observation (BR-01m0f0wn898xd4tr7j7t9bsjy7):
+    // settling answers a deviation that was declared and accepted, so a task that declared none has
+    // nothing here to settle, and a real finding still has only the capture path.
+    const declared = reviewSection(entity.content, "Deviations");
+    if (declaredNothing(declared)) {
+      throw new Error(`Task ${id} declared no deviation, so there is nothing to settle.`);
+    }
+
+    entity.data.deviation_settled = {
+      reason: stated,
+      // The actor, never an approver: this claims no human said yes (rule 5).
+      settled_by: options.actor ?? "cli",
+      settled_at: new Date().toISOString(),
+    };
+    entity.data.updated_at = new Date().toISOString().slice(0, 10);
+    writeFileSync(task.path, renderMarkdown(entity.data, entity.content));
+    regenerateIndex(root);
+    appendLifecycleEvent(root, id, task.state, `Declared deviation settled as leaving nothing behind: ${stated}`);
+    if (options.commit !== false) commitControlState(root, `chore(kotta): settle the declared deviation of ${id}`);
+    return { ok: true as const, command: "task settle" as const, data: { id, title: entityTitle(task.path), reason: stated, settledBy: options.actor ?? "cli" } };
+  }, { requireClean: false });
 }
 
 export function closeTask(id: string, approved: boolean, repositoryRoot?: string, options: { locked?: boolean; commit?: boolean; approvalRecorded?: boolean; receipt?: ApprovalReceipt } = {}) {

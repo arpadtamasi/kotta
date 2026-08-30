@@ -8,7 +8,7 @@ import { sweep, SWEEP_CATEGORIES, type SweepItem } from "../commands/sweep.js";
 import { openQuestions, type EntityQuestions } from "../commands/questions.js";
 import { REPLACE_RULES_REMEDY, type WorkspaceAgentsState } from "../commands/agents.js";
 import { expandOperations } from "../core/operations.js";
-import { briefTask, cancelTask, closeTask, defineTask, newTask, reopenTask, reviewTask, startTask, validateTask } from "../commands/task.js";
+import { briefTask, cancelTask, closeTask, defineTask, newTask, reopenTask, reviewTask, settleDeviation, startTask, validateTask } from "../commands/task.js";
 import { executeTask, formatExecution } from "../commands/execute.js";
 import { statusCommand } from "../commands/status.js";
 import { linkObservation, newObservation, resolveObservation, validateObservation } from "../commands/observation.js";
@@ -658,6 +658,14 @@ defineCommand("task", "reopen <id>")
   .option("--approve")
   .option("--json")
   .action((id: string, options: { approve?: boolean; json?: boolean }) => print(reopenTask(id, Boolean(options.approve)), Boolean(options.json)));
+defineCommand("task", "settle <id>", (result) => {
+  const { title, id, reason } = (result as { data: { title: string; id: string; reason: string } }).data;
+  return `Settled the declared deviation of ${title} (${id}): ${reason}`;
+}, "task settle")
+  .description("Record that a declared deviation left nothing behind")
+  .requiredOption("--reason <reason>", "Why the deviation left nothing behind")
+  .option("--json")
+  .action((id: string, options: { reason: string; json?: boolean }) => print(settleDeviation(id, options.reason), Boolean(options.json)));
 
 defineCommand("observation", "list", renderEntityList)
   .description("List observations with their state and title")

@@ -471,6 +471,9 @@ kotta task review T-014 \
 # ran on and `exit 0` next to the evidence. Entries without `run:` remain prose.
 kotta task close T-014 --approve
 kotta task reopen T-014 --approve
+kotta task settle T-014 --reason "The interpretation was argued and accepted at review; nothing is outstanding."
+# Records that a declared deviation left nothing behind, so `kotta sweep` stops raising it. It is
+# bookkeeping, not a gate: it names who settled it and stamps no approval receipt.
 
 kotta batch validate P-012
 kotta batch start P-012 --agent codex

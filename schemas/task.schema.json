@@ -44,6 +44,16 @@
     "blocked": { "type": "boolean" },
     "blocked_reason": { "type": "string", "minLength": 1 },
     "resolution": { "enum": ["completed", "cancelled", "duplicate", "obsolete"] },
+    "deviation_settled": {
+      "type": "object",
+      "required": ["reason", "settled_by", "settled_at"],
+      "properties": {
+        "reason": { "type": "string", "minLength": 1 },
+        "settled_by": { "type": "string", "minLength": 1 },
+        "settled_at": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
     "approved_by": { "$ref": "#/$defs/approvedBy" },
     "approved_at": { "$ref": "#/$defs/approvedAt" },
     "approval_basis": { "$ref": "#/$defs/approvalBasis" },

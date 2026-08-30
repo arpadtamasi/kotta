@@ -9,7 +9,7 @@ import { z } from "zod";
 const packageVersion = String((JSON.parse(readFileSync(fileURLToPath(new URL("../../package.json", import.meta.url)), "utf8")) as { version: unknown }).version);
 import { APPROVAL_ACTIONS, approvalDescription, approvalDetail, approvalEntity, decideApproval, failApproval, proposeApproval, type ApprovalAction, type ApprovalDecision } from "./approval.js";
 import { recordTaskMessage } from "./conversation.js";
-import { briefTask, defineTask, newTask, reviewTask, startTask, validateTask } from "./task.js";
+import { briefTask, defineTask, newTask, reviewTask, settleDeviation, startTask, validateTask } from "./task.js";
 import { linkObservation, newObservation } from "./observation.js";
 import { newSpecNode } from "./spec.js";
 import { statusCommand } from "./status.js";
@@ -303,6 +303,18 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
     try {
       const result = reviewTask(id, evidence, pullRequest, { deviations, observationsCreated, knownConcerns }, root);
       return toolResult(result as unknown as ToolPayload, `Submitted ${named(result.data.title, id)} for review${pullRequest ? ` in ${pullRequest}` : ""}.`);
+    } catch (error) { return toolError(error); }
+  });
+
+  define("task_settle_deviation", {
+    title: "Settle a declared deviation",
+    description: "Record that a deviation declared at review left nothing behind, with the reason it left nothing. Refused for a task that declared no deviation, a task that has not ended, and one already settled. This is a record of fact, not a human approval: it stamps who settled it and when, and no approval receipt.",
+    inputSchema: { id: z.string().min(1), reason: z.string().min(1) },
+    annotations: localWrite,
+  }, async ({ id, reason }) => {
+    try {
+      const result = settleDeviation(id, reason, root, { actor: "mcp" });
+      return toolResult(result as unknown as ToolPayload, `Settled the declared deviation of ${named(result.data.title, id)}: ${result.data.reason}`);
     } catch (error) { return toolError(error); }
   });
 
