@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Every sweep item has a way to leave it, including the finding that nothing was left behind.**
+  `undeclared-deviation` offered exactly one exit: write an observation. For a deviation that was an
+  interpretation argued and accepted at review — a port range explained, a changelog entry — that
+  means inventing work about nothing, so the honest operator leaves the item and the list only
+  grows; on this repository it stood at 20, all of them 26 days old. `kotta task settle <id>
+  --reason "…"` (`task_settle_deviation` in a calling chat) records that a closed task's declared
+  deviation left nothing behind, and the sweep stops raising it. It is bookkeeping about an
+  acceptance the review already carried, not a new gate: the record names who settled it and when,
+  and stamps no approval receipt, because nobody was asked. It is refused where it would be a lie —
+  a task that declared no deviation, a task that has not ended, and one already settled — so a real
+  finding still has only the capture path. The deviation prose the review wrote is never rewritten.
+
 - **Submission is a boundary the tool holds, in both directions.** The state machine said so; nothing
   enforced it, because the record had no anchor — the commit a submission stands on was computed for
   the evidence table only when a `run:` check happened to be declared, printed into prose, and

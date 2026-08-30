@@ -67,6 +67,7 @@ export const OPERATIONS: readonly OperationDeclaration[] = [
   { id: "task.cancel", summary: "Retire work whose purpose is gone, with a reason.", cli: ["task", "cancel"], mcp: { absent: CHAT_GATED } },
   { id: "task.brief", summary: "Assemble the minimal execution context for one task.", cli: ["task", "brief"], mcp: "task_brief" },
   { id: "task.reopen", summary: "Return a reviewed or terminal task to work.", cli: ["task", "reopen"], mcp: { absent: CHAT_GATED } },
+  { id: "task.settle-deviation", summary: "Record that a declared deviation left nothing behind, with the reason.", cli: ["task", "settle"], mcp: "task_settle_deviation" },
   { id: "task.message-record", summary: "Persist one visible chat message against a task.", cli: { absent: "Records what was said in a chat; there is no terminal conversation to record." }, mcp: "task_message_record" },
 
   // Observations.
