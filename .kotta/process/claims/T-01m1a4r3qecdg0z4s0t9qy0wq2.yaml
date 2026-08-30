@@ -1,0 +1,9 @@
+task: T-01m1a4r3qecdg0z4s0t9qy0wq2
+agent: claude
+branch: feat/T-01m1a4r3qecdg0z4s0t9qy0wq2-a-spec-id-cited-in-prose-resolves-or-validation-says-so
+worktree: .worktrees/T-01m1a4r3qecdg0z4s0t9qy0wq2
+execution_mode: inherited
+origin: created
+start_ref: HEAD
+start_commit: 35abdc5ee9e5f4bd368b6937640b6e2d69f7c2a4
+started_at: 2026-08-30T20:11:44.254Z

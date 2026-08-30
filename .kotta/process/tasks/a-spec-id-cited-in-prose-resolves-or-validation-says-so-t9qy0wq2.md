@@ -1,7 +1,7 @@
 ---
 id: T-01m1a4r3qecdg0z4s0t9qy0wq2
 title: 'A spec id cited in prose resolves, or validation says so'
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -13,7 +13,8 @@ depends_on: []
 blocks: []
 spec:
   - UC-01m0f0wn89ny7vx515ke3ksnra
-branch: null
+branch: >-
+  feat/T-01m1a4r3qecdg0z4s0t9qy0wq2-a-spec-id-cited-in-prose-resolves-or-validation-says-so
 pull_request: null
 created_at: '2026-08-30'
 updated_at: '2026-08-30'
@@ -24,6 +25,12 @@ coverage:
     - UC-01m0f0wn89ny7vx515ke3ksnra
   'What counts as a citation comes from the form registry, so a newly registered form is read the day it is registered and no list in the code has to be edited.':
     - UC-01m0f0wn89ny7vx515ke3ksnra
+assigned_agent: claude
+worktree: .worktrees/T-01m1a4r3qecdg0z4s0t9qy0wq2
+execution_mode: inherited
+branch_origin: created
+start_ref: HEAD
+start_commit: 35abdc5ee9e5f4bd368b6937640b6e2d69f7c2a4
 ---
 # T-01m1a4r3qecdg0z4s0t9qy0wq2 — A spec id cited in prose resolves, or validation says so
 
