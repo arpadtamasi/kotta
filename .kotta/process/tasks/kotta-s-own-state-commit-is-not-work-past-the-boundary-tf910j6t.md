@@ -1,7 +1,7 @@
 ---
 id: T-01m19b26j3z4vc6y8ntf910j6t
 title: Kotta's own state commit is not work past the boundary
-status: review
+status: done
 origin: human
 types:
   - bug
@@ -31,6 +31,10 @@ branch_origin: adopted
 start_ref: HEAD
 start_commit: 7e87ef7901dd0a8b52c90d45c801b0df690d06d5
 review_commit: 53a55cb44c49c885cccb7fcd9f6bfc1bcc0a510a
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-30T16:48:20.813Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 ## Outcome
 
