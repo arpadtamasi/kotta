@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- kotta-s-own-state-commit-is-not-work-past-the-boundary-tf910j6t
+None.
 
 ## Active tasks
 
-None.
+- kotta-s-own-state-commit-is-not-work-past-the-boundary-tf910j6t
 
 ## Review
 

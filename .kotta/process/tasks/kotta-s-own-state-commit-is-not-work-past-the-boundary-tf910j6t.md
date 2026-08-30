@@ -1,7 +1,7 @@
 ---
 id: T-01m19b26j3z4vc6y8ntf910j6t
 title: Kotta's own state commit is not work past the boundary
-status: defined
+status: active
 origin: human
 types:
   - bug
@@ -14,7 +14,7 @@ blocks: []
 spec:
   - SM-01m0f0wn89gjy6dbk1j6fjpv6j
   - BR-01m0pw5bc7b1rkg5dct5qgdkmb
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-30'
 updated_at: '2026-08-30'
@@ -24,6 +24,12 @@ coverage:
     - BR-01m0pw5bc7b1rkg5dct5qgdkmb
   'A commit that touches anything outside those records is still reported, including one that touches both.':
     - SM-01m0f0wn89gjy6dbk1j6fjpv6j
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 7e87ef7901dd0a8b52c90d45c801b0df690d06d5
 ---
 ## Outcome
 
