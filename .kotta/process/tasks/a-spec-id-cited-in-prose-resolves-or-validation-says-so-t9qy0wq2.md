@@ -1,7 +1,7 @@
 ---
 id: T-01m1a4r3qecdg0z4s0t9qy0wq2
 title: 'A spec id cited in prose resolves, or validation says so'
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -32,6 +32,10 @@ branch_origin: created
 start_ref: HEAD
 start_commit: 35abdc5ee9e5f4bd368b6937640b6e2d69f7c2a4
 review_commit: 989a5fdcd9dd7ac3a2ccef6c091965cf59ee3072
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-30T20:47:43.099Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 # T-01m1a4r3qecdg0z4s0t9qy0wq2 — A spec id cited in prose resolves, or validation says so
 

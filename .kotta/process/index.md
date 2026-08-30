@@ -20,7 +20,7 @@ None.
 
 ## Review
 
-- a-spec-id-cited-in-prose-resolves-or-validation-says-so-t9qy0wq2
+None.
 
 ## Blocked
 
