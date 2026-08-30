@@ -1,7 +1,7 @@
 ---
 id: T-01m199skkmpg216qgkdbf8my5d
 title: 'Submission is a boundary the tool holds, in both directions'
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -13,7 +13,7 @@ depends_on: []
 blocks: []
 spec:
   - SM-01m0f0wn89gjy6dbk1j6fjpv6j
-branch: null
+branch: claude/graft-kottara-837884
 pull_request: null
 created_at: '2026-08-30'
 updated_at: '2026-08-30'
@@ -24,6 +24,12 @@ coverage:
     - SM-01m0f0wn89gjy6dbk1j6fjpv6j
   'A claim that accounted for nothing is said at submission: when no commit landed between the start and the submission, the record says the work predates the claim.':
     - SM-01m0f0wn89gjy6dbk1j6fjpv6j
+assigned_agent: claude
+worktree: .
+execution_mode: inherited
+branch_origin: adopted
+start_ref: HEAD
+start_commit: 72ce691a84189b7e2f5f72edf5323b03a71f750a
 ---
 ## Outcome
 

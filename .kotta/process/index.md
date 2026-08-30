@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- submission-is-a-boundary-the-tool-holds-in-both-directions-dbf8my5d
+None.
 
 ## Active tasks
 
-None.
+- submission-is-a-boundary-the-tool-holds-in-both-directions-dbf8my5d
 
 ## Review
 
