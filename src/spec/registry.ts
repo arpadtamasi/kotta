@@ -4,7 +4,7 @@ import { parse } from "yaml";
 import { TASK_ID } from "../core/identity.js";
 import { parseMarkdown, sections } from "../core/markdown.js";
 import type { ValidationIssue } from "../core/validation.js";
-import { specPath, validateSpecDirectory } from "../filesystem/workspace.js";
+import { processPath, specPath, validateSpecDirectory } from "../filesystem/workspace.js";
 
 /**
  * The specification layer's schema has always existed — every form declares its required fields and
@@ -173,6 +173,58 @@ export function readSpecNodeText(node: SpecNode): string {
   return readFileSync(node.path, "utf8").trim();
 }
 
+/** The body of a minted id: 26 lowercase Crockford characters, as `identity.ts` mints them. */
+const CROCKFORD_BODY = "[0-9a-hjkmnp-tv-z]{26}";
+
+/**
+ * Ids the workspace can resolve besides its specification nodes.
+ *
+ * A node's prose cites decisions as well as other nodes, and a mistyped decision id reads as an
+ * answer exactly as a mistyped node id does. Decisions carry both the minted and the sequential
+ * form (D-010), so the id is read from the file rather than from its name.
+ */
+function decisionIds(root: string): Set<string> {
+  const found = new Set<string>();
+  const directory = processPath(root, "decisions");
+  if (!existsSync(directory)) return found;
+  for (const filename of readdirSync(directory).filter((name) => name.endsWith(".md"))) {
+    try {
+      const id = String(parseMarkdown(readFileSync(join(directory, filename), "utf8")).data.id ?? "").trim();
+      if (id) found.add(id);
+    } catch { /* a malformed decision is reported by its own validation, not by every lookup */ }
+  }
+  return found;
+}
+
+/**
+ * What a citation looks like, built from the registry rather than from a list in the code
+ * (UC-01m0f0wn89ny7vx515ke3ksnra). A form registered tomorrow is read tomorrow. Longer prefixes are
+ * tried first so `EX-` is never read as an `E-` citation with a stray character.
+ */
+function citationPattern(forms: SpecForm[]): RegExp {
+  const prefixes = [...new Set([...forms.map((form) => form.prefix), "D"])]
+    .filter(Boolean)
+    .sort((left, right) => right.length - left.length || left.localeCompare(right))
+    .map((prefix) => prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  // A sequential decision id (D-003) predates minting and still stands, so both bodies are read.
+  return new RegExp(`(?<![A-Za-z0-9-])(?:${prefixes.join("|")})-(?:${CROCKFORD_BODY}|[0-9]{3,})(?![0-9A-Za-z-])`, "g");
+}
+
+/** Every id cited in a node's prose, with the heading it stands under, in the order they appear. */
+function proseCitations(body: string, pattern: RegExp): Array<{ id: string; heading: string }> {
+  const found: Array<{ id: string; heading: string }> = [];
+  let heading = "the text before the first heading";
+  for (const line of body.split(/\r?\n/)) {
+    const marked = /^#{1,6}\s+(.*\S)\s*$/.exec(line);
+    if (marked) {
+      heading = marked[1];
+      continue;
+    }
+    for (const match of line.matchAll(pattern)) found.push({ id: match[0], heading });
+  }
+  return found;
+}
+
 export function validateSpecWorkspace(root: string): ValidationIssue[] {
   const { forms, issues } = readFormRegistry(root);
   const known = new Map(forms.map((form) => [form.id, form]));
@@ -191,6 +243,23 @@ export function validateSpecWorkspace(root: string): ValidationIssue[] {
     const previous = ids.get(node.id);
     if (previous) issues.push({ code: "SPEC_NODE_DUPLICATE", message: `Specification id '${node.id}' appears in ${basename(previous)} and ${basename(node.path)}.`, path: node.path });
     else ids.set(node.id, node.path);
+  }
+
+  // A citation resolves, or it is a broken reference (UC-01m0f0wn89ny7vx515ke3ksnra). The edge
+  // checks below read frontmatter; an id written into a node's prose was read by nobody, so a
+  // mistyped one landed green and was only ever found by a person re-reading the sentence.
+  const citations = citationPattern(forms);
+  const resolvable = new Set([...ids.keys(), ...decisionIds(root)]);
+  for (const node of nodes) {
+    const body = parseMarkdown(readFileSync(node.path, "utf8")).content;
+    for (const { id: cited, heading } of proseCitations(body, citations)) {
+      if (resolvable.has(cited)) continue;
+      issues.push({
+        code: "SPEC_PROSE_DANGLING_CITATION",
+        message: `${basename(node.path)} cites '${cited}' under '${heading}', which is neither a specification node nor a decision in this workspace. Correct the id or remove the citation; a reference that resolves to nothing reads as an answer.`,
+        path: node.path,
+      });
+    }
   }
 
   for (const node of nodes) {

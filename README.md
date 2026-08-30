@@ -353,6 +353,12 @@ lands on the base branch on a human yes. Until it is filled in, `kotta validate`
 unanswered section and edge with the form's own question — the scaffold and the validator are the
 two halves of one authoring loop.
 
+A specification id written into a node's text is a citation, and `kotta validate` refuses one that
+resolves to nothing — naming the file, the id, and the heading it stands under. Resolving means a
+specification node or a decision record; what counts as a citation comes from the registry, so a
+form the project added is read without a code change. A reference that points at a node which does
+not exist is worse than no reference, because it reads as an answer.
+
 One entity is one stable file. Lifecycle state lives in the frontmatter `status` field alone, so
 a transition is a one-line edit in place — a file never moves between directories, and two
 branches that transition the same entity meet as an ordinary merge conflict on the status line,
