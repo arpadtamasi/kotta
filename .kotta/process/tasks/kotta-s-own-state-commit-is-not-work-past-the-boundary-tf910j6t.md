@@ -1,7 +1,7 @@
 ---
 id: T-01m19b26j3z4vc6y8ntf910j6t
 title: Kotta's own state commit is not work past the boundary
-status: active
+status: review
 origin: human
 types:
   - bug
@@ -30,6 +30,7 @@ execution_mode: inherited
 branch_origin: adopted
 start_ref: HEAD
 start_commit: 7e87ef7901dd0a8b52c90d45c801b0df690d06d5
+review_commit: 53a55cb44c49c885cccb7fcd9f6bfc1bcc0a510a
 ---
 ## Outcome
 
@@ -84,3 +85,27 @@ None.
 Found by the feature on itself, minutes after it was submitted. It is a separate task rather than an
 amendment to that one because the rule it enforces is exactly that a submitted task is closed to
 further work.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A commit whose whole diff is Kotta's own process records is not reported as work past the submission. | run: npx vitest run tests/integration/submission-boundary.test.ts -t "not work past the boundary" — verified: exit 0 at 53a55cb |
+| A commit that touches anything outside those records is still reported, including one that touches both. | run: npx vitest run tests/integration/submission-boundary.test.ts -t "do not hide a commit that touches anything else" — verified: exit 0 at 53a55cb |
+
+### Verification performed
+
+A commit whose whole diff is Kotta's own process records is not reported as work past the submission.: run: npx vitest run tests/integration/submission-boundary.test.ts -t "not work past the boundary"
+A commit that touches anything outside those records is still reported, including one that touches both.: run: npx vitest run tests/integration/submission-boundary.test.ts -t "do not hide a commit that touches anything else"
+
+### Deviations
+
+Not declared.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Not declared.

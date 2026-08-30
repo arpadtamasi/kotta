@@ -16,10 +16,11 @@ None.
 
 ## Active tasks
 
-- kotta-s-own-state-commit-is-not-work-past-the-boundary-tf910j6t
+None.
 
 ## Review
 
+- kotta-s-own-state-commit-is-not-work-past-the-boundary-tf910j6t
 - submission-is-a-boundary-the-tool-holds-in-both-directions-dbf8my5d
 
 ## Blocked
