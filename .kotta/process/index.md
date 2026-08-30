@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- a-spec-id-cited-in-prose-resolves-or-validation-says-so-t9qy0wq2
+None.
 
 ## Review
 
-None.
+- a-spec-id-cited-in-prose-resolves-or-validation-says-so-t9qy0wq2
 
 ## Blocked
 

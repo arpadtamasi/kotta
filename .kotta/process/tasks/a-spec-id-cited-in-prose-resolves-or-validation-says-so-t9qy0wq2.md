@@ -1,7 +1,7 @@
 ---
 id: T-01m1a4r3qecdg0z4s0t9qy0wq2
 title: 'A spec id cited in prose resolves, or validation says so'
-status: active
+status: review
 origin: human
 types:
   - feature
@@ -31,6 +31,7 @@ execution_mode: inherited
 branch_origin: created
 start_ref: HEAD
 start_commit: 35abdc5ee9e5f4bd368b6937640b6e2d69f7c2a4
+review_commit: 989a5fdcd9dd7ac3a2ccef6c091965cf59ee3072
 ---
 # T-01m1a4r3qecdg0z4s0t9qy0wq2 — A spec id cited in prose resolves, or validation says so
 
@@ -97,3 +98,29 @@ The check belongs in `src/spec/registry.ts`, in `validateSpecWorkspace`, where `
 every node id to its path — is already built. Decision ids are read from
 `.kotta/process/decisions/`. The new issue code sits beside `SPEC_NODE_DANGLING_EDGE`; name it for
 prose rather than for edges, so the two are distinguishable in a report.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| A specification id written into a spec node prose that names nothing in the workspace fails validation, which says which file, which id, and which section it stands under. | run: npx vitest run tests/integration/spec-prose-citation.test.ts -t "an id naming nothing fails validation" — verified: exit 0 at 989a5fd |
+| A citation that resolves is silent, and resolving means either a specification node or a decision record: the 141 landed nodes still validate, the five that cite decisions included. | run: npx vitest run tests/integration/spec-prose-citation.test.ts -t "is silent, including a node citing itself\|resolves against the decision records\|passes the check it now runs" — verified: exit 0 at 989a5fd |
+| What counts as a citation comes from the form registry, so a newly registered form is read the day it is registered and no list in the code has to be edited. | run: npx vitest run tests/integration/spec-prose-citation.test.ts -t "comes from the registry\|longer prefix is never read" — verified: exit 0 at 989a5fd |
+
+### Verification performed
+
+A specification id written into a spec node prose that names nothing in the workspace fails validation, which says which file, which id, and which section it stands under.: run: npx vitest run tests/integration/spec-prose-citation.test.ts -t "an id naming nothing fails validation"
+A citation that resolves is silent, and resolving means either a specification node or a decision record: the 141 landed nodes still validate, the five that cite decisions included.: run: npx vitest run tests/integration/spec-prose-citation.test.ts -t "is silent, including a node citing itself|resolves against the decision records|passes the check it now runs"
+What counts as a citation comes from the form registry, so a newly registered form is read the day it is registered and no list in the code has to be edited.: run: npx vitest run tests/integration/spec-prose-citation.test.ts -t "comes from the registry|longer prefix is never read"
+
+### Deviations
+
+None.
+
+### Observations created
+
+Not declared.
+
+### Known concerns
+
+Task and observation prose is still unread, by the non-goal the definition states: their citations reach the specification through the coverage gate. A spec node naming a task in prose is likewise still only refused in frontmatter. Both are separate promises. The fixture premise is asserted rather than assumed: the beforeEach refuses to run a case unless the three-node workspace validates clean first, so the exit-code claim says something about the citation and not about the fixture.
