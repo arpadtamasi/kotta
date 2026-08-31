@@ -16,11 +16,11 @@ None.
 
 ## Active tasks
 
-- an-operation-summarised-as-a-report-is-proved-not-to-write-whscx62j
+None.
 
 ## Review
 
-None.
+- an-operation-summarised-as-a-report-is-proved-not-to-write-whscx62j
 
 ## Blocked
 

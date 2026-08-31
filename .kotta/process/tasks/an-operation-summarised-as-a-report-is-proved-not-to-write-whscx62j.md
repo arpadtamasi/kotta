@@ -1,7 +1,7 @@
 ---
 id: T-01m1bb1fhe0fsmk05swhscx62j
 title: An operation summarised as a report is proved not to write
-status: active
+status: review
 origin: human
 types:
   - feature
@@ -31,6 +31,7 @@ execution_mode: inherited
 branch_origin: created
 start_ref: HEAD
 start_commit: a82236b160f331b6ecb3bf0a26cba26645efc02a
+review_commit: e73c898190d5e19b232d152062415b112e76d883
 ---
 # T-01m1bb1fhe0fsmk05swhscx62j — An operation summarised as a report is proved not to write
 
@@ -103,3 +104,29 @@ totality tests and is where the required-field check belongs beside them. The ex
 its own file because it builds a populated fixture — a task, an observation, a batch, a decision —
 and walks the read-declared commands against it. Argumentless commands run as they are; the ones
 taking an id take the fixture's.
+
+## Review evidence
+
+| Acceptance condition | Evidence |
+|---|---|
+| Every operation declares whether it reads or writes, and an entry that omits it fails the build the way a missing surface name does. | run: npx vitest run tests/integration/operation-registry.test.ts -t "declares whether it reads or writes" — verified: exit 0 at e73c898 |
+| A read-declared operation is proved to read: run against a populated workspace, it leaves every file and the commit byte-identical. | run: npx vitest run tests/integration/operation-effect.test.ts -t "leaves the workspace and the commit\|arguments here, so none can be skipped\|not vacuous\|does commit" — verified: exit 0 at e73c898 |
+| An operation that writes and is summarised as a report, a check or a validation fails by name, and the two that do so today are corrected. | run: npx vitest run tests/integration/operation-registry.test.ts -t "not summarised as a report" — verified: exit 0 at e73c898 |
+
+### Verification performed
+
+Every operation declares whether it reads or writes, and an entry that omits it fails the build the way a missing surface name does.: run: npx vitest run tests/integration/operation-registry.test.ts -t "declares whether it reads or writes"
+A read-declared operation is proved to read: run against a populated workspace, it leaves every file and the commit byte-identical.: run: npx vitest run tests/integration/operation-effect.test.ts -t "leaves the workspace and the commit|arguments here, so none can be skipped|not vacuous|does commit"
+An operation that writes and is summarised as a report, a check or a validation fails by name, and the two that do so today are corrected.: run: npx vitest run tests/integration/operation-registry.test.ts -t "not summarised as a report"
+
+### Deviations
+
+None.
+
+### Observations created
+
+F-hb96agns — a human-approved decision is the one record no command commits. F-dzx96s2m — a command's help text and its declaration are two descriptions of one operation, and nothing keeps them in agreement.
+
+### Known concerns
+
+The reporting-verb rule reads the summary, so it is a heuristic on prose: it catches an opening verb with no writing stem anywhere in the sentence, which is the shape both failures had. The execution proof is the load-bearing half. Declaring the effect by hand found two mislabels of my own within minutes, which is the argument for the run-it check rather than against the field. The suite's fixtures are never cleaned up and filled the disk mid-run today; that is separate and not recorded here, because it is the environment rather than the workspace.
