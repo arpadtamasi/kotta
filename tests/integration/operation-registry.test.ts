@@ -4,7 +4,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, test } from "vitest";
 import { createKottaMcpServer } from "../../src/commands/mcp.js";
-import { OPERATIONS, declaredCliCommands, declaredMcpTools, exposed, expandOperations } from "../../src/core/operations.js";
+import { OPERATIONS, OPERATION_EFFECTS, REPORTING_VERBS, WRITING_STEMS, declaredCliCommands, declaredMcpTools, exposed, expandOperations } from "../../src/core/operations.js";
 
 /**
  * The registry is total (BR-01m0nsyasfnjc9s4073r8zb33j): both surfaces are derived from the code
@@ -73,6 +73,29 @@ describe("the operation registry is total", () => {
       expect(operation.id, `${operation.id} identity`).toMatch(/^[a-z]+\.[a-z-]+$/);
       expect(exposed(operation.cli) || exposed(operation.mcp), `${operation.id} reaches no surface`).toBe(true);
     }
+  });
+
+  test("every operation declares whether it reads or writes", () => {
+    // Required, like a surface name: an entry that is silent about its effect is the caller being
+    // left to guess, which is the state this rule exists to end (BR-01m0nsyasfnjc9s4073r8zb33j).
+    for (const operation of OPERATIONS) {
+      expect(OPERATION_EFFECTS, `${operation.id} declares no effect`).toContain(operation.effect);
+    }
+    expect(expandOperations().every((operation) => OPERATION_EFFECTS.includes(operation.effect))).toBe(true);
+  });
+
+  test("an operation that writes is not summarised as a report", () => {
+    // "A declaration that names an operation for what it reports says so when the operation also
+    // writes." Two entries broke this: `validate` and `batch validate` both promote a backlog batch
+    // to defined and commit, under summaries that said only that they validate.
+    const misdescribed = OPERATIONS.filter((operation) => {
+      if (operation.effect !== "writes") return false;
+      const summary = operation.summary.toLowerCase();
+      const opens = REPORTING_VERBS.some((verb) => summary.startsWith(verb));
+      return opens && !WRITING_STEMS.some((stem) => new RegExp(`\\b${stem}`).test(summary));
+    });
+
+    expect(misdescribed.map((operation) => `${operation.id}: ${operation.summary}`)).toEqual([]);
   });
 
   test("declarations and expansions are unique, so no surface name has two owners", () => {

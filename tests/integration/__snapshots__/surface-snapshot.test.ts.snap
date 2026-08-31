@@ -18,7 +18,8 @@ Commands:
                               that would move it
   questions [options] [id]    Report the open questions an entity asks, or every
                               entity's at once
-  validate [options]          Validate the Kotta workspace
+  validate [options]          Validate the Kotta workspace, and commit a backlog
+                              batch this promotes to defined
   status [options]            Show canonical workspace status
   gap [options]               Report accepted spec promises without repository
                               evidence and enforcement without a spec trace
@@ -89,7 +90,8 @@ Options:
 ### kotta validate
 Usage: kotta validate [options]
 
-Validate the Kotta workspace
+Validate the Kotta workspace, and commit a backlog batch this promotes to
+defined
 
 Options:
   --json
@@ -448,7 +450,7 @@ Commands:
   new [options]
   add [options] <batch-id> <member-id>     Add a task, or another batch to group under this one
   remove [options] <batch-id> <member-id>  Remove a member task, or a grouped child batch
-  validate [options] <id>
+  validate [options] <id>                  Validate a batch and plan its waves, defining and committing one that validates from backlog
   start [options] <id>
   status [options] <id>
   close [options] <id>                     Complete a batch whose member tasks have all reached done, from any batch state
@@ -504,6 +506,9 @@ Options:
 
 ### kotta batch validate
 Usage: kotta batch validate [options] <id>
+
+Validate a batch and plan its waves, defining and committing one that validates
+from backlog
 
 Options:
   --json

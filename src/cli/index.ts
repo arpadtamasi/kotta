@@ -548,7 +548,9 @@ defineCommand(null, "questions [id]", renderQuestions)
   .action((id: string | undefined, options: { json?: boolean }) => print(openQuestions(id), Boolean(options.json)));
 
 defineCommand(null, "validate")
-  .description("Validate the Kotta workspace")
+  // Says what it does, because it does more than validate: a backlog batch that validates is
+  // promoted and committed (BR-01m0nsyasfnjc9s4073r8zb33j).
+  .description("Validate the Kotta workspace, and commit a backlog batch this promotes to defined")
   .option("--json")
   .action((options: { json?: boolean }) => print(validateWorkspace(), Boolean(options.json)));
 
@@ -754,6 +756,7 @@ defineCommand("batch", "remove <batch-id> <member-id>")
   .option("--json")
   .action((batchId: string, memberId: string, options: { json?: boolean }) => print(updateBatchTasks(batchId, memberId, "remove"), Boolean(options.json)));
 defineCommand("batch", "validate <id>")
+  .description("Validate a batch and plan its waves, defining and committing one that validates from backlog")
   .option("--json")
   .action((id: string, options: { json?: boolean }) => print(validateBatch(id), Boolean(options.json)));
 defineCommand("batch", "start <id>", renderBatchStart)
