@@ -1,13 +1,20 @@
 ---
 id: F-01m19wvgyccd54shrsxhd61x8s
 title: The published task schema forbids six fields the tool itself writes
-status: new
+status: resolved
 origin: agent
 observation_type: inconsistency
 confidence: high
 severity: medium
 discovered_during: T-01m19v5wx9wd9pf77rdvhtr3s5
 created_at: '2026-08-30'
+disposition: amend-spec
+resolved_at: '2026-08-31T18:55:42.105Z'
+approved_by: cli
+approved_at: '2026-08-31T18:55:42.105Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - BR-01m0sj2f8mxydc7zxz6y8xn6b1
 ---
 # F-01m19wvgyccd54shrsxhd61x8s — The published task schema forbids six fields the tool itself writes
 
