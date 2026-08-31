@@ -8,6 +8,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **The committed board bundle matches its source, or the suite names the file that does not.**
+  `ui-dist/` is tracked so a checkout can run the board without a build step, and `kotta ui` serves
+  that copy — which is exactly why it can go stale. On 2026-08-29 a corrected `ui/src/App.tsx` left
+  the tracked bundle still carrying a removed string, and the fix was invisible to anyone running
+  the board from a checkout. The suite now builds `ui/` into a scratch directory and compares it
+  file by file with the committed bundle, reporting each one that differs, is missing, or is left
+  over from an older build, followed by the one command that regenerates it. It builds the source
+  itself rather than trusting an earlier step, so it cannot report green for the person who ran the
+  tests without building; it writes nothing into the tracked bundle. The build deliberately does not
+  inherit the test runner's `NODE_ENV`: `test` selects a different React build and therefore a
+  different content hash, and a checker that cries wolf gets switched off.
+
 - **A specification id cited in prose resolves, or the workspace does not validate.** The
   specification has long said that a citation resolving to nothing is a broken reference wherever it
   stands; nothing read prose. `validateSpecWorkspace` checked frontmatter edges and stopped there,
