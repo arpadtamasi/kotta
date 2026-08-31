@@ -10,6 +10,8 @@ Every schema Kotta publishes states something the code actually holds to. For ea
 
 The check reads the published file, never a copy of it inside the suite. A test that restates the contract proves only that the restatement is self-consistent.
 
+The agreement is asserted in both directions. A schema that admits no field it has not declared promises that its list is the whole of the record, so every field the code writes is declared by it. A check that walks the schema's own list and finds the code satisfies it has read one direction and reported agreement: the fields it cannot see are precisely the ones added after it was written. Where a published schema forbids what the tool itself writes, the schema and the code disagree with every required field present, and the first to find out is whoever validates a real record against the contract Kotta publishes.
+
 ## Rationale
 
 Kotta ships six JSON schemas — task, observation, batch, claim, event, config — declaring forty-four required fields and six sets of permitted values between them. The code duplicates all of it in hand-maintained arrays, and exactly one pairing is checked: the observation enums. The other five are documentation wearing the costume of a contract, and anyone building against them is building on a promise nothing keeps.
