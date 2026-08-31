@@ -3,13 +3,20 @@ id: F-01m1bbczq2507gyqxmdzx96s2m
 title: >-
   A command's help text and its declaration are two descriptions of one
   operation, and nothing keeps them in agreement
-status: new
+status: resolved
 origin: agent
 observation_type: inconsistency
 confidence: high
 severity: medium
 discovered_during: T-01m1bb1fhe0fsmk05swhscx62j
 created_at: '2026-08-31'
+disposition: amend-spec
+resolved_at: '2026-08-31T18:55:41.048Z'
+approved_by: cli
+approved_at: '2026-08-31T18:55:41.048Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - BR-01m0nsyasfnjc9s4073r8zb33j
 ---
 # F-01m1bbczq2507gyqxmdzx96s2m — A command's help text and its declaration are two descriptions of one operation, and nothing keeps them in agreement
 
