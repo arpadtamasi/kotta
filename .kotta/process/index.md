@@ -29,4 +29,3 @@ None.
 ## New observations
 
 - a-human-approved-decision-is-the-one-record-no-command-commi-hb96agns
-- the-suite-was-green-here-and-red-in-ci-for-a-day-and-a-half--7m56gxge

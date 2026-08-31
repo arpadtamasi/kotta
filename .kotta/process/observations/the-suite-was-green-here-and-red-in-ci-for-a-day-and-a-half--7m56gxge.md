@@ -3,13 +3,21 @@ id: F-01m17n3dt0nm04maay7m56gxge
 title: >-
   The suite was green here and red in CI for a day and a half, and nothing here
   looked
-status: new
+status: resolved
 origin: agent
 observation_type: gap
 confidence: high
 severity: medium
 discovered_during: null
 created_at: '2026-08-29'
+disposition: amend-spec
+resolved_at: '2026-08-31T18:55:43.188Z'
+approved_by: cli
+approved_at: '2026-08-31T18:55:43.188Z'
+approval_basis: 'CLI --approve: observation.resolve'
+spec:
+  - BR-01m1cjrgkej23rfe962zk31z7r
+  - EX-01m1cjsz0k2pspzgx2rpm92vnm
 ---
 # F-01m17n3dt0nm04maay7m56gxge — The suite was green here and red in CI for a day and a half, and nothing here looked
 
