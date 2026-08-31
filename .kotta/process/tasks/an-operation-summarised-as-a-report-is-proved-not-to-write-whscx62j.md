@@ -1,7 +1,7 @@
 ---
 id: T-01m1bb1fhe0fsmk05swhscx62j
 title: An operation summarised as a report is proved not to write
-status: defined
+status: active
 origin: human
 types:
   - feature
@@ -13,7 +13,8 @@ depends_on: []
 blocks: []
 spec:
   - BR-01m0nsyasfnjc9s4073r8zb33j
-branch: null
+branch: >-
+  feat/T-01m1bb1fhe0fsmk05swhscx62j-an-operation-summarised-as-a-report-is-proved-not-to-write
 pull_request: null
 created_at: '2026-08-31'
 updated_at: '2026-08-31'
@@ -24,6 +25,12 @@ coverage:
     - BR-01m0nsyasfnjc9s4073r8zb33j
   'An operation that writes and is summarised as a report, a check or a validation fails by name, and the two that do so today are corrected.':
     - BR-01m0nsyasfnjc9s4073r8zb33j
+assigned_agent: claude
+worktree: .worktrees/T-01m1bb1fhe0fsmk05swhscx62j
+execution_mode: inherited
+branch_origin: created
+start_ref: HEAD
+start_commit: a82236b160f331b6ecb3bf0a26cba26645efc02a
 ---
 # T-01m1bb1fhe0fsmk05swhscx62j — An operation summarised as a report is proved not to write
 

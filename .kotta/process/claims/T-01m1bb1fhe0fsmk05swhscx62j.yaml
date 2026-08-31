@@ -1,0 +1,9 @@
+task: T-01m1bb1fhe0fsmk05swhscx62j
+agent: claude
+branch: feat/T-01m1bb1fhe0fsmk05swhscx62j-an-operation-summarised-as-a-report-is-proved-not-to-write
+worktree: .worktrees/T-01m1bb1fhe0fsmk05swhscx62j
+execution_mode: inherited
+origin: created
+start_ref: HEAD
+start_commit: a82236b160f331b6ecb3bf0a26cba26645efc02a
+started_at: 2026-08-31T07:21:27.325Z

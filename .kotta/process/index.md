@@ -12,11 +12,11 @@ None.
 
 ## Defined tasks
 
-- an-operation-summarised-as-a-report-is-proved-not-to-write-whscx62j
+None.
 
 ## Active tasks
 
-None.
+- an-operation-summarised-as-a-report-is-proved-not-to-write-whscx62j
 
 ## Review
 
