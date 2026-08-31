@@ -3,7 +3,7 @@ id: T-01m1ac3k3h718pjf70tressnp6
 title: >-
   The committed board bundle matches its source, or the suite says which file
   does not
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -19,7 +19,7 @@ branch: >-
   feat/T-01m1ac3k3h718pjf70tressnp6-the-committed-board-bundle-matches-its-source-or-the-suite-s
 pull_request: null
 created_at: '2026-08-30'
-updated_at: '2026-08-30'
+updated_at: '2026-08-31'
 coverage:
   'A committed bundle that no longer matches a build of its source fails the suite, naming every file that differs, is missing or is extra, and the one command that regenerates it.':
     - IF-01m0f0wn898ggsdxa0kh6t6tnw
@@ -34,6 +34,10 @@ branch_origin: created
 start_ref: HEAD
 start_commit: e56e81cd9f06266a75d6a7b566b5cb21f582e64e
 review_commit: 1a05b7d545f0a64e335c00435553d42207522b03
+resolution: completed
+approved_by: cli
+approved_at: '2026-08-31T07:04:37.953Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 # T-01m1ac3k3h718pjf70tressnp6 — The committed board bundle matches its source, or the suite says which file does not
 

@@ -1,9 +1,0 @@
-task: T-01m1ac3k3h718pjf70tressnp6
-agent: claude
-branch: feat/T-01m1ac3k3h718pjf70tressnp6-the-committed-board-bundle-matches-its-source-or-the-suite-s
-worktree: .worktrees/T-01m1ac3k3h718pjf70tressnp6
-execution_mode: inherited
-origin: created
-start_ref: HEAD
-start_commit: e56e81cd9f06266a75d6a7b566b5cb21f582e64e
-started_at: 2026-08-30T22:20:22.389Z
