@@ -1,7 +1,7 @@
 ---
 id: T-01m1bb1fhe0fsmk05swhscx62j
 title: An operation summarised as a report is proved not to write
-status: review
+status: done
 origin: human
 types:
   - feature
@@ -17,7 +17,7 @@ branch: >-
   feat/T-01m1bb1fhe0fsmk05swhscx62j-an-operation-summarised-as-a-report-is-proved-not-to-write
 pull_request: null
 created_at: '2026-08-31'
-updated_at: '2026-08-31'
+updated_at: '2026-09-01'
 coverage:
   'Every operation declares whether it reads or writes, and an entry that omits it fails the build the way a missing surface name does.':
     - BR-01m0nsyasfnjc9s4073r8zb33j
@@ -32,6 +32,10 @@ branch_origin: created
 start_ref: HEAD
 start_commit: a82236b160f331b6ecb3bf0a26cba26645efc02a
 review_commit: e73c898190d5e19b232d152062415b112e76d883
+resolution: completed
+approved_by: cli
+approved_at: '2026-09-01T11:58:49.530Z'
+approval_basis: 'CLI --approve: task.close'
 ---
 # T-01m1bb1fhe0fsmk05swhscx62j — An operation summarised as a report is proved not to write
 
