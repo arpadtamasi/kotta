@@ -4,7 +4,7 @@ form: business-rule
 title: 'The authoritative run is the verdict, not the local one'
 accepted:
   - >-
-    unimplemented: Landed on 2026-08-31 from the observation that this repository reported a local green after every wave for a day and a half while the gated run was red. Nothing keeps it yet. The obligation belongs in the rules file Kotta ships, and it is the follow-up work that puts it there which will name this id; until then the rule is agreed and unenforced, and saying so is the point of this admission.
+    unimplemented: Examined on 2026-09-01, the day after it landed, from the observation that this repository reported a local green after every wave for a day and a half while the gated run was red. Nothing keeps it yet. The obligation belongs in the rules file Kotta ships, and it is the follow-up work that puts it there which will name this id; until then the rule is agreed and unenforced, and saying so is the point of this admission.
 ---
 # The authoritative run is the verdict, not the local one
 

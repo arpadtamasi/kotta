@@ -6,7 +6,7 @@ subjects:
   - BR-01m1cjrgkej23rfe962zk31z7r
 accepted:
   - >-
-    unimplemented: Landed with the rule it illustrates and shares its state. It will carry evidence when the obligation reaches the shipped rules file.
+    unimplemented: Examined on 2026-09-01 with the rule it illustrates, and it shares that rule's state: agreed, and kept by nothing. It will carry evidence when the obligation reaches the shipped rules file.
 ---
 
 ## Given
