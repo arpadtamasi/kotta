@@ -4,6 +4,9 @@ form: example
 title: "Local green is reported while the gated run is red"
 subjects:
   - BR-01m1cjrgkej23rfe962zk31z7r
+accepted:
+  - >-
+    unimplemented: Landed with the rule it illustrates and shares its state. It will carry evidence when the obligation reaches the shipped rules file.
 ---
 
 ## Given
