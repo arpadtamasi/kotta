@@ -1,13 +1,19 @@
 ---
 id: F-01m1bbbby1bhzrxj3yhb96agns
 title: A human-approved decision is the one record no command commits
-status: new
+status: resolved
 origin: agent
 observation_type: inconsistency
 confidence: high
 severity: medium
 discovered_during: T-01m1bb1fhe0fsmk05swhscx62j
 created_at: '2026-08-31'
+disposition: create-task
+resolved_at: '2026-09-01T06:23:14.662Z'
+approved_by: cli
+approved_at: '2026-09-01T06:23:14.662Z'
+approval_basis: 'CLI --approve: observation.resolve'
+task: T-01m1dt5ppf303ss9ajj5h0z5yk
 ---
 # F-01m1bbbby1bhzrxj3yhb96agns — A human-approved decision is the one record no command commits
 
