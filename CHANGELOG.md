@@ -6,7 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- **`kotta validate` and `kotta batch validate` now say that they write.** Both promote a backlog
+  batch to `defined`, write the record, append a lifecycle event and commit — under summaries that
+  said only that they validate. The accepted rule has always held that an entry summarised as a
+  check, a report or a validation which changes stored state is a declaration that is wrong rather
+  than incomplete; nothing checked it. The two summaries are corrected, and the behaviour is
+  unchanged.
+
 ### Added
+
+- **Every operation declares whether it reads or writes, and a read is proved by running it.** The
+  registry gained a required `effect`, so an entry cannot be silent about it any more than it can
+  be silent about a surface name. Two checks hold it: a declaration that writes may not open its
+  summary with a reporting verb and say no more, and every `reads` declaration is run against a
+  populated fixture workspace with the whole workspace and `HEAD` compared before and after — so a
+  write that avoids `git status` by committing is caught too. The walk asserts it covers exactly the
+  declared reads, so an operation added tomorrow cannot pass by being unrunnable, and one case
+  proves the comparison is not vacuous by watching `validate` commit. Declaring the effect found
+  two more operations that were quietly mislabelled as writing: `observation validate` and
+  `claim list` only read.
 
 - **The committed board bundle matches its source, or the suite names the file that does not.**
   `ui-dist/` is tracked so a checkout can run the board without a build step, and `kotta ui` serves
