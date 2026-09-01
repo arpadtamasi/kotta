@@ -486,26 +486,6 @@ describe("the removed kind field", () => {
     expect(schema.required).not.toContain("kind");
     expect(schema.properties.kind).toBeUndefined();
   });
-
-  test("a batch that still carries it loads, with a warning", () => {
-    const root = realpathSync(mkdtempSync(join(tmpdir(), "kotta-migrate-kind-load-")));
-    git(root, "init", "-b", "main");
-    git(root, "config", "user.name", "Kotta Test");
-    git(root, "config", "user.email", "test@example.com");
-    run(root, ["init"]);
-    const created = run(root, ["task", "new", "--title", "Member", "--type", "feature"]).data as { id: string };
-    const batch = run(root, ["batch", "new", "--title", "With kind", "--goal", "Ship it"]).data as { id: string; path: string };
-    run(root, ["batch", "add", batch.id, created.id]);
-    const parsed = matter(readFileSync(batch.path, "utf8"));
-    writeFileSync(batch.path, matter.stringify(parsed.content, { ...parsed.data, kind: "sprint" }));
-
-    const result = invoke(root, ["batch", "validate", batch.id, "--json"]);
-    expect(result.status).toBe(0);
-    const report = JSON.parse(result.stdout) as { ok: boolean; data: { warnings: string[] } };
-    expect(report.ok).toBe(true);
-    expect(report.data.warnings.join("\n")).toContain("still carries the removed 'kind' field");
-    expect(result.stderr).toContain("kotta migrate");
-  });
 });
 
 describe("a workspace the size of a real one", () => {

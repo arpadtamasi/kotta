@@ -21,17 +21,6 @@ interface BatchData {
   [key: string]: unknown;
 }
 
-/**
- * The whole subtree as one work list, dependencies before the tasks that declare them. Derived
- * on every read rather than stored: membership is already answered by `.kotta/`, and a cached copy
- * would be a second source of truth for it.
- */
-export function flattenBatch(root: string, id: string): { tasks: string[]; waves: string[][] } {
-  const ids = [...new Set(subtreeTasks(batchTree(root, id)))];
-  const waves = ids.length ? planBatchWaves(ids, taskDependencies(root, ids)) : [];
-  return { tasks: waves.flat(), waves };
-}
-
 /** A short id the listings print resolves to a batch, so `batch add` routes it as one. */
 function isKnownBatch(root: string, id: string): boolean {
   try { findBatch(root, id); return true; } catch { return false; }
@@ -71,27 +60,6 @@ export function planBatchWaves(ids: string[], dependencies: Map<string, string[]
     for (const id of wave) { remaining.delete(id); completed.add(id); }
   }
   return waves;
-}
-
-/**
- * `kind` was removed with the vocabulary (D-01kz240dn155hb97h6px6n2p85): once the entity is called a
- * batch, `kind: batch` is a tautology, and `sprint`/`milestone`/`mission` never carried meaning. A file
- * that still has it loads — the field is simply ignored — but the reader says so once, and names the fix.
- */
-export const REMOVED_BATCH_KIND = "kind";
-
-export function batchKindWarning(id: string, data: Record<string, unknown>): string | undefined {
-  if (data[REMOVED_BATCH_KIND] === undefined) return undefined;
-  return `Warning: batch ${id} still carries the removed '${REMOVED_BATCH_KIND}' field (${String(data[REMOVED_BATCH_KIND])}); it is ignored. Run 'kotta migrate' to drop it.`;
-}
-
-const warnedKinds = new Set<string>();
-
-function warnOnBatchKind(id: string, data: Record<string, unknown>): void {
-  const warning = batchKindWarning(id, data);
-  if (!warning || warnedKinds.has(id)) return;
-  warnedKinds.add(id);
-  process.stderr.write(`${warning}\n`);
 }
 
 export function newBatch(options: { title: string; goal?: string; parallelism?: number }, repositoryRoot?: string) {
@@ -202,8 +170,6 @@ export function validateBatch(id: string, repositoryRoot?: string, options: { tr
   const entity = parseMarkdown(readFileSync(batch.path, "utf8"));
   const data = entity.data as BatchData;
   const errors: Array<{ code: string; message: string }> = [];
-  const warnings = [batchKindWarning(id, entity.data)].filter((warning): warning is string => warning !== undefined);
-  warnOnBatchKind(id, entity.data);
   if (String(data.id) !== id) errors.push({ code: "ID_MISMATCH", message: "Batch identifier does not match the requested id." });
   errors.push(...receiptErrors(entity.data));
   const body = sections(entity.content);
@@ -246,7 +212,7 @@ export function validateBatch(id: string, repositoryRoot?: string, options: { tr
       state = "defined";
     }
   }
-  return { ok: errors.length === 0, command: "batch validate", data: { id, title: entityTitle(batch.path), state, waves, children, warnings }, errors };
+  return { ok: errors.length === 0, command: "batch validate", data: { id, title: entityTitle(batch.path), state, waves, children }, errors };
 }
 
 /** Resolves the coordinator branch the batch must run on, creating or adopting it when safe. */
