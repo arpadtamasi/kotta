@@ -21,6 +21,8 @@ Kilenc mérés vezetett ide (2026-09-19 – 09-23): a snake és a goschool páro
 6. **A hierarchia levezetett, nem karbantartott.** A modulok a manifestekből, a node modulja a bizonyíték helyéről. Új mező nincs, mert az elavulna.
 7. **A közös mag ígérete hivatkozás.** A `corpus.search` két változata már ma elcsúszott a goschool és az assistant-core között.
 
+8. **A mai Kotta legacy lesz, nem szűnik meg.** (Operátori döntés.) A hét workspace használatban van; a `kotta-legacy` név megtartja a mai működést, amíg a migráció meg nem történik, és a `kotta` név az új termék felülete lesz.
+
 ## Risks / Trade-offs
 
 - **A formákban írás 2,3× lassabb** → a tervezés külön fázis, nem a beszélgetés része; az ár egyszer jelentkezik változtatásonként.

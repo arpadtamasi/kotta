@@ -11,6 +11,17 @@ A migráció SHALL a meglévő folyamat-tartalmat csak olvasható archívumba te
 - **WHEN** egy mai workspace-t migrálunk
 - **THEN** a spec node-jai változatlanok maradnak, a folyamat-adat archívumba kerül, és semmi nem törlődik
 
+### Requirement: A régi eszköz legacy néven megmarad
+A mai folyamatmotor SHALL `kotta-legacy` néven futtatható és telepíthető maradni, amíg a migráció le nem zajlik, és a migrált workspace-ben a folyamat-adat SHALL `legacy/` alá kerülni, csak olvashatóan.
+
+#### Scenario: A régi eszköz még fut
+- **WHEN** egy workspace még nincs migrálva
+- **THEN** a `kotta-legacy` a megszokott módon kezeli, az új `kotta` pedig megmondja, hogy migráció kell
+
+#### Scenario: Migrálás után
+- **WHEN** a workspace migrálva lett
+- **THEN** a folyamat-adat a `legacy/` alatt olvasható marad, és semmilyen parancs nem ír bele
+
 ### Requirement: OpenSpec-projekt importálható
 A rendszer SHALL egy meglévő narratív specet átvenni, és a tervezés-fázissal műszaki modellt SHALL belőle előállítani.
 

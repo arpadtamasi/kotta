@@ -24,6 +24,7 @@ A Kotta a **műszaki spec** gazdája lesz az OpenSpec narratív specje mellett, 
 - **Repók közötti hivatkozás:** a fogyasztó a mag ígéreteire hivatkozik, nem másolja őket, verzióhoz kötve.
 - **Narratíva:** változtatásonként desztillált beszélgetés, a (javaslat, válasz) párokkal, és azzal, **ki döntött** — ember, ember a gép javaslatára, vagy a gép egyedül.
 - **Nézet:** a board a modellt mutatja diagramként (use case, story map, entitás-térkép, állapotgépek), a jelöléssel, mi kimondott és mi következtetett.
+- **A mai Kotta legacy lesz, nem szűnik meg.** A folyamatmotor `kotta-legacy` néven marad futtatható és telepíthető, a `kotta` név az új terméké; a migrált workspace-ekben a folyamat-adat `legacy/` alá kerül, csak olvashatóan.
 - **BREAKING:** kiesik a task, a claim, a worktree-kezelés, a batch, a review-kapu, az observation-életciklus és a döntési rekord. A meglévő workspace-ek `process/` adata archívumba kerül, csak olvashatóan.
 
 ## Capabilities
@@ -42,4 +43,4 @@ A Kotta a **műszaki spec** gazdája lesz az OpenSpec narratív specje mellett, 
 - **Kiesik:** `src/commands/task.ts`, `batch.ts`, `execute.ts`, `approval.ts` nagy része, `sweep.ts`, `observation.ts`, `claim.ts`, `decision.ts`, `conversation.ts`, és a hozzájuk tartozó `core/` modulok.
 - **Marad, átalakul:** a form-regiszter, a `validate`, a `gap`, a `sync`, a `ui` szervere, a `migrate`.
 - **Új:** a tervezés-fázis, a modul-ellenőrzések, a narratíva-desztilláció, a diagram-nézetek, az import.
-- Az `@arpadtamasi/kotta` felülete törik; a változás major verzió.
+- Az `@arpadtamasi/kotta` felülete törik; a változás major verzió. A mai felület `kotta-legacy` néven marad elérhető, hogy a hét meglévő workspace ne álljon meg a migráció előtt.
