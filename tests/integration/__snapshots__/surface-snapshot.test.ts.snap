@@ -7,44 +7,50 @@ Usage: kotta [options] [command]
 The technical specification beside your code: forms, nodes, evidence
 
 Options:
-  -V, --version               output the version number
-  -h, --help                  display help for command
+  -V, --version                 output the version number
+  -h, --help                    display help for command
 
 Commands:
-  init [options]              Create a .kotta workspace: the form registry, the
-                              rules file, the skills
-  migrate [options]           Carry a pre-1.0 workspace to version 6: the
-                              process state into a read-only legacy/ archive,
-                              the specification untouched
-  validate [options]          Validate the specification: every node against its
-                              form, every edge against the node it names
-  gap [options]               Report accepted spec promises without repository
-                              evidence and enforcement without a spec trace
-  modules [options]           List the modules the manifests declare; check
-                              their boundaries; publish a module's promises
-  questions [options] [id]    Report the open questions a specification draft
-                              asks, or every draft's at once
-  spec                        Draft specification nodes from the registered
-                              forms
-  plan [options] <change>     Measure a change's model delta against the
-                              accepted model and write its planning.md:
-                              structure, conflicts, silences, drift, provenance
-  approve [options] <change>  Record the human's yes to a planned change's model
-                              delta: the one gate, written as approval.yaml
-  archive [options] <change>  Land an approved change: merge its model into the
-                              specification, regenerate the narrative, move it
-                              to the archive
-  sync [options]              Install the skills Kotta ships, add newly shipped
-                              forms, and refresh the workspace rules file
-  doctor [options]            Report whether Kotta is reachable from where its
-                              work happens
-  integrate [options] <host>  Connect Kotta's specification tools to a calling
-                              agent host
-  mcp [options]               Serve Kotta's read-only specification tools to the
-                              calling chat over stdio MCP
-  ui [options]                Serve the local read-only board of the
-                              specification
-  help [command]              display help for command
+  init [options]                Create a .kotta workspace: the form registry,
+                                the rules file, the skills
+  migrate [options]             Carry a pre-1.0 workspace to version 6: the
+                                process state into a read-only legacy/ archive,
+                                the specification untouched
+  validate [options]            Validate the specification: every node against
+                                its form, every edge against the node it names
+  gap [options]                 Report accepted spec promises without repository
+                                evidence and enforcement without a spec trace
+  modules [options]             List the modules the manifests declare; check
+                                their boundaries; publish a module's promises
+  questions [options] [id]      Report the open questions a specification draft
+                                asks, or every draft's at once
+  spec                          Draft specification nodes from the registered
+                                forms
+  plan [options] <change>       Measure a change's model delta against the
+                                accepted model and write its planning.md:
+                                structure, conflicts, silences, drift,
+                                provenance
+  approve [options] <change>    Record the human's yes to a planned change's
+                                model delta: the one gate, written as
+                                approval.yaml
+  archive [options] <change>    Land an approved change: merge its model into
+                                the specification, regenerate the narrative,
+                                move it to the archive
+  narrative [options] <change>  Distil an agent session log into the change's
+                                conversation.md: intent, proposals with the
+                                human's answers, paths turned down, questions
+  sync [options]                Install the skills Kotta ships, add newly
+                                shipped forms, and refresh the workspace rules
+                                file
+  doctor [options]              Report whether Kotta is reachable from where its
+                                work happens
+  integrate [options] <host>    Connect Kotta's specification tools to a calling
+                                agent host
+  mcp [options]                 Serve Kotta's read-only specification tools to
+                                the calling chat over stdio MCP
+  ui [options]                  Serve the local read-only board of the
+                                specification
+  help [command]                display help for command
 
 ### kotta init
 Usage: kotta init [options]
@@ -205,6 +211,19 @@ narrative, move it to the archive
 Options:
   --json
   -h, --help  display help for command
+
+### kotta narrative
+Usage: kotta narrative [options] <change>
+
+Distil an agent session log into the change's conversation.md: intent, proposals
+with the human's answers, paths turned down, questions
+
+Options:
+  --from <path>   A Claude Code or Codex session log (.jsonl), or a directory of
+                  them
+  --since <time>  Only messages at or after this ISO 8601 time
+  --json
+  -h, --help      display help for command
 
 ### kotta sync
 Usage: kotta sync [options]
