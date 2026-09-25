@@ -54,11 +54,12 @@ export function provenanceCounts(nodes: SpecNode[]): ProvenanceCounts {
   return { levels, deciders, unmarked };
 }
 
-/** A source is `<file> · <requirement or section>`; the section is optional. */
+/** A source is `<file> · <requirement or section>`, or `<file>.md#<section>`; the section is optional. */
 export function parseSource(source: string): { file: string; section: string | null; narrative: boolean } {
   const [file, ...rest] = source.split(/\s+·\s+/);
-  const section = rest.join(" · ").trim() || null;
-  const trimmed = file.trim();
+  const anchor = rest.length ? null : /^([^#\s]+\.md)#(.+)$/i.exec(file.trim());
+  const section = (anchor ? anchor[2] : rest.join(" · ")).trim() || null;
+  const trimmed = anchor ? anchor[1] : file.trim();
   // Only the change folder's narrative is fetched; any other file is shown as the text it is.
   const narrative = /^openspec\/changes\/(?:[^/]+\/)+[^/]+\.md$/i.test(trimmed) && !trimmed.split("/").some((part) => part === ".." || part === ".");
   return { file: trimmed, section, narrative };

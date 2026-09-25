@@ -109,6 +109,11 @@ describe("a node's sources", () => {
     expect(parseSource("openspec/specs/x/spec.md").narrative).toBe(false);
   });
 
+  it("reads a `#` anchor as the cited section, as `kotta narrative` suggests", () => {
+    expect(parseSource("openspec/changes/checkout/conversation.md#J2")).toEqual({ file: "openspec/changes/checkout/conversation.md", section: "J2", narrative: true });
+    expect(narrativeSection("## Javaslatok\n\n### J1 · 10:04\n\nigen\n\n### J2 · 10:09\n\n> mehet\n", "J2")).toBe("### J2 · 10:09\n\n> mehet");
+  });
+
   it("finds the cited section down to the next heading at its level", () => {
     const text = "# T\n\n## Accounting\n\nyes\n\n### Detail\n\nalso\n\n## Other\n\nno\n";
     expect(narrativeSection(text, "accounting")).toBe("## Accounting\n\nyes\n\n### Detail\n\nalso");
