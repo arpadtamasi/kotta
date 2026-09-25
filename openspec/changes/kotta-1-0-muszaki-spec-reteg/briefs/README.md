@@ -13,7 +13,7 @@ Ez a mappa az OpenSpec-change végrehajtásának ágens-briefjeit tartja, hogy b
 | összefésülés: 2A+2B+2C egy fejen | `spike/kotta-1.0` @ `6e7711b` | kész, 275 teszt zöld, 16 parancs |
 | végpróba a kaszinón: migrate → plan → approve → archive | `/Users/rp/Dev/phd/oktatas/kaszino-e2e` | kész; 4 javítandó (3A) |
 | 3A. a végpróba javításai | `spike/k3-fix` (worktree `../kotta-k3-fix`) | nem indult |
-| 3B. narratíva-desztilláció (`kotta narrative`) | `spike/k3-narrative` (worktree `../kotta-k3-narrative`) | nem indult |
+| 3B. narratíva-desztilláció (`kotta narrative`) | `spike/k3-narrative` (worktree `../kotta-k3-narrative`) | kész, 293 teszt zöld (+18); `kotta narrative <change> --from <napló\|könyvtár> [--since] [--json]` Claude Code- és Codex-naplóból írja a `conversation.md`-t (SZ/J/E/K/P tételek, szűrés fajtánként); a `plan` (f) listázza a fel nem oldható `conversation.md`-hivatkozásokat; a board a `#rész` alakot is olvassa; döntések a `DECISIONS.md` „Phase 3B” részében; összefésüléskor a CLI-felület snapshotja újragenerálandó |
 | 3C. OpenSpec-import (`kotta import openspec`) | `spike/k3-import` (worktree `../kotta-k3-import`) | nem indult |
 | 3D. a workspace-ek migrálása, kiadás | — | nem kezdtük |
 

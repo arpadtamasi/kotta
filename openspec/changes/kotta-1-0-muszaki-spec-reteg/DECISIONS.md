@@ -200,3 +200,58 @@ Phase 2B (module boundary and evidence levels, `tasks.md` 1.2, 2, 5.1).
   container and fails on a serious or critical violation, with `color-contrast` off because jsdom
   computes no colours. Both themes were drawn once in a real Chromium to check that Mermaid renders
   and that a drawn node opens its drawer.
+
+Phase 3B (narrative distillation, `kotta narrative`).
+
+- **3B: the cited part is written ` · <part>`, and `#<part>` is accepted too.** The brief asks for
+  `conversation.md#<szakasz>`; the shared provenance contract and the board's `parseSource` use
+  `<file> · <part>`, and a `#` source was not recognised as narrative. Both now resolve (the board
+  reads a `.md#part` anchor); the skill and the distillate teach the ` · ` form.
+- **3B: every item is a heading with an id and a UTC minute** — `SZ1` intent, `J1` approved
+  proposal, `E1` path turned down, `K1` question, `P1` unpaired — because the board cites by "first
+  heading whose text contains the part". Times are UTC so the file is the same on every machine;
+  ids number per kind in time order across all logs read.
+- **3B: pairing reads only the agent message directly before a human message**, and within a Claude
+  Code turn only its last text entry (the agent's final reply). The agent message is a *proposal*
+  (options with a question, or a proposal phrase: javaslom, ajánlom, szeretnéd, ha akarod, mehet?,
+  I suggest, should I, want me to…), a *question* (a `?` in its last two paragraphs), or a
+  *statement*. A reply is a *yes* (a short run of yes-words, or up to eight words starting with one
+  and no "de/but/viszont"), a *pick* among offered options (`b`, `az a`, `B-t`), a *no* (starts with
+  nem/ne/no/inkább/instead…), or unclear. Yes or a pick of the recommended option → `J`; no, or a pick
+  of a different option than the one the agent recommended → `E`; any reply to a question → `K`;
+  unclear, or a bare "mehet" after a statement → `P`. A human message after a statement, or with no
+  agent message before it, is intent. Every human message appears exactly once, verbatim; the agent's
+  text is shortened from the front to ~900 characters.
+- **3B: known limits of the heuristic.** An imperative yes ("takarítsd", "csináld meg az agentet") is
+  unclear, not a yes; a proposal buried in an earlier text entry of the same turn is not seen; a "no"
+  to "should I keep X?" is filed as a path turned down even when it agrees with the agent's own lean;
+  a recommendation is read only when the agent names one option letter or number. Real logs from this
+  machine gave mostly intents and a few `J`/`P` items; the rest is the human's call in `P`.
+- **3B: a hand-edited distillate is never overwritten.** The file carries `generated_by: kotta
+  narrative` and a `digest` of its body; a file without the marker, or whose body no longer matches,
+  is refused with `NARRATIVE_EDITED` and left alone. There is no `--force`: moving the file aside is
+  the override. `--since` is a filter, not an append.
+- **3B: the filter runs over the rendered file, not the raw log.** It counts only what would have
+  been written (a secret in a truncated agent paragraph is not counted). Kinds: `api-kulcs` (`sk-…`),
+  `github-token` (`gh[opsur]_…`, `github_pat_…`), `aws-kulcs` (`AKIA`/`ASIA`), `jwt`, `titok-érték`
+  (the value after `password:`/`token=`/`api_key:`/`Authorization: Bearer`), `e-mail`, `telefonszám`
+  (`+…`, `06 …` or `(…)` forms with 9–15 digits, so dates, versions and ids stay), and
+  `otthoni-útvonal` (`/Users/<n>/`, `/home/<n>/`, `C:\Users\<n>\` → `~`, and the `-Users-<n>-`
+  folder names Claude Code gives projects). The log paths under "Nyers forrás" are shortened the same
+  way but not counted: they are the command's record, not the conversation.
+- **3B: what is skipped.** Claude Code: `isSidechain`, tool-only entries (tool_use, tool_result,
+  thinking), `isMeta` and compact summaries, `<system-reminder>`/`<task-notification>`/
+  `<local-command-…>`/`<command-…>`, `Base directory for this skill`, `[Request interrupted…`,
+  image-only messages, human messages over 4000 characters; `<system-reminder>` and `<ide_…>` blocks
+  inside a human message are cut out, the rest kept. Codex: non-message response items, `developer`
+  role, `# AGENTS.md instructions`, `<environment_context>`, `<skill>`, `<turn_aborted>`, image tags;
+  the IDE extension's "# Context from my IDE setup" keeps only what follows "## My request for
+  Codex:". Every skip is counted by reason under "Nyers forrás". A file under a `--from` directory
+  that is neither format is named and skipped; a single `--from` file that is neither is refused.
+- **3B: `plan` reads the conversation, it does not require it.** `ChangeAnalysis.conversation` names
+  the file and each delta-node source citing a `conversation.md` that does not resolve (not the
+  repo-relative path, no such file, no part named, no heading naming the part); `planning.md` lists
+  them under (f). Non-blocking: the provenance block itself is still measured in (a).
+- **3B: the rules template names `kotta narrative`; this repository's own `.kotta/AGENTS.md` was not
+  re-synced** (upkeep for 3D). The CLI surface snapshot was regenerated; the new command widens the
+  help column, so the whole snapshot re-wraps and will conflict with 3A/3C — regenerate at merge.
