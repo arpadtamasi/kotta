@@ -1,0 +1,32 @@
+---
+id: BR-01m0qtshfqhcrrqtz051zm9svr
+form: business-rule
+title: "Every accepted promise is kept or admitted"
+capability: evidence
+provenance:
+  level: partly-inferred
+  decided_by: agent-decided
+  sources:
+    - "openspec/changes/bizonyitek-csak-kodbol/specs/evidence/spec.md · Requirement: Minden elfogadott ígéretről látszik, megépült-e"
+    - "openspec/changes/bizonyitek-csak-kodbol/proposal.md · What Changes"
+  quote: "Bizonyíték SHALL csak olyan fájl lehet, amely az ígéretet betartja vagy ellenőrzi — kód, teszt, parancsdefiníció —; a specifikáció és annak bármely másolata SHALL NOT bizonyítéknak számítani."
+  inferred: "Where the sentence sits in the accepted rule, and the capability it now belongs to, were chosen by the agent; the accepted text is otherwise unchanged."
+---
+
+## Rule
+
+An accepted specification node either has evidence — code, a test, or a command definition naming it by its id — or it declares an accepted implementation gap saying why it does not yet. There is no third state. Evidence SHALL be what keeps or checks the promise — code, a test, a command definition — and never what states or copies it: the specification and every copy of it, in the workspace, in a change, in the archive or in a generated narrative, MUST NOT count as evidence. `kotta gap` refuses a workspace holding one: it names each node that is neither, says where evidence was sought, and exits non-zero. Admitting a gap does not dispose of a promise. It is a readable statement that the promise stands and is not yet kept, and removing the admission is part of the work that keeps it.
+
+A promise is evidenced by citation: the site that keeps it names the node id, and the report looks for that identifier and nothing else, because the check has to be fast and exact (D-01m14bh1g2pk1fdwm9wpsmx9zg). Naming the node is therefore a term of the agreement, not a habit of this repository: a task that keeps a promise without citing it leaves the promise unaccounted for, however well the code behaves, and the refusal asks for the citation rather than for an implementation the reader may already have written.
+
+A promise whose work has not begun is not an unaccounted one. Where an agreement lands before the code that keeps it - the order this project's own shaping advises - the ratchet asks what is true of each node, not whether it is implemented yet, and a workspace that has just written its specification is not refused for having written it. What the ratchet exists to stop is a promise nobody has accounted for, and "the work has not started" is an accounting.
+
+## Rationale
+
+Coverage already binds the front of the lifecycle: a task cannot become defined until every acceptance condition cites a node that has landed. Nothing bound the other end, so the number of accepted promises with no evidence could only grow. On the day this rule was written it stood at 108 of 119 nodes; eleven were named anywhere in the repository.
+
+Driving that number to zero is not the remedy and would be the opposite of one — writing node ids into comments produces exactly the narration this project keeps removing. The remedy is to make the number a choice. Every promise sits in one of two columns, and a promise reaches the admitted column only when someone writes down why it is there.
+
+## Scope
+
+`kotta gap`, and the specification nodes it reads. Not `validate`, which never reads the repository tree and would have to scan all of it to answer this. Not the task lifecycle: no gate moves, no task changes shape, and a task's coverage map means what it meant before.
