@@ -14,3 +14,18 @@ az import SHALL figyelmeztetésként megnevezni a képességet, amelynek nincs k
 #### Scenario: A Purpose szöveget és megjegyzést is tartalmaz
 - **WHEN** a `## Purpose` szakaszban a megjegyzés mellett próza is áll
 - **THEN** az import a prózából vázol goal-t, a megjegyzés nélkül
+
+### Requirement: A migráció nem bukik rendszer-metaadaton
+A `kotta migrate` SHALL figyelmen kívül hagyni az operációs rendszer metaadatfájljait
+(`.DS_Store`, `Thumbs.db`, `desktop.ini`) a régi alak könyvtárainak olvasásánál, és SHALL
+megnevezni a tervben, mit hagyott figyelmen kívül. Minden más ismeretlen bejegyzésen SHALL
+továbbra is megállni írás nélkül.
+
+#### Scenario: Finder-metaadat a régi workspace-ben
+- **WHEN** egy v2-es workspace `batches/` könyvtárában `.DS_Store` fájl van
+- **THEN** a migráció lefut, a fájl nem kerül az archívumba, és a terv megnevezi, hogy figyelmen
+  kívül hagyta
+
+#### Scenario: Ismeretlen fájl a régi workspace-ben
+- **WHEN** egy régi alakú könyvtárban a migráció számára ismeretlen, nem metaadat bejegyzés van
+- **THEN** a migráció megáll, megnevezi a bejegyzést, és semmit nem ír

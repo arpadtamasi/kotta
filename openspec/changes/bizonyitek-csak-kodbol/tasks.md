@@ -9,7 +9,10 @@
 - [ ] 2.1 A Purpose (és a követelmény/scenario) szövege megjegyzések levágása után mérve.
 - [ ] 2.2 Üres Purpose → nincs goal-vázlat, figyelmeztetés a képesség nevével; teszt a csak-megjegyzés és a próza+megjegyzés esetre.
 
-## 3. Dokumentáció és ellenőrzés
-- [ ] 3.1 `docs/modules-and-evidence.md` „Known limit” pontja törölve, a kizárási szabály leírva.
-- [ ] 3.2 A kaszinó-workspace-en (`/Users/rp/Dev/phd/oktatas/kaszino-e2e`) a `gap` 184 cited → 0 cited; a szám a CHANGELOG-ba.
-- [ ] 3.3 `npm run typecheck`, `npm test`, CHANGELOG-bejegyzés.
+## 3. Migráció
+- [ ] 3.1 A lapítás figyelmen kívül hagyja a rendszer-metaadatfájlokat és a tervben megnevezi; teszt `.DS_Store`-ral és egy valódi ismeretlen fájllal.
+
+## 4. Dokumentáció és ellenőrzés
+- [ ] 4.1 `docs/modules-and-evidence.md` „Known limit” pontja törölve, a kizárási szabály leírva.
+- [ ] 4.2 A kaszinó-workspace-en (`/Users/rp/Dev/phd/oktatas/kaszino-e2e`) a `gap` 184 cited → 0 cited; a szám a CHANGELOG-ba.
+- [ ] 4.3 `npm run typecheck`, `npm test`, CHANGELOG-bejegyzés.

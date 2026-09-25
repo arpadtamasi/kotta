@@ -21,6 +21,10 @@ Ugyanezen a napon került elő egy kisebb import-hiba: a `kotta import openspec`
 `## Purpose` szakaszból is célt vázol, amely csak a generátor „nincs cél-node” megjegyzését
 tartalmazza. A megjegyzés nem szöveg; nem lehet belőle node.
 
+Harmadik, a migrációknál (2026-09-25, flowbench): a `kotta migrate` egy v2-es workspace
+könyvtárában talált `.DS_Store` fájlon megállt („unexpected entry”), és nem írt semmit. A
+rendszer-metaadat nem a workspace része; a migráció nem bukhat rajta.
+
 ## What Changes
 
 - **A specifikáció bármely másolata nem bizonyíték.** A bizonyíték-szűrő kizárja az `openspec/`
@@ -38,13 +42,15 @@ tartalmazza. A megjegyzés nem szöveg; nem lehet belőle node.
 ## Capabilities
 
 ### Modified Capabilities
+- `migration`: a `migrate` a rendszer-metaadatfájlokat (`.DS_Store`, `Thumbs.db`, `desktop.ini`)
+  figyelmen kívül hagyja a régi alak lapításánál, és megnevezi, mit hagyott figyelmen kívül.
 - `evidence`: mi számít bizonyítéknak, és mi nem — a specifikáció másolatai kizárva.
 - `migration`: az OpenSpec-import nem készít node-ot olyan szakaszból, amely csak megjegyzés.
 
 ## Impact
 
 - `src/core/modules.ts` (`isEvidencePath`, a fájlosztályozás), `src/commands/gap.ts`,
-  `src/commands/modules.ts`, `src/commands/import.ts`; tesztek a `tests/unit` és
+  `src/commands/modules.ts`, `src/commands/import.ts`, `src/commands/migrate.ts`; tesztek a `tests/unit` és
   `tests/integration` alatt; `docs/modules-and-evidence.md` „Known limit” pontja törlendő.
 - Viselkedésváltozás minden 1.0-s workspace-ben, ahol archivált change van: a `cited` szintű
   node-ok száma csökken — ez a helyes szám. A kaszinón várhatóan 184 → 0 cited, amíg a kód nem
