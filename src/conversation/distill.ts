@@ -64,8 +64,11 @@ export function recommendedOption(text: string, options: string[]): string | und
     const option = OPTION_LINE.exec(line);
     if (option && /\b(?:ajánlott|javasolt|recommended|preferred)\b|\(ajánlom\)|\(javaslom\)/i.test(line)) return (option[1] ?? option[2] ?? option[3]).toLowerCase();
   }
-  const named = /(?:javaslom|ajánlom|javaslatom|recommend|I(?:'d| would) go with|I(?:'d| would) pick|prefer)[^\n?]{0,40}?(?:\b|\*\*|\()([A-D1-4])(?:\*\*|\)|-[ae]?t\b|\b)/.exec(plain);
-  const candidate = named?.[1]?.toLowerCase();
+  const named = /(?:[Jj]avaslom|[Aa]jánlom|[Jj]avaslatom|[Rr]ecommend|I(?:'d| would) go with|I(?:'d| would) pick|prefer)[^\n?]{0,40}?(?:\b|\*\*|\()([A-D1-4])(?:\*\*|\)|-[ae]?t\b|\b)/.exec(plain);
+  // Hungarian puts the verb last: "az a) változatot ajánlom", "a B-t javaslom". A lowercase letter
+  // counts only with its bracket or suffix, or it is the article "a".
+  const after = /(?:^|[\s(*])([A-Da-d1-4](?=\)|-[ae]?t\b|\*\*)|[A-D1-4](?=\s))(?:\)|-[ae]?t|\*\*)?\s*(?:(?:változatot|opciót|utat|megoldást)\s+)?(?:ajánlom|javaslom)/.exec(plain);
+  const candidate = (named?.[1] ?? after?.[1])?.toLowerCase();
   return candidate && options.includes(candidate) ? candidate : undefined;
 }
 

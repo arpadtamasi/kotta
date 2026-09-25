@@ -158,14 +158,16 @@ function readCodex(entries: Entry[], skip: (reason: SkipReason) => void): Uttera
     if (payload.role !== "user") { skip("system"); continue; }
     // Each input block is judged on its own: Codex sends the environment and the request as siblings.
     const kept: string[] = [];
+    let judged = false;
     for (const text of blockTexts(payload.content, ["input_text", "text"]).texts) {
       const reason = humanSkipReason(text);
-      if (reason) { skip(reason); continue; }
+      if (reason) { skip(reason); judged = true; continue; }
       const unwrapped = unwrapHuman(text);
       if (unwrapped) kept.push(unwrapped);
     }
     const text = kept.join("\n\n").trim();
-    if (!text) { if (Array.isArray(payload.content) && payload.content.length) skip("image"); continue; }
+    // Nothing left and nothing skipped for a reason: the message was only an image and its tags.
+    if (!text) { if (!judged) skip("image"); continue; }
     if (text.length > PASTE_LIMIT) { skip("paste"); continue; }
     utterances.push({ speaker: "human", timestamp, text });
   }

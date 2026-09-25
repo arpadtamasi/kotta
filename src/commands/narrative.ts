@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join, relative, resolve } from "node:path";
+import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { join, relative, resolve, sep } from "node:path";
 import { parseMarkdown } from "../core/markdown.js";
 import { distill, type Distillate, type Pair } from "../conversation/distill.js";
 import { REDACTION_KINDS, redact, type RedactionCounts } from "../conversation/redact.js";
@@ -127,14 +127,23 @@ function body(change: string, result: Distillate): string[] {
   return lines;
 }
 
+/**
+ * A log's path as the file shows it: repository-relative inside the repository, home-relative outside.
+ * This is the command's own record of where it read, not the conversation, so it is not counted as
+ * something the filter removed.
+ */
+function shownPath(root: string, path: string): string {
+  return path.startsWith(root + sep) ? relative(root, path).split(sep).join("/") : redact(path).text;
+}
+
 function sourceLines(root: string, sources: NarrativeSource[], since: string | null, unrecognized: string[], all: Utterance[]): string[] {
   const lines = ["## Nyers forrás", ""];
   for (const source of sources) {
     const skipped = Object.entries(source.skipped).map(([reason, count]) => `${SKIP_LABEL[reason as SkipReason]} ${count}`).join(", ");
-    const path = source.path.startsWith(root) ? relative(root, source.path) : source.path;
+    const path = shownPath(root, source.path);
     lines.push(`- \`${path}\` (${source.format === "codex" ? "Codex" : "Claude Code"}): ${source.human + source.agent} üzenet feldolgozva (ember ${source.human}, ágens ${source.agent})${skipped ? `; kihagyva: ${skipped}` : ""}.`);
   }
-  for (const path of unrecognized) lines.push(`- \`${path}\`: nem munkamenet-napló, kihagyva.`);
+  for (const path of unrecognized) lines.push(`- \`${shownPath(root, path)}\`: nem munkamenet-napló, kihagyva.`);
   const times = all.map((utterance) => utterance.timestamp).filter(Boolean).sort();
   if (times.length) lines.push("", `Időszak: ${formatTime(times[0])} – ${formatTime(times[times.length - 1])}.${since ? ` Csak a ${formatTime(since)} utáni üzenetek.` : ""}`);
   lines.push("");
@@ -174,7 +183,8 @@ export function narrativeCommand(name: string, options: NarrativeOptions): Narra
     since = new Date(options.since);
     if (Number.isNaN(since.getTime())) throw new Error(`--since '${options.since}' is not a time; give an ISO 8601 timestamp such as 2026-09-25T10:00:00Z.`);
   }
-  const from = resolve(options.from);
+  const given = resolve(options.from);
+  const from = existsSync(given) ? realpathSync(given) : given;
   const files = sessionFiles(from);
   const sessions: Session[] = [];
   const unrecognized: string[] = [];
@@ -217,8 +227,8 @@ export function narrativeCommand(name: string, options: NarrativeOptions): Narra
     "---",
     `change: ${change}`,
     `generated_by: ${GENERATOR}`,
-    `generated_at: ${(options.now ?? new Date()).toISOString()}`,
-    ...(sinceText ? [`since: ${sinceText}`] : []),
+    `generated_at: "${(options.now ?? new Date()).toISOString()}"`,
+    ...(sinceText ? [`since: "${sinceText}"`] : []),
     `digest: "${digest(text)}"`,
     "---",
     "",
