@@ -33,6 +33,7 @@
           <a href="#why">Why</a>
           <a href="#how">How it works</a>
           <a href="#install">Install</a>
+          <a class="nav-docs" href="https://github.com/arpadtamasi/kotta/tree/main/docs">Docs <span aria-hidden="true">↗</span></a>
           <a class="nav-support" href="https://github.com/arpadtamasi/kotta/issues/new?template=bug.yml" target="_blank" rel="noreferrer noopener">Report a bug <span aria-hidden="true">↗</span></a>
           <a class="nav-github" href="https://github.com/arpadtamasi/kotta">GitHub <span aria-hidden="true">↗</span></a>
         </nav>
@@ -178,6 +179,28 @@
         </div>
       </section>
 
+      <section class="board-view" id="board" data-unit="board" aria-labelledby="board-title">
+        <div class="container board-layout">
+          <div class="board-copy">
+            <h2 id="board-title">See what the machine decided.</h2>
+            <p class="board-lede"><code>kotta ui</code> draws the accepted model as diagrams and marks every node with where it came from. One filter leaves only what the agent decided on its own: the list to read before you say yes.</p>
+            <div class="decision-aid">
+              <h3 id="decision-title">Kotta, or OpenSpec alone?</h3>
+              <p><b>OpenSpec alone</b> is enough for a small change you make on your own, when the requirements and scenarios say everything the code needs.</p>
+              <p><b>Add Kotta</b> when rules, states and interfaces must survive many changes, when an agent fills in gaps and you need to see what it decided, or when modules and repositories rely on one another’s promises.</p>
+            </div>
+            <p class="board-links">
+              <a href="https://github.com/arpadtamasi/kotta/blob/main/docs/getting-started.md">Ten-minute walkthrough <span aria-hidden="true">↗</span></a>
+              <a href="https://github.com/arpadtamasi/kotta/tree/main/docs">Read the docs <span aria-hidden="true">↗</span></a>
+            </p>
+          </div>
+          <figure class="board-shot">
+            <img src="../assets/docs/board-agent-decided.png" width="1440" height="900" loading="lazy" alt="The Kotta board on a card-game project, filtered to the nodes the agent decided on its own, each row with its provenance badges." />
+            <figcaption>The board on a real project: 184 nodes, 74 of them decided by the agent alone.</figcaption>
+          </figure>
+        </div>
+      </section>
+
       <section class="quickstart" id="install" data-unit="quickstart" aria-labelledby="install-title">
         <div class="container quickstart-layout">
           <div class="quickstart-copy">
@@ -229,6 +252,7 @@ kotta archive &lt;change&gt;</code></pre>
         <div class="container footer-bar-inner">
           <a class="wordmark footer-wordmark" href="#top" aria-label="Back to top">Kotta</a>
           <span>MIT licensed · local-first · repository-native</span>
+          <a href="https://github.com/arpadtamasi/kotta/tree/main/docs">Docs <span aria-hidden="true">↗</span></a>
           <a class="nav-support" href="https://github.com/arpadtamasi/kotta/issues/new?template=bug.yml" target="_blank" rel="noreferrer noopener">Report a bug <span aria-hidden="true">↗</span></a>
           <a href="https://github.com/arpadtamasi/kotta">github.com/arpadtamasi/kotta <span aria-hidden="true">↗</span></a>
         </div>

@@ -646,6 +646,90 @@ tbody th {
   border-bottom-color: var(--signal-dark);
 }
 
+.board-view {
+  padding-block: clamp(86px, 10vw, 150px);
+  border-bottom: 1px solid var(--ink);
+  background: var(--paper-deep);
+}
+
+.board-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: clamp(48px, 8vw, 120px);
+  align-items: start;
+}
+
+.board-view h2 {
+  margin: 0;
+  font-size: clamp(2.6rem, 5vw, 4.6rem);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+}
+
+.board-lede {
+  margin: 28px 0 0;
+  color: var(--ink-soft);
+  font-size: clamp(1.02rem, 1.3vw, 1.2rem);
+  line-height: 1.5;
+}
+
+.board-lede code {
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 0.9em;
+}
+
+.decision-aid {
+  margin-top: 40px;
+  padding-top: 22px;
+  border-top: 1px solid var(--ink);
+}
+
+.decision-aid h3 {
+  margin: 0 0 14px;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+}
+
+.decision-aid p {
+  margin: 0 0 12px;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.board-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  margin: 30px 0 0;
+}
+
+.board-links a {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.board-shot {
+  margin: 0;
+}
+
+.board-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--ink);
+  background: var(--paper);
+}
+
+.board-shot figcaption {
+  margin-top: 12px;
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+}
+
 .quickstart {
   padding-block: clamp(86px, 10vw, 150px);
 }
@@ -769,7 +853,7 @@ tbody th {
 .footer-bar-inner {
   min-height: 88px;
   display: grid;
-  grid-template-columns: auto 1fr auto auto;
+  grid-template-columns: auto 1fr auto auto auto;
   align-items: center;
   gap: 34px;
 }
@@ -794,6 +878,7 @@ tbody th {
   .problem-layout,
   .mechanism-heading,
   .difference-heading,
+  .board-layout,
   .quickstart-layout,
   .closing-layout {
     grid-template-columns: 1fr;
@@ -929,6 +1014,7 @@ tbody th {
   .problem,
   .mechanism,
   .difference,
+  .board-view,
   .quickstart {
     padding-block: 80px;
   }

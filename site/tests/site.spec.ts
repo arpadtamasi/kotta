@@ -26,8 +26,8 @@ test("renders the approved content in order", async ({ page }) => {
   });
   await page.goto("./");
 
-  await expect(page.locator("[data-unit]")).toHaveCount(7);
-  expect(await page.locator("[data-unit]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-unit")))).toEqual(["hero", "problem", "arrivals", "workflow", "comparison", "quickstart", "trust"]);
+  await expect(page.locator("[data-unit]")).toHaveCount(8);
+  expect(await page.locator("[data-unit]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-unit")))).toEqual(["hero", "problem", "arrivals", "workflow", "comparison", "board", "quickstart", "trust"]);
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Prose proposes. The model is what was agreed.");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Keep it beside the code.");
   await expect(page.getByText("Every node says where it came from and who decided it.")).toBeVisible();
@@ -46,6 +46,20 @@ test("renders the approved content in order", async ({ page }) => {
   await expect(page.getByText("Accepted at the one gate")).toBeVisible();
   await expect(page.locator("tbody tr")).toHaveCount(4);
   await expect(page.locator("tbody th")).toHaveText(["Agent chat", "Issue tracker", "Spec generator", "Kotta"]);
+  // The board section: a real screenshot, served from the build, and the decision aid beside it.
+  await expect(page.getByRole("heading", { name: "See what the machine decided." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Kotta, or OpenSpec alone?" })).toBeVisible();
+  await expect(page.locator(".decision-aid p")).toHaveCount(2);
+  const shot = page.locator(".board-shot img");
+  await shot.scrollIntoViewIfNeeded();
+  await expect(shot).toHaveAttribute("alt", /provenance badges/);
+  await expect.poll(() => shot.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth)).toBe(1440);
+  // The documentation is one click away: header, footer, and the walkthrough beside the screenshot.
+  const docs = "https://github.com/arpadtamasi/kotta/tree/main/docs";
+  await expect(page.locator("header nav").getByRole("link", { name: "Docs" })).toHaveAttribute("href", docs);
+  await expect(page.locator("footer").getByRole("link", { name: "Docs" })).toHaveAttribute("href", docs);
+  await expect(page.getByRole("link", { name: "Read the docs" })).toHaveAttribute("href", docs);
+  await expect(page.getByRole("link", { name: "Ten-minute walkthrough" })).toHaveAttribute("href", "https://github.com/arpadtamasi/kotta/blob/main/docs/getting-started.md");
   await expect(page.locator("#install")).toContainText(`@arpadtamasi/kotta@${declaredVersion()}`);
   // One Kotta command, not a pinned third-party installer that leaves out the rules file
   // (BR-01m0zx29x1nvccpr4xwyhjr153).
