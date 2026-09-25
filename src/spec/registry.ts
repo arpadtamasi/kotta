@@ -256,7 +256,8 @@ export function validateNodeSet(forms: SpecForm[], nodes: SpecNode[], options: N
     const body = sections(parseMarkdown(readFileSync(node.path, "utf8")).content);
     for (const heading of form.headings) {
       const text = body.get(heading.toLowerCase());
-      if (text === undefined || !text.trim()) issues.push({ code: "SPEC_NODE_MISSING_SECTION", message: `${basename(node.path)} (${form.id}) is missing or leaves empty the required section '${heading}'.`, path: node.path });
+      // A comment is a note to the author, not an answer: a section holding only one is still empty.
+      if (text === undefined || !text.replace(/<!--[\s\S]*?-->/g, "").trim()) issues.push({ code: "SPEC_NODE_MISSING_SECTION", message: `${basename(node.path)} (${form.id}) is missing or leaves empty the required section '${heading}'.`, path: node.path });
     }
 
     if (!measureEdges) continue;

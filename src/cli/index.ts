@@ -20,6 +20,7 @@ import { displayId } from "../core/identity.js";
 import { formatPlan, planChange, type PlanResult } from "../commands/plan.js";
 import { approveChange, formatApprove, type ApproveResult } from "../commands/approve.js";
 import { archiveChange, formatArchive, type ArchiveResult } from "../commands/archive.js";
+import { formatImport, importOpenSpec, type ImportResult } from "../commands/import.js";
 
 const program = new Command();
 const packagePath = fileURLToPath(new URL("../../package.json", import.meta.url));
@@ -286,6 +287,15 @@ define("archive <change>", (result: unknown) => formatArchive(result as ArchiveR
   .description("Land an approved change: merge its model into the specification, regenerate the narrative, move it to the archive")
   .option("--json")
   .action((change: string, options: { json?: boolean }) => print(archiveChange(change), Boolean(options.json)));
+
+// Taking an existing narrative in: drafts through the planning phase, never a direct translation.
+const importCommand = program.command("import").description("Take an existing specification into the technical model through the planning phase");
+importCommand.command("openspec")
+  .description("Draft an OpenSpec project's requirements, scenarios and purposes into a change's model, for the planning phase to complete")
+  .option("--change <name>", "The change to open under openspec/changes/; omitted is import-openspec-<date>")
+  .option("--json")
+  .action((options: { change?: string; json?: boolean }) => print(importOpenSpec({ change: options.change }), Boolean(options.json)));
+renderers.set("import openspec", (result: unknown) => formatImport(result as ImportResult));
 
 define("sync", renderSync)
   .description("Install the skills Kotta ships, add newly shipped forms, and refresh the workspace rules file")
