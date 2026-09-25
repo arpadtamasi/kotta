@@ -7,7 +7,7 @@ Ez a mappa az OpenSpec-change végrehajtásának ágens-briefjeit tartja, hogy b
 | Szakasz | Ág | Állapot |
 |---|---|---|
 | 1. alap: folyamatréteg ki, v6 workspace, migráció v1–v5 → v6, `1.0.0-alpha.1` | `spike/kotta-1.0` @ `8e4a4c4` | kész, 201 teszt zöld |
-| 2A. tervezés-fázis: provenance, `spec new --into`, `plan`, `approve` (a kapu), `archive`, `plan-change` skill | `spike/k1-plan` (worktree `../kotta-k1-plan`) | nem indult |
+| 2A. tervezés-fázis: provenance, `spec new --into`, `plan`, `approve` (a kapu), `archive`, `plan-change` skill | `spike/k1-plan` (worktree `../kotta-k1-plan`) @ `495563a` | kész, 222 teszt zöld |
 | 2B. modulhatár: `modules`, `modules check`, `modules publish-spec`, `gap` szintek | `spike/k1-modules` (worktree `../kotta-k1-modules`) | nem indult |
 | 2C. diagram-nézet a boardon, provenance-jelölés, narratíva-elérés | `spike/k1-ui` (worktree `../kotta-k1-ui`) | nem indult |
 | 3. narratíva-desztilláció, OpenSpec-import, a workspace-ek migrálása, végpróba a kaszinón | — | nem kezdtük |
