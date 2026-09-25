@@ -47,3 +47,53 @@ of `tasks.md`).
 - **The `SPEC_REFERENCES_TASK` rule is gone.** It forbade a node from naming a task; there is no
   task to name. The "specification never points at execution" idea returns in phase 2 as the
   boundary between the model and the narrative, not as a task-id check.
+
+Phase 2A (sections 3 and 4.2 of `tasks.md`: provenance, `spec new --into`, `plan`, `approve`,
+`archive`, the `plan-change` skill).
+
+- **A second published schema.** The brief puts provenance "into the JSON schema", and the only
+  schema was the workspace configuration, whose test said it is the only one shipped. Done:
+  `schemas/provenance.schema.json` is published beside it and kept identical to the validator's
+  constants by a unit test (a published schema is enforced or not published).
+- **`sources` may be empty only for `inferred`.** The contract lists `sources` without saying when it
+  is required. Done: `stated` and `partly-inferred` need at least one source (something said it);
+  `inferred` may name none. `quote` is optional everywhere; `inferred` is required unless `stated`.
+- **`spec new` scaffolds provenance everywhere, not only `--into`.** "Provenance on every node" and
+  "`spec new` scaffolds it" read together: the block is laid out empty on every new draft (and listed
+  as unanswered). An accepted node may delete it; a present block is measured in full.
+- **`kotta validate` measures open changes' nodes one by one; edges are `plan`'s.** A delta's edges
+  resolve only against the merged view, so `validate` checks each `model/` node's id, form, fields,
+  sections and required provenance, and `plan` checks the edges.
+- **`--into` requires the change directory to exist.** A typo would otherwise create a stray change.
+  The proposal is OpenSpec's to create; Kotta adds `model/` beside it.
+- **An open question is still answered by naming a `D-…` reference, at face value** (phase 1's rule,
+  kept, because decision records are gone). The planning skill tells the agent to record the human's
+  answer in the node and remove the item; either way `approve` refuses while one is unanswered.
+- **"At most 10 per change" is 10 per change, not per changed node.** The candidates are ranked by
+  kind (lifecycle transition removed or reversed > names a changed or removed node > glossary
+  non-example > named by a changed node > shares an edge target), and the report counts what it did
+  not list.
+- **A transition counts as reversed only when the way back is new.** A lifecycle that had both
+  `a → b` and `b → a` and loses one has lost a transition, not reversed one.
+- **Drift compares the statement, not the whole requirement.** "Whose SHALL sentence changed since
+  the node" is read as: a bound requirement's text before any bold sub-heading must equal the node's
+  first section, or still contain the sentence its `provenance.quote` records (what the node was
+  derived from). The change's own `specs/` are compared with the merged model, `openspec/specs/` with
+  the accepted one. In `plan` drift is reported and does not block; in `archive` any drift left in
+  `openspec/specs/` after regeneration refuses, per "nem enged archiválni".
+- **Which forms become requirements is fixed by form id** (business-rule, interface,
+  quality-attribute, use-case, user-story; scenarios from `example` by `subjects`; purpose from
+  `goal`). A project-added form is not generated into the narrative. With no goal naming the
+  capability and no earlier Purpose to keep, the Purpose is a comment saying the model states none —
+  nothing is invented to fill it.
+- **`approve` is back on the CLI.** Phase 1's test asserted the word was gone from `--help` (it was the
+  0.x approval surface). It now names the planning gate; the test checks the 0.x `approval` command
+  stays gone and `approve <change>` is the gate.
+- **`approval.yaml` records the basis as the delta hash itself** (`approval_basis: sha256:…`, over
+  every file under `model/` by path and content), with `approved_by` from `--by` — not
+  `KOTTA_APPROVER` — because the caller relays who said yes. `approve` refuses a `planning.md` older
+  than any `model/` file by mtime, and also one whose recorded hash differs (mtime alone survives a
+  checkout).
+- **`archive` does not commit and does not re-ask.** It re-runs the mechanical checks (structure,
+  merged view, removed-still-referenced, drift) before its first write, so a refusal changes nothing;
+  none of them is a human gate. The archive date is the UTC date.

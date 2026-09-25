@@ -29,6 +29,14 @@ the precise, machine-checkable form of what was accepted — and when the two di
 model is the truth and the disagreement is reported, not smoothed over; the code is what keeps the
 promises, and it says which by naming the node it keeps.
 
+A change moves through them in one pass. Its narrative lives in `openspec/changes/<name>/`; planning
+translates it into a **model delta** under that change's `model/`, every node marked with its
+`provenance` (stated, partly inferred or inferred, and who decided it); `kotta plan <name>` measures
+the delta against the accepted model and writes `planning.md`; the human decides it — **the one gate**
+— and `kotta approve <name> --by <who>` records that yes; `kotta archive <name>` then lands exactly
+the approved delta in `{{workspace}}/spec/`, regenerates the narrative from the model, and moves the
+change to the archive, asking nothing again. The `plan-change` skill is the how.
+
 ## The rule everything else follows from
 
 `{{workspace}}/spec/` is **project-owned**. Its form registry (`spec/forms/*.yaml`) and the nodes
@@ -36,8 +44,8 @@ stored in form-declared directories are yours to shape, in conversation, with th
 by hand — the validator measures a node against its form and names the form's own question for
 every missing part. A node becomes the agreement when it lands on the base branch on a human yes.
 
-There is **no process layer**: no task, no claim, no batch, no observation, no decision record, no
-approval receipt. Kotta 1.0 does not track who is doing what; it holds what was agreed and whether
+There is **no process layer**: no task, no claim, no batch, no observation, no decision record. The
+one receipt left is a change's `approval.yaml`, the record of its one gate. Kotta 1.0 does not track who is doing what; it holds what was agreed and whether
 the code keeps it. `{{workspace}}/legacy/`, where a migrated workspace keeps its pre-1.0 process
 state, is a read-only archive — nothing reads it and nothing writes it.
 
@@ -76,8 +84,8 @@ unaccounted for.
 
 Undecided points in a draft are enumerated under `Open decisions`, one list item each, addressed as
 `<id>/Q<n>` by their position; `kotta questions` lists them. The planning phase of a change is where
-they are answered and where the one human gate stands; until it ships, a draft with an open question
-is a draft, not an agreement.
+they are answered and where the one human gate stands: `kotta approve` refuses a delta with an open
+question, so a draft with one is a draft, not an agreement.
 
 ## Rules for agents
 
@@ -102,8 +110,8 @@ is a draft, not an agreement.
 
 ## Skills
 
-If the Kotta skills are installed, prefer them — they encode the how. `setup-kotta` initializes a
-workspace; `explore-workspace` answers questions across the specification; `requirements-traceability`
+If the Kotta skills are installed, prefer them — they encode the how. `plan-change` carries a
+change from its narrative to the one gate; `setup-kotta` initializes a workspace; `explore-workspace` answers questions across the specification; `requirements-traceability`
 reads the model as a graph and reports what hangs; `consolidate-model` finds one concept living under
 several names; `report-kotta-bug` reports a defect in Kotta itself. `kotta sync` installs them.
 

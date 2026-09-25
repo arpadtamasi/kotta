@@ -9,6 +9,12 @@ version 6.
   registry is the project's: add a form, and its nodes participate with nothing compiled in.
 - `spec/<directory>/` holds the nodes, one Markdown file each, with the id, form, title, required
   fields and edges in the frontmatter. Identifiers are minted with `kotta spec new`, never typed.
+  Every form also takes two optional fields: `capability` (a path such as `identity/user-auth`, the
+  narrative spec the node is generated into) and `provenance` — `level` (stated, partly-inferred,
+  inferred), `decided_by` (human, agent-proposed-human-approved, agent-decided), `sources`, a `quote`
+  of at most 30 words, and what was `inferred`. It is measured wherever present
+  (`schemas/provenance.schema.json`) and required on every node a change proposes under
+  `openspec/changes/<name>/model/`.
 - `legacy/` exists only in a workspace migrated from a pre-1.0 Kotta. It is a read-only archive of
   the old process state (tasks, observations, batches, claims, events, decisions, profiles); nothing
   in Kotta 1.0 reads or writes it. Its own README says what it holds.
