@@ -1,25 +1,35 @@
-import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, rmdirSync, statSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, renameSync, rmdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { parseMarkdown, renderMarkdown } from "../core/markdown.js";
 import { readWorkspaceConfig } from "../core/config.js";
-import { LEGACY_WORKSPACE_DIRECTORY, PROCESS_DIRECTORIES, PROCESS_DIRECTORY, SPEC_DIRECTORY, WORKSPACE_DIRECTORIES, WORKSPACE_DIRECTORY, WORKSPACE_SCHEMA_VERSION, assertNotNewerWorkspace, bundledFormsDirectory, ensureIndexMergeAttribute, findRepositoryRoot, indexMergeAttribute, regenerateIndex, registeredSpecDirectories, syncWorkspaceForms, validateSpecDirectory, workspaceDirectoryName } from "../filesystem/workspace.js";
-import { TASK_STATES } from "../filesystem/entities.js";
+import {
+  LEGACY_DIRECTORY, LEGACY_WORKSPACE_DIRECTORY, PROCESS_DIRECTORY, SPEC_DIRECTORY, WORKSPACE_DIRECTORIES, WORKSPACE_DIRECTORY, WORKSPACE_SCHEMA_VERSION,
+  assertNotNewerWorkspace, bundledFormsDirectory, findRepositoryRoot, registeredSpecDirectories, validateSpecDirectory, workspaceConfigTemplate,
+  workspaceDirectoryName, workspaceReadmeTemplate, workspaceSchemaVersion,
+} from "../filesystem/workspace.js";
 import { REPLACE_RULES_REMEDY, WORKSPACE_AGENTS_FILE, syncWorkspaceAgents } from "./agents.js";
 import { validateWorkspace } from "./validate.js";
 
 /**
- * `kotta migrate` — one command that carries a workspace from any older shape to the current one.
+ * `kotta migrate` — one command that carries a workspace from any pre-1.0 shape to version 6.
  *
- * It is the only reader in the CLI that understands the old shape; every other command refuses it and
- * names this command (D-01kz240dn155hb97h6px6n2p85). Three rules hold it together:
+ * Kotta 1.0 owns the technical specification and keeps no process layer. The migration therefore
+ * does two things and nothing else: it carries the pre-1.0 process state — whatever shape it is in,
+ * v1 to v5 — into a read-only `legacy/process/` archive in the last pre-1.0 shape, and it rewrites
+ * the workspace's own files (config, README, rules) to the version-6 shape. The specification is
+ * left byte-identical, and the command proves that, the way it proves no identifier was lost.
  *
- * - **Identifiers are never touched** (D-010). No id, no filename and no reference *value* moves; only
- *   directory names, field names and stored state values do. This is vocabulary, not identity — and
- *   the command proves it, by comparing the id set before and after and refusing to lose one.
- * - **Idempotent and fail-before-write.** The complete move/rewrite/create plan and every conflict is
- *   resolved before mutation. A finished workspace reports "already current"; an unsafe mixed or
- *   conflicting workspace is left byte-identical.
+ * It is the only reader in the CLI that understands the old shapes; every other command refuses
+ * them and names this command. Three rules hold it together:
+ *
+ * - **Identifiers are never touched.** No id, no filename and no reference *value* moves; only
+ *   directory names, field names and stored state values do, and only in the archive.
+ * - **Idempotent and fail-before-write.** The complete plan and every conflict is resolved before
+ *   mutation. A finished workspace reports "already current"; an unsafe workspace is left byte-identical.
  * - **Dry run first.** `--dry-run` computes the identical plan and writes nothing.
  */
 
@@ -27,8 +37,7 @@ export type MigrationChange =
   | { kind: "move"; from: string; to: string }
   | { kind: "create"; path: string }
   | { kind: "remove"; path: string }
-  | { kind: "rewrite"; path: string; fields: string[] }
-  | { kind: "regenerate"; path: string };
+  | { kind: "rewrite"; path: string; fields: string[] };
 
 /** What became of the generated rules file the migration carried along. */
 export interface MigrateRules {
@@ -47,6 +56,8 @@ export interface MigrateData {
   workspace: string;
   dryRun: boolean;
   current: boolean;
+  /** The shape version the workspace recorded before the migration; null when it recorded none. */
+  fromVersion: number | null;
   changes: MigrationChange[];
   ids: string[];
   notes: string[];
@@ -62,9 +73,11 @@ export interface MigrateResult {
   data: MigrateData;
 }
 
+/** The pre-1.0 lifecycle vocabulary, kept here and nowhere else: the archive is written in it. */
+const TASK_STATES = ["backlog", "defined", "active", "review", "done"] as const;
+const PROCESS_DIRECTORIES = ["tasks", "observations", "batches", "profiles", "claims", "decisions", "events"] as const;
+
 const TASK_KEYS: Record<string, string> = { package: "batch", source_finding: "source_observation" };
-// Compatibility: v3 and earlier workspaces called the work unit `contract`. Migration is the
-// one writer that understands those stored names and rewrites them into the v4 task vocabulary.
 const BATCH_KEYS: Record<string, string> = { tickets: "tasks", contracts: "tasks" };
 const BATCH_AUTHORITY_KEYS: Record<string, string> = {
   create_findings: "create_observations",
@@ -87,17 +100,15 @@ const OBSERVATION_DISPOSITIONS: Record<string, string> = {
   "attach-to-existing-contract": "attach-to-existing-task",
 };
 const CLAIM_KEYS: Record<string, string> = { ticket: "task", contract: "task" };
-const CONFIG_WORKFLOW_KEYS: Record<string, string> = {
-  allow_agent_findings: "allow_agent_observations",
-  allow_agent_ready_tickets: "allow_agent_defined_tasks",
-  allow_agent_defined_contracts: "allow_agent_defined_tasks",
-};
-const CONFIG_VALIDATION_KEYS: Record<string, string> = { require_verification_for_ready: "require_verification_for_defined" };
-const CONFIG_VERSION = WORKSPACE_SCHEMA_VERSION;
+
+/** The config keys version 6 keeps. Everything else configured a process that no longer exists. */
+const KEPT_TOP_LEVEL_KEYS = ["version", "project", "git", "validation"];
+const KEPT_GIT_KEYS = ["base_branch", "protected_branches"];
+const KEPT_VALIDATION_KEYS = ["strict"];
 
 /**
  * A planned rewrite. `write` takes the target path because the file may move first: the plan is
- * computed on the layout that is on disk now, and applied to the one the directory moves produce.
+ * computed on the layout that is on disk now, and applied to the one the moves produce.
  */
 interface Rewrite { fields: string[]; write: (target: string) => void }
 
@@ -117,9 +128,9 @@ function renameKeys(data: Record<string, unknown>, map: Record<string, string>):
 
 /**
  * A frontmatter date written without quotes parses as a YAML timestamp, and re-serializing one turns
- * `2026-07-21` into `2026-07-21T00:00:00.000Z` — churn the vocabulary migration never asked for, and a
- * value the schema's `YYYY-MM-DD` pattern rejects. Kotta's own writers always store dates as text, so
- * a legacy timestamp is normalised to the same text before the file is written back.
+ * `2026-07-21` into `2026-07-21T00:00:00.000Z`. Kotta's writers always stored dates as text, so a
+ * legacy timestamp is normalised to the same text before a file that is being rewritten anyway is
+ * written back.
  */
 function normalizeDates(data: Record<string, unknown>): boolean {
   let normalized = false;
@@ -167,7 +178,6 @@ function planEntity(path: string, entity: "task" | "batch" | "observation", dire
     data.status = directoryState;
   }
 
-  // Only a file that is being rewritten anyway gets its dates normalised; nothing is touched for it alone.
   if (fields.length && normalizeDates(data)) fields.push("dates normalised to YYYY-MM-DD text");
 
   return { fields, write: (target) => writeFileSync(target, renderMarkdown(data, parsed.content)) };
@@ -189,17 +199,28 @@ function planEvent(path: string): Rewrite {
   return { fields, write: (target) => writeFileSync(target, `${JSON.stringify(data, null, 2)}\n`) };
 }
 
-function planConfig(path: string): Rewrite {
+/**
+ * The version-6 configuration: what the old file said about the project and its Git branches,
+ * nothing about a process. Every dropped key is named, so the dry run says exactly what is lost.
+ */
+function planConfig(path: string, projectName: string): Rewrite {
   const data = (parseYaml(readFileSync(path, "utf8")) ?? {}) as Record<string, unknown>;
-  const fields = renameKeys(data, { packages: "batches" });
-  if (data.workflow && typeof data.workflow === "object") {
-    fields.push(...renameKeys(data.workflow as Record<string, unknown>, CONFIG_WORKFLOW_KEYS).map((change) => `workflow.${change}`));
-  }
-  if (data.validation && typeof data.validation === "object") {
-    fields.push(...renameKeys(data.validation as Record<string, unknown>, CONFIG_VALIDATION_KEYS).map((change) => `validation.${change}`));
-  }
-  if (data.version !== CONFIG_VERSION) { fields.push(`version: ${String(data.version)} → ${CONFIG_VERSION}`); data.version = CONFIG_VERSION; }
-  return { fields, write: (target) => writeFileSync(target, stringifyYaml(data)) };
+  const fields: string[] = [];
+  const project = (data.project ?? {}) as Record<string, unknown>;
+  const git = (data.git ?? {}) as Record<string, unknown>;
+  const validation = (data.validation ?? {}) as Record<string, unknown>;
+  if (data.version !== WORKSPACE_SCHEMA_VERSION) fields.push(`version: ${data.version === undefined ? "(none)" : String(data.version)} → ${WORKSPACE_SCHEMA_VERSION}`);
+  for (const key of Object.keys(data)) if (!KEPT_TOP_LEVEL_KEYS.includes(key)) fields.push(`${key} removed`);
+  for (const key of Object.keys(git)) if (!KEPT_GIT_KEYS.includes(key)) fields.push(`git.${key} removed`);
+  for (const key of Object.keys(validation)) if (!KEPT_VALIDATION_KEYS.includes(key)) fields.push(`validation.${key} removed`);
+  const next = workspaceConfigTemplate(typeof project.name === "string" && project.name.trim() ? project.name : projectName, {
+    baseBranch: typeof git.base_branch === "string" && git.base_branch.trim() ? git.base_branch : undefined,
+    protectedBranches: Array.isArray(git.protected_branches) ? git.protected_branches.map(String) : undefined,
+    strict: typeof validation.strict === "boolean" ? validation.strict : undefined,
+  });
+  const rendered = stringifyYaml(next);
+  if (!fields.length && readFileSync(path, "utf8") !== rendered) fields.push("rendered in the version-6 key order");
+  return { fields, write: (target) => writeFileSync(target, rendered) };
 }
 
 function isRealDirectory(path: string): boolean {
@@ -207,14 +228,33 @@ function isRealDirectory(path: string): boolean {
   catch { return false; }
 }
 
+/** Whether Git tracks anything at `path`, so the move can be recorded as a rename in the index. */
+function gitTracks(root: string, path: string): boolean {
+  try {
+    return execFileSync("git", ["ls-files", "--", path], { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim().length > 0;
+  } catch {
+    return false;
+  }
+}
+
 /**
- * Moves one preflighted source onto an absent destination. Conflict handling belongs entirely to
- * planning: reaching this function means every target was proven absent before the first write.
+ * Moves one preflighted source onto an absent destination — through `git mv` when Git tracks the
+ * source, so the archive is a recorded rename and `git log --follow` reaches back through it, and
+ * as a plain rename otherwise. Conflict handling belongs entirely to planning: reaching this
+ * function means every target was proven absent before the first write.
  */
-function moveDirectory(from: string, to: string): void {
+function moveEntry(root: string, from: string, to: string): void {
   if (!existsSync(from)) return;
   if (existsSync(to)) throw new Error(`Migration destination already exists: ${to}. Nothing was moved.`);
   mkdirSync(dirname(to), { recursive: true });
+  if (gitTracks(root, from)) {
+    try {
+      execFileSync("git", ["mv", "-k", from, to], { cwd: root, stdio: "ignore" });
+      if (existsSync(to) && !existsSync(from)) return;
+    } catch {
+      // Git declined — an untracked parent, a bare checkout — and the plain rename below is the same move.
+    }
+  }
   renameSync(from, to);
 }
 
@@ -227,10 +267,14 @@ const ID_DIRECTORIES = [
   "decisions",
 ];
 
-/** Every id in the workspace, read from the frontmatter: the set that must be identical afterwards (D-010). */
+/** Every id in the workspace, read from the frontmatter: the set that must be identical afterwards. */
 export function workspaceIds(workspace: string): string[] {
   const ids = new Set<string>();
-  const directories = [...ID_DIRECTORIES, ...ID_DIRECTORIES.map((directory) => `${PROCESS_DIRECTORY}/${directory}`)];
+  const directories = [
+    ...ID_DIRECTORIES,
+    ...ID_DIRECTORIES.map((directory) => `${PROCESS_DIRECTORY}/${directory}`),
+    ...ID_DIRECTORIES.map((directory) => `${LEGACY_DIRECTORY}/${PROCESS_DIRECTORY}/${directory}`),
+  ];
   for (const directory of directories) {
     for (const path of markdownFiles(join(workspace, directory))) {
       const id = String(parseMarkdown(readFileSync(path, "utf8")).data.id ?? "").trim();
@@ -238,6 +282,27 @@ export function workspaceIds(workspace: string): string[] {
     }
   }
   return [...ids].sort();
+}
+
+/** Content hash of every file under `directory`, keyed by relative path: the byte-identity proof for `spec/`. */
+function contentSnapshot(directory: string): Map<string, string> | null {
+  if (!existsSync(directory)) return null;
+  const files = new Map<string, string>();
+  const walk = (current: string) => {
+    for (const name of readdirSync(current).sort()) {
+      const path = join(current, name);
+      if (statSync(path).isDirectory()) walk(path);
+      else files.set(relative(directory, path), createHash("sha256").update(readFileSync(path)).digest("hex"));
+    }
+  };
+  walk(directory);
+  return files;
+}
+
+function sameSnapshot(before: Map<string, string>, after: Map<string, string> | null): boolean {
+  if (!after || before.size !== after.size) return false;
+  for (const [path, digest] of before) if (after.get(path) !== digest) return false;
+  return true;
 }
 
 /** Applies a list of directory moves to one workspace-relative path. */
@@ -248,6 +313,34 @@ function remap(path: string, moves: Array<{ from: string; to: string }>): string
     else if (result.startsWith(`${move.from}/`)) result = `${move.to}${result.slice(move.from.length)}`;
   }
   return result;
+}
+
+function packageVersion(): string {
+  const manifest = JSON.parse(readFileSync(fileURLToPath(new URL("../../package.json", import.meta.url)), "utf8")) as { version?: unknown };
+  return typeof manifest.version === "string" ? manifest.version : "unknown";
+}
+
+/** The archive's own explanation, written once beside it. */
+export function legacyReadme(fromVersion: number | null, movesWorkspace: boolean): string {
+  const shape = fromVersion === null ? "a workspace that recorded no shape version" : `workspace shape version ${fromVersion}`;
+  return [
+    "# Legacy process archive",
+    "",
+    "This directory is a **read-only archive of the pre-1.0 Kotta process state**: the tasks,",
+    "observations, batches, claims, events, decisions, profiles and the generated index that the",
+    "process engine of the 0.x releases kept under `process/`.",
+    "",
+    `\`kotta migrate\` (Kotta ${packageVersion()}) moved it here from ${shape}${movesWorkspace ? `, under the pre-rename \`${LEGACY_WORKSPACE_DIRECTORY}/\` directory` : ""}.`,
+    `The records are stored in the last pre-1.0 shape (version 5): one file per entity, lifecycle state`,
+    "in the frontmatter `status` field. Older vocabulary was carried to that shape on the way in;",
+    "no identifier, filename or reference value was changed, and the specification beside it was",
+    "left byte-identical.",
+    "",
+    "Kotta 1.0 owns the technical specification and has no task, claim, batch, observation or",
+    "decision. Nothing in it reads or writes this directory. To work with these records as they",
+    "were, install the last pre-1.0 release: `npx -y -p @arpadtamasi/kotta@0.11.1 kotta --help`.",
+    "",
+  ].join("\n");
 }
 
 export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryRoot?: string): MigrateResult {
@@ -265,17 +358,30 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
   const movesWorkspace = isRealDirectory(legacyWorkspace) && !isRealDirectory(targetWorkspace);
   const workspace = movesWorkspace ? legacyWorkspace : join(root, workspaceDirectoryName(root));
   if (!existsSync(workspace)) throw new Error(`No Kotta workspace exists at ${root}. Run 'kotta init' first.`);
-  // Migration only ever carries a workspace forward (BR-01m0q89b16xcfasfj1z8mc2hgg). The CLI exempts
-  // this command from the shape check so it can read old workspaces at all, so the newer direction is
-  // refused here instead — before any change is planned, which is what --dry-run would have printed.
+  // Migration only ever carries a workspace forward. The CLI exempts this command from the shape
+  // check so it can read old workspaces at all, so the newer direction is refused here instead.
   assertNotNewerWorkspace(root);
-  if (movesWorkspace) changes.push({ kind: "move", from: LEGACY_WORKSPACE_DIRECTORY, to: WORKSPACE_DIRECTORY });
-  const idsBefore = workspaceIds(workspace);
-
-  // 2. Read and validate the data-driven spec registry before classifying any project directory.
-  // A form controls where its nodes move, so an unsafe or ambiguous declaration is a hard preflight
-  // failure, not something migration tries to repair.
   const label = basename(workspace);
+  const fromVersion = workspaceSchemaVersion(root);
+  const idsBefore = workspaceIds(workspace);
+  const specBefore = contentSnapshot(join(workspace, SPEC_DIRECTORY));
+
+  // 2. Already there? Version 6 with nothing pre-1.0 left at the top of the workspace.
+  const preEntries = readdirSync(workspace).filter((name) => ([PROCESS_DIRECTORY, ...PROCESS_DIRECTORIES, ...TASK_STATES, "ready", "findings", "packages", "forms", "index.md"] as string[]).includes(name));
+  if (!movesWorkspace && fromVersion === WORKSPACE_SCHEMA_VERSION && !preEntries.length) {
+    return {
+      ok: true,
+      command: "migrate",
+      data: { root, workspace, dryRun, current: true, fromVersion, changes: [], ids: idsBefore, notes: [], rules: null, validation: null },
+    };
+  }
+  if (movesWorkspace) changes.push({ kind: "move", from: LEGACY_WORKSPACE_DIRECTORY, to: WORKSPACE_DIRECTORY });
+  const archive = join(workspace, LEGACY_DIRECTORY);
+  if (existsSync(archive)) {
+    throw new Error(`Migration destination already exists: ${archive}. A workspace carries one archive; move or remove this one before migrating again. Nothing was written.`);
+  }
+
+  // 3. Read and validate the data-driven spec registry before classifying any project directory.
   const flatForms = join(workspace, "forms");
   const nestedForms = join(workspace, SPEC_DIRECTORY, "forms");
   if (existsSync(flatForms) && existsSync(nestedForms)) {
@@ -294,7 +400,7 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
   const reservedRoots = new Set([
     ...PROCESS_DIRECTORIES.map((directory) => directory.split("/")[0]),
     ...TASK_STATES.map(String),
-    ...["ready", "findings", "packages", SPEC_DIRECTORY, PROCESS_DIRECTORY, "forms"],
+    ...["ready", "findings", "packages", SPEC_DIRECTORY, PROCESS_DIRECTORY, LEGACY_DIRECTORY, "forms"],
   ]);
   for (const directory of specDirectories) {
     validateSpecDirectory(directory, formDirectory);
@@ -340,14 +446,16 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
   // A nested namespace plus any flat data is a destination conflict even when the exact child is
   // absent: proceeding would bless a half-migrated workspace and make later recovery ambiguous.
   const flatRoots = [...reservedRoots, ...registeredRoots]
-    .filter((name) => ![SPEC_DIRECTORY, PROCESS_DIRECTORY].includes(name) && existsSync(join(workspace, name)));
+    .filter((name) => ![SPEC_DIRECTORY, PROCESS_DIRECTORY, LEGACY_DIRECTORY].includes(name) && existsSync(join(workspace, name)));
   if ((existsSync(join(workspace, SPEC_DIRECTORY)) || existsSync(join(workspace, PROCESS_DIRECTORY))) && flatRoots.length) {
     throw new Error(`Migration found mixed legacy and nested workspace data: ${flatRoots.map((name) => join(workspace, name)).join(", ")}. Nothing was written.`);
   }
 
-  // 3. Plan every path move. Every destination is checked now, before the first mutation.
+  // 4. Plan every path move. Every destination is checked now, before the first mutation. The
+  // pre-flat shapes are first brought to the v5 shape under process/, then the whole namespace
+  // moves to the archive in one rename.
   const moves: Array<{ from: string; to: string }> = [];
-  const move = (from: string, to: string) => {
+  const move = (from: string, to: string, report = true) => {
     if (!existsSync(join(workspace, from))) return;
     const duplicate = moves.find((entry) => entry.to === to);
     if (duplicate) {
@@ -357,14 +465,9 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
       throw new Error(`Migration destination already exists: ${join(workspace, to)}. Nothing was written.`);
     }
     moves.push({ from, to });
-    changes.push({ kind: "move", from: `${label}/${from}`, to: `${WORKSPACE_DIRECTORY}/${to}` });
+    if (report) changes.push({ kind: "move", from: `${label}/${from}`, to: `${WORKSPACE_DIRECTORY}/${remap(to, [{ from: PROCESS_DIRECTORY, to: `${LEGACY_DIRECTORY}/${PROCESS_DIRECTORY}` }])}` });
   };
 
-  // 3a. Lifecycle state directories flatten per file: one entity, one stable file, state in the
-  // frontmatter alone. Two states holding the same filename is the duplicated-state damage the old
-  // shape allowed — refused by `move`, never resolved by overwriting. The emptied directory is
-  // removed afterwards; its state is transcribed into each file's frontmatter below (3b plans it),
-  // because in the old shapes the directory, not the frontmatter, was the authority.
   const removals: string[] = [];
   const flattened: Array<{ source: string; state: string; entity: "task" | "batch" | "observation" }> = [];
   const flatten = (source: string, target: string, state: string, entity: "task" | "batch" | "observation") => {
@@ -413,18 +516,25 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
   for (const top of registeredRoots) move(top, `${SPEC_DIRECTORY}/${top}`);
   if (existsSync(join(workspace, "index.md"))) move("index.md", `${PROCESS_DIRECTORY}/index.md`);
 
-  // 4. Frontmatter, claims and config: planned on today's paths, applied to tomorrow's.
+  // The archive: the whole process namespace, whether it was there already or the moves above
+  // assemble it, leaves in one rename. Reported once, as the move it is.
+  const archives = existsSync(join(workspace, PROCESS_DIRECTORY)) || moves.some((entry) => entry.to === PROCESS_DIRECTORY || entry.to.startsWith(`${PROCESS_DIRECTORY}/`));
+  if (archives) {
+    moves.push({ from: PROCESS_DIRECTORY, to: `${LEGACY_DIRECTORY}/${PROCESS_DIRECTORY}` });
+    changes.push({ kind: "move", from: `${label}/${PROCESS_DIRECTORY}`, to: `${WORKSPACE_DIRECTORY}/${LEGACY_DIRECTORY}/${PROCESS_DIRECTORY}` });
+    changes.push({ kind: "create", path: `${WORKSPACE_DIRECTORY}/${LEGACY_DIRECTORY}/README.md` });
+  }
+
+  // 5. Frontmatter, claims, events and config: planned on today's paths, applied to tomorrow's.
   const rewrites: Array<{ relativePath: string; rewrite: Rewrite }> = [];
   const plan = (path: string, planner: (path: string) => Rewrite) => {
     const rewrite = planner(path);
     if (!rewrite.fields.length) return;
     const relativePath = relative(workspace, path);
     rewrites.push({ relativePath, rewrite });
-    changes.push({ kind: "rewrite", path: relativePath, fields: rewrite.fields });
+    changes.push({ kind: "rewrite", path: `${WORKSPACE_DIRECTORY}/${remap(relativePath, moves)}`, fields: rewrite.fields });
   };
 
-  // Files being flattened get the directory's state verdict transcribed; files already flat get
-  // the vocabulary pass alone, so a re-run on a current workspace rewrites nothing.
   for (const { source, state, entity } of flattened) {
     for (const path of markdownFiles(join(workspace, source))) plan(path, (file) => planEntity(file, entity, state));
   }
@@ -445,69 +555,62 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
     }
   }
   const config = join(workspace, "config.yaml");
-  if (existsSync(config)) plan(config, planConfig);
+  if (existsSync(config)) plan(config, (path) => planConfig(path, basename(root)));
+  else changes.push({ kind: "create", path: `${WORKSPACE_DIRECTORY}/config.yaml` });
 
-  // Required empty directories are material workspace structure even though Git cannot preserve
-  // them. Creating them is explicit in the dry-run and idempotent on the next run.
-  const required = [
-    ...PROCESS_DIRECTORIES.map((directory) => `${PROCESS_DIRECTORY}/${directory}`),
-    `${SPEC_DIRECTORY}/forms`,
-    ...specDirectories.map((directory) => `${SPEC_DIRECTORY}/${directory}`),
-  ];
-  const futurePathExists = (path: string): boolean => {
-    if (existsSync(join(workspace, path))) return true;
-    return moves.some((entry) => {
-      // A move landing at or inside `path` materialises the directory on its way in.
-      if (path === entry.to || entry.to.startsWith(`${path}/`)) return true;
-      if (!path.startsWith(`${entry.to}/`)) return false;
-      const suffix = path.slice(entry.to.length + 1);
-      return existsSync(join(workspace, entry.from, suffix));
-    });
-  };
-  const creates = [...new Set(required)].filter((path) => !futurePathExists(path));
-  for (const path of creates) changes.push({ kind: "create", path: `${WORKSPACE_DIRECTORY}/${path}` });
+  // The workspace's own README describes the shape it is in; a migrated workspace gets this Kotta's.
+  const readme = join(workspace, "README.md");
+  const readmeCurrent = existsSync(readme) && readFileSync(readme, "utf8") === workspaceReadmeTemplate();
+  if (!readmeCurrent) changes.push(existsSync(readme) ? { kind: "rewrite", path: `${WORKSPACE_DIRECTORY}/README.md`, fields: ["workspace README → this Kotta's copy"] } : { kind: "create", path: `${WORKSPACE_DIRECTORY}/README.md` });
 
-  const attribute = indexMergeAttribute(WORKSPACE_DIRECTORY);
+  // A workspace with no form registry at all gets the bundled one, as init would give it; a
+  // workspace that has one is left exactly as it is, because the specification is the project's.
+  const installsForms = !existsSync(flatForms) && !existsSync(nestedForms);
+  if (installsForms) changes.push({ kind: "create", path: `${WORKSPACE_DIRECTORY}/${SPEC_DIRECTORY}/forms (the bundled form registry)` });
+
+  // The generated index is gone with the process, and so is the merge driver it needed.
   const attributesPath = join(root, ".gitattributes");
   const attributes = existsSync(attributesPath) ? readFileSync(attributesPath, "utf8") : "";
-  const staleAttributes = WORKSPACE_DIRECTORIES.flatMap((directory) => [
-    `${directory}/index.md merge=union`,
-    indexMergeAttribute(directory),
-  ]).filter((candidate) => candidate !== attribute);
+  const staleAttributes = new Set(WORKSPACE_DIRECTORIES.flatMap((directory) => [`${directory}/index.md merge=union`, `${directory}/${PROCESS_DIRECTORY}/index.md merge=union`]));
   const attributeLines = attributes.split(/\r?\n/);
-  const attributeCurrent = attributeLines.filter((line) => line === attribute).length === 1 && !staleAttributes.some((line) => attributeLines.includes(line));
-  if (!attributeCurrent) changes.push({ kind: "rewrite", path: ".gitattributes", fields: [`workspace index merge attribute → ${attribute}`] });
+  const keptAttributeLines = attributeLines.filter((line) => !staleAttributes.has(line.trim()));
+  const attributesChange = keptAttributeLines.length !== attributeLines.length;
+  const attributesRendered = keptAttributeLines.join("\n");
+  const attributesEmpty = attributesRendered.trim() === "";
+  if (attributesChange) changes.push(attributesEmpty ? { kind: "remove", path: ".gitattributes" } : { kind: "rewrite", path: ".gitattributes", fields: ["index merge attribute removed"] });
 
-  const current = changes.length === 0;
-  if (!current) {
-    changes.push({ kind: "regenerate", path: `${WORKSPACE_DIRECTORY}/${PROCESS_DIRECTORY}/index.md` });
-    // A workspace arrives whole (UC-01m0f0wn89x00jkpqpqc2esx9h). The records move to the current
-    // shape and the one document every agent in this project reads moves with them; a migration
-    // that leaves it behind keeps instructing them from the version it came from.
-    changes.push({ kind: "rewrite", path: `${WORKSPACE_DIRECTORY}/${WORKSPACE_AGENTS_FILE}`, fields: ["rules file → this Kotta's copy"] });
-  }
+  // The one document every agent in this project reads moves with the records.
+  changes.push({ kind: "rewrite", path: `${WORKSPACE_DIRECTORY}/${WORKSPACE_AGENTS_FILE}`, fields: ["rules file → this Kotta's copy"] });
 
   let rules: MigrateRules | null = null;
   let validation: MigrateValidation | null = null;
 
-  if (!dryRun && !current) {
-    if (movesWorkspace) {
-      moveDirectory(legacyWorkspace, targetWorkspace);
-    }
+  if (!dryRun) {
+    if (movesWorkspace) moveEntry(root, legacyWorkspace, targetWorkspace);
     const applied = movesWorkspace ? targetWorkspace : workspace;
-    for (const entry of moves) moveDirectory(join(applied, entry.from), join(applied, entry.to));
+    for (const entry of moves) moveEntry(root, join(applied, entry.from), join(applied, entry.to));
     for (const entry of rewrites) entry.rewrite.write(join(applied, remap(entry.relativePath, moves)));
-    for (const path of creates) mkdirSync(join(applied, path), { recursive: true });
-    // Deepest first, so an emptied state directory leaves before its emptied container.
+    if (!existsSync(join(applied, "config.yaml"))) writeFileSync(join(applied, "config.yaml"), stringifyYaml(workspaceConfigTemplate(basename(root))));
+    // Deepest first, so an emptied state directory leaves before its emptied container — at the
+    // path the moves left it, which for a state directory under process/ is inside the archive.
     for (const path of [...removals].sort((left, right) => right.length - left.length)) {
-      const target = join(applied, path);
+      const target = join(applied, remap(path, moves));
       if (existsSync(target)) rmdirSync(target);
     }
-    syncWorkspaceForms(root);
-    ensureIndexMergeAttribute(root);
-    regenerateIndex(root);
+    if (archives) writeFileSync(join(applied, LEGACY_DIRECTORY, "README.md"), legacyReadme(fromVersion, movesWorkspace));
+    if (!readmeCurrent) writeFileSync(join(applied, "README.md"), workspaceReadmeTemplate());
+    if (installsForms) {
+      mkdirSync(join(applied, SPEC_DIRECTORY, "forms"), { recursive: true });
+      for (const filename of readdirSync(bundledFormsDirectory()).filter((name) => name.endsWith(".yaml")).sort()) {
+        writeFileSync(join(applied, SPEC_DIRECTORY, "forms", filename), readFileSync(join(bundledFormsDirectory(), filename)));
+      }
+    }
+    if (attributesChange) {
+      if (attributesEmpty) rmSync(attributesPath, { force: true });
+      else writeFileSync(attributesPath, `${attributesRendered.replace(/\n+$/, "")}\n`);
+    }
     // The same writer `sync` uses, so drift is decided in one place: a hand-edited file is
-    // reported, never replaced (BR-01m0f1djtb5dkb76tjzq4x3ffh).
+    // reported, never replaced.
     rules = syncWorkspaceAgents(root);
   }
 
@@ -515,55 +618,54 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
   const idsAfter = workspaceIds(finalWorkspace);
   const lost = idsBefore.filter((id) => !idsAfter.includes(id));
   if (lost.length) throw new Error(`Migration lost identifiers: ${lost.join(", ")}. Inspect ${finalWorkspace} before running anything else.`);
+  if (!dryRun && specBefore && !sameSnapshot(specBefore, contentSnapshot(join(finalWorkspace, SPEC_DIRECTORY)))) {
+    throw new Error(`Migration changed a byte under ${join(finalWorkspace, SPEC_DIRECTORY)}, which it promised not to. Inspect the working tree with 'git status' before running anything else.`);
+  }
 
   // A report of success over a workspace its own validator would refuse claims more than the result
-  // carries (UC-01m0f0wn89x00jkpqpqc2esx9h). The migration says so; it does not repair it, and an
-  // invalid result is still a migrated result — the operator is told, not blocked. It reads without
-  // transitioning: validation is a batch's promotion and commits it, and a migration that advanced
-  // a lifecycle and committed on its way past would be doing something other than migrating.
-  if (!dryRun && !current) {
-    const report = validateWorkspace(root, { transition: false });
+  // carries. The migration says so; it does not repair it, and an invalid result is still a
+  // migrated result — the operator is told, not blocked.
+  if (!dryRun) {
+    const report = validateWorkspace(root);
     validation = { ok: report.ok, errors: report.errors };
   }
 
   return {
     ok: true,
     command: "migrate",
-    data: { root, workspace: finalWorkspace, dryRun, current, changes, ids: idsAfter, notes: baseRefNotes(root, current, dryRun), rules, validation },
+    data: { root, workspace: finalWorkspace, dryRun, current: false, fromVersion, changes, ids: idsAfter, notes: baseRefNotes(root, dryRun), rules, validation },
   };
 }
 
 /**
- * F-01kz25qf318bmn1t860n2rjcpt: the board does not read the working tree — it reads the configured
- * base ref through git plumbing. Between a migration landing in a working tree and that commit
- * reaching the base ref, `kotta ui` shows the header path of the new workspace and none of its
- * content. The migration says so out loud rather than let an operator meet a silently empty board.
+ * The board does not read the working tree — it reads the configured base ref through git plumbing.
+ * Between a migration landing in a working tree and that commit reaching the base ref, `kotta ui`
+ * shows the specification the ref holds, under the old paths. The migration says so out loud.
  */
-export function baseRefNotes(root: string, current: boolean, dryRun: boolean): string[] {
-  if (current) return [];
+export function baseRefNotes(root: string, dryRun: boolean): string[] {
   const base = readWorkspaceConfig(root).baseBranch;
   return [
-    `The board reads the workspace from the '${base}' ref, not from the working tree, so it ${dryRun ? "would show" : "shows"} an empty board until this migration is committed and reaches '${base}'. The board says the same thing itself while the gap lasts.`,
-    `Commit the migration, then merge it into '${base}' before reading the board.`,
+    `The board reads the workspace from the '${base}' ref, not from the working tree, so it ${dryRun ? "would keep showing" : "keeps showing"} the pre-migration specification until this migration is committed and reaches '${base}'.`,
+    `Review the moves with 'git status', commit the migration, then merge it into '${base}'. The archive under ${workspaceDirectoryName(root)}/${LEGACY_DIRECTORY}/ is read-only from here on: nothing in Kotta 1.0 writes into it.`,
   ];
 }
 
 export function formatMigration(result: MigrateResult): string {
   const { data } = result;
-  if (data.current) return `${data.workspace} is already on the current shape; nothing to migrate.`;
+  if (data.current) return `${data.workspace} is already on the current shape (version ${WORKSPACE_SCHEMA_VERSION}); nothing to migrate.`;
+  const from = data.fromVersion === null ? "an unversioned workspace" : `shape version ${data.fromVersion}`;
   const lines = [
     data.dryRun
-      ? `kotta migrate --dry-run — ${data.changes.length} change${data.changes.length === 1 ? "" : "s"} planned for ${data.workspace}. Nothing was written.`
-      : `kotta migrate — ${data.changes.length} change${data.changes.length === 1 ? "" : "s"} applied to ${data.workspace}.`,
+      ? `kotta migrate --dry-run — ${data.changes.length} change${data.changes.length === 1 ? "" : "s"} planned for ${data.workspace}, from ${from} to version ${WORKSPACE_SCHEMA_VERSION}. Nothing was written.`
+      : `kotta migrate — ${data.changes.length} change${data.changes.length === 1 ? "" : "s"} applied to ${data.workspace}, from ${from} to version ${WORKSPACE_SCHEMA_VERSION}.`,
   ];
   for (const change of data.changes) {
     if (change.kind === "move") lines.push(`  move       ${change.from} → ${change.to}`);
     else if (change.kind === "create") lines.push(`  create     ${change.path}`);
-    else if (change.kind === "remove") lines.push(`  remove     ${change.path} (emptied state directory)`);
-    else if (change.kind === "rewrite") lines.push(`  rewrite    ${change.path}: ${change.fields.join(", ")}`);
-    else lines.push(`  regenerate ${change.path}`);
+    else if (change.kind === "remove") lines.push(`  remove     ${change.path}${change.path === ".gitattributes" ? " (held only the index merge attribute)" : " (emptied state directory)"}`);
+    else lines.push(`  rewrite    ${change.path}: ${change.fields.join(", ")}`);
   }
-  lines.push(`  ${data.ids.length} identifiers, all unchanged (D-010: this is vocabulary, not identity).`);
+  lines.push(`  ${data.ids.length} identifiers, all unchanged; the specification under ${SPEC_DIRECTORY}/ is ${data.dryRun ? "left" : "verified"} byte-identical.`);
   for (const line of rulesLines(data.rules)) lines.push(line);
   for (const line of validationLines(data.validation)) lines.push(line);
   for (const note of data.notes) lines.push(`\n${note}`);
@@ -585,14 +687,13 @@ export function rulesLines(rules: MigrateRules | null): string[] {
 
 /**
  * The migration says whether what it produced satisfies the rules of the shape it moved to. It
- * reports; it never repairs, and it never turns a completed migration into a failure — the records
- * moved either way, and the operator needs to know both facts.
+ * reports; it never repairs, and it never turns a completed migration into a failure.
  */
 export function validationLines(validation: MigrateValidation | null): string[] {
   if (!validation) return [];
   if (validation.ok) return ["\nThe migrated workspace validates: 'kotta validate' finds nothing to report."];
   const lines = [
-    `\nThe migration finished, but the workspace it produced does not validate: ${validation.errors.length} problem${validation.errors.length === 1 ? "" : "s"}. The records moved; these are what is left to fix.`,
+    `\nThe migration finished, but the specification it carried does not validate: ${validation.errors.length} problem${validation.errors.length === 1 ? "" : "s"}. The records moved; these are what is left to fix.`,
   ];
   for (const error of validation.errors.slice(0, 10)) lines.push(`  ${error.code}  ${error.message}`);
   if (validation.errors.length > 10) lines.push(`  ... and ${validation.errors.length - 10} more; run 'kotta validate' for the full report.`);
