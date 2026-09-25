@@ -47,3 +47,60 @@ of `tasks.md`).
 - **The `SPEC_REFERENCES_TASK` rule is gone.** It forbade a node from naming a task; there is no
   task to name. The "specification never points at execution" idea returns in phase 2 as the
   boundary between the model and the narrative, not as a task-id check.
+
+Phase 2B (module boundary and evidence levels, `tasks.md` 1.2, 2, 5.1).
+
+- **A missing interface warns; it does not refuse.** The `module-boundary` spec says the check "hibát
+  ad", the 2B brief says `validate` carries the checks as warnings. Done: in both `validate` and
+  `kotta modules check` a missing interface, a straddler and a cross-boundary reference are warnings;
+  only an interface whose `module:` names no declared module (`MODULE_UNKNOWN`) and a malformed
+  `reference:` block refuse. Whether (a) should become an error once real workspaces are clean is
+  the operator's call.
+- **Which manifests declare a module.** npm/pnpm: only the directories the workspace globs list
+  (`package.json` `workspaces`, `pnpm-workspace.yaml` `packages:`, with `!` exclusions); the root
+  `package.json` is a module only when it declares no workspace. uv and pub workspace roots are not
+  modules either; any other `pyproject.toml` with `[project]`, every `pubspec.yaml`, every `go.mod`,
+  and Cargo workspace members (or a root `[package]`) are. One directory claimed by two ecosystems
+  goes to the first (node, python, dart, rust, go).
+- **Which external dependencies are listed.** Every `file:`/`path` and git dependency is; a plain
+  version range only when an interface's `reference.module` names it or the installed package ships
+  `kotta-spec/`. Listing every range would make `left-pad` a module relationship.
+- **Working tree for `modules`, commit for `gap`.** `kotta modules`, `modules check` and the checks in
+  `validate` read the working tree (`git ls-files --cached --others --exclude-standard`), like
+  `validate` reads the spec; `gap` keeps reading committed bytes on the base branch and discovers the
+  modules from the manifests at that same commit. The two can disagree about uncommitted work.
+- **Placement uses `gap`'s evidence unfiltered.** A node's modules are those of every file `gap`
+  counts as evidence, Markdown included; a design note outside every package that names an id makes
+  the node straddle with `(root)`. Two paths are excluded from evidence everywhere: `node_modules/`
+  and any `kotta-spec/` directory — a published copy of a promise is not evidence that it is kept.
+- **The `reference:` block gained two optional keys.** `{ module, version, resolve }` cannot say which
+  of the core's interfaces is meant, nor where a git core lives. Added: `id` (the foreign interface;
+  without it the one with the same title, else the module's only interface) and `url` (for `resolve:
+  git` when no manifest dependency gives one). Without `resolve`, file → package → git is tried in
+  order and every failed attempt is reported.
+- **What a pin is compared with.** A commit pin (7–40 hex) is stale when the matched core node's file
+  changed in `pin..HEAD` (file and git resolution) or the published manifest's commit differs
+  (package resolution, which carries no history). Any other pin is a version and must equal the
+  resolved module's version exactly; ranges are not interpreted. Git resolution clones/fetches into a
+  bare cache under the OS temp directory, so `modules check` touches the network only for git refs.
+- **"Copy" is measured on the body, by words.** Twice the longest common word sequence over both
+  lengths, above 0.8; only interfaces without a `reference:` are compared, against every foreign
+  interface a `file:` dependency's repository or an installed `kotta-spec/` makes readable.
+- **A cross-boundary reference is any frontmatter value naming a node id**, not only the registry's
+  edge fields; a mention in the body is not a reference.
+- **`kotta-spec/` layout.** `<module>/kotta-spec/` mirrors `.kotta/spec/`: `forms/` with the forms
+  used, one directory per form, and `manifest.json` `{ format: 1, module, version, commit, nodes }`.
+  "Rules and examples bound to an interface" is read as business-rule and example nodes whose
+  frontmatter names the interface, plus examples naming those rules. The command replaces only its
+  own output (a directory without `manifest.json` is refused) and does not edit `package.json`
+  `files`; it says to.
+- **`bound` is static; `prove` is a design note.** `bound` = the id in a test's name (`it`/`test`/
+  `describe`/`group`/`testWidgets` strings; Rust `#[test] fn` and Python `def test_` names with the
+  id's separators as `_`). `it.skip`, `xit` and `#[ignore]` do not bind. Not built: `kotta prove`
+  would run the project's test command with a machine-readable reporter, map each result whose name
+  carries an id to that node, and report `green | red | skipped` per node at the commit — a skipped
+  test leaving the node unproven, with the reason (spec `evidence`, "Átugrott teszt").
+- **The module summary in `gap` counts a straddler in each of its modules**, so rows can sum past
+  the node count; nodes without evidence are counted apart as `unplaced`, except an interface with
+  `module:`, which counts under that module as `none`. The per-evidence entries keep their old
+  `{ kind, path }` shape.
