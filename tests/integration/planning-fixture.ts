@@ -71,7 +71,7 @@ export function planningWorkspace(label: string): string {
     { "Governed lifecycle": "A game from start to end.", States: "running, paused, over", Transitions: "- running -> paused\n- paused -> running\n- running -> over" }));
   write(root, `${spec}/glossary-terms/quit-${TERM.slice(-8)}.md`, node(
     { id: TERM, form: "glossary-term", title: "Quit" },
-    { Definition: "Ending a game before it is over.", Usage: "The player quits.", "Non-examples": "- pause — stops the clock and keeps the game" }));
+    { Definition: "Ending a game before it is over.", Usage: "The player quits.", "Non-examples": "- pause — stops the clock, but does not end the game" }));
 
   const change = "openspec/changes/add-pause";
   write(root, `${change}/proposal.md`, "# Add pause\n\n## Why\n\nA paused game should just quit.\n");

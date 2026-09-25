@@ -5,6 +5,7 @@ import { displayId } from "../core/identity.js";
 import { parseOpenQuestions, unresolvedQuestions } from "../core/questions.js";
 import { findRepositoryRoot, specPath } from "../filesystem/workspace.js";
 import { OPENSPEC_DIRECTORY, PLANNING_FILE, deltaHash, readChangeModel, type ChangeModel } from "../spec/change.js";
+import { claimSentences, glossaryContrasts, readContent } from "../spec/contrast.js";
 import { markdownFiles, narrativeDrift, type NarrativeDrift } from "../spec/narrative.js";
 import { PROVENANCE_DECIDERS, PROVENANCE_LEVELS, readProvenance } from "../spec/provenance.js";
 import { formIssues, readFormRegistry, readSpecNodes, referencesIn, validateNodeSet, type SpecForm, type SpecNode, type ValidationIssue } from "../spec/registry.js";
@@ -58,7 +59,7 @@ export interface ProvenanceSummary {
   levels: Record<string, number>;
   decidedBy: Record<string, number>;
   /** Every node whose content the agent decided alone: the list a human reviews at the gate. */
-  machineDecisions: Array<NodeRef & { inferred: string }>;
+  machineDecisions: Array<NodeRef & { inferred: string; quote: string; source: string }>;
 }
 
 export interface ChangeAnalysis {
@@ -118,14 +119,6 @@ export function transitions(node: SpecNode): Array<[string, string]> {
   return pairs;
 }
 
-function nonExamples(node: SpecNode): string[] {
-  const text = sections(parseMarkdown(readFileSync(node.path, "utf8")).content).get("non-examples") ?? "";
-  return text.split(/\r?\n/)
-    .map((line) => /^\s*(?:[-*+]|\d+[.)])\s+(.*)$/.exec(line)?.[1] ?? "")
-    .map((item) => item.replace(/[`*_"]/g, "").split(/\s+[—–-]\s+|:\s/)[0].trim().toLowerCase())
-    .filter((item) => item.length >= 3);
-}
-
 function conflictCandidates(root: string, accepted: SpecNode[], delta: SpecNode[], removed: SpecNode[]): ConflictCandidate[] {
   const acceptedById = new Map(accepted.map((node) => [node.id, node]));
   const deltaIds = new Set(delta.map((node) => node.id));
@@ -164,14 +157,21 @@ function conflictCandidates(root: string, accepted: SpecNode[], delta: SpecNode[
       for (const { field } of fieldReferences(node).filter(({ value }) => value === gone.id)) add("references-removed", node, gone, `names the removed node in '${field}'`);
     }
   }
-  const glossary = [...standing, ...delta].filter((node) => node.form === "glossary-term");
-  for (const change of delta) {
-    const name = title(change).toLowerCase();
-    for (const term of glossary) {
-      if (term.id === change.id) continue;
-      for (const contrast of nonExamples(term)) {
-        const words = new RegExp(`\\b${contrast.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`);
-        if (words.test(name)) add("glossary-contrast", term, change, `the title '${title(change)}' uses '${contrast}', which ${title(term)} names as a non-example`);
+  // A glossary contrast needs a claim that says of a non-example what the term denies; a shared
+  // word in a title is not one. One side of every pair is in the delta: the rest was accepted together.
+  const deltaSet = new Set(delta.map((node) => node.id));
+  const current = [...standing, ...delta];
+  const claims = new Map(current.map((node) => [node.id, claimSentences(readContent(node))]));
+  for (const term of current.filter((node) => node.form === "glossary-term")) {
+    const content = readContent(term);
+    for (const node of current) {
+      if (node.id === term.id || (!deltaSet.has(node.id) && !deltaSet.has(term.id))) continue;
+      for (const contrast of glossaryContrasts(title(term), content, claims.get(node.id) ?? [])) {
+        const sentence = contrast.sentence.length > 200 ? `${contrast.sentence.slice(0, 197)}…` : contrast.sentence;
+        const detail = `“${sentence}” states of '${contrast.subject}' what ${title(term)} denies: “${contrast.explanation}”`;
+        // The accepted side is the one that may no longer hold; the delta side is why.
+        if (deltaSet.has(node.id)) add("glossary-contrast", term, node, detail);
+        else add("glossary-contrast", node, term, detail);
       }
     }
   }
@@ -190,7 +190,9 @@ function provenanceSummary(root: string, delta: SpecNode[]): ProvenanceSummary {
     if (!provenance) { unmarked.push(node.id); continue; }
     levels[provenance.level] += 1;
     decidedBy[provenance.decided_by] += 1;
-    if (provenance.decided_by === "agent-decided") machineDecisions.push({ ...reference(root, node), inferred: String(provenance.inferred ?? "").trim() });
+    if (provenance.decided_by === "agent-decided") {
+      machineDecisions.push({ ...reference(root, node), inferred: String(provenance.inferred ?? "").trim(), quote: String(provenance.quote ?? "").trim(), source: String((provenance.sources ?? [])[0] ?? "").trim() });
+    }
   }
   return { nodes: delta.length, unmarked, levels, decidedBy, machineDecisions };
 }
@@ -280,7 +282,33 @@ function issueLines(issues: ValidationIssue[], root: string): string[] {
   return issues.map((issue) => `- \`${issue.code}\` ${issue.message}${issue.path ? ` — ${relative(root, issue.path) || issue.path}` : ""}`);
 }
 
-export function renderPlanning(analysis: ChangeAnalysis, root: string, generatedAt: string): string {
+/**
+ * What a machine decision rests on: what the agent supplied, when it said so; otherwise the words it
+ * worked from, quoted; otherwise the first source it names.
+ */
+function machineAccount(decision: ProvenanceSummary["machineDecisions"][number]): string {
+  if (decision.inferred) return decision.inferred;
+  if (decision.quote) return `from “${decision.quote}”${decision.source ? ` (${decision.source})` : ""}`;
+  if (decision.source) return `from ${decision.source}`;
+  return "(no account of what was supplied)";
+}
+
+/** The markers around section (c)'s hand-written part: the contradictions the agent judged itself. */
+export const JUDGED_OPEN = "<!-- kotta:judged — the agent's own findings; `kotta plan` keeps this block as written -->";
+export const JUDGED_CLOSE = "<!-- /kotta:judged -->";
+const JUDGED_BLOCK = /<!-- kotta:judged\b[^>]*-->\r?\n?([\s\S]*?)<!-- \/kotta:judged -->/;
+
+/** The hand-written judged block of an existing `planning.md`, trimmed; empty when there is none. */
+export function judgedBlock(planning: string): string {
+  return JUDGED_BLOCK.exec(planning)?.[1].trim() ?? "";
+}
+
+/** The judged findings, one per list item. */
+export function judgedFindings(block: string): string[] {
+  return block.split(/\r?\n/).map((line) => /^\s*(?:[-*+]|\d+[.)])\s+(.*)$/.exec(line)?.[1]?.trim() ?? "").filter(Boolean);
+}
+
+export function renderPlanning(analysis: ChangeAnalysis, root: string, generatedAt: string, judged = ""): string {
   const ok = blockingIssues(analysis).length === 0;
   const lines = [
     "---",
@@ -317,7 +345,8 @@ export function renderPlanning(analysis: ChangeAnalysis, root: string, generated
     lines.push(`${conflict.rank}. **${named(conflict.node)}** — ${conflict.detail} (${conflict.kind}; because of ${named(conflict.because)}). Awaits judgement.`);
   }
   if (analysis.conflictsTotal > analysis.conflicts.length) lines.push("", `${analysis.conflictsTotal - analysis.conflicts.length} lower-ranked candidates are not listed; the ${analysis.conflicts.length} above rank highest.`);
-  lines.push("");
+  lines.push("", "The machine's candidates are mechanical and narrow. Contradictions the agent found by comparing every claim of the delta with the accepted nodes it touches, each marked `judged`:", "");
+  lines.push(JUDGED_OPEN, ...(judged.trim() ? [judged.trim()] : []), JUDGED_CLOSE, "");
 
   lines.push("## (d) Silences", "");
   if (!analysis.silences.openDecisions.length && !analysis.silences.formQuestions.length) lines.push("No open decision, and no question a form asks is left unanswered.");
@@ -340,7 +369,7 @@ export function renderPlanning(analysis: ChangeAnalysis, root: string, generated
   lines.push(`Decided by: ${PROVENANCE_DECIDERS.map((decider) => `${summary.decidedBy[decider]} ${decider}`).join(", ")}.`, "");
   lines.push("What the machine decided alone:", "");
   if (!summary.machineDecisions.length) lines.push("- nothing");
-  for (const decision of summary.machineDecisions) lines.push(`- ${named(decision)} — ${decision.inferred || "(no account of what was supplied)"}`);
+  for (const decision of summary.machineDecisions) lines.push(`- ${named(decision)} — ${machineAccount(decision)}`);
   lines.push("");
   return `${lines.join("\n")}`;
 }
@@ -348,7 +377,7 @@ export function renderPlanning(analysis: ChangeAnalysis, root: string, generated
 export interface PlanResult {
   ok: boolean;
   command: "plan";
-  data: ChangeAnalysis & { planning: string };
+  data: ChangeAnalysis & { planning: string; judged: string[] };
   errors: ValidationIssue[];
 }
 
@@ -356,16 +385,18 @@ export function planChange(name: string, repositoryRoot?: string, now: Date = ne
   const root = repositoryRoot ?? findRepositoryRoot();
   const analysis = analyzeChange(root, name);
   const path = join(analysis.model.directory, PLANNING_FILE);
-  writeFileSync(path, renderPlanning(publicAnalysis(analysis), root, now.toISOString()));
+  // The agent's judged findings are its own writing: a re-plan measures again and keeps them.
+  const judged = existsSync(path) ? judgedBlock(readFileSync(path, "utf8")) : "";
+  writeFileSync(path, renderPlanning(publicAnalysis(analysis), root, now.toISOString(), judged));
   const errors = blockingIssues(analysis);
-  return { ok: errors.length === 0, command: "plan", data: { ...publicAnalysis(analysis), planning: relative(root, path) }, errors };
+  return { ok: errors.length === 0, command: "plan", data: { ...publicAnalysis(analysis), planning: relative(root, path), judged: judgedFindings(judged) }, errors };
 }
 
 export function formatPlan(result: PlanResult): string {
   const data = result.data;
   const lines = [
     `Planned ${data.change}: ${data.delta.added.length} added, ${data.delta.modified.length} changed, ${data.delta.removed.length} removed. Report: ${data.planning}.`,
-    `Conflict candidates awaiting judgement: ${data.conflictsTotal}${data.conflictsTotal > data.conflicts.length ? ` (top ${data.conflicts.length} listed)` : ""}. Open decisions: ${data.silences.openDecisions.length}. Narrative drift: ${data.drift.length}. Decided by the machine alone: ${data.provenance.machineDecisions.length}.`,
+    `Conflict candidates awaiting judgement: ${data.conflictsTotal}${data.conflictsTotal > data.conflicts.length ? ` (top ${data.conflicts.length} listed)` : ""}. Open decisions: ${data.silences.openDecisions.length}. Narrative drift: ${data.drift.length}. Judged by the agent: ${data.judged.length}. Decided by the machine alone: ${data.provenance.machineDecisions.length}.`,
   ];
   if (result.ok) lines.push("Ready for the gate: put the delta, the candidates and the machine's decisions to the human, then record their yes with 'kotta approve'.");
   return lines.join("\n");

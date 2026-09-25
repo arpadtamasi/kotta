@@ -114,6 +114,30 @@ describe("kotta plan", () => {
     expect(report).toContain("Awaits judgement.");
   });
 
+  test("lists a machine decision by what it rests on, and keeps the agent's judged findings across a re-plan", () => {
+    const root = planningWorkspace("plan-account");
+    answerPause(root);
+    // Decided by the agent, but stated: nothing was supplied, so the report shows the words it came from.
+    write(root, `${CHANGE}/model/examples/timer-holds-${HOLD.slice(-8)}.md`, node(
+      { id: HOLD, form: "example", title: "The timer holds while paused", subjects: [PAUSE], provenance: { level: "stated", decided_by: "agent-decided", sources: ["openspec/changes/add-pause/proposal.md · Why"], quote: "a paused game should just quit" } },
+      { Given: "a game paused at 01:10", When: "a minute passes", Then: "the clock still shows 01:10" }));
+    expect(json(root, ["plan", "add-pause"]).status).toBe(0);
+    let report = readFileSync(join(root, CHANGE, "planning.md"), "utf8");
+    expect(report).toContain("The timer holds while paused (EX-000000e3) — from “a paused game should just quit” (openspec/changes/add-pause/proposal.md · Why)");
+    expect(report).toContain("Game lifecycle (SM-000000s1) — that a finished game can be restarted");
+    expect(report).not.toContain("no account of what was supplied");
+
+    // The agent writes what it judged into (c); the next plan measures again and keeps it.
+    const finding = "- judged: Quitting asks for confirmation now quits a paused game at once, which the Quit term says a pause does not do.";
+    write(root, `${CHANGE}/planning.md`, report.replace("<!-- /kotta:judged -->", `${finding}\n<!-- /kotta:judged -->`));
+    const again = json(root, ["plan", "add-pause"]);
+    expect(again.body.data.judged).toEqual([finding.slice(2)]);
+    report = readFileSync(join(root, CHANGE, "planning.md"), "utf8");
+    expect(report.split(finding)).toHaveLength(2);
+    expect(report.indexOf(finding)).toBeLessThan(report.indexOf("## (d) Silences"));
+    expect(report.indexOf(finding)).toBeGreaterThan(report.indexOf("## (c) Conflict candidates"));
+  });
+
   test("passes once the question is answered, and fails on a structural gap in the delta", () => {
     const root = planningWorkspace("plan-ok");
     answerPause(root);
