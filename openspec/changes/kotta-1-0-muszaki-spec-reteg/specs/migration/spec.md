@@ -11,12 +11,12 @@ A migráció SHALL a meglévő folyamat-tartalmat csak olvasható archívumba te
 - **WHEN** egy mai workspace-t migrálunk
 - **THEN** a spec node-jai változatlanok maradnak, a folyamat-adat archívumba kerül, és semmi nem törlődik
 
-### Requirement: A régi eszköz legacy néven megmarad
-A mai folyamatmotor SHALL `kotta-legacy` néven futtatható és telepíthető maradni, amíg a migráció le nem zajlik, és a migrált workspace-ben a folyamat-adat SHALL `legacy/` alá kerülni, csak olvashatóan.
+### Requirement: Nincs kompatibilitási réteg, csak migráció
+Az 1.0 SHALL NOT a régi folyamat-parancsokat megtartani; egy migrálatlan workspace-ben SHALL a migrációt ajánlani és mást nem tenni. A régi kiadás a régi verziószámon marad telepíthető.
 
-#### Scenario: A régi eszköz még fut
-- **WHEN** egy workspace még nincs migrálva
-- **THEN** a `kotta-legacy` a megszokott módon kezeli, az új `kotta` pedig megmondja, hogy migráció kell
+#### Scenario: Migrálatlan workspace
+- **WHEN** az 1.0 egy régi formájú workspace-t talál
+- **THEN** megnevezi a migrációt, és semmilyen más parancs nem fut le rajta
 
 #### Scenario: Migrálás után
 - **WHEN** a workspace migrálva lett
