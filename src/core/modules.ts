@@ -420,12 +420,14 @@ export function discoverModules(files: RepositoryFiles, options: DiscoveryOption
     if (previous !== undefined) issues.push({ code: "MODULE_DUPLICATE_NAME", message: `Module name '${module.name}' is declared by both ${previous} and ${module.path}; a node can be placed in only one of them.`, path: module.manifest ?? undefined });
     else names.set(module.name, module.path);
   }
-  const internal = (name: string) => names.has(name) || [...names.keys()].some((known) => normalizePythonName(known) === normalizePythonName(name));
+  /** The declared name a dependency means, matched exactly or by Python's normalized spelling. */
+  const internal = (name: string) => names.has(name) ? name : [...names.keys()].find((known) => normalizePythonName(known) === normalizePythonName(name));
   const byDirectory = new Map(declared.map(({ module }) => [resolve(files.root, module.path), module.name]));
 
   const modules: RepoModule[] = declared.map(({ module, raw }) => ({ ...module, surface: [], dependencies: raw.flatMap((dependency): ModuleDependency[] => {
     const local = dependency.path ? byDirectory.get(resolve(dependency.path)) : undefined;
-    if (local || (internal(dependency.name) && !dependency.path && !dependency.git)) return [{ name: local ?? dependency.name, external: false, spec: dependency.spec }];
+    const named = !dependency.path && !dependency.git ? internal(dependency.name) : undefined;
+    if (local || named) return [{ name: (local ?? named)!, external: false, spec: dependency.spec }];
     if (dependency.path) return [{ name: dependency.name, external: true, spec: dependency.spec, resolve: "file", path: dependency.path }];
     if (dependency.git) return [{ name: dependency.name, external: true, spec: dependency.spec, resolve: "git", url: dependency.url, ref: dependency.ref }];
     if (options.externalNames?.has(dependency.name) || installedSpec(files.root, module.path, dependency.name)) return [{ name: dependency.name, external: true, spec: dependency.spec, resolve: "package" }];

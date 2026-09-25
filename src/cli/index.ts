@@ -242,13 +242,14 @@ const modules = define("modules", renderModules)
 modules.command("check")
   .description("Check module boundaries and cross-repository references: missing interfaces, straddling nodes, references across a boundary, stale pins, drifted copies")
   .option("--json")
-  .action((options: { json?: boolean }) => print(checkModules(), Boolean(options.json)));
+  // `--json` is also the parent's option, and commander hands it to whichever command declares it first.
+  .action((_options: unknown, command: Command) => print(checkModules(), Boolean(command.optsWithGlobals().json)));
 renderers.set("modules check", renderModulesCheck);
 modules.command("publish-spec")
   .description("Copy a module's interface nodes and the rules and examples bound to them into <module>/kotta-spec/, to ship with the package")
   .argument("<module>", "A module name the manifests declare")
   .option("--json")
-  .action((module: string, options: { json?: boolean }) => print(publishSpec(module), Boolean(options.json)));
+  .action((module: string, _options: unknown, command: Command) => print(publishSpec(module), Boolean(command.optsWithGlobals().json)));
 renderers.set("modules publish-spec", renderPublishSpec);
 
 define("questions [id]", renderQuestions)
