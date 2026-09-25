@@ -1,66 +1,39 @@
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { listEntities, type ListableEntity } from "../filesystem/entities.js";
 import { displayId } from "../core/identity.js";
 import { findRepositoryRoot } from "../filesystem/workspace.js";
-import { controlPlaneRoot } from "../git/control-plane.js";
 import { parseOpenQuestions, unresolvedQuestions, type OpenQuestion } from "../core/questions.js";
-import { findDecision } from "./decision.js";
+import { readFormRegistry, readSpecNodes } from "../spec/registry.js";
 
 /**
- * What still waits on a human, for one entity or for all of them
- * (BR-01m0z873stwx7szg5896gwsbry, UC-01m0f0wn89m98wpkqq8e5c9p6p).
+ * What still waits on a human, for one specification node or for all of them.
  *
- * The same parse the defining gate reads, so a listing can never disagree with a refusal. Nothing
- * here writes, and a workspace that does not validate is still answerable — the question is asked
- * most often about an entity that will not go through.
+ * A draft carries its undecided points under an `Open decisions` heading, one list item each. The
+ * planning phase (phase 2) refuses to approve a model delta while any of them is open; this command
+ * is the read that lists them. Nothing here writes, and a workspace that does not validate is still
+ * answerable — the question is asked most often about a draft that is not finished.
  */
-
-/** The kinds that can carry the section. Only tasks do today; a hand-written one is still read. */
-const KINDS: readonly ListableEntity[] = ["task", "observation", "batch"];
 
 export interface EntityQuestions {
   id: string;
-  kind: ListableEntity;
+  form: string;
   title: string;
-  state: string;
   /** Path relative to the repository root, so the reader can open it. */
   path: string;
   questions: OpenQuestion[];
-  /** How many of them are still unanswered — what puts this entity ahead of the others. */
+  /** How many of them are still unanswered — what puts this node ahead of the others. */
   open: number;
-  /** Whether an unanswered question here is what stops the entity from being defined. */
-  blocksDefining: boolean;
 }
 
 function relative(root: string, path: string): string {
   return path.startsWith(`${root}/`) ? path.slice(root.length + 1) : path;
 }
 
-function forEntity(root: string, kind: ListableEntity, listed: { id: string; title: string; state: string; path: string }): EntityQuestions | null {
-  if (!existsSync(listed.path)) return null;
-  const content = readFileSync(listed.path, "utf8");
-  const questions = parseOpenQuestions(listed.id, content, (decision) => Boolean(findDecision(root, decision)));
-  if (!questions.length) return null;
-  const open = unresolvedQuestions(questions).length;
-  return {
-    id: listed.id,
-    kind,
-    title: listed.title,
-    state: listed.state,
-    path: relative(root, listed.path),
-    questions,
-    open,
-    // Only a task has a defining gate to block, and only before it is through it.
-    blocksDefining: open > 0 && kind === "task" && listed.state === "backlog",
-  };
-}
-
 export interface QuestionsResult {
   ok: true;
   command: "questions";
   data: {
-    /** The entity asked about, when one was; null for the whole workspace. */
+    /** The node asked about, when one was; null for the whole workspace. */
     entity: string | null;
     entities: EntityQuestions[];
     total: number;
@@ -69,33 +42,44 @@ export interface QuestionsResult {
 }
 
 /**
- * Open questions, grouped by entity. Blocking entities come first, then the rest by how many
- * questions are still open, then by id, so the order is the order to work through.
+ * Open questions, grouped by node: the most open first, then by id, so the order is the order to
+ * work through. A question that names a decision reference counts as answered at face value; the
+ * planning phase is where an answer is recorded and checked.
  */
 export function openQuestions(id?: string, repositoryRoot?: string): QuestionsResult {
-  const root = controlPlaneRoot(repositoryRoot ? resolve(repositoryRoot) : findRepositoryRoot());
-  const listed = KINDS.flatMap((kind) => listEntities(root, kind).map((found) => ({ kind, found })));
+  const root = repositoryRoot ? resolve(repositoryRoot) : findRepositoryRoot();
+  const { forms } = readFormRegistry(root);
+  const { nodes } = readSpecNodes(root, forms);
   let entity: string | null = null;
-  let wanted = listed;
+  let wanted = nodes;
 
   if (id) {
     const trimmed = id.trim();
-    // The id the CLI printed is the id the CLI accepts, on every kind at once: a short form
-    // resolves here the same way it resolves inside a family, and two matches are refused.
-    const matches = listed.filter(({ found }) => found.id === trimmed || displayId(found.id) === trimmed);
-    const ids = [...new Set(matches.map(({ found }) => found.id))];
-    if (ids.length > 1) throw new Error(`Entity id '${trimmed}' is ambiguous; it matches ${ids.join(", ")}. Name one of them in full.`);
-    if (!ids.length) throw new Error(`No entity matches '${trimmed}'.`);
+    // The id the CLI printed is the id the CLI accepts: a short form resolves here, and two matches
+    // are refused rather than guessed between.
+    const matches = nodes.filter((node) => node.id === trimmed || displayId(node.id) === trimmed);
+    const ids = [...new Set(matches.map((node) => node.id))];
+    if (ids.length > 1) throw new Error(`Node id '${trimmed}' is ambiguous; it matches ${ids.join(", ")}. Name one of them in full.`);
+    if (!ids.length) throw new Error(`No specification node matches '${trimmed}'.`);
     entity = ids[0];
     wanted = matches;
   }
 
-  // An entity with nothing open is not an error: it is the empty enumeration, and saying so is the
-  // answer the reader came for.
-  const entities = wanted.flatMap(({ kind, found }) => forEntity(root, kind, found) ?? []);
+  const entities = wanted.flatMap((node): EntityQuestions[] => {
+    const content = readFileSync(node.path, "utf8");
+    const questions = parseOpenQuestions(node.id, content);
+    if (!questions.length) return [];
+    return [{
+      id: node.id,
+      form: node.form,
+      title: typeof node.data.title === "string" ? node.data.title.trim() : node.id,
+      path: relative(root, node.path),
+      questions,
+      open: unresolvedQuestions(questions).length,
+    }];
+  });
 
-  entities.sort((a, b) =>
-    Number(b.blocksDefining) - Number(a.blocksDefining) || b.open - a.open || a.id.localeCompare(b.id));
+  entities.sort((a, b) => b.open - a.open || a.id.localeCompare(b.id));
 
   return {
     ok: true,

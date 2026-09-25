@@ -1,12 +1,7 @@
-version: 4
+version: 6
 
 project:
   name: example-project
-
-workflow:
-  require_human_done_approval: true
-  allow_agent_observations: true
-  allow_agent_defined_tasks: false
 
 git:
   base_branch: main
@@ -14,16 +9,6 @@ git:
     - main
     - master
     - develop
-  worktrees: auto
-  worktree_root: .worktrees
-  branch_pattern: "{prefix}/{id}-{slug}"
-
-batches:
-  default_parallelism: 2
-  stop_on_failure: true
 
 validation:
   strict: true
-  reject_unknown_profiles: true
-  require_verification_for_defined: true
-  require_review_evidence_for_done: true

@@ -6,15 +6,6 @@ import { readEnv } from "../core/env.js";
 import { findRepositoryRoot, hasWorkspace, syncWorkspaceForms } from "../filesystem/workspace.js";
 import { linkProjectAgents, pointerLine, syncWorkspaceAgents } from "./agents.js";
 
-/** Skill directories the v3 `contract` vocabulary named; sync removes an owned leftover once its rename is installed. */
-const LEGACY_TASK_SKILL_RENAMES: Readonly<Record<string, string>> = {
-  "close-contract": "close-task",
-  "define-contract": "define-task",
-  "design-by-contract": "design-by-task",
-  "execute-contract": "execute-task",
-  "start-contract": "start-task",
-};
-
 /**
  * Kotta ships its skills inside the package, but nothing has ever installed them — so the
  * `AGENTS.md` instruction to prefer them has never had a true precondition. `sync` copies them
@@ -28,7 +19,7 @@ const LEGACY_TASK_SKILL_RENAMES: Readonly<Record<string, string>> = {
  * symlinks into a directory that later moved, and both were dangling by the time anyone looked.
  */
 
-/** Where the shipped skills live: `<package>/skills`, alongside `profiles/` and `templates/`. */
+/** Where the shipped skills live: `<package>/skills`, alongside `templates/`. */
 export function shippedSkillsRoot(): string {
   return fileURLToPath(new URL("../../skills", import.meta.url));
 }
@@ -148,14 +139,18 @@ export function syncSkills(environment: NodeJS.ProcessEnv = process.env): SyncRe
     (occupied ? updated : created).push(name);
   }
 
-  // Remove only legacy task-vocabulary directories that Kotta's own manifest claims, and only
-  // after their renamed replacement is present. Unowned collisions remain somebody else's files.
-  for (const [legacy, current] of Object.entries(LEGACY_TASK_SKILL_RENAMES)) {
-    const oldPath = join(target, legacy);
-    if (!owned.has(legacy) || !owned.has(current) || !existsSync(join(target, current)) || !existsSync(oldPath)) continue;
-    rmSync(oldPath, { recursive: true, force: true });
-    owned.delete(legacy);
-    removed.push(legacy);
+  // A skill Kotta installed and no longer ships is removed — the process-layer skills of the
+  // pre-1.0 releases, above all. Only what the manifest proves is Kotta's own: an unowned directory
+  // under a retired name is somebody else's file and stays.
+  const shipped = new Set(shippedSkillNames(source));
+  for (const name of [...owned].sort()) {
+    if (shipped.has(name)) continue;
+    const path = join(target, name);
+    if (existsSync(path)) {
+      rmSync(path, { recursive: true, force: true });
+      removed.push(name);
+    }
+    owned.delete(name);
   }
 
   writeManifest(target, owned);
@@ -170,7 +165,7 @@ export function syncSkills(environment: NodeJS.ProcessEnv = process.env): SyncRe
  *
  * The project's own `AGENTS.md` is a third thing and is not Kotta's. `linkAgents` appends one
  * pointer line to it after a human said yes; without the flag the pointer is only reported, so the
- * calling agent can quote the exact line when it asks (D-01kztp2epe4sehb25mpv7hc33b).
+ * calling agent can quote the exact line when it asks.
  */
 export function syncCommand(options: { linkAgents?: boolean; replaceRules?: boolean } = {}, environment: NodeJS.ProcessEnv = process.env) {
   const skills = syncSkills(environment);
@@ -188,8 +183,7 @@ export function syncCommand(options: { linkAgents?: boolean; replaceRules?: bool
  * the copy was edited. Nothing is stored to answer this: the shipped skills are on disk in the
  * installed package, so the comparison is made directly.
  *
- * A skill that was never installed is not drift. `sync` has simply not been run, and `status`
- * reports that separately rather than nagging about ten absences.
+ * A skill that was never installed is not drift. `sync` has simply not been run.
  */
 export function skillDrift(environment: NodeJS.ProcessEnv = process.env): { installed: number; shipped: number; drifted: string[] } {
   const source = shippedSkillsRoot();

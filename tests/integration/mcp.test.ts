@@ -1,26 +1,22 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { ElicitRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { afterEach, describe, expect, test } from "vitest";
 import { createKottaMcpServer } from "../../src/commands/mcp.js";
 import { integrateCodex } from "../../src/commands/integrate.js";
-import { readWorkspace } from "../../src/commands/ui.js";
-import { readEvents } from "../../src/core/events.js";
-import { findTask } from "../../src/filesystem/entities.js";
+
+/**
+ * The calling chat reads the technical specification through these tools and writes nothing. There
+ * is no process to drive from chat any more: no approval, no claim, no transition — so the server
+ * carries read tools only, and refuses a pre-1.0 workspace like every other command.
+ */
 
 const cli = resolve("dist/cli/index.js");
-const MCP_TASK_SPEC_ID = "GT-01m0c0000000000000000000mc";
-/** A decision draft the chat carries whole, because there is no file for the human to open. */
-const DECISION_SOURCE = [
-  "---", "title: Adopt blue-green cutover", "---",
-  "## Decision", "", "Use a blue-green cutover.", "",
-  "## Context", "", "The release cannot tolerate downtime.", "",
-  "## Consequences", "", "Operate two stacks until verification completes.", "",
-].join("\n");
+const TERM = "GT-01m0c0000000000000000000mc";
+const RULE = "GT-01m0c0000000000000000000mr";
 const clients: Client[] = [];
 const servers: ReturnType<typeof createKottaMcpServer>[] = [];
 
@@ -35,503 +31,113 @@ function fixture(): string {
   execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: root });
   writeFileSync(join(root, "README.md"), "fixture\n");
   execFileSync("node", [cli, "init", "--json"], { cwd: root });
-  writeFileSync(join(root, ".kotta/spec/glossary-terms/caller-approval-000000mc.md"), [
-    "---", `id: ${MCP_TASK_SPEC_ID}`, "form: glossary-term", "title: Caller approval", "---", "",
-    "## Definition", "Human approval is recorded from host-chat elicitation.", "", "## Usage", "MCP lifecycle fixture.", "", "## Non-examples", "An unrecorded response.", "",
+  writeFileSync(join(root, ".kotta/spec/glossary-terms/caller-read-000000mc.md"), [
+    "---", `id: ${TERM}`, "form: glossary-term", "title: Caller read", "---", "",
+    "## Definition", "The calling chat reads the specification through tools.", "", "## Usage", "MCP fixture.", "", "## Non-examples", "A chat that edits the workspace.", "",
   ].join("\n"));
+  writeFileSync(join(root, ".kotta/spec/glossary-terms/read-only-000000mr.md"), [
+    "---", `id: ${RULE}`, "form: glossary-term", "title: The chat never writes", "accepted:", '  - "unimplemented: the fixture admits it on purpose"', "---", "",
+    "## Definition", "Nothing.", "", "## Usage", "Here.", "", "## Non-examples", "A write.", "", "## Open decisions", "- Should the board show admissions?", "",
+  ].join("\n"));
+  writeFileSync(join(root, "keeps.ts"), `// ${TERM}\nexport const kept = true;\n`);
   execFileSync("git", ["add", "-A"], { cwd: root });
   execFileSync("git", ["commit", "-m", "init"], { cwd: root });
   return root;
 }
 
-async function connect(root: string, decision: "approve" | "reject" | "cancel" = "approve") {
+async function connect(root: string) {
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   const server = createKottaMcpServer(root);
   servers.push(server);
-  const client = new Client({ name: "kotta-test", version: "1.0.0" }, { capabilities: { elicitation: { form: {} } } });
-  let prompt: unknown = null;
-  client.setRequestHandler(ElicitRequestSchema, async (request) => {
-    prompt = request.params;
-    return { action: "accept", content: { decision } };
-  });
-  await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
-  clients.push(client);
-  return { client, prompt: () => prompt };
-}
-
-async function connectWithoutElicitation(root: string) {
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  const server = createKottaMcpServer(root);
-  servers.push(server);
-  const client = new Client({ name: "kotta-test-no-elicitation", version: "1.0.0" }, { capabilities: {} });
+  const client = new Client({ name: "kotta-test", version: "1.0.0" });
   await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
   clients.push(client);
   return client;
 }
 
-function definition(id: string): string {
-  return `---
-id: ${id}
-spec: [${MCP_TASK_SPEC_ID}]
-coverage:
-  "Human approval is recorded from host-chat elicitation.": [${MCP_TASK_SPEC_ID}]
----
-# ${id} — Caller chat task
-
-## Outcome
-
-The calling chat controls the task without copied commands.
-
-## Scope
-
-Expose structured Kotta tools.
-
-## Non-goals
-
-No board mutations.
-
-## Acceptance
-
-- Human approval is recorded from host-chat elicitation.
-
-## Verification
-
-- Exercise the MCP tool through an in-memory client.
-
-## Constraints
-
-Keep canonical state on main.
-
-## Open decisions
-
-None.
-
-## Execution notes
-
-None.
-`;
-}
-
-async function createAndDefine(client: Client, root: string) {
-  const created = await client.callTool({ name: "task_create", arguments: { title: "Caller chat task", type: "feature", profiles: [] } });
-  const id = String((created.structuredContent as { data: { id: string } }).data.id);
-  expect(id).toMatch(/^T-/);
-  // The sentence a chat reads names the entity by title; the id it needs is in the structured
-  // payload beside it (BR-01m0f0wn89c50fe1mz5yn1nw85).
-  expect(created.content).toEqual(expect.arrayContaining([expect.objectContaining({ text: expect.stringContaining("Caller chat task") })]));
-  expect(readWorkspace(root).tasks.some((task) => task.id === id)).toBe(true);
-  expect(execFileSync("git", ["status", "--porcelain", "--", ".kotta"], { cwd: root, encoding: "utf8" })).toBe("");
-  const defined = await client.callTool({ name: "task_define", arguments: { id, definition: definition(id) } });
-  expect(defined.isError).not.toBe(true);
-  return id;
-}
-
-const GLOSSARY_ID = "GT-01m0c0000000000000000000ab";
-
-function landGlossaryNode(root: string): string {
-  const directory = join(root, ".kotta/spec/glossary-terms");
-  mkdirSync(directory, { recursive: true });
-  writeFileSync(join(directory, "amend-spec-disposition-000000ab.md"), [
-    "---", `id: ${GLOSSARY_ID}`, "form: glossary-term", "title: Amend-spec disposition", "---", "",
-    "## Definition", "The constructive exit that changes the accepted agreement.", "",
-    "## Usage", "Named by a resolved observation.", "",
-    "## Non-examples", "An automatic close.", "",
-  ].join("\n"));
-  execFileSync("git", ["add", ".kotta/spec"], { cwd: root });
-  execFileSync("git", ["commit", "-m", "docs(spec): define amend-spec"], { cwd: root });
-  return GLOSSARY_ID;
-}
-
-describe("Kotta caller-chat MCP", () => {
-  test("adds project MCP configuration idempotently without replacing existing settings", () => {
-    const root = fixture();
-    const directory = join(root, ".codex");
-    mkdirSync(directory);
-    const config = join(directory, "config.toml");
-    writeFileSync(config, "model = \"gpt-5\"\n");
-    expect(integrateCodex(root).data.changed).toBe(true);
-    expect(integrateCodex(root).data.changed).toBe(false);
-    const content = readFileSync(config, "utf8");
-    expect(content).toContain('model = "gpt-5"');
-    expect(content.match(/\[mcp_servers\.kotta\]/g)).toHaveLength(1);
-    // The invocation is proved from the running process, not written as a bare name
-    // (BR-01m0qyxvz954ay2rbm00bazrd5), so the interpreter and entry point are whatever is running.
-    expect(content).toContain(`command = "${process.execPath}"`);
-    expect(content).toMatch(/^args = \["\/.*index\.js", "mcp", "--workspace", "\."\]$/m);
+describe("the specification tools", () => {
+  test("every tool is a read, and there is no approval, task, observation or batch tool", async () => {
+    const client = await connect(fixture());
+    const { tools } = await client.listTools();
+    expect(tools.map((tool) => tool.name).sort()).toEqual(["gap_report", "spec_list", "spec_show", "workspace_questions", "workspace_validate"]);
+    for (const tool of tools) expect(tool.annotations?.readOnlyHint, `${tool.name} is read-only`).toBe(true);
   });
 
-  test("returns stable ids and applies one exact human-approved transition", async () => {
-    const root = fixture();
-    const connected = await connect(root, "approve");
-    const tools = await connected.client.listTools();
-    expect(tools.tools.map((tool) => tool.name)).toEqual(expect.arrayContaining([
-      "workspace_status", "gap_report", "task_create", "task_define", "task_validate", "task_start_caller", "approval_request",
-      "task_list", "observation_list", "decision_list", "batch_list",
-      "task_show", "observation_show", "decision_show", "batch_show",
-    ]));
-    // The deprecated contract_* aliases are gone: task_list/task_show are the only vocabulary.
-    expect(tools.tools.map((tool) => tool.name)).not.toContain("contract_list");
-    expect(tools.tools.map((tool) => tool.name)).not.toContain("contract_show");
-    expect(tools.tools.find((tool) => tool.name === "workspace_status")?.annotations?.readOnlyHint).toBe(true);
-    expect(tools.tools.find((tool) => tool.name === "gap_report")?.annotations?.readOnlyHint).toBe(true);
-    const gaps = await connected.client.callTool({ name: "gap_report", arguments: {} });
-    expect(gaps.isError).not.toBe(true);
-    expect(JSON.stringify(gaps.structuredContent)).toContain("gap report");
-    // Orientation reaches chat with the same answer the terminal gets, and reads nothing into the bargain.
-    for (const name of ["task_list", "observation_list", "decision_list", "batch_list", "task_show", "observation_show", "decision_show", "batch_show"]) {
-      expect(tools.tools.find((tool) => tool.name === name)?.annotations?.readOnlyHint).toBe(true);
-    }
-    const listed = await connected.client.callTool({ name: "task_list", arguments: {} });
-    expect((listed.structuredContent as { ok: boolean; data: { entity: string; entities: unknown[] } }).data.entity).toBe("task");
-    const narrowed = await connected.client.callTool({ name: "task_list", arguments: { state: ["review"] } });
-    expect((narrowed.structuredContent as { data: { count: number } }).data.count).toBe(0);
+  test("spec_list lists every node, narrows to a form, and refuses an unregistered one by naming the registry", async () => {
+    const client = await connect(fixture());
+    const all = await client.callTool({ name: "spec_list", arguments: {} });
+    const listed = (all.structuredContent as { data: { count: number; nodes: Array<{ id: string; form: string; title: string; path: string }> } }).data;
+    expect(listed.count).toBe(2);
+    expect(listed.nodes.map((node) => node.id).sort()).toEqual([RULE, TERM].sort());
+    expect(listed.nodes.find((node) => node.id === TERM)).toMatchObject({ form: "glossary-term", title: "Caller read", path: ".kotta/spec/glossary-terms/caller-read-000000mc.md" });
 
-    const id = await createAndDefine(connected.client, root);
-    const validated = await connected.client.callTool({ name: "task_validate", arguments: { id } });
-    expect((validated.structuredContent as { ok: boolean }).ok).toBe(true);
+    const narrowed = await client.callTool({ name: "spec_list", arguments: { form: "business-rule" } });
+    expect((narrowed.structuredContent as { data: { nodes: Array<{ id: string }> } }).data.nodes).toEqual([]);
+    const terms = await client.callTool({ name: "spec_list", arguments: { form: "glossary-term" } });
+    expect((terms.structuredContent as { data: { nodes: Array<{ id: string }> } }).data.nodes.map((node) => node.id).sort()).toEqual([RULE, TERM].sort());
 
-    expect(findTask(root, id).state).toBe("defined");
-
-    const started = await connected.client.callTool({
-      name: "task_start_caller",
-      arguments: { id, agent: "codex" },
-    });
-    expect(started.isError).not.toBe(true);
-    const worktree = String((started.structuredContent as { data: { worktree: string } }).data.worktree);
-    expect(existsSync(worktree)).toBe(true);
-    expect(findTask(root, id).state).toBe("active");
-    expect(findTask(worktree, id).state).toBe("defined");
-
-    const submitted = await connected.client.callTool({
-      name: "task_submit_review",
-      arguments: { id, evidence: "Caller-chat MCP integration exercised through review." },
-    });
-    expect(submitted.isError).not.toBe(true);
-    expect(findTask(root, id).state).toBe("review");
-
-    const approval = await connected.client.callTool({
-      name: "approval_request",
-      arguments: { entity: id, action: "task.close", payload: {}, clientRequestId: "close-once" },
-    });
-    expect(approval.isError).not.toBe(true);
-    // The gate names the judgement by title, never by id (QA-01m0fp2hdkq55yrx9qr5t8pweh).
-    expect(JSON.stringify(connected.prompt())).toContain("Close \\\"Caller chat task\\\"");
-    expect(JSON.stringify(connected.prompt())).not.toContain(id);
-    expect(findTask(root, id).state).toBe("done");
-    const events = readEvents(root, id);
-    expect(events.filter((event) => event.kind === "approval").map((event) => event.phase)).toEqual(["proposed", "approved", "applied"]);
-    const approved = events.find((event) => event.phase === "approved");
-    expect(approved?.source_message).toMatch(/^E-/);
-    expect(events.find((event) => event.id === approved?.source_message)?.text).toContain("Approved in caller chat");
-
-    const repeated = await connected.client.callTool({
-      name: "approval_request",
-      arguments: { entity: id, action: "task.close", payload: {}, clientRequestId: "close-once" },
-    });
-    expect((repeated.structuredContent as { phase: string }).phase).toBe("applied");
-    expect(readEvents(root, id).filter((event) => event.kind === "approval")).toHaveLength(3);
+    const refused = await client.callTool({ name: "spec_list", arguments: { form: "nonesuch" } });
+    expect(refused.isError).toBe(true);
+    expect(String((refused.content as Array<{ text: string }>)[0].text)).toContain("use-case");
   });
 
-  test("records a rejection and leaves lifecycle state unchanged", async () => {
-    const root = fixture();
-    const { client } = await connect(root, "reject");
-    const id = await createAndDefine(client, root);
-    await client.callTool({ name: "task_message_record", arguments: { task: id, role: "human", text: "ok, mehet" } });
-    expect(findTask(root, id).state).toBe("defined");
-    expect(readEvents(root, id).filter((event) => event.kind === "approval")).toEqual([]);
-    const result = await client.callTool({
-      name: "approval_request",
-      arguments: { entity: id, action: "task.cancel", payload: { resolution: "cancelled", reason: "The work is objectless" } },
-    });
-    expect(result.isError).not.toBe(true);
-    expect(findTask(root, id).state).toBe("defined");
-    expect(readEvents(root, id).filter((event) => event.kind === "approval").map((event) => event.phase)).toEqual(["proposed", "rejected"]);
+  test("spec_show reads one node by full or short id, with its frontmatter and sections", async () => {
+    const client = await connect(fixture());
+    const shown = await client.callTool({ name: "spec_show", arguments: { id: `GT-${TERM.slice(-8)}` } });
+    const node = (shown.structuredContent as { data: { id: string; form: string; title: string; frontmatter: Record<string, unknown>; sections: Record<string, string> } }).data;
+    expect(node).toMatchObject({ id: TERM, form: "glossary-term", title: "Caller read" });
+    expect(node.frontmatter.title).toBe("Caller read");
+    expect(node.sections.definition).toBe("The calling chat reads the specification through tools.");
+    expect(String((shown.content as Array<{ text: string }>)[0].text)).toContain("Caller read is a glossary-term");
+
+    const missing = await client.callTool({ name: "spec_show", arguments: { id: "GT-nope" } });
+    expect(missing.isError).toBe(true);
   });
 
-  test("resolves amend-spec through caller-chat approval and records the named specification nodes", async () => {
+  test("workspace_validate, workspace_questions and gap_report answer what the CLI answers", async () => {
     const root = fixture();
-    const connected = await connect(root, "approve");
-    const specId = landGlossaryNode(root);
-    const captured = JSON.parse(execFileSync("node", [
-      cli, "observation", "new",
-      "--title", "The disposition glossary is incomplete",
-      "--type", "inconsistency",
-      "--evidence", "The accepted specification now defines amend-spec.",
-      "--json",
-    ], { cwd: root, encoding: "utf8" })) as { data: { id: string } };
-    const id = captured.data.id;
+    const client = await connect(root);
+    const validated = await client.callTool({ name: "workspace_validate", arguments: {} });
+    expect((validated.structuredContent as { ok: boolean; data: { specNodes: number } })).toMatchObject({ ok: true, data: { specNodes: 2 } });
 
-    const resolved = await connected.client.callTool({
-      name: "approval_request",
-      arguments: {
-        entity: id,
-        action: "observation.resolve",
-        payload: { disposition: "amend-spec", spec: [specId] },
-      },
-    });
+    const questions = await client.callTool({ name: "workspace_questions", arguments: {} });
+    const asked = (questions.structuredContent as { data: { open: number; entities: Array<{ id: string }> } }).data;
+    expect(asked.open).toBe(1);
+    expect(asked.entities.map((entity) => entity.id)).toEqual([RULE]);
 
-    expect(resolved.isError).not.toBe(true);
-    // The human still sees exactly which specification nodes the disposition would amend, now in a
-    // sentence rather than as the command that would do it.
-    expect(JSON.stringify(connected.prompt())).toContain(specId);
-    expect(JSON.stringify(connected.prompt())).toContain("amend-spec");
-    expect(readWorkspace(root).observations.find((observation) => observation.id === id)).toMatchObject({
-      status: "resolved",
-      disposition: "amend-spec",
-      spec: [specId],
-    });
-    const approvalPayloads = readEvents(root, id)
-      .filter((event) => event.kind === "approval")
-      .map((event) => event.payload);
-    expect(approvalPayloads).toEqual([
-      expect.objectContaining({ disposition: "amend-spec", spec: [specId] }),
-      expect.objectContaining({ disposition: "amend-spec", spec: [specId] }),
-      expect.objectContaining({ disposition: "amend-spec", spec: [specId] }),
-    ]);
+    const gap = await client.callTool({ name: "gap_report", arguments: {} });
+    const report = (gap.structuredContent as { ok: boolean; data: { promises: unknown[]; acceptedGaps: Array<{ id: string }>; nodes: Array<{ id: string; evidence: unknown[] }> } });
+    expect(report.ok).toBe(true);
+    expect(report.data.promises).toEqual([]);
+    expect(report.data.acceptedGaps.map((entry) => entry.id)).toEqual([RULE]);
+    expect(report.data.nodes.find((node) => node.id === TERM)?.evidence).toHaveLength(1);
   });
 
-  test("the caller chat records the operator's own noticing as theirs", async () => {
+  test("the tools write nothing", async () => {
     const root = fixture();
-    const connected = await connect(root, "approve");
-
-    // The chat is where the operator's noticings are made, and where they were lost: the tool
-    // wrote origin as a literal, so an agent relaying what was said claimed it as its own
-    // (UC-01m0f0wn89jqb5mpcjjt1j5j8p).
-    const relayed = await connected.client.callTool({
-      name: "observation_create",
-      arguments: { title: "The board sorts by a column of one value", type: "process", evidence: "Said by the operator while triaging.", origin: "human" },
-    });
-    expect(relayed.isError, JSON.stringify(relayed.structuredContent ?? relayed.content)).not.toBe(true);
-
-    const own = await connected.client.callTool({
-      name: "observation_create",
-      arguments: { title: "The importer logs nothing", type: "bug", evidence: "Seen while reading the code." },
-    });
-    expect(own.isError).not.toBe(true);
-
-    const observations = readWorkspace(root).observations;
-    expect(observations.find((entry) => String(entry.title).startsWith("The board sorts"))).toMatchObject({ origin: "human" });
-    expect(observations.find((entry) => String(entry.title).startsWith("The importer"))).toMatchObject({ origin: "agent" });
+    const client = await connect(root);
+    for (const name of ["spec_list", "workspace_validate", "workspace_questions", "gap_report"]) await client.callTool({ name, arguments: {} });
+    await client.callTool({ name: "spec_show", arguments: { id: TERM } });
+    expect(execFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" })).toBe("");
   });
 
-  test("attaching an observation from the caller chat carries the task it attaches to", async () => {
+  test("a pre-1.0 workspace is refused at server creation, naming the migration", () => {
     const root = fixture();
-    const connected = await connect(root, "approve");
-    const id = await createAndDefine(connected.client, root);
-    const captured = JSON.parse(execFileSync("node", [
-      cli, "observation", "new",
-      "--title", "The importer logs nothing",
-      "--type", "bug",
-      "--evidence", "Observed while defining the caller-chat task.",
-      "--json",
-    ], { cwd: root, encoding: "utf8" })) as { data: { id: string } };
-    const observation = captured.data.id;
-
-    // Attaching with no task is refused before the human is asked: the payload is scoped per
-    // disposition (BR-01m0vqr9k6r571egp3z8qwnpkj), and this disposition's meaning is the reference.
-    const bare = await connected.client.callTool({
-      name: "approval_request",
-      arguments: { entity: observation, action: "observation.resolve", payload: { disposition: "attach-to-existing-task" } },
-    });
-    expect(bare.isError).toBe(true);
-    expect(JSON.stringify(bare.structuredContent)).toContain("attach-to-existing-task");
-    expect(connected.prompt(), "and nothing reached the human").toBeNull();
-
-    const attached = await connected.client.callTool({
-      name: "approval_request",
-      arguments: { entity: observation, action: "observation.resolve", payload: { disposition: "attach-to-existing-task", task: id } },
-    });
-    expect(attached.isError).not.toBe(true);
-    // The human is shown which task, by the name it carries rather than by its id.
-    expect(JSON.stringify(connected.prompt())).toContain("attached to Caller chat task");
-    expect(readWorkspace(root).observations.find((entry) => entry.id === observation)).toMatchObject({
-      status: "resolved",
-      disposition: "attach-to-existing-task",
-      task: id,
-    });
+    mkdirSync(join(root, ".kotta/process/tasks"), { recursive: true });
+    expect(() => createKottaMcpServer(root)).toThrow(/pre-1\.0 Kotta workspace shape[\s\S]*kotta migrate/);
   });
 
-  test("amends an already-defined task through the MCP define tool", async () => {
+  test("integrate codex records the running interpreter and entry, with no approval tool block", () => {
     const root = fixture();
-    const connected = await connect(root);
-    const id = await createAndDefine(connected.client, root);
-    expect(findTask(root, id).state).toBe("defined");
-
-    const amendedDefinition = definition(id)
-      .replace(`id: ${id}`, `id: ${id}\ntitle: Revised caller chat task`)
-      .replaceAll("Caller chat task", "Revised caller chat task");
-    const amended = await connected.client.callTool({ name: "task_define", arguments: { id, definition: amendedDefinition } });
-
-    expect(amended.isError).not.toBe(true);
-    const location = findTask(root, id);
-    expect(location.state).toBe("defined");
-    expect(location.filename).toBe(`revised-caller-chat-task-${id.slice(-8)}.md`);
-    expect(readFileSync(location.path, "utf8")).toContain("title: Revised caller chat task");
-    expect(readEvents(root, id).at(-1)).toMatchObject({ state: "defined", summary: "Task definition amended before execution." });
-    expect(execFileSync("git", ["status", "--porcelain", "--", ".kotta"], { cwd: root, encoding: "utf8" })).toBe("");
-  });
-
-  test("accepts named review evidence and refuses duplicated answers through MCP", async () => {
-    const root = fixture();
-    const connected = await connect(root);
-    const id = await createAndDefine(connected.client, root);
-    const first = "Caller-chat approval is recorded.";
-    const second = "The submitted task remains auditable.";
-    const mappedDefinition = definition(id).replace(
-      "- Human approval is recorded from host-chat elicitation.",
-      `- ${first}\n- ${second}`,
-    ).replace(
-      `  "Human approval is recorded from host-chat elicitation.": [${MCP_TASK_SPEC_ID}]`,
-      `  "${first}": [${MCP_TASK_SPEC_ID}]\n  "${second}": [${MCP_TASK_SPEC_ID}]`,
-    );
-    const mapped = await connected.client.callTool({ name: "task_define", arguments: { id, definition: mappedDefinition } });
-    expect(mapped.isError).not.toBe(true);
-    await connected.client.callTool({ name: "task_start_caller", arguments: { id, agent: "codex" } });
-
-    const duplicate = await connected.client.callTool({
-      name: "task_submit_review",
-      arguments: { id, evidence: { [first]: "one copied blob", [second]: "one   copied\nblob" } },
-    });
-    expect(duplicate.isError).toBe(true);
-    expect(JSON.stringify(duplicate.structuredContent)).toContain(first);
-    expect(JSON.stringify(duplicate.structuredContent)).toContain(second);
-    expect(findTask(root, id).state).toBe("active");
-
-    const distinct = await connected.client.callTool({
-      name: "task_submit_review",
-      arguments: { id, evidence: { [first]: "approval event phases inspected", [second]: "review record inspected on the control plane" } },
-    });
-    expect(distinct.isError).not.toBe(true);
-    expect(findTask(root, id).state).toBe("review");
-  });
-
-  test("retires a defined task from the caller chat, with the reason and the supersession in the prompt", async () => {
-    const root = fixture();
-    const connected = await connect(root);
-    const id = await createAndDefine(connected.client, root);
-    expect(findTask(root, id).state).toBe("defined");
-
-    const unnamed = await connected.client.callTool({
-      name: "approval_request",
-      arguments: { entity: id, action: "task.cancel", payload: { resolution: "obsolete", reason: "A decision settled the opposite" } },
-    });
-    expect(unnamed.isError).toBe(true);
-    expect(JSON.stringify(unnamed.structuredContent)).toContain("supersededBy");
-    expect(findTask(root, id).state).toBe("defined");
-
-    const retired = await connected.client.callTool({
-      name: "approval_request",
-      arguments: { entity: id, action: "task.cancel", payload: { resolution: "cancelled", reason: "The work is objectless" } },
-    });
-    expect(retired.isError).not.toBe(true);
-    // The human is shown what ends and why, not only which command runs.
-    expect(JSON.stringify(connected.prompt())).toContain("The work is objectless");
-    expect(findTask(root, id).state).toBe("done");
-    // The chat-surface approval leaves a receipt on the retired task, its basis linking the
-    // visible human message that carried the yes.
-    const retiredFile = readFileSync(findTask(root, id).path, "utf8");
-    // The cancel's own visible yes is the last human message; its id is what the basis links.
-    const cancelYes = readEvents(root, id).filter((event) => event.kind === "message" && event.role === "human").at(-1);
-    expect(retiredFile).toContain("approved_by: caller-chat");
-    expect(retiredFile).toMatch(/approved_at: /);
-    expect(retiredFile).toContain(`caller-chat yes (${cancelYes?.id}): task.cancel`);
-    // The refused proposal above never reached the event log; only the cancel did.
-    const phases = readEvents(root, id).filter((event) => event.kind === "approval").map((event) => event.phase);
-    expect(phases).toEqual(["proposed", "approved", "applied"]);
-  });
-
-  test("records a decision from the caller chat, showing its text and leaving a receipt", async () => {
-    const root = fixture();
-    const connected = await connect(root, "approve");
-
-    const recorded = await connected.client.callTool({
-      name: "approval_request",
-      arguments: { action: "decision.create", payload: { source: DECISION_SOURCE } },
-    });
-    expect(recorded.isError).not.toBe(true);
-
-    // The id was minted with the proposal: the human never relayed one, and nothing named a file.
-    const files = readdirSync(join(root, ".kotta/process/decisions"));
-    expect(files).toHaveLength(1);
-    const id = files[0].replace(/\.md$/, "");
-    expect(id).toMatch(/^D-[0-9a-hjkmnp-tv-z]{26}$/);
-
-    // Acceptance 2: what the elicitation showed is what was published, verbatim.
-    const prompt = JSON.stringify(connected.prompt());
-    expect(prompt).toContain("Adopt blue-green cutover");
-    expect(prompt).toContain("Operate two stacks until verification completes");
-    const stored = readFileSync(join(root, ".kotta/process/decisions", files[0]), "utf8");
-    expect(stored).toContain("Use a blue-green cutover.");
-    expect(stored).toContain("Operate two stacks until verification completes.");
-
-    // Acceptance 1: the same receipt every other chat-approved gate leaves.
-    expect(stored).toContain("approved_by: caller-chat");
-    expect(stored).toMatch(/approved_at: /);
-    const yes = readEvents(root, id).filter((event) => event.kind === "message" && event.role === "human").at(-1);
-    expect(stored).toContain(`caller-chat yes (${yes?.id}): decision.create`);
-    expect(readEvents(root, id).filter((event) => event.kind === "approval").map((event) => event.phase))
-      .toEqual(["proposed", "approved", "applied"]);
-    expect(execFileSync("git", ["status", "--porcelain", "--", ".kotta"], { cwd: root, encoding: "utf8" })).toBe("");
-  });
-
-  test("a rejected decision records the refusal and publishes nothing", async () => {
-    const root = fixture();
-    const { client } = await connect(root, "reject");
-
-    const result = await client.callTool({
-      name: "approval_request",
-      arguments: { action: "decision.create", payload: { source: DECISION_SOURCE } },
-    });
-
-    expect(result.isError).not.toBe(true);
-    expect(existsSync(join(root, ".kotta/process/decisions"))
-      ? readdirSync(join(root, ".kotta/process/decisions"))
-      : []).toEqual([]);
-    const phases = readEvents(root).filter((event) => event.kind === "approval").map((event) => event.phase);
-    expect(phases).toEqual(["proposed", "rejected"]);
-  });
-
-  test("a decision payload that is not the decision's text is refused before the human is asked", async () => {
-    const root = fixture();
-    const connected = await connect(root, "approve");
-
-    for (const payload of [{}, { source: "   " }, { source: DECISION_SOURCE, title: "Adopt blue-green cutover" }]) {
-      const refused = await connected.client.callTool({ name: "approval_request", arguments: { action: "decision.create", payload } });
-      expect(refused.isError, JSON.stringify(payload)).toBe(true);
-      expect(JSON.stringify(refused.structuredContent)).toContain("decision.create");
-    }
-    // Nothing was asked and nothing was written: no elicitation, no decision, no event.
-    expect(connected.prompt()).toBeNull();
-    expect(existsSync(join(root, ".kotta/process/decisions"))
-      ? readdirSync(join(root, ".kotta/process/decisions"))
-      : []).toEqual([]);
-    expect(readEvents(root).filter((event) => event.kind === "approval")).toEqual([]);
-
-    // A draft that only fails on its own content is refused after the yes, as a durable failure -
-    // the decision never lands, and the approval carries the reason.
-    const invalid = await connected.client.callTool({
-      name: "approval_request",
-      arguments: { action: "decision.create", payload: { source: "---\ntitle: Incomplete\n---\n## Decision\n\nProceed.\n" } },
-    });
-    expect(invalid.isError).toBe(true);
-    expect(existsSync(join(root, ".kotta/process/decisions"))
-      ? readdirSync(join(root, ".kotta/process/decisions"))
-      : []).toEqual([]);
-    expect(readEvents(root).filter((event) => event.kind === "approval").map((event) => event.phase))
-      .toEqual(["proposed", "approved", "failed"]);
-  });
-
-  test("fails closed when the calling host cannot present elicitation", async () => {
-    const root = fixture();
-    const client = await connectWithoutElicitation(root);
-    const id = await createAndDefine(client, root);
-    const result = await client.callTool({
-      name: "approval_request",
-      arguments: { entity: id, action: "task.cancel", payload: { resolution: "cancelled", reason: "The work is objectless" } },
-    });
-    expect(result.isError).toBe(true);
-    expect(JSON.stringify(result.structuredContent)).toContain("Nothing was applied");
-    expect(findTask(root, id).state).toBe("defined");
-    expect(readEvents(root, id).filter((event) => event.kind === "approval").map((event) => event.phase)).toEqual(["proposed", "failed"]);
+    const first = integrateCodex(root);
+    expect(first.data.changed).toBe(true);
+    const config = readFileSync(join(root, ".codex/config.toml"), "utf8");
+    expect(config).toContain("[mcp_servers.kotta]");
+    expect(config).toContain(`command = "${process.execPath}"`);
+    expect(config).toContain('"mcp", "--workspace", "."');
+    expect(config).not.toContain("approval_request");
+    const second = integrateCodex(root);
+    expect(second.data.changed).toBe(false);
+    expect(readFileSync(join(root, ".codex/config.toml"), "utf8")).toBe(config);
   });
 });

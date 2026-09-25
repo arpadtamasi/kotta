@@ -17,9 +17,6 @@ required = false
 startup_timeout_sec = 10
 tool_timeout_sec = 120
 default_tools_approval_mode = "auto"
-
-[mcp_servers.kotta.tools.approval_request]
-approval_mode = "approve"
 `;
 }
 
@@ -49,7 +46,7 @@ export function integrateCodex(repositoryRoot?: string) {
   }
 
   const prefix = existing && !existing.endsWith("\n") ? `${existing}\n` : existing;
-  const separator = prefix.trim() ? "\n# Kotta caller-chat control plane\n" : "";
+  const separator = prefix.trim() ? "\n# Kotta technical specification tools\n" : "";
   writeFileSync(path, `${prefix}${separator}${codexMcpConfig()}`);
   return { ok: true, command: "integrate codex", data: { path, changed: true, recorded: kottaInvocation().command, resolves: true, replacement: null } };
 }

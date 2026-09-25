@@ -5,10 +5,9 @@ import { fileURLToPath } from "node:url";
 import { findRepositoryRoot, workspaceDirectoryName, workspacePath } from "../filesystem/workspace.js";
 
 /**
- * Kotta's rules used to reach a project only by a human copying this repository's `AGENTS.md` by
- * hand, which is why the install line — the one fact an agent without the CLI needs — never
- * travelled with them (F-01kztn8rzehzvdfqq1snwc55jk). The rules now ship, and Kotta writes them
- * into the workspace directory it already owns outright.
+ * Kotta's rules ship with the package and are written into the workspace directory it owns, with
+ * the install line — the one fact an agent without the CLI needs — rendered from the package that
+ * is actually running.
  *
  * The project's own `AGENTS.md` stays the project's. Kotta links it only when asked. The one
  * exception to append-only linking is a legacy Kotta prelude: its explicit `## This repository`
@@ -87,18 +86,16 @@ export interface WorkspaceAgentsResult {
 }
 
 /**
- * The one sentence a drifted file is missing: how to stop being drifted. A verdict with no remedy
- * is what left this repository's own rules file behind its template for two days
- * (F-01m0tnv8vmjjjack09xt7w25zf, IF-01m0f0wn8994dzf9z1sdygxa04). Drift is a state to leave
- * (BR-01m0f1djtb5dkb76tjzq4x3ffh): this names the one command that leaves it.
+ * The one sentence a drifted file is missing: how to stop being drifted. Drift is a state to leave;
+ * this names the one command that leaves it.
  */
 export const REPLACE_RULES_REMEDY = "To discard those edits and take Kotta's copy, run 'kotta sync --replace-rules'; to keep them, move them into the project's own AGENTS.md, which Kotta never writes.";
 
 export interface SyncAgentsOptions {
   /**
    * Take Kotta's copy, discarding whatever the file holds. Deliberate by construction: the same
-   * rule that promises an edited file survives (BR-01m0f1djtb5dkb76tjzq4x3ffh) is the one this
-   * overrides, so nothing sets it implicitly.
+   * rule that promises an edited file survives is the one this overrides, so nothing sets it
+   * implicitly.
    */
   replace?: boolean;
 }
@@ -149,15 +146,15 @@ export function pointerLine(repositoryRoot?: string): string {
 
 /**
  * What Kotta writes into a project's own file. Never a bare pointer: a reader who meets
- * `@.kotta/AGENTS.md` alone after the last line of someone's conventions has been told nothing
- * (BR-01m0f1djtb5dkb76tjzq4x3ffh, D-01m13v4eqfhv5213paeqdn4tbm). An agent that has read the
- * document places this better; this is the deterministic path, for environments that have none.
+ * `@.kotta/AGENTS.md` alone after the last line of someone's conventions has been told nothing.
+ * An agent that has read the document places this better; this is the deterministic path, for
+ * environments that have none.
  */
 function pointerBlock(line: string): string {
   return [
     "## Kotta",
     "",
-    "Work in this repository is defined, executed, reviewed and closed through Kotta. The rules its",
+    "This repository keeps its technical specification with Kotta. The rules its",
     "agents follow are kept with the workspace and included here:",
     "",
     line,

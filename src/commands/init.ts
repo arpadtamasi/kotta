@@ -11,15 +11,12 @@ import { syncSkills } from "./sync.js";
  * them.
  *
  * The skills install is global and idempotent, so running `init` in a second repository costs
- * nothing. The project's own `AGENTS.md` is touched only with `linkAgents`, and only ever by one
- * appended line (D-01kztp2epe4sehb25mpv7hc33b).
+ * nothing. The project's own `AGENTS.md` is touched only with `linkAgents`, or created when absent.
  */
 export function initCommand(projectName?: string, options: { linkAgents?: boolean } = {}) {
   const result = initializeWorkspace({ projectName });
   const skills = syncSkills();
   const agents = syncWorkspaceAgents(result.root);
-  // An absent project file is created unasked; an existing one is still only touched with the flag
-  // (BR-01m0f1djtb5dkb76tjzq4x3ffh, D-01m13v4eqfhv5213paeqdn4tbm).
   const projectFileMissing = !existsSync(join(result.root, PROJECT_AGENTS_FILE));
   const projectAgents = options.linkAgents || projectFileMissing ? linkProjectAgents(result.root) : null;
   return { ok: true, command: "init", data: { root: result.root, skills: skills.data, agents, projectAgents, pointer: pointerLine(result.root) } };

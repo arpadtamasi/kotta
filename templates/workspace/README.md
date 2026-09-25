@@ -1,29 +1,24 @@
 # Kotta workspace
 
-This directory is the repository's canonical work record. It has two ownership boundaries:
-project-owned specification knowledge under `spec/`, and Kotta-owned execution and lifecycle state
-under `process/`. One entity is one stable file: lifecycle state lives in the frontmatter `status`
-field alone, and a transition edits that field in place — a file never moves between directories.
+This directory holds the repository's **technical specification**: the accepted promises of the
+product in the precise, machine-checkable shape their forms declare. It is workspace shape
+version 6.
 
-- `spec/forms/` contains the data-driven form registry; every form's `directory` is relative to
-  `spec/`, so nodes live in paths such as `spec/goals/`, `spec/user-stories/`, and `spec/entities/`.
-- `process/tasks/` contains every task, whatever its state.
-- `process/observations/`, `process/batches/`, and `process/profiles/` contain the remaining durable process records.
-- `process/claims/` contains temporary execution locks. Do not edit or remove an active claim casually.
-- `process/events/` contains immutable visible chat, lifecycle and scoped approval events.
-- `process/decisions/` contains durable human decisions. Create them with
-  `kotta decision create --from <draft.md> --approve`; do not edit canonical records directly.
-- `process/index.md` is generated; do not edit it manually.
+- `spec/forms/` is the data-driven form registry. Every form's `directory` is relative to `spec/`,
+  so nodes live in paths such as `spec/goals/`, `spec/use-cases/` and `spec/business-rules/`. The
+  registry is the project's: add a form, and its nodes participate with nothing compiled in.
+- `spec/<directory>/` holds the nodes, one Markdown file each, with the id, form, title, required
+  fields and edges in the frontmatter. Identifiers are minted with `kotta spec new`, never typed.
+- `legacy/` exists only in a workspace migrated from a pre-1.0 Kotta. It is a read-only archive of
+  the old process state (tasks, observations, batches, claims, events, decisions, profiles); nothing
+  in Kotta 1.0 reads or writes it. Its own README says what it holds.
+- `AGENTS.md` is the rules file Kotta writes for the agents working in this project; `kotta sync`
+  keeps it current and reports a hand-edited copy as drifted rather than replacing it.
+- `config.yaml` names the project, the base branch and the protected branches.
 
-Repository files are canonical. Visible task chat is persisted here; provider internals, hidden
-reasoning and raw tool output are not. Pull-request comments and user interfaces remain views.
+There is no process layer here: no task, claim, batch, observation or decision record. A node
+becomes the agreement when it lands on the base branch on a human yes; `kotta validate` measures
+every node against its form, and `kotta gap` reports which accepted promises the code keeps — by
+naming the node's id where it keeps them — and which it does not.
 
-Use the calling host chat's Kotta MCP tools for scoped human approvals and the `kotta` CLI as the
-automation-compatible fallback. Both use the same validated services. `kotta ui` is read-only. Live
-state and visible conversation stay on the configured base branch; task feature worktrees hold
-implementation code without a competing lifecycle copy. `task execute` launches a fresh
-brief-only context by default, while `task_start_caller` explicitly keeps the caller's context.
-
-A decision draft uses `title` frontmatter and non-empty `Decision`, `Context`, and
-`Consequences` sections. The CLI assigns a stable `D-001`-style identifier and date,
-validates the draft, and publishes it atomically to the identity-only filename (`D-001.md`).
+Repository files are canonical. Chat, the board (`kotta ui`) and pull requests are views.

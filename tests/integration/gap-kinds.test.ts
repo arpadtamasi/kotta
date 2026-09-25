@@ -86,35 +86,4 @@ describe("an admission says which kind it is", () => {
     expect(result.status).not.toBe(0);
     expect(say(result)).toContain("UNADMITTED_PROMISE");
   }, 60_000);
-
-  test("this workspace's inherited admissions all carry a kind, and none claims to be examined", () => {
-    // `gap` reads the configured base branch, so judging this checkout means giving a clone a main
-    // that is this commit — the same reason the ratchet's self-check clones.
-    const clone = mkdtempSync(join(tmpdir(), "kotta-kinds-self-"));
-    execFileSync("git", ["clone", "--quiet", resolve("."), clone]);
-    execFileSync("git", ["checkout", "-B", "main", "--quiet"], { cwd: clone });
-
-    const result = attempt(clone, ["gap", "--json"]);
-    const report = JSON.parse(say(result)) as {
-      data: { unkinded: unknown[]; promises: unknown[]; acceptedGaps: Array<{ kind: string; reason: string }> };
-    };
-    expect(report.data.unkinded, "every inherited admission was given a kind").toEqual([]);
-    expect(report.data.promises, "and nothing was left unadmitted").toEqual([]);
-
-    const kinds = report.data.acceptedGaps.map(({ kind }) => kind);
-    expect(kinds).toContain("structural");
-    expect(kinds).toContain("unexamined");
-    // The inherited admissions were assigned in bulk, from the form or from the fact that nobody
-    // had looked; none of them may claim the kind that means someone did. A node examined
-    // deliberately since may — and says when, which is what tells the two apart.
-    const bulk = report.data.acceptedGaps.filter(({ reason }) => /Inherited on |Assigned on /.test(reason));
-    expect(bulk.length, "the inherited set is what this test is about").toBeGreaterThan(0);
-    expect(bulk.map(({ kind }) => kind).filter((kind) => kind === "unimplemented"), "no bulk assignment claims a judgement").toEqual([]);
-    for (const gap of report.data.acceptedGaps.filter(({ kind }) => kind === "unimplemented")) {
-      expect(gap.reason, "an unimplemented admission says when it was examined").toMatch(/Examined on \d{4}-\d{2}-\d{2}/);
-    }
-    for (const gap of report.data.acceptedGaps.filter(({ kind }) => kind === "structural")) {
-      expect(gap.reason, "the structural wording says the kind came from the form").toContain("from the form of this node");
-    }
-  }, 180_000);
 });

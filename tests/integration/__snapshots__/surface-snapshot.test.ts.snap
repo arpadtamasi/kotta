@@ -1,0 +1,275 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`the surfaces Kotta exposes > the CLI surface, read from the built binary 1`] = `
+"### kotta 
+Usage: kotta [options] [command]
+
+The technical specification beside your code: forms, nodes, evidence
+
+Options:
+  -V, --version               output the version number
+  -h, --help                  display help for command
+
+Commands:
+  init [options]              Create a .kotta workspace: the form registry, the
+                              rules file, the skills
+  migrate [options]           Carry a pre-1.0 workspace to version 6: the
+                              process state into a read-only legacy/ archive,
+                              the specification untouched
+  validate [options]          Validate the specification: every node against its
+                              form, every edge against the node it names
+  gap [options]               Report accepted spec promises without repository
+                              evidence and enforcement without a spec trace
+  questions [options] [id]    Report the open questions a specification draft
+                              asks, or every draft's at once
+  spec                        Draft specification nodes from the registered
+                              forms
+  sync [options]              Install the skills Kotta ships, add newly shipped
+                              forms, and refresh the workspace rules file
+  doctor [options]            Report whether Kotta is reachable from where its
+                              work happens
+  integrate [options] <host>  Connect Kotta's specification tools to a calling
+                              agent host
+  mcp [options]               Serve Kotta's read-only specification tools to the
+                              calling chat over stdio MCP
+  ui [options]                Serve the local read-only board of the
+                              specification
+  help [command]              display help for command
+
+### kotta init
+Usage: kotta init [options]
+
+Create a .kotta workspace: the form registry, the rules file, the skills
+
+Options:
+  --project-name <name>
+  --link-agents          Link the project's AGENTS.md to the workspace rules,
+                         migrating a recognized legacy Kotta prelude after the
+                         human said yes
+  --json
+  -h, --help             display help for command
+
+### kotta migrate
+Usage: kotta migrate [options]
+
+Carry a pre-1.0 workspace to version 6: the process state into a read-only
+legacy/ archive, the specification untouched
+
+Options:
+  --workspace <path>  Repository root or workspace directory; omitted uses the
+                      repository around the cwd
+  --dry-run           Report every change without writing anything
+  --json
+  -h, --help          display help for command
+
+### kotta validate
+Usage: kotta validate [options]
+
+Validate the specification: every node against its form, every edge against the
+node it names
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta gap
+Usage: kotta gap [options]
+
+Report accepted spec promises without repository evidence and enforcement
+without a spec trace
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta questions
+Usage: kotta questions [options] [id]
+
+Report the open questions a specification draft asks, or every draft's at once
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta spec
+Usage: kotta spec [options] [command]
+
+Draft specification nodes from the registered forms
+
+Options:
+  -h, --help            display help for command
+
+Commands:
+  new [options] <form>  Mint and scaffold a specification node from its
+                        registered form
+  help [command]        display help for command
+
+### kotta spec new
+Usage: kotta spec new [options] <form>
+
+Mint and scaffold a specification node from its registered form
+
+Arguments:
+  form             A form id the workspace registry declares
+
+Options:
+  --title <title>  What the node is called wherever a human reads it
+  --json
+  -h, --help       display help for command
+
+### kotta sync
+Usage: kotta sync [options]
+
+Install the skills Kotta ships, add newly shipped forms, and refresh the
+workspace rules file
+
+Options:
+  --link-agents    Link the project's AGENTS.md to the workspace rules,
+                   migrating a recognized legacy Kotta prelude after the human
+                   said yes
+  --replace-rules  Discard local edits to the workspace rules file and take
+                   Kotta's copy; without this an edited file is never replaced
+  --json
+  -h, --help       display help for command
+
+### kotta doctor
+Usage: kotta doctor [options]
+
+Report whether Kotta is reachable from where its work happens
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta integrate
+Usage: kotta integrate [options] <host>
+
+Connect Kotta's specification tools to a calling agent host
+
+Arguments:
+  host        Supported host: codex
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta mcp
+Usage: kotta mcp [options]
+
+Serve Kotta's read-only specification tools to the calling chat over stdio MCP
+
+Options:
+  --workspace <path>  Repository root or linked worktree (default: ".")
+  -h, --help          display help for command
+
+### kotta ui
+Usage: kotta ui [options]
+
+Serve the local read-only board of the specification
+
+Options:
+  --workspace <path>  Repository root or workspace directory (default: ".")
+  --port <port>       Local port; omitted starts at 4311 and advances to the
+                      next free port
+  --host <host>       Bind host (default: "127.0.0.1")
+  --no-open           Print the URL without opening it in the default browser
+  --json
+  -h, --help          display help for command"
+`;
+
+exports[`the surfaces Kotta exposes > the MCP tool surface, read from a live server 1`] = `
+[
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {},
+      "type": "object",
+    },
+    "name": "gap_report",
+    "title": "Read the implementation gap",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "form": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "spec_list",
+    "title": "List the specification nodes",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "type": "string",
+        },
+      },
+      "required": [
+        "id",
+      ],
+      "type": "object",
+    },
+    "name": "spec_show",
+    "title": "Show one specification node",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "id": {
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "workspace_questions",
+    "title": "Read the open questions a node asks",
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+    },
+    "inputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {},
+      "type": "object",
+    },
+    "name": "workspace_validate",
+    "title": "Validate the specification",
+  },
+]
+`;

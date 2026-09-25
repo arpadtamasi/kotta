@@ -3,53 +3,28 @@
   "$id": "https://github.com/arpadtamasi/kotta/schemas/config.schema.json",
   "title": "Kotta workspace configuration",
   "type": "object",
-  "required": ["version", "project", "workflow", "git", "batches", "validation"],
+  "required": ["version", "project", "git", "validation"],
   "properties": {
-    "version": { "const": 5 },
+    "version": { "const": 6 },
     "project": {
       "type": "object",
       "required": ["name"],
       "properties": { "name": { "type": "string", "minLength": 1 } },
       "additionalProperties": false
     },
-    "workflow": {
-      "type": "object",
-      "required": ["require_human_done_approval", "allow_agent_observations", "allow_agent_defined_tasks"],
-      "properties": {
-        "require_human_done_approval": { "type": "boolean" },
-        "allow_agent_observations": { "type": "boolean" },
-        "allow_agent_defined_tasks": { "type": "boolean" }
-      },
-      "additionalProperties": false
-    },
     "git": {
       "type": "object",
-      "required": ["base_branch", "protected_branches", "worktrees", "worktree_root", "branch_pattern"],
+      "required": ["base_branch", "protected_branches"],
       "properties": {
         "base_branch": { "type": "string", "minLength": 1 },
-        "protected_branches": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
-        "worktrees": { "enum": ["auto", "always", "never"] },
-        "worktree_root": { "type": "string", "minLength": 1 },
-        "branch_pattern": { "type": "string", "pattern": "\\{prefix\\}.*\\{id\\}.*\\{slug\\}" },
-        "branch_prefixes": { "type": "object", "additionalProperties": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$" } }
+        "protected_branches": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
       },
-      "additionalProperties": false
-    },
-    "batches": {
-      "type": "object",
-      "required": ["default_parallelism", "stop_on_failure"],
-      "properties": { "default_parallelism": { "type": "integer", "minimum": 1 }, "stop_on_failure": { "type": "boolean" } },
       "additionalProperties": false
     },
     "validation": {
       "type": "object",
-      "required": ["strict", "reject_unknown_profiles", "require_verification_for_defined", "require_review_evidence_for_done"],
-      "properties": {
-        "strict": { "type": "boolean" },
-        "reject_unknown_profiles": { "type": "boolean" },
-        "require_verification_for_defined": { "type": "boolean" },
-        "require_review_evidence_for_done": { "type": "boolean" }
-      },
+      "required": ["strict"],
+      "properties": { "strict": { "type": "boolean" } },
       "additionalProperties": false
     }
   },

@@ -1,22 +1,28 @@
-import { spawnSync } from "node:child_process";
-import { resolve } from "node:path";
+import { execFileSync, spawnSync } from "node:child_process";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, test } from "vitest";
 import { createKottaMcpServer } from "../../src/commands/mcp.js";
 
 /**
- * The two surfaces, captured as they are. `T-01kzda6nj9hd2z45tt06fw8n0g` derives both from one
- * operation registry, and the only proof that a derivation preserved behaviour is a picture of the
- * behaviour taken beforehand. So these snapshots are the baseline: they are read from the built
- * binary and from a live server rather than from the source, and a diff in either file after the
- * registry lands means the refactor changed what it promised not to.
- *
- * They are equally the standing guard afterwards (BR-01m0nsyasfnjc9s4073r8zb33j): no count is
- * asserted anywhere, because a count is stale by the time it is read — the whole surface is.
+ * The two surfaces, captured as they are: every CLI command with its help, and every MCP tool with
+ * its schema and annotations, read from the built binary and from a live server rather than from
+ * the source. No count is asserted anywhere, because a count is stale by the time it is read — the
+ * whole surface is, and a diff in either snapshot is a change to what Kotta promises.
  */
 
 const cli = resolve("dist/cli/index.js");
+
+/** A fresh version-6 workspace: the repository's own is still on the pre-1.0 shape in this phase. */
+function currentWorkspace(): string {
+  const root = mkdtempSync(join(tmpdir(), "kotta-surface-"));
+  execFileSync("git", ["init", "-b", "main"], { cwd: root });
+  execFileSync("node", [cli, "init", "--json"], { cwd: root });
+  return root;
+}
 
 const clients: Client[] = [];
 const servers: ReturnType<typeof createKottaMcpServer>[] = [];
@@ -48,15 +54,14 @@ function walk(path: string[] = []): Array<{ path: string[]; text: string }> {
 
 describe("the surfaces Kotta exposes", () => {
   test("the CLI surface, read from the built binary", () => {
-  // Roughly sixty process spawns against the built binary at ~0.4s each; the default 15s timeout
-  // was always marginal for that and tipped over as the surface grew. The walk is the point of the
-  // test, so the budget moves rather than the coverage.
+    // One process spawn per command against the built binary; the walk is the point of the test,
+    // so the budget is generous rather than the coverage small.
     const surface = walk().map(({ path, text }) => `### kotta ${path.join(" ")}\n${text}`).join("\n\n");
     expect(surface).toMatchSnapshot();
   }, 120_000);
 
   test("the MCP tool surface, read from a live server", async () => {
-    const server = createKottaMcpServer(process.cwd());
+    const server = createKottaMcpServer(currentWorkspace());
     const client = new Client({ name: "surface-snapshot", version: "0" });
     servers.push(server);
     clients.push(client);

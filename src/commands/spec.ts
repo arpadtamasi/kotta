@@ -2,23 +2,21 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { renderMarkdown } from "../core/markdown.js";
 import { mintSpecId, specFilename } from "../core/identity.js";
+import { slugify } from "../core/naming.js";
 import { findRepositoryRoot, specPath } from "../filesystem/workspace.js";
-import { controlPlaneRoot } from "../git/control-plane.js";
 import { readFormRegistry, type SpecForm } from "../spec/registry.js";
-import { slugify } from "./task.js";
 
 /**
  * `kotta spec new` — the one command that hands an author a node instead of asking them to type one.
  *
- * The accepted use case is explicit: identifiers are minted by Kotta, not written by hand, and an
- * author asking for a node gets one already carrying its id and its form's skeleton
- * (UC-01m0f0wn89ny7vx515ke3ksnra). Everything the scaffold contains comes from the form's own
- * registry entry — prefix, directory, required frontmatter, required headings, required edges — so
- * a project that registers its own form gets the same service with no change here.
+ * Identifiers are minted by Kotta, not written by hand, and an author asking for a node gets one
+ * already carrying its id and its form's skeleton. Everything the scaffold contains comes from the
+ * form's own registry entry — prefix, directory, required frontmatter, required headings, required
+ * edges — so a project that registers its own form gets the same service with no change here.
  *
  * It writes a draft and stops. A shaped node becomes the agreement when it lands on the base branch
- * on a human yes, which is a different act; and the parts the author has yet to answer are reported
- * by `kotta validate` as the form's own registered questions, which is where they belong.
+ * on a human yes, which is a different act; the parts the author has yet to answer are reported by
+ * `kotta validate` as the form's own registered questions.
  */
 
 export interface SpecNewData {
@@ -38,7 +36,6 @@ export interface SpecNewResult {
   data: SpecNewData;
 }
 
-/** The frontmatter a node of this form must carry, with the three the scaffold can answer filled in. */
 function scaffoldFrontmatter(form: SpecForm, id: string, title: string): { data: Record<string, unknown>; unanswered: string[] } {
   const data: Record<string, unknown> = {};
   const unanswered: string[] = [];
@@ -48,8 +45,6 @@ function scaffoldFrontmatter(form: SpecForm, id: string, title: string): { data:
     data[field] = null;
     unanswered.push(field);
   }
-  // An outgoing edge is answered in a frontmatter field, so the field is laid out empty with the
-  // form's own question beside it — the author reads what to answer, not which key to invent.
   for (const edge of form.edges) {
     if (edge.direction !== "outgoing") continue;
     for (const field of edge.fields) {
@@ -61,13 +56,9 @@ function scaffoldFrontmatter(form: SpecForm, id: string, title: string): { data:
   return { data, unanswered };
 }
 
-/** One `## Heading` per required section, each carrying what the form says the section is for. */
 function scaffoldBody(form: SpecForm, title: string): string {
   const lines = [`# ${title}`, ""];
   for (const heading of form.headings) lines.push(`## ${heading}`, "", "", "");
-  // An outgoing edge is answered here, in this node's own frontmatter; an incoming one is answered
-  // by another node pointing at this one. Saying which is which is the difference between a
-  // question an author can act on and a list they have to decode.
   const outgoing = form.edges.filter((edge) => edge.direction === "outgoing" && edge.question);
   const incoming = form.edges.filter((edge) => edge.direction === "incoming" && edge.question);
   if (outgoing.length || incoming.length) {
@@ -80,14 +71,12 @@ function scaffoldBody(form: SpecForm, title: string): string {
 }
 
 export function newSpecNode(options: { form: string; title: string }, repositoryRoot?: string): SpecNewResult {
-  const root = controlPlaneRoot(repositoryRoot ?? findRepositoryRoot());
+  const root = repositoryRoot ?? findRepositoryRoot();
   const { forms } = readFormRegistry(root);
   if (!forms.length) throw new Error(`No form registry is installed at ${specPath(root, "forms")}. Run 'kotta init' or 'kotta migrate' first.`);
 
   const requested = options.form.trim();
   const form = forms.find((candidate) => candidate.id === requested);
-  // Describing the registry on demand is the same promise as minting from it: an author who names a
-  // form that is not there learns what is, rather than being told only that they were wrong.
   if (!form) {
     throw new Error(`No form '${requested}' is registered. This workspace registers: ${forms.map((candidate) => candidate.id).join(", ")}.`);
   }

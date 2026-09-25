@@ -1,18 +1,17 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { basename, join } from "node:path";
 import { parse } from "yaml";
-import { TASK_ID } from "../core/identity.js";
 import { parseMarkdown, sections } from "../core/markdown.js";
-import type { ValidationIssue } from "../core/validation.js";
 import { specPath, validateSpecDirectory } from "../filesystem/workspace.js";
 
 /**
- * The specification layer's schema has always existed — every form declares its required fields and
- * its required edges — but nothing in Kotta read it. Checking a node against its form was delegated
- * to a skill, in prose, which states that it never gates anything. This module is the mechanical
- * half moved into code: the registry is still the only source of form-specific knowledge, so a
- * project-added form participates without a TypeScript change.
+ * The technical specification's schema is the form registry: every form declares its required
+ * fields and its required edges, and this module is the mechanical half that measures a node
+ * against them. The registry is the only source of form-specific knowledge, so a project-added
+ * form participates without a TypeScript change.
  */
+
+export interface ValidationIssue { code: string; message: string; path?: string }
 
 export interface SpecFormEdge {
   name: string;
@@ -43,17 +42,6 @@ export interface SpecNode {
 
 function strings(value: unknown): string[] {
   return Array.isArray(value) ? value.map(String) : [];
-}
-
-/** Every frontmatter value a node offers, flattened, so a reference can be looked for in all of them. */
-function frontmatterValues(data: Record<string, unknown>): Array<{ field: string; value: string }> {
-  const found: Array<{ field: string; value: string }> = [];
-  for (const [field, value] of Object.entries(data)) {
-    for (const entry of Array.isArray(value) ? value : [value]) {
-      if (typeof entry === "string" || typeof entry === "number") found.push({ field, value: String(entry) });
-    }
-  }
-  return found;
 }
 
 export function readFormRegistry(root: string): { forms: SpecForm[]; issues: ValidationIssue[] } {
@@ -88,13 +76,7 @@ export function readFormRegistry(root: string): { forms: SpecForm[]; issues: Val
         issues.push({ code: "SPEC_FORM_INVALID", message: `Form '${id}' edge '${String(edge.name ?? "")}' has direction '${direction}'; only 'incoming' and 'outgoing' exist.`, path });
         continue;
       }
-      // The direction rule is structural, not a convention to remember: a form that could name a
-      // task as an edge target would give the specification a way to point at execution.
       const targets = strings(edge.target_forms);
-      if (targets.some((target) => target === "task")) {
-        issues.push({ code: "SPEC_REFERENCES_TASK", message: `Form '${id}' edge '${String(edge.name ?? "")}' targets 'task'. Specification never references tasks; tasks reference specification.`, path });
-        continue;
-      }
       edges.push({
         name: String(edge.name ?? ""),
         direction,
@@ -168,11 +150,6 @@ export function findSpecNode(root: string, id: string): SpecNode | undefined {
   return undefined;
 }
 
-/** Read a node's full text, for the execution brief. */
-export function readSpecNodeText(node: SpecNode): string {
-  return readFileSync(node.path, "utf8").trim();
-}
-
 export function validateSpecWorkspace(root: string): ValidationIssue[] {
   const { forms, issues } = readFormRegistry(root);
   const known = new Map(forms.map((form) => [form.id, form]));
@@ -221,14 +198,6 @@ export function validateSpecWorkspace(root: string): ValidationIssue[] {
     for (const heading of form.headings) {
       const text = body.get(heading.toLowerCase());
       if (text === undefined || !text.trim()) issues.push({ code: "SPEC_NODE_MISSING_SECTION", message: `${basename(node.path)} (${form.id}) is missing or leaves empty the required section '${heading}'.`, path: node.path });
-    }
-
-    // A node naming a task is the direction rule broken in data rather than in schema; it is
-    // refused wherever it appears, under any field name.
-    for (const { field, value } of frontmatterValues(node.data)) {
-      if (TASK_ID.test(value)) {
-        issues.push({ code: "SPEC_REFERENCES_TASK", message: `${basename(node.path)} names task '${value}' in field '${field}'. Specification never references tasks; tasks reference specification.`, path: node.path });
-      }
     }
 
     for (const edge of form.edges) {
