@@ -1,24 +1,21 @@
 // @vitest-environment jsdom
 //
-// The board is a pure projection. Opening every view and drawer must still leave the
-// calling chat as the only interactive lifecycle surface.
+// The board is a pure projection of the specification. Opening the view and every drawer must
+// still issue one kind of request — a GET of the workspace — and nothing else.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { App } from "../../ui/src/App";
-import { decision, observation, batch, task, workspace } from "./fixtures";
+import { node, workspace } from "./fixtures";
 
-const WRITE_PATHS = ["/api/chat", "/api/approval/propose", "/api/approval/decide", "/api/task/sign", "/api/batch", "/api/batch/tasks", "/api/observation", "/api/observation/resolve"];
+const GOAL = "G-01m0f0wn89bsqrswjac57sdzez";
+const RULE = "BR-01m0f0wn89c50fe1mz5yn1nw85";
 
 const data = workspace({
-  tasks: [
-    task("T-012", "Make the UI workspace argument explicit", { status: "active", batch: "P-003", assigned_agent: "codex", source_observation: "F-001" }),
-    task("T-013", "Add a discoverable bug-reporting path", { status: "review", batch: "P-003" }),
-    task("T-014", "Port collision returns raw EADDRINUSE", { status: "defined" }),
-    task("T-029", "Reading the board makes no per-file git call", { status: "done" }),
+  spec: [
+    node(GOAL, "goal", "Work is accounted for"),
+    node(RULE, "business-rule", "Identifiers are permanent", { edges: { goal: [GOAL] }, accepted: ["unimplemented: nothing keeps it yet"] }),
   ],
-  batches: [batch("P-003", "Trustworthy daily use", { status: "active", tasks: ["T-012", "T-013"] })],
-  observations: [observation("F-001", "CLI help contradicts the --workspace default"), observation("F-002", "The board hides worktree state", { status: "resolved", became: "T-029" })],
-  decisions: [decision("D-001", "The directory is the state")],
+  notices: ["The board reads .kotta/ from the 'main' ref, not from the working tree."],
 });
 
 let calls: Array<{ url: string; method: string }>;
@@ -34,15 +31,10 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 async function boot() {
   render(<App />);
-  await screen.findByRole("heading", { name: "Waiting on you" });
-}
-/** The rail is the only thing that navigates, so views are switched through it. */
-function go(view: string) {
-  const rail = screen.getByRole("navigation", { name: "Board sections" });
-  fireEvent.click(within(rail).getByRole("button", { name: new RegExp(view) }));
+  await screen.findByRole("heading", { name: "Specification" });
 }
 
-describe("Passive board navigation", () => {
+describe("Passive board", () => {
   it("loads the workspace through one GET and nothing else", async () => {
     await boot();
     expect(calls.length).toBeGreaterThanOrEqual(1);
@@ -50,57 +42,26 @@ describe("Passive board navigation", () => {
     expect(new Set(calls.map((call) => call.method))).toEqual(new Set(["GET"]));
   });
 
-  it("keeps every view and entity drawer free of mutation controls", async () => {
+  it("keeps the view and the drawer free of mutation controls, and says it is read-only", async () => {
     await boot();
-    const views = ["Observations", "Tasks", "Batches", "Decisions", "Home"];
     let rendered = document.body.innerHTML;
-    for (const view of views) {
-      go(view);
-      rendered += document.body.innerHTML;
-    }
-    go("Tasks");
-    const taskRow = screen.getAllByText("Make the UI workspace argument explicit").map((node) => node.closest("button")).find(Boolean);
-    if (!taskRow) throw new Error("Task row was not rendered.");
-    fireEvent.click(taskRow);
-    rendered += document.body.innerHTML;
-    fireEvent.keyDown(window, { key: "Escape" });
-    // both overlays too
-    fireEvent.keyDown(window, { key: "w" });
-    rendered += document.body.innerHTML;
-    fireEvent.keyDown(window, { key: "Escape" });
-    fireEvent.keyDown(window, { key: "?" });
+    fireEvent.click(screen.getByText("Identifiers are permanent"));
     rendered += document.body.innerHTML;
     fireEvent.keyDown(window, { key: "Escape" });
 
-    for (const path of WRITE_PATHS) expect(rendered).not.toContain(`"${path}"`);
     expect(rendered).not.toMatch(/<form\b/);
     expect(rendered).not.toMatch(/type="submit"/);
-    expect(rendered).toContain("read-only");
+    expect(rendered.toLowerCase()).toContain("read-only");
+    expect(screen.getByRole("status").textContent).toContain("not reading what you are editing");
   });
 
-  it("clicking every control on every view still issues no write", async () => {
+  it("clicking every control still issues no write", async () => {
     await boot();
-    for (const view of ["Home", "Observations", "Tasks", "Batches", "Decisions"]) {
-      go(view);
-      // Click everything that is currently on screen, then close whatever it opened.
-      const controls = screen.getAllByRole("button");
-      for (const control of controls) {
-        await act(async () => { fireEvent.click(control); });
-        fireEvent.keyDown(window, { key: "Escape" });
-      }
+    for (const control of screen.getAllByRole("button")) {
+      await act(async () => { fireEvent.click(control); });
+      fireEvent.keyDown(window, { key: "Escape" });
     }
     await waitFor(() => expect(calls.every((call) => call.method === "GET" && call.url === "/api/workspace")).toBe(true));
-  });
-
-  it("presents the CLI only as a fallback to caller-chat approvals", async () => {
-    await boot();
-    fireEvent.click(screen.getByRole("button", { name: /CLI/ }));
-    const sheet = await screen.findByRole("dialog", { name: "CLI fallback" });
-    expect(sheet.textContent).toContain("The calling chat is the primary approval surface.");
-    expect(sheet.textContent).toContain("The board is read-only.");
-    expect(sheet.textContent).toContain("kotta task close <id> --approve");
-    fireEvent.keyDown(window, { key: "Escape" });
-    expect(screen.queryByRole("dialog")).toBeNull();
   });
 
   it("keeps the last good read on screen and offers a retry when a refresh fails", async () => {
@@ -111,7 +72,7 @@ describe("Passive board navigation", () => {
     expect(banner.textContent).toContain("Last read failed.");
     expect(banner.textContent).toContain("GET /api/workspace");
     expect(banner.textContent).toContain("HTTP 500");
-    // The bands are still there — one failing read does not blank the board.
-    expect(screen.getByRole("heading", { name: "What runs next?" })).toBeDefined();
+    // The list is still there — one failing read does not blank the board.
+    expect(screen.getByText("Work is accounted for")).toBeDefined();
   });
 });
