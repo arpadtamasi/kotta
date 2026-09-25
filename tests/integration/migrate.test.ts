@@ -448,7 +448,9 @@ describe("no command but the migration runs on a pre-1.0 workspace", () => {
     }
     const help = invoke(root, ["--help"]).stdout;
     expect(help).toContain("migrate");
-    expect(help).not.toContain("approve");
+    // The 0.x approval surface is gone; `approve` is back only as the planning phase's one gate.
+    expect(help).not.toMatch(/^\s{2}approval\b/m);
+    expect(help).toMatch(/^\s{2}approve \[options\] <change>\s+Record the human's yes/m);
   });
 });
 

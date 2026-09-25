@@ -4,8 +4,9 @@ import { describe, expect, test } from "vitest";
 import { WORKSPACE_SCHEMA_VERSION } from "../../src/filesystem/workspace.js";
 
 /**
- * A published schema is enforced or not published. Kotta 1.0 publishes one: the workspace
- * configuration. The five process schemas of the 0.x releases left with the process.
+ * A published schema is enforced or not published. Kotta 1.0 publishes two: the workspace
+ * configuration and a node's provenance block (enforced by the registry; tests/unit/provenance.test.ts
+ * keeps the two identical). The five process schemas of the 0.x releases left with the process.
  */
 
 const schemasDirectory = resolve("schemas");
@@ -15,8 +16,8 @@ const schema = (file: string) => JSON.parse(readFileSync(resolve(schemasDirector
 };
 
 describe("the published configuration schema", () => {
-  test("is the only schema shipped", () => {
-    expect(readdirSync(schemasDirectory).filter((name) => name.endsWith(".json"))).toEqual(["config.schema.json"]);
+  test("ships beside the provenance schema, and nothing else", () => {
+    expect(readdirSync(schemasDirectory).filter((name) => name.endsWith(".json")).sort()).toEqual(["config.schema.json", "provenance.schema.json"]);
   });
 
   test("publishes the workspace shape version the code implements", () => {

@@ -51,6 +51,26 @@ export function requirementBody(node: SpecNode, form: SpecForm | undefined): str
   return parts.join("\n\n");
 }
 
+/** The node's statement: its first non-empty required section, what a requirement's SHALL sentence says. */
+export function requirementStatement(node: SpecNode, form: SpecForm | undefined): string {
+  const body = nodeSections(node);
+  for (const heading of form?.headings ?? []) {
+    const text = (body.get(heading.toLowerCase()) ?? "").trim();
+    if (text) return text;
+  }
+  return "";
+}
+
+/** A narrative requirement's statement: its text up to the first bold sub-heading a generated one carries. */
+export function narrativeStatement(body: string): string {
+  const lines: string[] = [];
+  for (const line of body.split(/\r?\n/)) {
+    if (/^\*\*[^*]+\*\*\s*$/.test(line.trim())) break;
+    lines.push(line);
+  }
+  return lines.join("\n");
+}
+
 function scenario(example: SpecNode, form: SpecForm | undefined): string[] {
   const body = nodeSections(example);
   const lines = [`#### Scenario: ${title(example)}`, `<!-- kotta: ${example.id} -->`];
@@ -141,22 +161,23 @@ export interface NarrativeDrift {
 }
 
 /**
- * The bound requirements whose statement no longer agrees with the node. A requirement agrees when
- * its text is the text the node generates, or when it still carries the sentence the node's
- * provenance quotes — the statement the node was derived from.
+ * The bound requirements whose statement no longer agrees with the node. A requirement's statement —
+ * its SHALL sentence, the text before any bold sub-heading — agrees when it is the node's own
+ * statement (its first section), or when it still carries the sentence the node's provenance quotes:
+ * the statement the node was derived from.
  */
 export function narrativeDrift(root: string, file: string, content: string, nodes: Map<string, SpecNode>, forms: SpecForm[]): NarrativeDrift[] {
   const formById = new Map(forms.map((form) => [form.id, form]));
   const drift: NarrativeDrift[] = [];
   for (const requirement of boundRequirements(content)) {
-    const narrative = normalizeProse(requirement.body);
+    const narrative = normalizeProse(narrativeStatement(requirement.body));
     const node = nodes.get(requirement.id);
     const where = relative(root, file);
     if (!node) {
       drift.push({ file: where, line: requirement.line, requirement: requirement.title, id: requirement.id, kind: "missing-node", narrative });
       continue;
     }
-    const model = normalizeProse(requirementBody(node, formById.get(node.form)));
+    const model = normalizeProse(requirementStatement(node, formById.get(node.form)));
     const quote = readProvenance(node.data.provenance)?.quote;
     const quoted = typeof quote === "string" && quote.trim() && narrative.includes(normalizeProse(quote));
     if (narrative === model || quoted) continue;

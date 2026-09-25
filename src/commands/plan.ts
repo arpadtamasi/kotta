@@ -142,9 +142,11 @@ function conflictCandidates(root: string, accepted: SpecNode[], delta: SpecNode[
   for (const change of modified) {
     const before = acceptedById.get(change.id)!;
     const after = new Set(transitions(change).map(([from, to]) => `${from}\0${to}`));
+    const earlier = new Set(transitions(before).map(([from, to]) => `${from}\0${to}`));
     for (const [from, to] of transitions(before)) {
       if (after.has(`${from}\0${to}`)) continue;
-      if (after.has(`${to}\0${from}`)) add("transition-reversed", before, change, `the accepted transition ${from} → ${to} now runs ${to} → ${from}`);
+      // Reversed only when the way back is new: a pair the model already had both ways lost one of them.
+      if (after.has(`${to}\0${from}`) && !earlier.has(`${to}\0${from}`)) add("transition-reversed", before, change, `the accepted transition ${from} → ${to} now runs ${to} → ${from}`);
       else add("transition-removed", before, change, `the accepted transition ${from} → ${to} is gone`);
     }
     const outgoing = new Set(fieldReferences(change).map(({ value }) => value));
@@ -296,7 +298,7 @@ export function renderPlanning(analysis: ChangeAnalysis, root: string, generated
     "",
   ];
   const list = (label: string, nodes: NodeRef[]) => {
-    lines.push(`${label}: ${nodes.length ? "" : "none"}`);
+    lines.push(`${label}:${nodes.length ? "" : " none"}`);
     for (const node of nodes) lines.push(`- ${named(node)} — ${node.form}, ${node.path}`);
     lines.push("");
   };

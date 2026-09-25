@@ -24,6 +24,14 @@ Commands:
                               asks, or every draft's at once
   spec                        Draft specification nodes from the registered
                               forms
+  plan [options] <change>     Measure a change's model delta against the
+                              accepted model and write its planning.md:
+                              structure, conflicts, silences, drift, provenance
+  approve [options] <change>  Record the human's yes to a planned change's model
+                              delta: the one gate, written as approval.yaml
+  archive [options] <change>  Land an approved change: merge its model into the
+                              specification, regenerate the narrative, move it
+                              to the archive
   sync [options]              Install the skills Kotta ships, add newly shipped
                               forms, and refresh the workspace rules file
   doctor [options]            Report whether Kotta is reachable from where its
@@ -114,8 +122,42 @@ Arguments:
 
 Options:
   --title <title>  What the node is called wherever a human reads it
+  --into <change>  Draft the node into a change's model delta
+                   (openspec/changes/<change>/model/) instead of the accepted
+                   specification
   --json
   -h, --help       display help for command
+
+### kotta plan
+Usage: kotta plan [options] <change>
+
+Measure a change's model delta against the accepted model and write its
+planning.md: structure, conflicts, silences, drift, provenance
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta approve
+Usage: kotta approve [options] <change>
+
+Record the human's yes to a planned change's model delta: the one gate, written
+as approval.yaml
+
+Options:
+  --by <who>  The human who said yes in the conversation
+  --json
+  -h, --help  display help for command
+
+### kotta archive
+Usage: kotta archive [options] <change>
+
+Land an approved change: merge its model into the specification, regenerate the
+narrative, move it to the archive
+
+Options:
+  --json
+  -h, --help  display help for command
 
 ### kotta sync
 Usage: kotta sync [options]

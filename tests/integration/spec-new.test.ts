@@ -51,7 +51,7 @@ describe("kotta spec new", () => {
     }
     expect(parsed.data.actor).toEqual([]);
     expect(parsed.data.goal).toEqual([]);
-    expect(created.unanswered).toEqual(["actor", "goal"]);
+    expect(created.unanswered).toEqual(["actor", "goal", "provenance"]);
     // The form's own questions, and which of them this node answers itself.
     expect(file).toContain("Which actor owns this interaction? Answer in frontmatter 'actor'.");
     expect(file).toContain("What example proves this use case? Answered by a example node naming this one.");
@@ -76,7 +76,7 @@ describe("kotta spec new", () => {
     const parsed = matter(readFileSync(join(root, created.path), "utf8"));
     // The field the project's own form requires is laid out, unanswered and named as such.
     expect(parsed.data.severity).toBeNull();
-    expect(created.unanswered).toEqual(["severity"]);
+    expect(created.unanswered).toEqual(["severity", "provenance"]);
     expect(created.sections).toEqual(["Exposure", "Mitigation"]);
   });
 
