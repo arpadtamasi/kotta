@@ -12,7 +12,7 @@ Ez a mappa az OpenSpec-change végrehajtásának ágens-briefjeit tartja, hogy b
 | 2C. diagram-nézet a boardon, provenance-jelölés, narratíva-elérés | `spike/k1-ui` (worktree `../kotta-k1-ui`) | kész, 239 teszt zöld; négy diagram-nézet, provenance-jelölés és -szűrő, `GET /api/narrative`; `ui-dist/` 1,2 MB (Mermaid lustán tölt) |
 | összefésülés: 2A+2B+2C egy fejen | `spike/kotta-1.0` @ `6e7711b` | kész, 275 teszt zöld, 16 parancs |
 | végpróba a kaszinón: migrate → plan → approve → archive | `/Users/rp/Dev/phd/oktatas/kaszino-e2e` | kész; 4 javítandó (3A) |
-| 3A. a végpróba javításai | `spike/k3-fix` (worktree `../kotta-k3-fix`) | nem indult |
+| 3A. a végpróba javításai | `spike/k3-fix` (worktree `../kotta-k3-fix`) | kész, 287 teszt zöld; glossary-kontraszt állításból (a kaszinón 8 → 0 hamis jelölt), (f) quote/forrás, `validate` a change-node-okat is kimondja, SHALL/MUST a modellben (`normative_sections`: figyelmeztetés / change-ben hiba), interfész-szerződés mint scenario, `narrative: generated \| authored`, `judged` blokk a (c)-ben; döntések a `DECISIONS.md` „3A:” pontjaiban |
 | 3B. narratíva-desztilláció (`kotta narrative`) | `spike/k3-narrative` (worktree `../kotta-k3-narrative`) | nem indult |
 | 3C. OpenSpec-import (`kotta import openspec`) | `spike/k3-import` (worktree `../kotta-k3-import`) | nem indult |
 | 3D. a workspace-ek migrálása, kiadás | — | nem kezdtük |

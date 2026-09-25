@@ -200,3 +200,67 @@ Phase 2B (module boundary and evidence levels, `tasks.md` 1.2, 2, 5.1).
   container and fails on a serious or critical violation, with `color-contrast` off because jsdom
   computes no colours. Both themes were drawn once in a real Chromium to check that Mermaid renders
   and that a drawn node opens its drawer.
+- **3A: a glossary contrast is a negation flipped, not a shared word.** A candidate needs one
+  sentence of a claim section (Rule, Meaning, Definition, Then, Postconditions, Invariants,
+  Response) that names the term (every content word of its title), names a non-example's subject
+  (two thirds of its content words, numbers exact, not counting the tokens that named the term),
+  states a word the non-example's explanation negates, and carries no negation beyond the subject's
+  own. Words match across Hungarian inflection by shared stem or, from five letters, as a substring
+  ("beleszámít" ⊃ "számít"). A non-example whose explanation negates nothing yields no candidate:
+  that is where the test cannot decide, so it stays silent. The term's Definition/Meaning is not
+  compared — "says something else than the definition" is not lexically decidable. On the Casino
+  archive the old eight candidates are gone and none replaces them; the planted contradiction
+  (a changed rule counting undecided majority points toward the Kint vagyok threshold) is found.
+  The real one in the archive — the use case step "a 11 összpontot elérő fél bemondja a győzelmet"
+  against Pontbontás' invariant — is not: it is in a Main success scenario and names no term. That
+  is the agent's `judged` block's job.
+- **3A: the planning fixture's glossary term now negates.** "pause — stops the clock and keeps the
+  game" became "stops the clock, but does not end the game", so the fixture's intended contrast
+  (a paused game quits at once) is still a candidate under the narrower rule.
+- **3A: (f) shows what a machine decision rests on.** `inferred` when filled; otherwise the
+  `quote`, with the first source in brackets; otherwise the first source; "(no account…)" only when
+  the block has none of them.
+- **3A: the judged block lives between two HTML comments in (c).** `kotta plan` copies whatever is
+  between `<!-- kotta:judged … -->` and `<!-- /kotta:judged -->` into the new report, whatever the
+  delta, and reports its list items as `data.judged`. It is not re-validated and does not block.
+- **3A: the normative sections are the registry's, with defaults for installed registries.** A form
+  declares `normative_sections` (business-rule [Rule], interface [Postconditions, Invariants],
+  quality-attribute [Response]); a registry written before the key existed gets those defaults by
+  form id, so `kotta validate` warns on the Casino's 49 rules, interfaces and quality attributes
+  without a re-sync. One of the listed sections must carry `\b(SHALL|MUST)\b` (case-sensitive, as
+  OpenSpec reads it); all-empty sections are left to the missing-section check. For the quality
+  attribute, "the obligation section" was read as `Response`. Code: `SPEC_NODE_NOT_NORMATIVE` —
+  a warning in `validate` for accepted nodes, an error for a change's `model/` nodes, a blocking
+  structure issue in `plan` (and therefore in `approve` and `archive`).
+- **3A: a comment is not content.** The `spec new` scaffold puts the SHALL/MUST hint as an HTML
+  comment under each normative heading, so the required-section check now ignores comments: a
+  section holding only a comment is empty, as before the hint existed.
+- **3A: the generator carries sections verbatim, as before.** The brief says "the Rule's first
+  sentence into the requirement body"; the generator already carries the whole Rule (then the other
+  sections under bold labels) unchanged, and the drift check compares on that. Narrowing to the
+  first sentence would drop text, so it was not done.
+- **3A: OpenSpec 1.13.1 accepts GIVEN; it rejects a requirement without a scenario.**
+  `openspec validate --specs --strict` on the Casino's generated specs: every one of the 67
+  requirements lacks SHALL/MUST (a warning, fatal under --strict), and seven requirements have no
+  scenario (an error) — all seven interfaces, because no example may name an interface. GIVEN lines
+  pass as they are and were left. The generator now gives an interface without an example its own
+  contract as the scenario, word for word: "#### Scenario: <title> keeps its contract", GIVEN the
+  Preconditions, THEN the Postconditions. Regenerated in a scratch copy, the Casino specs fail only
+  on the keyword; with a keyword inserted they pass all five. Other requirement forms without an
+  example (a use case, a user story) still get no scenario: `archive` warns
+  `NARRATIVE_NO_SCENARIO`, it does not invent one.
+- **3A: open — use cases and user stories are not normative forms.** 18 of the Casino's 67
+  requirements are use cases and user stories; OpenSpec wants SHALL/MUST in them too, and the brief
+  names only rules, interfaces and quality attributes. Their requirements will keep failing
+  `openspec validate --strict` until the operator decides whether their Intent/Story must carry the
+  keyword (a one-line `normative_sections` in their forms).
+- **3A: a brief Purpose is a warning.** Archive warns `NARRATIVE_PURPOSE_BRIEF` when a generated
+  Purpose is under OpenSpec's 50 characters, comments not counted — including the placeholder
+  comment written when no goal names the capability (OpenSpec itself counts the comment and passes
+  it). Nothing is padded.
+- **3A: `narrative:` is read from `.kotta/config.yaml` first, `openspec/config.yaml` second.** The
+  first file that sets the key decides; an unknown value refuses archive with `CONFIG_INVALID`.
+  The published config schema gained the optional `narrative` enum. `authored`: archive lands the
+  model, writes nothing under `openspec/specs/`, returns every bound requirement's drift in
+  `data.drift` and as `NARRATIVE_DRIFT` warnings, and succeeds. `generated`: as before, drift
+  refuses. `kotta plan` is unchanged in both modes: it reports drift in (e) either way.
