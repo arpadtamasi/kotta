@@ -8,7 +8,7 @@ import { OPENSPEC_DIRECTORY, PLANNING_FILE, deltaHash, readChangeModel, type Cha
 import { claimSentences, glossaryContrasts, readContent } from "../spec/contrast.js";
 import { markdownFiles, narrativeDrift, type NarrativeDrift } from "../spec/narrative.js";
 import { PROVENANCE_DECIDERS, PROVENANCE_LEVELS, readProvenance } from "../spec/provenance.js";
-import { formIssues, readFormRegistry, readSpecNodes, referencesIn, validateNodeSet, type SpecForm, type SpecNode, type ValidationIssue } from "../spec/registry.js";
+import { formIssues, normativeIssues, readFormRegistry, readSpecNodes, referencesIn, validateNodeSet, type SpecForm, type SpecNode, type ValidationIssue } from "../spec/registry.js";
 
 /**
  * `kotta plan <change>` — the mechanical half of the planning phase.
@@ -213,7 +213,7 @@ export function analyzeChange(root: string, name: string): Analysis {
   if (!model.nodes.length && !model.removed.length) {
     structure.push({ code: "CHANGE_MODEL_EMPTY", message: `The change '${model.name}' proposes no model delta: model/ holds no node and no ${"REMOVED.md"} entry. Translate the narrative into nodes first (the plan-change skill).`, path: model.modelDirectory });
   }
-  structure.push(...validateNodeSet(forms, mergedNodes, { subject: inDelta, requireProvenance: inDelta }));
+  structure.push(...validateNodeSet(forms, mergedNodes, { subject: inDelta, requireProvenance: inDelta }), ...normativeIssues(forms, model.nodes));
   for (const id of model.removed) {
     if (!acceptedById.has(id)) structure.push({ code: "CHANGE_REMOVED_UNKNOWN", message: `model/REMOVED.md removes ${id}, which is not an accepted node.`, path: join(model.modelDirectory, "REMOVED.md") });
     if (deltaIds.has(id)) structure.push({ code: "CHANGE_REMOVED_AND_CHANGED", message: `model/REMOVED.md removes ${id}, and model/ also carries a new version of it. A node is either changed or removed.`, path: join(model.modelDirectory, "REMOVED.md") });

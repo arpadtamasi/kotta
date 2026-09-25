@@ -201,7 +201,8 @@ describe("kotta modules", () => {
   test("validate carries the boundary checks: warnings, and the unknown module as an error", () => {
     const report = kotta(app, "validate", "--json").json() as { errors: Array<{ code: string }>; warnings: Array<{ code: string }> };
     expect(report.errors.map((error) => error.code)).toContain("MODULE_UNKNOWN");
-    expect(new Set(report.warnings.map((warning) => warning.code))).toEqual(new Set(["MODULE_INTERFACE_MISSING", "MODULE_STRADDLER", "MODULE_CROSS_REFERENCE"]));
+    // The boundary's warnings; the fixture's rules also lack SHALL, which validate reports beside them.
+    expect(new Set(report.warnings.map((warning) => warning.code).filter((code) => code.startsWith("MODULE_")))).toEqual(new Set(["MODULE_INTERFACE_MISSING", "MODULE_STRADDLER", "MODULE_CROSS_REFERENCE"]));
   });
 
   test("a reference resolves through git: url and commit", () => {

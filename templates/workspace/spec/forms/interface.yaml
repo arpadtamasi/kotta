@@ -10,6 +10,7 @@ identity:
 required_fields:
   frontmatter: [id, form, title]
   body_headings: [Purpose, Preconditions, Postconditions, Invariants, Failures]
+normative_sections: [Postconditions, Invariants]  # one of these states the obligation with SHALL or MUST
 required_edges:
   - name: reference
     direction: incoming

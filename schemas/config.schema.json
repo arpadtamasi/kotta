@@ -21,6 +21,10 @@
       },
       "additionalProperties": false
     },
+    "narrative": {
+      "description": "Who writes openspec/specs: 'generated' (default) — kotta archive regenerates each touched capability from the model; 'authored' — people write it, and archive only reports where it disagrees with the model.",
+      "enum": ["generated", "authored"]
+    },
     "validation": {
       "type": "object",
       "required": ["strict"],

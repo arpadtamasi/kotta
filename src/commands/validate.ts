@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import { analyzeWorkingTree, boundaryFindings, type ModuleFinding } from "../core/modules.js";
 import { WORKSPACE_DIRECTORY_LABEL, findRepositoryRoot, workspacePath } from "../filesystem/workspace.js";
 import { listChanges, readChangeModel } from "../spec/change.js";
-import { readFormRegistry, readSpecNodes, validateNodeSet, validateSpecWorkspace, type ValidationIssue } from "../spec/registry.js";
+import { normativeIssues, readFormRegistry, readSpecNodes, validateNodeSet, validateSpecWorkspace, type ValidationIssue } from "../spec/registry.js";
 
 export interface ValidateResult {
   ok: boolean;
@@ -32,7 +32,8 @@ export function validateWorkspace(repositoryRoot?: string): ValidateResult {
   }
   const errors = validateSpecWorkspace(root);
   const { forms } = readFormRegistry(root);
-  const specNodes = readSpecNodes(root, forms).nodes.length;
+  const accepted = readSpecNodes(root, forms).nodes;
+  const specNodes = accepted.length;
   let changes = 0;
   let changeNodes = 0;
   for (const name of listChanges(root)) {
@@ -40,10 +41,12 @@ export function validateWorkspace(repositoryRoot?: string): ValidateResult {
     if (!model.files.length) continue;
     changes += 1;
     changeNodes += model.nodes.length;
-    errors.push(...model.issues, ...validateNodeSet(forms, model.nodes, { requireProvenance: () => true, edges: false }));
+    errors.push(...model.issues, ...validateNodeSet(forms, model.nodes, { requireProvenance: () => true, edges: false }), ...normativeIssues(forms, model.nodes));
   }
   const findings = boundaryFindings(analyzeWorkingTree(root));
   errors.push(...findings.filter((finding) => finding.severity === "error").map(issue));
-  const warnings = findings.filter((finding) => finding.severity === "warning").map(issue);
+  // An accepted node without SHALL or MUST is reported, not refused: it was agreed before the rule.
+  // A change's node is new writing, so there it refuses (above).
+  const warnings = [...normativeIssues(forms, accepted), ...findings.filter((finding) => finding.severity === "warning").map(issue)];
   return { ok: errors.length === 0, command: "validate", data: { forms: forms.length, specNodes, changes, changeNodes }, errors, warnings };
 }

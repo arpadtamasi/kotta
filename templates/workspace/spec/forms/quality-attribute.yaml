@@ -10,6 +10,7 @@ identity:
 required_fields:
   frontmatter: [id, form, title]
   body_headings: [Source, Stimulus, Environment, Artifact, Response, Measure]
+normative_sections: [Response]  # one of these states the obligation with SHALL or MUST
 required_edges:
   - name: verification
     direction: incoming

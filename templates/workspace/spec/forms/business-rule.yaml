@@ -10,6 +10,7 @@ identity:
 required_fields:
   frontmatter: [id, form, title]
   body_headings: [Rule, Rationale, Scope]
+normative_sections: [Rule]  # one of these states the obligation with SHALL or MUST
 required_edges:
   - name: evidence
     direction: incoming

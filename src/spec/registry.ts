@@ -31,8 +31,24 @@ export interface SpecForm {
   frontmatter: string[];
   headings: string[];
   edges: SpecFormEdge[];
+  /** The sections that state an obligation, one of which must carry SHALL or MUST. */
+  normative: string[];
   path: string;
 }
+
+/**
+ * The normative sections of the standard forms, for a registry written before `normative_sections`
+ * existed: an installed workspace gets the check without re-syncing its forms. A form that declares
+ * the key, even as an empty list, is taken at its word.
+ */
+export const DEFAULT_NORMATIVE_SECTIONS: Record<string, string[]> = {
+  "business-rule": ["Rule"],
+  interface: ["Postconditions", "Invariants"],
+  "quality-attribute": ["Response"],
+};
+
+/** The OpenSpec convention: the obligation is stated with SHALL or MUST, in English, whatever the language around it. */
+export const NORMATIVE_KEYWORD = /\b(?:SHALL|MUST)\b/;
 
 export interface SpecNode {
   id: string;
@@ -96,6 +112,7 @@ export function readFormRegistry(root: string): { forms: SpecForm[]; issues: Val
       frontmatter: strings(required.frontmatter),
       headings: strings(required.body_headings),
       edges,
+      normative: Array.isArray(data.normative_sections) ? strings(data.normative_sections) : DEFAULT_NORMATIVE_SECTIONS[id] ?? [],
       path,
     });
   }
@@ -255,7 +272,8 @@ export function validateNodeSet(forms: SpecForm[], nodes: SpecNode[], options: N
 
     const body = sections(parseMarkdown(readFileSync(node.path, "utf8")).content);
     for (const heading of form.headings) {
-      const text = body.get(heading.toLowerCase());
+      // A comment is a scaffold's hint, not content: a section holding only one is still empty.
+      const text = body.get(heading.toLowerCase())?.replace(/<!--[\s\S]*?-->/g, "");
       if (text === undefined || !text.trim()) issues.push({ code: "SPEC_NODE_MISSING_SECTION", message: `${basename(node.path)} (${form.id}) is missing or leaves empty the required section '${heading}'.`, path: node.path });
     }
 
@@ -286,6 +304,29 @@ export function validateNodeSet(forms: SpecForm[], nodes: SpecNode[], options: N
         }
       }
     }
+  }
+  return issues;
+}
+
+/**
+ * The nodes whose obligation is stated without SHALL or MUST. A node whose normative sections are all
+ * empty is left to the missing-section check. Where this is a warning (accepted nodes) and where it
+ * refuses (a change's new or changed nodes) is the caller's choice.
+ */
+export function normativeIssues(forms: SpecForm[], nodes: SpecNode[]): ValidationIssue[] {
+  const known = new Map(forms.map((form) => [form.id, form]));
+  const issues: ValidationIssue[] = [];
+  for (const node of nodes) {
+    const form = known.get(node.form);
+    if (!form?.normative.length) continue;
+    const body = sections(parseMarkdown(readFileSync(node.path, "utf8")).content);
+    const texts = form.normative.map((heading) => (body.get(heading.toLowerCase()) ?? "").replace(/<!--[\s\S]*?-->/g, "").trim()).filter(Boolean);
+    if (!texts.length || texts.some((text) => NORMATIVE_KEYWORD.test(text))) continue;
+    issues.push({
+      code: "SPEC_NODE_NOT_NORMATIVE",
+      message: `${basename(node.path)} (${form.id}) states its ${form.normative.join(" / ")} without SHALL or MUST. Write the obligation with the keyword, in English whatever the language around it, as OpenSpec expects: "The system SHALL …", „A rendszer SHALL …".`,
+      path: node.path,
+    });
   }
   return issues;
 }

@@ -17,6 +17,14 @@ export const REQUIREMENT_FORMS = ["business-rule", "interface", "quality-attribu
 export const SCENARIO_FORM = "example";
 /** The form whose node states a capability's purpose. */
 export const PURPOSE_FORM = "goal";
+/**
+ * The form no example can prove (an example's `subjects` never name one), so its requirement would
+ * carry no scenario, which OpenSpec rejects. Its own contract is the scenario: the preconditions as
+ * GIVEN, the postconditions as THEN, word for word.
+ */
+export const CONTRACT_FORM = "interface";
+/** OpenSpec's `validate --strict` calls a shorter Purpose too brief. */
+export const MIN_PURPOSE_LENGTH = 50;
 
 const BINDING = /^\s*<!--\s*kotta:\s*([A-Za-z]{1,4}-[0-9a-hjkmnp-tv-z]{26})\s*-->\s*$/;
 const REQUIREMENT = /^###\s+Requirement:\s*(.+?)\s*$/;
@@ -81,6 +89,37 @@ function scenario(example: SpecNode, form: SpecForm | undefined): string[] {
   return lines;
 }
 
+function contractScenario(node: SpecNode): string[] {
+  const body = nodeSections(node);
+  const given = normalizeProse(body.get("preconditions") ?? "");
+  const then = normalizeProse(body.get("postconditions") ?? "");
+  if (!then) return [];
+  return [`#### Scenario: ${title(node)} keeps its contract`, `<!-- kotta: ${node.id} -->`, ...(given ? [`- **GIVEN** ${given}`] : []), `- **THEN** ${then}`];
+}
+
+/**
+ * What OpenSpec's strict validation will say of a narrative's shape, said before it does: a Purpose
+ * under its minimum, a requirement with no scenario. Reported, never filled in — the text a generator
+ * would have to invent is the model's to state.
+ */
+export function narrativeShapeWarnings(file: string, content: string): Array<{ code: string; message: string; path: string }> {
+  const warnings: Array<{ code: string; message: string; path: string }> = [];
+  const purpose = normalizeProse(sections(content).get("purpose") ?? "");
+  if (purpose.length < MIN_PURPOSE_LENGTH) {
+    warnings.push({ code: "NARRATIVE_PURPOSE_BRIEF", message: `${file} states a Purpose of ${purpose.length} characters; OpenSpec's strict validation wants at least ${MIN_PURPOSE_LENGTH}. State the capability's outcome in a goal node that names it; the generator invents none.`, path: file });
+  }
+  const lines = content.split(/\r?\n/);
+  for (let index = 0; index < lines.length; index += 1) {
+    const heading = REQUIREMENT.exec(lines[index]);
+    if (!heading) continue;
+    let cursor = index + 1;
+    let scenarios = 0;
+    for (; cursor < lines.length && !/^#{1,3}\s/.test(lines[cursor]); cursor += 1) if (/^####\s/.test(lines[cursor])) scenarios += 1;
+    if (!scenarios) warnings.push({ code: "NARRATIVE_NO_SCENARIO", message: `${file}:${index + 1} requirement '${heading[1]}' has no scenario, which OpenSpec rejects. Add an example node whose subjects name it.`, path: file });
+  }
+  return warnings;
+}
+
 /** The `## Purpose` body of an existing narrative, kept when no goal node states one. */
 function existingPurpose(existing: string | undefined): string | undefined {
   if (!existing) return undefined;
@@ -116,6 +155,7 @@ export function generateCapabilitySpec(capability: string, nodes: SpecNode[], fo
       lines.push(`### Requirement: ${title(node)}`, `<!-- kotta: ${node.id} -->`, requirementBody(node, formById.get(node.form)), "");
       const proving = examples.filter((example) => referencesIn(example.data.subjects).includes(node.id)).sort((a, b) => title(a).localeCompare(title(b)) || a.id.localeCompare(b.id));
       for (const example of proving) lines.push(...scenario(example, formById.get(example.form)), "");
+      if (!proving.length && node.form === CONTRACT_FORM) lines.push(...contractScenario(node), "");
     }
   }
   return `${lines.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd()}\n`;

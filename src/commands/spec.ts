@@ -30,6 +30,8 @@ export interface SpecNewData {
   unanswered: string[];
   /** Body headings the scaffold laid out empty. */
   sections: string[];
+  /** The sections of those that must state the obligation with SHALL or MUST. */
+  normative: string[];
   /** The change whose model delta the node was drafted into; null for the accepted specification. */
   change: string | null;
 }
@@ -64,9 +66,16 @@ function scaffoldFrontmatter(form: SpecForm, id: string, title: string): { data:
   return { data, unanswered };
 }
 
+const NORMATIVE_HINT = "<!-- State the obligation with SHALL or MUST, in English whatever the language around it: \"The system SHALL …\", „A rendszer SHALL …\". A change's node without one is refused. -->";
+
 function scaffoldBody(form: SpecForm, title: string): string {
   const lines = [`# ${title}`, ""];
-  for (const heading of form.headings) lines.push(`## ${heading}`, "", "", "");
+  const normative = new Set(form.normative.map((heading) => heading.toLowerCase()));
+  for (const heading of form.headings) {
+    // The obligation is written with its keyword from the first draft; the comment does not count as content.
+    if (normative.has(heading.toLowerCase())) lines.push(`## ${heading}`, "", NORMATIVE_HINT, "", "");
+    else lines.push(`## ${heading}`, "", "", "");
+  }
   const outgoing = form.edges.filter((edge) => edge.direction === "outgoing" && edge.question);
   const incoming = form.edges.filter((edge) => edge.direction === "incoming" && edge.question);
   if (outgoing.length || incoming.length) {
@@ -105,7 +114,7 @@ export function newSpecNode(options: { form: string; title: string; into?: strin
   return {
     ok: true,
     command: "spec new",
-    data: { id, form: form.id, title, path: relative(root, path), unanswered, sections: [...form.headings], change },
+    data: { id, form: form.id, title, path: relative(root, path), unanswered, sections: [...form.headings], normative: [...form.normative], change },
   };
 }
 
@@ -114,6 +123,7 @@ export function formatSpecNew(result: SpecNewResult): string {
   const lines = [`Drafted ${data.title} (${data.id}) as a ${data.form} at ${data.path}${data.change ? `, in the model delta of ${data.change}` : ""}.`];
   if (data.sections.length) lines.push(`Sections to fill: ${data.sections.join(", ")}.`);
   if (data.unanswered.length) lines.push(`Frontmatter to answer: ${data.unanswered.join(", ")}.`);
+  if (data.normative.length) lines.push(`State the obligation in ${data.normative.join(" or ")} with SHALL or MUST ("The system SHALL …", also in Hungarian text).`);
   lines.push(
     data.change
       ? `This is a draft in the change, and nothing was committed: 'kotta plan ${data.change}' measures the delta, and it lands through the gate ('kotta approve', then 'kotta archive').`

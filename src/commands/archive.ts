@@ -2,10 +2,11 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, 
 import { basename, dirname, join, relative } from "node:path";
 import { parse } from "yaml";
 import { receiptErrors } from "../core/approval-receipt.js";
+import { readNarrativeSetting, type NarrativeMode } from "../core/config.js";
 import { displayId } from "../core/identity.js";
 import { findRepositoryRoot, specPath } from "../filesystem/workspace.js";
 import { APPROVAL_FILE, ARCHIVE_DIRECTORY, OPENSPEC_DIRECTORY, changesPath } from "../spec/change.js";
-import { SCENARIO_FORM, generateCapabilitySpec, markdownFiles, narrativeDrift, type NarrativeDrift } from "../spec/narrative.js";
+import { SCENARIO_FORM, generateCapabilitySpec, markdownFiles, narrativeDrift, narrativeShapeWarnings, type NarrativeDrift } from "../spec/narrative.js";
 import { referencesIn, type SpecNode, type ValidationIssue } from "../spec/registry.js";
 import { analyzeChange, type NodeRef } from "./plan.js";
 
@@ -29,11 +30,15 @@ export interface ArchiveResult {
     added: NodeRef[];
     replaced: NodeRef[];
     removed: NodeRef[];
+    /** Who writes `openspec/specs`: regenerated from the model, or written by people and only compared. */
+    narrative: NarrativeMode;
     /** Narrative specs regenerated, relative to the repository root. */
     narratives: string[];
     drift: NarrativeDrift[];
   };
   errors: ValidationIssue[];
+  /** What does not stop the landing: an authored narrative's drift, a narrative OpenSpec will call incomplete. */
+  warnings: ValidationIssue[];
 }
 
 function capabilityOf(node: SpecNode | undefined): string | undefined {
@@ -46,7 +51,9 @@ export function archiveChange(name: string, repositoryRoot?: string, now: Date =
   const analysis = analyzeChange(root, name);
   const { model, forms, accepted, mergedNodes } = analysis;
   const errors: ValidationIssue[] = [];
-  const empty = { change: analysis.change, archivedTo: null, added: analysis.delta.added, replaced: analysis.delta.modified, removed: analysis.delta.removed, narratives: [], drift: [] };
+  const setting = readNarrativeSetting(root);
+  const empty = { change: analysis.change, archivedTo: null, added: analysis.delta.added, replaced: analysis.delta.modified, removed: analysis.delta.removed, narrative: setting.mode, narratives: [], drift: [] };
+  if (setting.error) errors.push({ code: "CONFIG_INVALID", message: setting.error, ...(setting.source ? { path: setting.source } : {}) });
 
   const approvalPath = join(model.directory, APPROVAL_FILE);
   if (!existsSync(approvalPath)) {
@@ -82,7 +89,7 @@ export function archiveChange(name: string, repositoryRoot?: string, now: Date =
   const stamp = now.toISOString().slice(0, 10);
   const destination = changesPath(root, ARCHIVE_DIRECTORY, `${stamp}-${analysis.change}`);
   if (existsSync(destination)) errors.push({ code: "ARCHIVE_EXISTS", message: `${relative(root, destination)} already exists; nothing was moved over it.`, path: destination });
-  if (errors.length) return { ok: false, command: "archive", data: empty, errors };
+  if (errors.length) return { ok: false, command: "archive", data: empty, errors, warnings: [] };
 
   // The capabilities this delta touches: its own nodes', the ones they replaced or removed, and the
   // capabilities of whatever a changed example proves.
@@ -102,7 +109,8 @@ export function archiveChange(name: string, repositoryRoot?: string, now: Date =
 
   const specsRoot = join(root, OPENSPEC_DIRECTORY, "specs");
   const generated = new Map<string, string>();
-  for (const capability of [...touched].sort()) {
+  // An authored narrative is the people's prose: nothing is generated into it, and its drift is told, not enforced.
+  if (setting.mode === "generated") for (const capability of [...touched].sort()) {
     const path = join(specsRoot, capability, "spec.md");
     const existing = existsSync(path) ? readFileSync(path, "utf8") : undefined;
     generated.set(path, generateCapabilitySpec(capability, mergedNodes, forms, existing));
@@ -111,12 +119,17 @@ export function archiveChange(name: string, repositoryRoot?: string, now: Date =
   // The generated prose is checked against the model it came from, with every other narrative, before anything is written.
   const files = new Set([...markdownFiles(specsRoot), ...generated.keys()]);
   const drift = [...files].sort().flatMap((file) => narrativeDrift(root, file, generated.get(file) ?? readFileSync(file, "utf8"), mergedById, forms));
-  if (drift.length) {
+  const driftMessage = (item: NarrativeDrift) => item.kind === "missing-node" ? `${item.file}:${item.line} requirement '${item.requirement}' is bound to ${item.id}, which the merged model does not hold.` : `${item.file}:${item.line} requirement '${item.requirement}' disagrees with ${item.node} (${displayId(item.id)}): the narrative says “${item.narrative}”, the model says “${item.model}”.`;
+  const warnings: ValidationIssue[] = setting.mode === "authored"
+    ? drift.map((item) => ({ code: "NARRATIVE_DRIFT", message: driftMessage(item), path: join(root, item.file) }))
+    : [...generated].flatMap(([path, content]) => narrativeShapeWarnings(relative(root, path), content)).map((warning) => ({ ...warning, path: join(root, warning.path) }));
+  if (drift.length && setting.mode === "generated") {
     return {
       ok: false,
       command: "archive",
       data: { ...empty, drift },
-      errors: drift.map((item) => ({ code: "NARRATIVE_DRIFT", message: item.kind === "missing-node" ? `${item.file}:${item.line} requirement '${item.requirement}' is bound to ${item.id}, which the merged model does not hold.` : `${item.file}:${item.line} requirement '${item.requirement}' disagrees with ${item.node} (${displayId(item.id)}): the narrative says “${item.narrative}”, the model says “${item.model}”.`, path: join(root, item.file) })),
+      errors: drift.map((item) => ({ code: "NARRATIVE_DRIFT", message: driftMessage(item), path: join(root, item.file) })),
+      warnings: [],
     };
   }
 
@@ -143,8 +156,9 @@ export function archiveChange(name: string, repositoryRoot?: string, now: Date =
   return {
     ok: true,
     command: "archive",
-    data: { ...empty, archivedTo: relative(root, destination), narratives: [...generated.keys()].map((path) => relative(root, path)), drift: [] },
+    data: { ...empty, archivedTo: relative(root, destination), narratives: [...generated.keys()].map((path) => relative(root, path)), drift: setting.mode === "authored" ? drift : [] },
     errors: [],
+    warnings,
   };
 }
 
@@ -155,7 +169,12 @@ export function formatArchive(result: ArchiveResult): string {
   for (const node of data.added) lines.push(`  added    ${node.title} (${displayId(node.id)})`);
   for (const node of data.replaced) lines.push(`  replaced ${node.title} (${displayId(node.id)})`);
   for (const node of data.removed) lines.push(`  removed  ${node.title} (${displayId(node.id)})`);
-  lines.push(data.narratives.length ? `Regenerated from the model, and checked against it: ${data.narratives.join(", ")}.` : "No node names a capability, so no narrative was regenerated.");
+  if (data.narrative === "authored") {
+    lines.push(`The narrative is authored, so openspec/specs was not written; ${data.drift.length ? `${data.drift.length} requirement${data.drift.length === 1 ? "" : "s"} there disagree${data.drift.length === 1 ? "s" : ""} with the model, reported below, not repaired.` : "every bound requirement there agrees with the model."}`);
+  } else {
+    lines.push(data.narratives.length ? `Regenerated from the model, and checked against it: ${data.narratives.join(", ")}.` : "No node names a capability, so no narrative was regenerated.");
+  }
   lines.push(`Moved the change to ${data.archivedTo}. Nothing was committed.`);
+  for (const warning of result.warnings) lines.push(`Warning: ${warning.code}: ${warning.message}`);
   return lines.join("\n");
 }
