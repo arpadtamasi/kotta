@@ -20,6 +20,8 @@ Commands:
                               form, every edge against the node it names
   gap [options]               Report accepted spec promises without repository
                               evidence and enforcement without a spec trace
+  modules [options]           List the modules the manifests declare; check
+                              their boundaries; publish a module's promises
   questions [options] [id]    Report the open questions a specification draft
                               asks, or every draft's at once
   spec                        Draft specification nodes from the registered
@@ -85,6 +87,51 @@ Usage: kotta gap [options]
 
 Report accepted spec promises without repository evidence and enforcement
 without a spec trace
+
+Options:
+  --module <name>  Report only the promises of one module: those evidenced in
+                   it, and the interfaces naming it
+  --json
+  -h, --help       display help for command
+
+### kotta modules
+Usage: kotta modules [options] [command]
+
+List the modules the manifests declare; check their boundaries; publish a
+module's promises
+
+Options:
+  --json
+  -h, --help                       display help for command
+
+Commands:
+  check [options]                  Check module boundaries and cross-repository
+                                   references: missing interfaces, straddling
+                                   nodes, references across a boundary, stale
+                                   pins, drifted copies
+  publish-spec [options] <module>  Copy a module's interface nodes and the rules
+                                   and examples bound to them into
+                                   <module>/kotta-spec/, to ship with the
+                                   package
+
+### kotta modules check
+Usage: kotta modules check [options]
+
+Check module boundaries and cross-repository references: missing interfaces,
+straddling nodes, references across a boundary, stale pins, drifted copies
+
+Options:
+  --json
+  -h, --help  display help for command
+
+### kotta modules publish-spec
+Usage: kotta modules publish-spec [options] <module>
+
+Copy a module's interface nodes and the rules and examples bound to them into
+<module>/kotta-spec/, to ship with the package
+
+Arguments:
+  module      A module name the manifests declare
 
 Options:
   --json
