@@ -605,24 +605,18 @@ describe("a migration hands over a whole workspace, and says whether it holds", 
 });
 
 describe("Kotta's own workspace", () => {
-  test("migrates without loss: the archive is the process tree byte for byte, and spec/ is untouched", () => {
-    // The repository's own `.kotta/` stays on the old shape in this phase; a local clone is one of
-    // the pre-1.0 workspaces the migration has to carry, and the largest.
+  test("is on the current shape: the archive under legacy/ is read-only history, spec/ validates, migrate has nothing to do", () => {
+    // The repository's own `.kotta/` was migrated on 2026-09-25 (v5 → v6). A local clone proves the
+    // migrated shape is what ships: the process tree lives under legacy/, the specification validates,
+    // and a second `migrate` reports the workspace as current.
     const clone = realpathSync(mkdtempSync(join(tmpdir(), "kotta-migrate-self-")));
     execFileSync("git", ["clone", "--local", "--no-hardlinks", "--quiet", resolve("."), clone]);
     execFileSync("git", ["checkout", "-B", "main", "--quiet"], { cwd: clone });
     git(clone, "config", "user.name", "Kotta Test");
     git(clone, "config", "user.email", "test@example.com");
-    const processBefore = snapshot(join(clone, ".kotta/process"));
-    const specBefore = snapshot(join(clone, ".kotta/spec"));
-    expect(Object.keys(processBefore).length).toBeGreaterThan(100);
-    expect(Object.keys(specBefore).length).toBeGreaterThan(100);
-
-    const result = invoke(clone, ["migrate"]);
-    expect(result.status, say(result)).toBe(0);
     expect(existsSync(join(clone, ".kotta/process"))).toBe(false);
-    expect(snapshot(join(clone, ".kotta/legacy/process"))).toEqual(processBefore);
-    expect(snapshot(join(clone, ".kotta/spec"))).toEqual(specBefore);
+    expect(Object.keys(snapshot(join(clone, ".kotta/legacy/process"))).length).toBeGreaterThan(100);
+    expect(Object.keys(snapshot(join(clone, ".kotta/spec"))).length).toBeGreaterThan(100);
     expect(readFileSync(join(clone, ".kotta/config.yaml"), "utf8")).toContain("version: 6");
     expect(run(clone, ["validate"])).toMatchObject({ ok: true });
     expect((run(clone, ["migrate"]).data as MigrateResult["data"]).current).toBe(true);
