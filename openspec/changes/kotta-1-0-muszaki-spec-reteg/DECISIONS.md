@@ -264,3 +264,32 @@ Phase 2B (module boundary and evidence levels, `tasks.md` 1.2, 2, 5.1).
   model, writes nothing under `openspec/specs/`, returns every bound requirement's drift in
   `data.drift` and as `NARRATIVE_DRIFT` warnings, and succeeds. `generated`: as before, drift
   refuses. `kotta plan` is unchanged in both modes: it reports drift in (e) either way.
+
+## Phase 3C — OpenSpec import
+
+- **3C: a section holding only an HTML comment is empty to validation.** The import leaves the
+  not-derivable sections with a note, as the brief asks; counted as text, the note would hide 486
+  gaps on oktat-ai from `kotta plan`. `validateNodeSet` now strips comments before the emptiness
+  check (one line in `src/spec/registry.ts`). No other test relied on a comment-only section.
+- **3C: the note, the goal title and the proposal are English.** Kotta writes its own text in
+  English; the narrative's text is copied as it is. The goal a Purpose becomes is titled
+  `Purpose of <capability>`, a name the planning phase is free to change.
+- **3C: an example's empty Given is not derivable either.** OpenSpec scenarios carry WHEN/THEN; the
+  example form requires Given, so it gets the same note (226 of the 486 gaps on oktat-ai). `AND`
+  and `BUT` continue the step above; a continuation line joins its step.
+- **3C: the quote is the first sentence, cut to 30 words.** Cut without an ellipsis, so it stays a
+  substring of the narrative and `narrativeDrift` still recognises the source statement.
+- **3C: matching an accepted node.** A requirement bound by `<!-- kotta: ID -->` changes that node
+  if it is a requirement form (business-rule, interface, quality-attribute, use-case,
+  user-story); otherwise, exactly one accepted requirement-form node with the same title
+  (case- and whitespace-insensitive) is matched. Several candidates, or a binding to an unknown or
+  wrong-form id, draft a new node and say so in the proposal's "Matching notes". A scenario matches
+  by binding, or by title only among examples already proving the matched rule; a Purpose matches
+  by binding, title, or the one accepted goal with the same `capability`. A matched node keeps its
+  file name, its form and its other sections; only the sections the narrative states are replaced,
+  its provenance becomes the import's, and an existing `capability` is kept.
+- **3C: the archive is history, not input.** `openspec/changes/archive/**` is listed in the
+  proposal's History for the planning phase to read for rationale; nothing is drafted from it.
+  Open (unarchived) changes are neither listed nor imported.
+- **3C: the import is refused over an existing change directory** and writes nothing; it reads only
+  `openspec/specs/<capability>/spec.md` (a `spec.md` directly under `specs/` is not a capability).
