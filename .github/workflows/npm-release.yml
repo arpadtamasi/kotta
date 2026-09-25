@@ -31,7 +31,9 @@ jobs:
         run: |
           VERSION="$(node -p "require('./package.json').version")"
           test "${GITHUB_REF_NAME}" = "v${VERSION}"
-          git fetch origin main --depth=1
+          # Full history: a shallow fetch of main sees only its tip, so a tag on the merge commit
+          # one below the tip (the v1.0.0-alpha.1 release) is wrongly reported as not on main.
+          git fetch origin main
           git merge-base --is-ancestor "${GITHUB_SHA}" origin/main
       - name: Install locked dependencies
         run: npm ci
