@@ -97,7 +97,8 @@ It reports (a) the delta's structure, (b) the merged model as a whole, (c) confl
 accepted nodes that share an edge with, are named by, or contrast with what the delta changes, and
 lifecycle transitions removed or reversed — ranked, at most ten, each awaiting judgement, (d) the
 silences: open decisions and unanswered form questions, (e) narrative drift, (f) the provenance
-summary with the list of what the machine decided. Fix what is structurally wrong, re-run, and repeat
+summary with the list of what the machine decided, and every citation of `conversation.md` that does
+not open at a heading. Fix what is structurally wrong, re-run, and repeat
 until only human questions remain.
 
 ## Take it to the gate
