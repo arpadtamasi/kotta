@@ -1,6 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Az import nem vázol node-ot megjegyzésből
+<!-- kotta: BR-01m3cqmtnnwxz7fkyr6d5ch9e6 -->
 A `kotta import openspec` SHALL a narratív spec szakaszainak szövegét a Markdown-megjegyzések
 levágása után mérni. Egy szakasz, amelyben ezután nincs szöveg, SHALL NOT node-vázlatot adni;
 az import SHALL figyelmeztetésként megnevezni a képességet, amelynek nincs kimondott célja.
@@ -16,6 +17,7 @@ az import SHALL figyelmeztetésként megnevezni a képességet, amelynek nincs k
 - **THEN** az import a prózából vázol goal-t, a megjegyzés nélkül
 
 ### Requirement: A migráció nem bukik rendszer-metaadaton
+<!-- kotta: BR-01m3cqmtvgmsdxnf78babstw2c -->
 A `kotta migrate` SHALL figyelmen kívül hagyni az operációs rendszer metaadatfájljait
 (`.DS_Store`, `Thumbs.db`, `desktop.ini`) a régi alak könyvtárainak olvasásánál, és SHALL
 megnevezni a tervben, mit hagyott figyelmen kívül. Minden más ismeretlen bejegyzésen SHALL
