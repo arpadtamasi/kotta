@@ -17,12 +17,11 @@ function mermaidDiagramsWeDraw(): Plugin {
     enforce: "pre",
     resolveId(source, importer) {
       if (!importer || !importer.includes("/node_modules/mermaid/")) return null;
-      return source === "katex" || UNUSED_MERMAID.test(source) ? `${STUB}:${source.split("/").pop()}` : null;
+      return source === "katex" || UNUSED_MERMAID.test(source) ? STUB : null;
     },
     load(id) {
-      if (!id.startsWith(`${STUB}:`)) return null;
-      const name = JSON.stringify(id.slice(STUB.length + 1));
-      return `const unused = () => { throw new Error("Mermaid's " + ${name} + " is not bundled with the Kotta board."); };\n`
+      if (id !== STUB) return null;
+      return "const unused = () => { throw new Error('A Mermaid diagram type, layout or KaTeX was asked for, and the Kotta board bundles only flowcharts and state diagrams laid out by dagre.'); };\n"
         + "export default { render: unused, renderToString: unused };\nexport const diagram = undefined;\nexport const render = unused;\n";
     },
   };
