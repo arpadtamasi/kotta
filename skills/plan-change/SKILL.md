@@ -89,7 +89,8 @@ overwritten.
    SHALL ask before it quits", „A rendszer SHALL megerősítést kérni kilépés előtt". The form registry
    names these sections (`normative_sections`); `kotta validate` and `kotta plan` refuse a change's
    node without the keyword. The generator carries the text into the narrative as written and never
-   adds the keyword for you, so it has to be there in the node.
+   adds the keyword for you, so it has to be there in the node. A use case or a user story needs
+   none: they are described in the narrative, not required by it.
 6. Bind the narrative where it names a node: a `<!-- kotta: <id> -->` line directly under a
    requirement heading lets `kotta plan` report when the prose and the node disagree. Report such a
    drift; do not rewrite either side to make it disappear.
@@ -172,9 +173,16 @@ Where `openspec/specs/` comes from is the project's setting, `narrative:` in `.k
 (or in `openspec/config.yaml`):
 
 - `generated` (the default): `kotta archive` regenerates each capability the delta touches from the
-  merged model, carrying every section as written. What OpenSpec's strict validation would still call
-  incomplete — a Purpose under fifty characters, a requirement no example proves — is reported as a
-  warning, never filled in: state it in the model (a goal node, an example).
+  merged model, carrying every section as written. Each capability's `spec.md` has, in order: the
+  `## Purpose` from its goals; `## Requirements`, one per business rule, interface and quality
+  attribute — the forms whose own text carries SHALL or MUST — each with the examples proving it as
+  scenarios; then two informative sections, `## Use cases` (Intent, Main success scenario,
+  Alternatives) and `## User stories` (Story, Value), each entry with the examples that prove it and
+  no requirement. Use cases and stories stay free-form: they need no keyword and never become a
+  requirement, because the generator would have to invent the SHALL sentence. What OpenSpec's strict
+  validation would still call incomplete — a Purpose under fifty characters, a requirement no
+  example proves — is reported as a warning, never filled in: state it in the model (a goal node,
+  an example).
 - `authored`: people write `openspec/specs/`. Archive lands the model and writes no narrative; where
   a bound requirement says something else than its node, it reports the drift and does not stop.
   Bring the two together by hand, in whichever direction the human decides.

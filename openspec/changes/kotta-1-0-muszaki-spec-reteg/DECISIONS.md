@@ -249,11 +249,21 @@ Phase 2B (module boundary and evidence levels, `tasks.md` 1.2, 2, 5.1).
   on the keyword; with a keyword inserted they pass all five. Other requirement forms without an
   example (a use case, a user story) still get no scenario: `archive` warns
   `NARRATIVE_NO_SCENARIO`, it does not invent one.
-- **3A: open — use cases and user stories are not normative forms.** 18 of the Casino's 67
-  requirements are use cases and user stories; OpenSpec wants SHALL/MUST in them too, and the brief
-  names only rules, interfaces and quality attributes. Their requirements will keep failing
-  `openspec validate --strict` until the operator decides whether their Intent/Story must carry the
-  keyword (a one-line `normative_sections` in their forms).
+- **3A: use cases and user stories are described, not required (operator, 2026-09-25: "SHALL/MUST
+  csak az OpenSpec-specekben").** Replaces the open question about their keyword. The keyword is
+  required only where the model's own text is the obligation — business rules, interfaces, quality attributes, by
+  `normative_sections`; use cases and user stories stay free-form. Since the generator never invents
+  a SHALL sentence (it carries text, it does not write intent), they are no longer
+  `### Requirement:` blocks: each capability's `spec.md` is Purpose, Requirements, then the
+  informative `## Use cases` (per entry `### <title>`, its `<!-- kotta: ID -->`, Intent, Main
+  success scenario, Alternatives) and `## User stories` (Story, Value), verbatim. An example that
+  proves a requirement is that requirement's scenario only; one that proves no requirement is a
+  `#### Scenario:` under each use case or story it names. The drift check reads `### Requirement:`
+  headings only, so the informative entries are never compared; OpenSpec 1.13.1 ignores the extra
+  sections (`openspec show` counts only the requirements) and `validate --specs --strict` passes on
+  a fixture with rules, an interface, a QA, two use cases and a story. `kotta import openspec` still
+  matches a requirement bound to a use case or story, as a narrative generated before this would
+  have it.
 - **3A: a brief Purpose is a warning.** Archive warns `NARRATIVE_PURPOSE_BRIEF` when a generated
   Purpose is under OpenSpec's 50 characters, comments not counted — including the placeholder
   comment written when no goal names the capability (OpenSpec itself counts the comment and passes

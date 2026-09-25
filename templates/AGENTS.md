@@ -41,12 +41,14 @@ change to the archive, asking nothing again. The `plan-change` skill is the how.
 
 Who writes `openspec/specs/` is the project's choice, `narrative:` in `{{workspace}}/config.yaml`.
 With `generated`, the default, archive regenerates every capability a change touches from the model,
-carrying the nodes' text as written; with `authored`, people write the narrative, archive writes none
+carrying the nodes' text as written: its Purpose, its requirements (the rules, interfaces and quality
+attributes, with their examples as scenarios), then its use cases and user stories as informative
+sections, never as requirements; with `authored`, people write the narrative, archive writes none
 of it and only reports where a bound requirement disagrees with its node. Either way the model is the
 truth, and an obligation carries its keyword in the model: a rule, an interface's postconditions or
 invariants, a quality attribute's response say SHALL or MUST — in English, as OpenSpec expects,
 whatever the language around it. A change's node without one is refused; an older accepted node is
-warned about.
+warned about. Use cases and user stories stay free-form and need no keyword.
 
 ## The rule everything else follows from
 

@@ -5,7 +5,7 @@ import { mintSpecId, specFilename } from "../core/identity.js";
 import { slugify } from "../core/naming.js";
 import { findRepositoryRoot, specPath } from "../filesystem/workspace.js";
 import { ARCHIVE_DIRECTORY, MODEL_DIRECTORY, OPENSPEC_DIRECTORY, changesPath } from "../spec/change.js";
-import { PURPOSE_FORM, REQUIREMENT_FORMS, SCENARIO_FORM, markdownFiles, normalizeProse } from "../spec/narrative.js";
+import { INFORMATIVE_FORMS, PURPOSE_FORM, REQUIREMENT_FORMS, SCENARIO_FORM, markdownFiles, normalizeProse } from "../spec/narrative.js";
 import { QUOTE_WORD_LIMIT, type Provenance } from "../spec/provenance.js";
 import { readFormRegistry, readSpecNodes, referencesIn, type SpecForm, type SpecNode } from "../spec/registry.js";
 import type { NodeRef } from "./plan.js";
@@ -31,6 +31,9 @@ import type { NodeRef } from "./plan.js";
 /** Written into every section the narrative has no text for. A comment is not an answer. */
 export const NOT_DERIVABLE = "<!-- kotta import: not derivable from the narrative spec; the planning phase asks for it. -->";
 /** What the import leaves for the planning phase to derive, by form id. */
+/** A requirement may be bound to a use case or story by a narrative generated before they became informative. */
+const BINDABLE_FORMS = [...REQUIREMENT_FORMS, ...INFORMATIVE_FORMS.map((entry) => entry.form)];
+
 export const NOT_DERIVED = ["actor", "use-case", "entity", "state-machine"] as const;
 const RULE_FORM = "business-rule";
 
@@ -299,7 +302,7 @@ export function importOpenSpec(options: { change?: string } = {}, repositoryRoot
       const where = `${source} · Requirement: ${requirement.title}`;
       const texts = { [ruleForm.headings[0].toLowerCase()]: requirement.text };
       const extra = { capability, provenance: provenance(where, firstSentence(requirement.text)) };
-      const existing = match(REQUIREMENT_FORMS, requirement.title, requirement.binding, where);
+      const existing = match(BINDABLE_FORMS, requirement.title, requirement.binding, where);
       const rule = existing ? changed(existing, texts, extra) : fresh(ruleForm, requirement.title, texts, extra);
       drafted.rules += 1;
 

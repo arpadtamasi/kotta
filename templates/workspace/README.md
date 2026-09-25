@@ -10,9 +10,10 @@ version 6.
 - `spec/<directory>/` holds the nodes, one Markdown file each, with the id, form, title, required
   fields and edges in the frontmatter. Identifiers are minted with `kotta spec new`, never typed.
   Every form also takes two optional fields: `capability` (a path such as `identity/user-auth`, the
-  narrative spec the node is generated into) and `provenance` — `level` (stated, partly-inferred,
-  inferred), `decided_by` (human, agent-proposed-human-approved, agent-decided), `sources`, a `quote`
-  of at most 30 words, and what was `inferred`. It is measured wherever present
+  narrative spec the node is generated into: a rule, interface or quality attribute as a requirement,
+  a use case or user story in the informative sections after the requirements) and `provenance` —
+  `level` (stated, partly-inferred, inferred), `decided_by` (human, agent-proposed-human-approved,
+  agent-decided), `sources`, a `quote` of at most 30 words, and what was `inferred`. It is measured wherever present
   (`schemas/provenance.schema.json`) and required on every node a change proposes under
   `openspec/changes/<name>/model/`.
 - `legacy/` exists only in a workspace migrated from a pre-1.0 Kotta. It is a read-only archive of

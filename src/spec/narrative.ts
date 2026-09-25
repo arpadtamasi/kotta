@@ -11,8 +11,21 @@ import { referencesIn, type SpecForm, type SpecNode } from "./registry.js";
  * is reported with both places named. Nothing here edits a narrative to make it agree.
  */
 
-/** The forms a requirement is generated for, in the order a capability's spec lists them. */
-export const REQUIREMENT_FORMS = ["business-rule", "interface", "quality-attribute", "use-case", "user-story"] as const;
+/**
+ * The forms a requirement is generated for, in the order a capability's spec lists them: the forms
+ * whose own text carries the normative keyword (the registry's `normative_sections`). A requirement's
+ * SHALL sentence is the node's, so only a node that states one becomes a requirement.
+ */
+export const REQUIREMENT_FORMS = ["business-rule", "interface", "quality-attribute"] as const;
+/**
+ * The forms a capability's spec describes after its requirements, informatively, under their own
+ * section: free-form in the model, so never a requirement — the generator would have to invent the
+ * SHALL sentence. Each lists the headings it carries, as the node wrote them.
+ */
+export const INFORMATIVE_FORMS = [
+  { form: "use-case", section: "Use cases", headings: ["Intent", "Main success scenario", "Alternatives"] },
+  { form: "user-story", section: "User stories", headings: ["Story", "Value"] },
+] as const;
 /** The form whose nodes become scenarios, attached by their `subjects`. */
 export const SCENARIO_FORM = "example";
 /** The form whose node states a capability's purpose. */
@@ -89,6 +102,15 @@ function scenario(example: SpecNode, form: SpecForm | undefined): string[] {
   return lines;
 }
 
+/** An informative entry: the node's chosen sections under bold labels, verbatim. */
+function informativeBody(node: SpecNode, headings: readonly string[]): string {
+  const body = nodeSections(node);
+  return headings.flatMap((heading) => {
+    const text = (body.get(heading.toLowerCase()) ?? "").trim();
+    return text ? [`**${heading}**\n\n${text}`] : [];
+  }).join("\n\n");
+}
+
 function contractScenario(node: SpecNode): string[] {
   const body = nodeSections(node);
   const given = normalizeProse(body.get("preconditions") ?? "");
@@ -149,6 +171,8 @@ export function generateCapabilitySpec(capability: string, nodes: SpecNode[], fo
   }
   lines.push("## Requirements", "");
   const examples = nodes.filter((node) => node.form === SCENARIO_FORM);
+  const byTitle = (a: SpecNode, b: SpecNode) => title(a).localeCompare(title(b)) || a.id.localeCompare(b.id);
+  const requirementIds = new Set(nodes.filter((node) => (REQUIREMENT_FORMS as readonly string[]).includes(node.form)).map((node) => node.id));
   for (const formId of REQUIREMENT_FORMS) {
     const requirements = members.filter((node) => node.form === formId).sort((a, b) => title(a).localeCompare(title(b)) || a.id.localeCompare(b.id));
     for (const node of requirements) {
@@ -156,6 +180,21 @@ export function generateCapabilitySpec(capability: string, nodes: SpecNode[], fo
       const proving = examples.filter((example) => referencesIn(example.data.subjects).includes(node.id)).sort((a, b) => title(a).localeCompare(title(b)) || a.id.localeCompare(b.id));
       for (const example of proving) lines.push(...scenario(example, formById.get(example.form)), "");
       if (!proving.length && node.form === CONTRACT_FORM) lines.push(...contractScenario(node), "");
+    }
+  }
+  // Use cases and user stories: described, not required. An example that proves a requirement is that
+  // requirement's scenario; one that proves none is listed under the use case or story it names.
+  for (const informative of INFORMATIVE_FORMS) {
+    const entries = members.filter((node) => node.form === informative.form).sort(byTitle);
+    if (!entries.length) continue;
+    lines.push(`## ${informative.section}`, "");
+    for (const node of entries) {
+      lines.push(`### ${title(node)}`, `<!-- kotta: ${node.id} -->`, informativeBody(node, informative.headings), "");
+      const proving = examples.filter((example) => {
+        const subjects = referencesIn(example.data.subjects);
+        return subjects.includes(node.id) && !subjects.some((subject) => requirementIds.has(subject));
+      }).sort(byTitle);
+      for (const example of proving) lines.push(...scenario(example, formById.get(example.form)), "");
     }
   }
   return `${lines.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd()}\n`;
