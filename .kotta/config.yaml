@@ -1,26 +1,11 @@
-version: 5
+version: 6
 project:
   name: a-team
-workflow:
-  require_human_done_approval: true
-  allow_agent_observations: true
-  allow_agent_defined_tasks: false
-agents:
-  permission_mode: acceptEdits
 git:
   base_branch: main
   protected_branches:
     - main
     - master
     - develop
-  worktrees: auto
-  worktree_root: .worktrees
-  branch_pattern: "{prefix}/{id}-{slug}"
-batches:
-  default_parallelism: 2
-  stop_on_failure: true
 validation:
   strict: true
-  reject_unknown_profiles: true
-  require_verification_for_defined: true
-  require_review_evidence_for_done: true
