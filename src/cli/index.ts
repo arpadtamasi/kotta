@@ -15,6 +15,7 @@ import { integrateCodex } from "../commands/integrate.js";
 import { doctorCommand } from "../commands/doctor.js";
 import { syncCommand } from "../commands/sync.js";
 import { gapReport } from "../commands/gap.js";
+import { checkModules, listModules, publishSpec, renderModules, renderModulesCheck, renderPublishSpec } from "../commands/modules.js";
 import { displayId } from "../core/identity.js";
 
 const program = new Command();
@@ -62,8 +63,8 @@ function renderGapReport(result: unknown): string {
 }
 
 function renderValidate(result: unknown): string {
-  const data = (result as { data: { forms: number; specNodes: number } }).data;
-  return `The specification validates: ${data.specNodes} node${data.specNodes === 1 ? "" : "s"} across ${data.forms} form${data.forms === 1 ? "" : "s"}.`;
+  const { data, warnings = [] } = result as { data: { forms: number; specNodes: number }; warnings?: Array<{ code: string; message: string }> };
+  return [`The specification validates: ${data.specNodes} node${data.specNodes === 1 ? "" : "s"} across ${data.forms} form${data.forms === 1 ? "" : "s"}.`, ...warnings.map((warning) => `Warning: ${warning.code}: ${warning.message}`)].join("\n");
 }
 
 function renderSync(result: unknown): string {
@@ -230,8 +231,25 @@ define("validate", renderValidate)
 
 define("gap", renderGapReport, "gap report")
   .description("Report accepted spec promises without repository evidence and enforcement without a spec trace")
+  .option("--module <name>", "Report only the promises of one module: those evidenced in it, and the interfaces naming it")
   .option("--json")
-  .action((options: { json?: boolean }) => print(gapReport(findRepositoryRoot()), Boolean(options.json)));
+  .action((options: { module?: string; json?: boolean }) => print(gapReport(findRepositoryRoot(), { module: options.module }), Boolean(options.json)));
+
+const modules = define("modules", renderModules)
+  .description("List the modules the manifests declare; check their boundaries; publish a module's promises")
+  .option("--json")
+  .action((options: { json?: boolean }) => print(listModules(), Boolean(options.json)));
+modules.command("check")
+  .description("Check module boundaries and cross-repository references: missing interfaces, straddling nodes, references across a boundary, stale pins, drifted copies")
+  .option("--json")
+  .action((options: { json?: boolean }) => print(checkModules(), Boolean(options.json)));
+renderers.set("modules check", renderModulesCheck);
+modules.command("publish-spec")
+  .description("Copy a module's interface nodes and the rules and examples bound to them into <module>/kotta-spec/, to ship with the package")
+  .argument("<module>", "A module name the manifests declare")
+  .option("--json")
+  .action((module: string, options: { json?: boolean }) => print(publishSpec(module), Boolean(options.json)));
+renderers.set("modules publish-spec", renderPublishSpec);
 
 define("questions [id]", renderQuestions)
   .description("Report the open questions a specification draft asks, or every draft's at once")
