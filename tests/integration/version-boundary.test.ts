@@ -6,16 +6,13 @@ import { describe, expect, test } from "vitest";
 import { WORKSPACE_SCHEMA_VERSION } from "../../src/filesystem/workspace.js";
 
 /**
- * A version boundary refuses in both directions (BR-01m0q89b16xcfasfj1z8mc2hgg,
- * EX-01m0q89b1693yvwzx0j8tr5zjp).
+ * A version boundary refuses in both directions.
  *
- * The failure this suite pins was reachable from a published release: a Kotta implementing version 5,
- * meeting a workspace recording version 6, called it a legacy shape and named `kotta migrate` — which
- * is exempt from the shape check so that it can read old workspaces, and therefore planned
- * `version: 6 -> 5`. Following the tool's own advice rewrote the newer workspace backwards.
- *
- * The tests drive the built binary because the refusal has to survive the CLI's own preAction hook,
- * which is where the first version of this fix was silently swallowed.
+ * A Kotta implementing version N, meeting a workspace recording version N+1, once called it a legacy
+ * shape and named `kotta migrate` — which is exempt from the shape check so that it can read old
+ * workspaces, and therefore planned a downgrade. Following the tool's own advice rewrote the newer
+ * workspace backwards. The tests drive the built binary because the refusal has to survive the
+ * CLI's own preAction hook.
  */
 
 const cli = resolve("dist/cli/index.js");
@@ -43,7 +40,7 @@ function fixture(label: string, version: number | string) {
 }
 
 /** Commands that read a workspace and are not exempt from the shape check. */
-const READERS = [["status"], ["validate"], ["task", "list"], ["observation", "list"], ["gap"]];
+const READERS = [["validate"], ["gap"], ["questions"], ["spec", "new", "goal", "--title", "x"], ["sync"], ["doctor"]];
 
 describe("a version boundary refuses in both directions", () => {
   test("a newer workspace is refused by every reading command, naming both versions", () => {
@@ -62,8 +59,6 @@ describe("a version boundary refuses in both directions", () => {
     const { root } = fixture("wording", NEWER);
     for (const command of [...READERS, ["migrate"], ["migrate", "--dry-run"]]) {
       const said = say(attempt(root, command));
-      // Both are true of the other direction and false of this one; either would send the reader to
-      // the command that rewrites the workspace backwards.
       expect(said.toLowerCase(), `${command.join(" ")} does not call it legacy`).not.toContain("legacy");
       expect(said, `${command.join(" ")} does not prescribe migrate`).not.toMatch(/kotta migrate/);
     }
@@ -78,7 +73,6 @@ describe("a version boundary refuses in both directions", () => {
       const said = say(result);
       expect(result.status, `${command.join(" ")} refuses`).not.toBe(0);
       expect(said).toContain("written by a newer Kotta");
-      // A dry run's whole output is its plan; a refusal that still printed one would be the defect.
       expect(said, "no plan is printed").not.toContain("changes planned");
       expect(said, "no downgrade is proposed").not.toContain(`version: ${NEWER}`);
     }
@@ -87,18 +81,18 @@ describe("a version boundary refuses in both directions", () => {
 
   test("an unreadable version is refused as neither direction", () => {
     const { root } = fixture("unreadable", "{{");
-    const said = say(attempt(root, ["status"]));
+    const said = say(attempt(root, ["validate"]));
     expect(said).toContain("does not record a readable workspace shape version");
     expect(said).toContain("config.yaml");
     expect(said.toLowerCase(), "it is not called legacy either").not.toContain("legacy");
   }, 60_000);
 
-  test("an older workspace still refuses the way it always did, and still migrates", () => {
+  test("an older workspace is refused as pre-1.0, named the migration, and migrates", () => {
     const { root, config } = fixture("older", WORKSPACE_SCHEMA_VERSION - 1);
 
-    const refusal = say(attempt(root, ["status"]));
-    expect(refusal, "the older direction keeps its wording").toContain("uses a legacy Kotta workspace shape");
-    expect(refusal, "and keeps naming the remedy").toContain("kotta migrate");
+    const refusal = say(attempt(root, ["validate"]));
+    expect(refusal, "the older direction is named for what it is").toContain("pre-1.0 Kotta workspace shape");
+    expect(refusal, "and names the remedy").toContain("kotta migrate");
 
     const planned = say(attempt(root, ["migrate", "--dry-run"]));
     expect(planned, "migrate keeps its exemption in this direction").toContain("changes planned");
@@ -106,6 +100,6 @@ describe("a version boundary refuses in both directions", () => {
 
     expect(attempt(root, ["migrate"]).status, "and carries the workspace forward").toBe(0);
     expect(readFileSync(config, "utf8")).toContain(`version: ${WORKSPACE_SCHEMA_VERSION}`);
-    expect(attempt(root, ["status"]).status, "after which it reads normally").toBe(0);
+    expect(attempt(root, ["validate"]).status, "after which it reads normally").toBe(0);
   }, 60_000);
 });

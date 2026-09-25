@@ -215,13 +215,14 @@ nav a:hover,
   letter-spacing: 0.025em;
 }
 
-.task-record {
+.node-card {
   align-self: center;
+  min-width: 0;
   border: 1px solid var(--ink);
   background: var(--paper);
 }
 
-.task-record-head,
+.node-card-head,
 .terminal-head {
   display: flex;
   align-items: center;
@@ -233,7 +234,7 @@ nav a:hover,
   font-size: 0.64rem;
 }
 
-.task-record-head > span:first-child {
+.node-card-head > span:first-child {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -247,12 +248,12 @@ nav a:hover,
   font-weight: 700;
 }
 
-.task-title {
+.node-title {
   padding: clamp(22px, 3vw, 36px);
   border-bottom: 1px solid var(--ink);
 }
 
-.task-id {
+.node-id {
   display: block;
   margin-bottom: 14px;
   color: var(--signal-dark);
@@ -261,18 +262,18 @@ nav a:hover,
   font-weight: 700;
 }
 
-.task-title h2 {
+.node-title h2 {
   margin: 0;
   font-size: clamp(1.45rem, 2.25vw, 2.1rem);
   letter-spacing: -0.03em;
   line-height: 1.08;
 }
 
-.task-fields {
+.node-fields {
   margin: 0;
 }
 
-.task-fields > div {
+.node-fields > div {
   display: grid;
   grid-template-columns: 82px 1fr;
   gap: 16px;
@@ -280,18 +281,30 @@ nav a:hover,
   border-bottom: 1px solid var(--rule);
 }
 
-.task-fields dt {
+.node-fields dt {
   font-family: var(--mono);
   font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
 }
 
-.task-fields dd {
+.node-fields dd {
   margin: 0;
+  overflow-wrap: anywhere;
   color: var(--ink-soft);
   font-size: 0.78rem;
   line-height: 1.45;
+}
+
+.prov-badge {
+  display: inline-block;
+  margin: 0 4px 4px 0;
+  padding: 2px 6px;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  font-weight: 700;
 }
 
 .human-gate {
@@ -795,7 +808,7 @@ tbody th {
     max-width: 15ch;
   }
 
-  .task-record {
+  .node-card {
     max-width: 680px;
   }
 
@@ -897,7 +910,7 @@ tbody th {
     line-height: 1.55;
   }
 
-  .task-fields > div {
+  .node-fields > div {
     grid-template-columns: 70px 1fr;
     gap: 10px;
   }

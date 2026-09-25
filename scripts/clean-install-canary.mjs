@@ -21,15 +21,12 @@ const run = (command, args, cwd = repository, environment = process.env) => exec
 
 run("npm", ["install", "--global", "--prefix", prefix, installationTarget], root);
 const environment = { ...process.env, PATH: `${join(prefix, "bin")}${delimiter}${process.env.PATH ?? ""}` };
-// Both bin names must resolve to the same entrypoint after the rename: `kotta` is the name,
-// `a-team` is the transitional alias neighbouring projects' scripts still call (D-006/3).
+// One bin name: `kotta`. The `a-team` alias of the 0.x releases left with 1.0.
 const actualVersion = run("kotta", ["--version"], repository, environment);
 if (actualVersion !== expectedVersion) throw new Error(`Expected kotta ${expectedVersion}, received ${actualVersion}.`);
-const aliasVersion = run("a-team", ["--version"], repository, environment);
-if (aliasVersion !== actualVersion) throw new Error(`Alias a-team reported ${aliasVersion}, kotta reported ${actualVersion}.`);
 run("git", ["init", "-b", "main"]);
 writeFileSync(join(repository, "README.md"), "# Canary repository\n");
 run("kotta", ["init"], repository, environment);
 if (!existsSync(join(repository, ".kotta"))) throw new Error("kotta init did not create a .kotta workspace.");
 run("kotta", ["validate"], repository, environment);
-process.stdout.write(`${JSON.stringify({ target, version: actualVersion, alias: aliasVersion, repository })}\n`);
+process.stdout.write(`${JSON.stringify({ target, version: actualVersion, repository })}\n`);

@@ -1,16 +1,14 @@
 import { spawn, spawnSync } from "node:child_process";
-import { createReadStream, existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { createReadStream, existsSync, readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
 import { createServer, type Server, type ServerResponse } from "node:http";
-import { basename, dirname, extname, join, normalize, relative, resolve } from "node:path";
+import { basename, dirname, extname, isAbsolute, join, normalize, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import matter from "gray-matter";
 import { parse } from "yaml";
 import { sections } from "../core/markdown.js";
-import { parseOpenQuestions } from "../core/questions.js";
-import { findTask, idFromFilename } from "../filesystem/entities.js";
+import { MINTED_BODY } from "../core/identity.js";
 import { ENV_PREFIX, readEnv } from "../core/env.js";
-import { PROCESS_DIRECTORY, SPEC_DIRECTORY, WORKSPACE_DIRECTORIES, WORKSPACE_SCHEMA_VERSION, flatWorkspaceEntries, hasWorkspace, legacyStateDirectories, v4StateDirectories, workspaceDirectoryName, workspaceSchemaVersion, workspaceShapeStanding } from "../filesystem/workspace.js";
-import type { KottaEvent } from "../core/events.js";
+import { SPEC_DIRECTORY, WORKSPACE_DIRECTORIES, WORKSPACE_SCHEMA_VERSION, WorkspaceShapeError, assertCurrentWorkspaceShape, hasWorkspace, workspaceDirectoryName } from "../filesystem/workspace.js";
 
 function git(root: string, args: string[]): { ok: boolean; out: string } {
   const result = spawnSync("git", args, { cwd: root, encoding: "utf8", maxBuffer: 256 * 1024 * 1024 });
@@ -19,9 +17,6 @@ function git(root: string, args: string[]): { ok: boolean; out: string } {
 function listFilesFromRef(root: string, ref: string, directory: string, subpath: string, extension: string): string[] {
   const result = git(root, ["ls-tree", "-r", "--name-only", ref, `${directory}/${subpath}`]);
   return result.ok ? result.out.split("\n").map((line) => line.trim()).filter((line) => line.endsWith(extension)) : [];
-}
-function listMdFromRef(root: string, ref: string, directory: string, subpath: string): string[] {
-  return listFilesFromRef(root, ref, directory, subpath, ".md");
 }
 function readFileFromRef(root: string, ref: string, repoPath: string): string | null {
   const result = git(root, ["show", `${ref}:${repoPath}`]);
@@ -76,7 +71,7 @@ function parseTar(archive: Buffer): Map<string, string> {
 }
 
 // In-process snapshot of the workspace directory at the base commit, read with a single `git archive`
-// subprocess and cached on the commit hash: identical hash between reloads means no batch read. (T-029)
+// subprocess and cached on the commit hash: identical hash between reloads means no batch read.
 let refSnapshotCache: { key: string; files: Map<string, string> } | null = null;
 function refSnapshot(root: string, commit: string, directory: string): Map<string, string> | null {
   const key = `${resolve(root)}\0${commit}\0${directory}`;
@@ -105,47 +100,98 @@ export function resolveWorkspaceLocation(workspaceOption: string): { workspace: 
   const named = (WORKSPACE_DIRECTORIES as readonly string[]).includes(basename(candidate));
   const projectRoot = named ? dirname(candidate) : candidate;
   if (named || hasWorkspace(candidate)) {
-    // A symlinked bridge between the two names points at one real directory; resolving to the real
-    // name keeps `git archive`/`ls-tree` — which see a symlink as a link, not as a tree — working.
     const directory = workspaceDirectoryName(projectRoot);
     return { workspace: join(projectRoot, directory), projectRoot, directory };
   }
   return { workspace: candidate, projectRoot: candidate, directory: basename(candidate) };
 }
 
-export function readWorkspace(workspaceOption: string) {
+/** Where a node came from and who settled it — the frontmatter contract of phase 2, carried as written. */
+export interface BoardProvenance {
+  level?: "stated" | "partly-inferred" | "inferred";
+  decided_by?: "human" | "agent-proposed-human-approved" | "agent-decided";
+  sources: string[];
+  quote?: string;
+  inferred?: string;
+}
+
+export interface BoardSpecNode {
+  id: string;
+  form: string;
+  title: string;
+  path: string;
+  accepted: string[];
+  edges: Record<string, string[]>;
+  sections: Record<string, string>;
+  /** Present only when the node records it; a node without one is shown without a mark. */
+  provenance?: BoardProvenance;
+  /** The optional capability path (`identity/user-auth`) the diagrams group by. */
+  capability?: string;
+}
+
+const PROVENANCE_LEVELS = ["stated", "partly-inferred", "inferred"] as const;
+const PROVENANCE_DECIDERS = ["human", "agent-proposed-human-approved", "agent-decided"] as const;
+
+/**
+ * The provenance block as the board shows it. Only the enumerated values are carried as a level or
+ * a decider: an unknown word is not guessed into one of the three, it is left unmarked.
+ */
+export function readProvenance(value: unknown): BoardProvenance | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const raw = value as Record<string, unknown>;
+  const text = (field: unknown) => (typeof field === "string" && field.trim() ? field.trim() : undefined);
+  const level = PROVENANCE_LEVELS.find((candidate) => candidate === raw.level);
+  const decider = PROVENANCE_DECIDERS.find((candidate) => candidate === raw.decided_by);
+  const sources = (Array.isArray(raw.sources) ? raw.sources : raw.sources === undefined ? [] : [raw.sources])
+    .filter((source): source is string => typeof source === "string" && source.trim() !== "").map((source) => source.trim());
+  const provenance: BoardProvenance = { sources };
+  if (level) provenance.level = level;
+  if (decider) provenance.decided_by = decider;
+  const quote = text(raw.quote);
+  if (quote) provenance.quote = quote;
+  const inferred = text(raw.inferred);
+  if (inferred) provenance.inferred = inferred;
+  return provenance.level || provenance.decided_by || sources.length || quote || inferred ? provenance : undefined;
+}
+
+export interface BoardWorkspace {
+  workspace: string;
+  project: string;
+  spec: BoardSpecNode[];
+  specForms: Array<{ id: string; directory: string; title: string }>;
+  notices: string[];
+  generatedAt: string;
+}
+
+const MINTED_REFERENCE = new RegExp(`^[A-Za-z]{1,4}-${MINTED_BODY}$`);
+
+/**
+ * The specification as the board shows it: every node of every registered form, read from the
+ * configured base ref through Git plumbing. A pre-1.0 workspace is refused, not explained — the
+ * board is a command like any other and no command runs on the old shape.
+ */
+export function readWorkspace(workspaceOption: string): BoardWorkspace {
   const { workspace, projectRoot, directory: workspaceDirectory } = resolveWorkspaceLocation(workspaceOption);
   if (!existsSync(join(workspace, "config.yaml"))) throw new Error(`No Kotta workspace found at ${workspace}.`);
+  if (hasWorkspace(projectRoot)) assertCurrentWorkspaceShape(projectRoot);
   const config = parse(readFileSync(join(workspace, "config.yaml"), "utf8")) as { version?: unknown; project?: { name?: string }; git?: { base_branch?: string } };
-  const schemaVersion = Number(config.version);
-  const processDirectory = schemaVersion === WORKSPACE_SCHEMA_VERSION ? PROCESS_DIRECTORY : "__legacy_workspace_schema__";
+  if (Number(config.version) !== WORKSPACE_SCHEMA_VERSION) {
+    throw new WorkspaceShapeError("older", `${workspace} records workspace shape version ${String(config.version)}, and this build implements version ${WORKSPACE_SCHEMA_VERSION}. Run 'kotta migrate --dry-run', then 'kotta migrate'; no other command reads the old shape.`);
+  }
   const base = config.git?.base_branch ?? "main";
   // Read from the base ref only when this workspace IS a git repo root with that ref; otherwise (non-git
   // fixtures, example dirs, a nested/uncommitted workspace) fall back to reading the working tree directly.
   const baseInfo = baseRefInfo(projectRoot, base);
   const useBase = baseInfo !== null && resolve(baseInfo.toplevel) === resolve(projectRoot);
   const onBase = useBase && baseInfo.branch === base;
-  // Batched, cached ref-side content (T-029): one archive subprocess per base commit, memory-cached on
-  // its hash. null (batch failure) falls back to the legacy per-file ls-tree/show path, loudly.
   const refFiles = useBase ? refSnapshot(projectRoot, baseInfo.commit, workspaceDirectory) : null;
-  // Working-tree state is never cached: one status call per reload, filtered per subpath below.
   const uncommittedAdds = onBase ? uncommittedMdAdds(projectRoot, workspaceDirectory) : [];
-  // `migration.json` is a pre-Kotta import artefact, not part of the entity model: its `tickets` /
-  // `findings` / `packages` keys are frozen at what the importer wrote and deliberately keep the old
-  // words, so an already-imported workspace stays readable. Nothing else in the code says them.
-  const migrationPath = join(workspace, "migration.json");
-  const migration = existsSync(migrationPath) ? JSON.parse(readFileSync(migrationPath, "utf8")) as { project?: string; tickets?: Array<{ id: string; [key: string]: unknown }> } : null;
-  const migrationById = new Map((migration?.tickets ?? []).map((task) => [task.id, task]));
 
-  // Derive the baseline entity set from the configured base ref (git plumbing, no checkout), so it does
-  // not change when another process checks out a different branch in the primary working tree. When the
-  // primary dir IS on the base branch, union its uncommitted workspace additions so freshly-created intake
-  // shows immediately. Active worktrees are overlaid per task below. (T-016 / D-001)
-  const readMd = (repoPath: string, fromRef: boolean): string =>
+  const readRepoFile = (repoPath: string, fromRef: boolean): string =>
     (fromRef ? (refFiles?.get(repoPath) ?? readFileFromRef(projectRoot, base, repoPath)) : readFileSync(join(projectRoot, repoPath), "utf8")) ?? "";
   const listRefMd = (subpath: string): string[] => refFiles
     ? [...refFiles.keys()].filter((path) => path.startsWith(`${workspaceDirectory}/${subpath}/`) && path.endsWith(".md"))
-    : listMdFromRef(projectRoot, base, workspaceDirectory, subpath);
+    : listFilesFromRef(projectRoot, base, workspaceDirectory, subpath, ".md");
   const gather = (subpath: string) => {
     const entries: Array<{ repoPath: string; fromRef: boolean }> = [];
     const seen = new Set<string>();
@@ -161,95 +207,9 @@ export function readWorkspace(workspaceOption: string) {
     }
     return entries.sort((left, right) => basename(left.repoPath).localeCompare(basename(right.repoPath)));
   };
-  // Decisions are cross-cutting and stateless, so they carry a date instead of a status.
-  // They come out of the same cached snapshot: no extra subprocess. (T-029)
-  const decisions = gather(`${processDirectory}/decisions`).map((entry) => {
-    const parsed = matter(readMd(entry.repoPath, entry.fromRef));
-    const date = parsed.data.date;
-    return {
-      id: String(parsed.data.id ?? basename(entry.repoPath).replace(/\.md$/, "")),
-      title: String(parsed.data.title ?? ""),
-      date: date instanceof Date ? date.toISOString().slice(0, 10) : date === undefined ? null : String(date),
-      filename: basename(entry.repoPath),
-      sections: sectionObject(parsed.content),
-    };
-  });
-  const decisionIds = new Set(decisions.map((decision) => decision.id));
 
-  // Lifecycle state lives in the frontmatter status field alone; the file's location says nothing.
-  const parseEntity = (entry: { repoPath: string; fromRef: boolean }): Record<string, unknown> => {
-    const parsed = matter(readMd(entry.repoPath, entry.fromRef));
-    const id = String(parsed.data.id ?? idFromFilename(basename(entry.repoPath)) ?? "");
-    return {
-      ...(parsed.data as Record<string, unknown>),
-      filename: basename(entry.repoPath),
-      sections: sectionObject(parsed.content),
-      // The same parse the gate and the CLI read (BR-01m0z873stwx7szg5896gwsbry): the panel cannot
-      // show an entity as clear while defining refuses it.
-      questions: parseOpenQuestions(id, parsed.content, (decision) => decisionIds.has(decision)),
-    };
-  };
-
-  const diagnostics: Array<{ entity: "task"; id: string; worktree: string; message: string }> = [];
-
-  // Tasks: the base control plane is canonical. A defined base plus an active worktree is the
-  // legacy pre-control-plane shape and remains readable until its next lifecycle mutation adopts it.
-  // Identity comes from the frontmatter: a minted entity's filename carries only its short id suffix.
-  const taskBase = new Map<string, Record<string, unknown>>();
-  for (const entry of gather(`${processDirectory}/tasks`)) {
-    const parsed = parseEntity(entry);
-    const id = String(parsed.id ?? idFromFilename(basename(entry.repoPath)) ?? "");
-    if (id && !taskBase.has(id)) taskBase.set(id, parsed);
-  }
-  const tasks = [...taskBase].map(([id, baseline]) => {
-    const worktree = join(projectRoot, ".worktrees", id);
-    if (existsSync(worktree)) {
-      try {
-        const location = findTask(worktree, id);
-        const parsed = matter(readFileSync(location.path, "utf8"));
-        if (String(parsed.data.id) !== id) throw new Error(`Task metadata id '${String(parsed.data.id)}' does not match ${id}.`);
-        if (String(baseline.status) === "defined" && location.state === "active") {
-          diagnostics.push({ entity: "task", id, worktree, message: "Legacy execution state is still stored in the feature worktree; the next lifecycle mutation will adopt it into the control plane." });
-          return { ...(parsed.data as Record<string, unknown>), filename: location.filename, sections: sectionObject(parsed.content), questions: parseOpenQuestions(id, parsed.content, (decision) => decisionIds.has(decision)), migration: migrationById.get(id) ?? null, worktree };
-        }
-        return { ...baseline, migration: migrationById.get(id) ?? null, worktree };
-      } catch (error) {
-        diagnostics.push({ entity: "task", id, worktree: worktree, message: error instanceof Error ? error.message : String(error) });
-      }
-    }
-    return { ...baseline, migration: migrationById.get(id) ?? null };
-  });
-  const batches = gather(`${processDirectory}/batches`).map(parseEntity);
-  const observations = gather(`${processDirectory}/observations`).map(parseEntity);
-  const eventPrefix = `${workspaceDirectory}/${processDirectory}/events/`;
-  const eventPaths = useBase
-    ? (refFiles ? [...refFiles.keys()].filter((path) => path.startsWith(eventPrefix) && path.endsWith(".json")) : listFilesFromRef(projectRoot, base, workspaceDirectory, `${processDirectory}/events`, ".json"))
-    : (() => {
-        const directory = join(workspace, processDirectory, "events");
-        if (!existsSync(directory)) return [];
-        return readdirSync(directory).flatMap((entity) => {
-          const entityDirectory = join(directory, entity);
-          return statSync(entityDirectory).isDirectory()
-            ? readdirSync(entityDirectory).filter((name) => name.endsWith(".json")).map((name) => `${workspaceDirectory}/${processDirectory}/events/${entity}/${name}`)
-            : [];
-        });
-      })();
-  const events = eventPaths.map((path) => JSON.parse((useBase ? (refFiles?.get(path) ?? readFileFromRef(projectRoot, base, path)) : readFileSync(join(projectRoot, path), "utf8")) ?? "{}") as KottaEvent)
-    .sort((left, right) => left.created_at.localeCompare(right.created_at) || left.id.localeCompare(right.id));
-  const claimPrefix = `${workspaceDirectory}/${processDirectory}/claims/`;
-  const claimPaths = useBase
-    ? (refFiles ? [...refFiles.keys()].filter((path) => path.startsWith(claimPrefix) && path.endsWith(".yaml")) : listFilesFromRef(projectRoot, base, workspaceDirectory, `${processDirectory}/claims`, ".yaml"))
-    : (() => {
-        const directory = join(workspace, processDirectory, "claims");
-        return existsSync(directory) ? readdirSync(directory).filter((name) => name.endsWith(".yaml")).map((name) => `${workspaceDirectory}/${processDirectory}/claims/${name}`) : [];
-      })();
-  const claims = claimPaths.map((path) => parse((useBase ? (refFiles?.get(path) ?? readFileFromRef(projectRoot, base, path)) : readFileSync(join(projectRoot, path), "utf8")) ?? "{}") as Record<string, unknown>);
-  const claimByTask = new Map(claims.map((claim) => [String(claim.task ?? ""), claim]));
-  const tasksWithClaims = tasks.map((task) => ({ ...task, claim: claimByTask.get(String((task as Record<string, unknown>).id ?? "")) ?? null }));
-  // The specification is what the rest of this is for (IF-01m0f0wn898ggsdxa0kh6t6tnw): a task
-  // executes an accepted agreement, and a board that shows only the execution shows the half that
-  // cannot be judged on its own. The form registry decides which directories hold nodes, exactly as
-  // it does for the CLI — no form name is compiled here.
+  // The form registry decides which directories hold nodes, exactly as it does for the CLI — no
+  // form name is compiled here.
   const specForms = (useBase
     ? (refFiles ? [...refFiles.keys()].filter((path) => path.startsWith(`${workspaceDirectory}/${SPEC_DIRECTORY}/forms/`) && path.endsWith(".yaml"))
       : listFilesFromRef(projectRoot, base, workspaceDirectory, `${SPEC_DIRECTORY}/forms`, ".yaml"))
@@ -257,7 +217,7 @@ export function readWorkspace(workspaceOption: string) {
         const directory = join(workspace, SPEC_DIRECTORY, "forms");
         return existsSync(directory) ? readdirSync(directory).filter((name) => name.endsWith(".yaml")).map((name) => `${workspaceDirectory}/${SPEC_DIRECTORY}/forms/${name}`) : [];
       })())
-    .map((path) => parse((useBase ? (refFiles?.get(path) ?? readFileFromRef(projectRoot, base, path)) : readFileSync(join(projectRoot, path), "utf8")) ?? "{}") as Record<string, unknown>)
+    .map((path) => parse(readRepoFile(path, useBase) || "{}") as Record<string, unknown>)
     .flatMap((form) => {
       const id = String(form.id ?? "").trim();
       const directory = String((form.directory ?? "") as string).trim();
@@ -265,98 +225,105 @@ export function readWorkspace(workspaceOption: string) {
     })
     .sort((left, right) => left.id.localeCompare(right.id));
 
-  const spec = specForms.flatMap((form) => gather(`${SPEC_DIRECTORY}/${form.directory}`).map((entry) => {
-    const parsed = matter(readMd(entry.repoPath, entry.fromRef));
+  const spec: BoardSpecNode[] = specForms.flatMap((form) => gather(`${SPEC_DIRECTORY}/${form.directory}`).map((entry) => {
+    const parsed = matter(readRepoFile(entry.repoPath, entry.fromRef));
     const id = String(parsed.data.id ?? "").trim();
+    const provenance = readProvenance(parsed.data.provenance);
+    const capability = typeof parsed.data.capability === "string" && parsed.data.capability.trim() ? parsed.data.capability.trim() : undefined;
     return {
+      ...(provenance ? { provenance } : {}),
+      ...(capability ? { capability } : {}),
       id,
       form: String(parsed.data.form ?? form.id).trim(),
       title: String(parsed.data.title ?? id).trim(),
       path: entry.repoPath,
       // The admission, kept as written: which kind of gap it records and why, or nothing at all.
       accepted: Array.isArray(parsed.data.accepted) ? parsed.data.accepted.map(String) : [],
-      // Every frontmatter field that names other nodes, under the name its form gave it. Reserved
-      // fields are the node's own identity; anything else a form declares is an edge, so a
-      // project's own form is traversed with nothing added here.
+      // Every frontmatter field that names other nodes, under the name its form gave it.
       edges: Object.fromEntries(Object.entries(parsed.data as Record<string, unknown>)
-        .filter(([field]) => !["id", "form", "title", "accepted"].includes(field))
+        .filter(([field]) => !["id", "form", "title", "accepted", "provenance", "capability"].includes(field))
         .map(([field, value]) => [field, (Array.isArray(value) ? value : [value])
-          .filter((entry): entry is string => typeof entry === "string" && /^[A-Za-z]{1,4}-[0-9a-hjkmnp-tv-z]{26}$/.test(entry))])
-        .filter(([, ids]) => (ids as string[]).length)),
+          .filter((candidate): candidate is string => typeof candidate === "string" && MINTED_REFERENCE.test(candidate))])
+        .filter(([, ids]) => (ids as string[]).length)) as Record<string, string[]>,
       sections: sectionObject(parsed.content),
     };
   })).filter((node) => node.id).sort((left, right) => left.title.localeCompare(right.title) || left.id.localeCompare(right.id));
 
-  const notices = readNotices(projectRoot, workspace, useBase, base, tasks.length + batches.length + observations.length);
-  return { workspace, project: migration?.project ?? config.project?.name ?? "Kotta workspace", migration, tasks: tasksWithClaims, batches, observations, decisions, events, claims, spec, specForms, diagnostics, notices, generatedAt: new Date().toISOString() };
+  const notices = readNotices(workspace, useBase, base, spec.length);
+  return { workspace, project: config.project?.name ?? "Kotta workspace", spec, specForms, notices, generatedAt: new Date().toISOString() };
 }
 
-/** Entity files sitting in the working tree, under any historical shape — the counterweight to the ref read. */
-function workingTreeEntityCount(workspace: string): number {
-  const taskStates = ["backlog", "defined", "active", "review", "done"];
-  const directories = [
-    `${PROCESS_DIRECTORY}/tasks`, `${PROCESS_DIRECTORY}/batches`, `${PROCESS_DIRECTORY}/observations`,
-    ...taskStates.map((state) => `${PROCESS_DIRECTORY}/${state}`),
-    ...["backlog", "defined", "active", "done"].map((state) => `${PROCESS_DIRECTORY}/batches/${state}`),
-    `${PROCESS_DIRECTORY}/observations/new`, `${PROCESS_DIRECTORY}/observations/resolved`,
-    ...taskStates, "ready",
-    "observations/new", "observations/resolved", "findings/new", "findings/resolved",
-    ...["backlog", "ready", "defined", "active", "done"].flatMap((state) => [`batches/${state}`, `packages/${state}`]),
-  ];
-  return directories.reduce((total, directory) => {
-    const path = join(workspace, directory);
-    return existsSync(path) ? total + readdirSync(path).filter((name) => name.endsWith(".md")).length : total;
-  }, 0);
+/** Specification files sitting in the working tree — the counterweight to the ref read. */
+function workingTreeNodeCount(workspace: string): number {
+  const spec = join(workspace, SPEC_DIRECTORY);
+  if (!existsSync(spec)) return 0;
+  let total = 0;
+  const walk = (directory: string) => {
+    for (const entry of readdirSync(directory, { withFileTypes: true })) {
+      if (entry.isDirectory()) { if (entry.name !== "forms") walk(join(directory, entry.name)); }
+      else if (entry.name.endsWith(".md")) total += 1;
+    }
+  };
+  walk(spec);
+  return total;
 }
 
 /**
- * What the board must say out loud instead of rendering an empty page (F-01kz25qf318bmn1t860n2rjcpt).
- *
- * The board reads the configured base ref through git plumbing, not the working tree, so a directory
- * or vocabulary migration that has not reached that ref yet produces a header path that looks right
- * above no content at all. That is indistinguishable from an empty workspace — unless the reader says
- * which side it read and why the other side is fuller.
+ * What the board must say out loud instead of rendering an empty page. The board reads the
+ * configured base ref through git plumbing, not the working tree, so a specification that has not
+ * reached that ref yet produces a header above no content at all.
  */
-export function readNotices(projectRoot: string, workspace: string, useBase: boolean, base: string, fromRef: number): string[] {
-  const notices: string[] = [];
-  const legacy = legacyStateDirectories(projectRoot);
-  const flat = flatWorkspaceEntries(projectRoot);
-  const stateDirs = v4StateDirectories(projectRoot).map((name) => `${PROCESS_DIRECTORY}/${name}`);
-  const version = workspaceSchemaVersion(projectRoot);
-  const standing = workspaceShapeStanding(projectRoot);
-  // The board explains rather than refuses, but it must not explain in the wrong direction: telling a
-  // reader of a newer workspace to migrate would send them to the command that rewrites it backwards
-  // (BR-01m0q89b16xcfasfj1z8mc2hgg). The far side of the window is its own notice, and it is the only
-  // one shown, because no legacy directory finding is meaningful in a shape this build cannot read.
-  if (standing === "newer" || standing === "unreadable") {
-    notices.push(standing === "newer"
-      ? `This workspace was written by a newer Kotta: its config records shape version ${version}, and this build implements version ${WORKSPACE_SCHEMA_VERSION}. The board does not read it. Upgrade Kotta; migration only carries a workspace forward and will not rewrite this one backwards.`
-      : `This workspace does not record a readable shape version, so the board cannot tell whether it is older or newer than the version ${WORKSPACE_SCHEMA_VERSION} this build implements. Repair its config.yaml.`);
-    return notices;
+export function readNotices(workspace: string, useBase: boolean, base: string, fromRef: number): string[] {
+  if (!useBase || fromRef > 0) return [];
+  const onDisk = workingTreeNodeCount(workspace);
+  if (onDisk === 0) return [];
+  return [`The board reads ${basename(workspace)}/ from the '${base}' ref, not from the working tree. That ref has no specification nodes while the working tree has ${onDisk} — a change that has not reached '${base}' yet. Commit it and merge it into '${base}'; the board is empty until then, and the workspace is not.`];
+}
+
+/** The one folder the narrative endpoint reads, relative to the served project root. */
+export const NARRATIVE_ROOT = "openspec";
+const NARRATIVE_MAX_BYTES = 1024 * 1024;
+
+export class NarrativeError extends Error {
+  constructor(readonly status: 400 | 404, message: string) { super(message); }
+}
+
+/**
+ * One Markdown file under the project's `openspec/` folder, read from the working tree — the
+ * narrative a node's provenance cites. Refuses, rather than normalises, anything that could leave
+ * that folder: an absolute path, a `..` segment, a backslash, a NUL byte, a non-Markdown file, and
+ * a symbolic link whose target resolves outside it.
+ */
+export function readNarrative(projectRoot: string, requested: unknown): { path: string; content: string } {
+  if (typeof requested !== "string" || !requested.trim()) throw new NarrativeError(400, "Name a file: ?path=openspec/changes/<change>/conversation.md.");
+  const path = requested.trim();
+  if (path.includes("\0") || path.includes("\\") || isAbsolute(path) || /^[A-Za-z]:/.test(path)) {
+    throw new NarrativeError(400, `'${path}' is not a repository-relative path.`);
   }
-  const readableVersion = version === WORKSPACE_SCHEMA_VERSION;
-  const obsolete = [...new Set([...legacy, ...flat, ...stateDirs, ...(readableVersion ? [] : [`config schema ${Number.isFinite(version) ? version : "unreadable"}`])])];
-  if (obsolete.length) {
-    notices.push(`This workspace still uses a legacy shape (${obsolete.map((name) => name.startsWith("config schema ") ? name : `${name}${name.includes(".") ? "" : "/"}`).join(", ")}). The board does not read it. Run 'kotta migrate --dry-run', then 'kotta migrate'.`);
+  const segments = path.split("/");
+  if (segments[0] !== NARRATIVE_ROOT || segments.length < 2 || segments.some((segment) => segment === ".." || segment === "." || segment === "")) {
+    throw new NarrativeError(400, `Only files under ${NARRATIVE_ROOT}/ are served, named without '.' or '..' segments; got '${path}'.`);
   }
-  // Only when the shape is current: an old-shape workspace reads as empty for the reason above, and
-  // saying "the ref has no entities" about it would be wrong — the ref has them, under the old names.
-  if (!obsolete.length && useBase && fromRef === 0) {
-    const onDisk = workingTreeEntityCount(workspace);
-    if (onDisk > 0) {
-      notices.push(`The board reads ${basename(workspace)}/ from the '${base}' ref, not from the working tree. That ref has no entities while the working tree has ${onDisk} — a migration or rename that has not reached '${base}' yet. Commit it and merge it into '${base}'; the board is empty until then, and the workspace is not.`);
-    }
+  if (extname(path).toLowerCase() !== ".md") throw new NarrativeError(400, `Only Markdown narrative is served; '${path}' is not a .md file.`);
+  const folder = join(projectRoot, NARRATIVE_ROOT);
+  const candidate = join(projectRoot, ...segments);
+  if (!existsSync(folder) || !existsSync(candidate)) throw new NarrativeError(404, `No such file: ${path}.`);
+  // The lexical checks above keep the name inside the folder; the real path keeps a link from leaving it.
+  const realFolder = realpathSync(folder);
+  const realFile = realpathSync(candidate);
+  const inside = relative(realFolder, realFile);
+  if (!inside || inside.startsWith("..") || isAbsolute(inside) || !realFile.startsWith(realFolder + sep)) {
+    throw new NarrativeError(400, `'${path}' resolves outside ${NARRATIVE_ROOT}/.`);
   }
-  return notices;
+  const stat = statSync(realFile);
+  if (!stat.isFile()) throw new NarrativeError(404, `No such file: ${path}.`);
+  if (stat.size > NARRATIVE_MAX_BYTES) throw new NarrativeError(400, `'${path}' is larger than the narrative limit of ${NARRATIVE_MAX_BYTES} bytes.`);
+  return { path, content: readFileSync(realFile, "utf8") };
 }
 
 function json(response: ServerResponse, status: number, value: unknown): void {
   response.writeHead(status, { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" });
   response.end(JSON.stringify(value));
-}
-
-function commandAvailable(command: string): boolean {
-  return spawnSync(command, ["--version"], { stdio: "ignore" }).status === 0;
 }
 
 const MIME: Record<string, string> = {
@@ -430,7 +397,6 @@ export async function bindUiServer(server: Server, host: string, requested?: num
   for (const candidate of candidates) {
     try {
       await listenOnce(server, host, candidate);
-      // An explicit 0 asks for an ephemeral port, so report what the OS actually gave us.
       const bound = (server.address() as { port: number } | null)?.port ?? candidate;
       return { port: bound, fallback: requested === undefined && candidate !== start };
     } catch (error) {
@@ -445,15 +411,14 @@ export async function bindUiServer(server: Server, host: string, requested?: num
 /** Returns the listening server so callers — tests above all — can shut it down. */
 export async function uiCommand(options: { workspace: string; port?: number; host: string; json?: boolean; open?: boolean }, open: BrowserOpener = openInBrowser): Promise<Server> {
   const initial = readWorkspace(options.workspace);
-  const projectRoot = resolveWorkspaceLocation(options.workspace).projectRoot;
-  const agents = { codex: commandAvailable("codex"), claude: commandAvailable("claude") };
+  const { projectRoot } = resolveWorkspaceLocation(initial.workspace);
   const staticRoot = fileURLToPath(new URL("../../ui-dist", import.meta.url));
   if (!existsSync(join(staticRoot, "index.html"))) throw new Error("UI assets are missing. Run npm run build first.");
-  const server = createServer(async (request, response) => {
+  const server = createServer((request, response) => {
     const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
     const requestMethod = String(request.method ?? "GET");
     if (requestMethod !== "GET" && requestMethod !== "HEAD") {
-      json(response, 405, { ok: false, error: "The Kotta board is read-only. Use the calling chat's Kotta tools for actions and approvals." });
+      json(response, 405, { ok: false, error: "The Kotta board is read-only. It shows the specification; nothing is changed from here." });
       return;
     }
     if (url.pathname === "/api/workspace") {
@@ -461,34 +426,11 @@ export async function uiCommand(options: { workspace: string; port?: number; hos
       catch (error) { json(response, 500, { error: error instanceof Error ? error.message : String(error) }); }
       return;
     }
-    if (url.pathname === "/api/agents") {
-      json(response, 200, agents);
-      return;
-    }
-    if (url.pathname === "/api/source" && request.method === "GET") {
-      try {
-        const requestedId = url.searchParams.get("id")?.trim() ?? "";
-        let sourceFile = url.searchParams.get("path")?.trim() ?? "";
-        if (requestedId && !sourceFile) {
-          const migrationPath = join(initial.workspace, "migration.json");
-          if (existsSync(migrationPath)) {
-            const migration = JSON.parse(readFileSync(migrationPath, "utf8")) as Record<string, unknown>;
-            const records = ["tickets", "findings", "excluded_terminal"].flatMap((key) => Array.isArray(migration[key]) ? migration[key] as Array<Record<string, unknown>> : []);
-            const record = records.find((candidate) => candidate.id === requestedId || candidate.legacy_id === requestedId);
-            if (typeof record?.source_file === "string") sourceFile = record.source_file;
-          }
-        }
-        sourceFile = sourceFile.replace(/^source:/, "").replace(/^\/+/, "");
-        if (!sourceFile) throw new Error(`No historical source is recorded for ${requestedId || "this reference"}.`);
-        let target = resolve(projectRoot, sourceFile);
-        if (!existsSync(target) && sourceFile.startsWith("tasks/")) target = resolve(projectRoot, "scrum", sourceFile);
-        const projectRelative = relative(projectRoot, target);
-        if (!projectRelative || projectRelative.startsWith("..") || projectRelative.includes("\0") || extname(target) !== ".md") throw new Error("Only Markdown sources inside the project can be opened.");
-        if (!existsSync(target) || !statSync(target).isFile()) throw new Error(`Source file not found: ${sourceFile}`);
-        const parsed = matter(readFileSync(target, "utf8"));
-        json(response, 200, { ok: true, path: projectRelative, title: parsed.data.title ?? basename(target), id: parsed.data.id ?? (requestedId || null), content: parsed.content.trim() });
-      } catch (error) {
-        json(response, 404, { ok: false, error: error instanceof Error ? error.message : String(error) });
+    if (url.pathname === "/api/narrative") {
+      try { json(response, 200, readNarrative(projectRoot, url.searchParams.get("path"))); }
+      catch (error) {
+        if (error instanceof NarrativeError) json(response, error.status, { error: error.message });
+        else json(response, 500, { error: error instanceof Error ? error.message : String(error) });
       }
       return;
     }

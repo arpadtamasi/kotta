@@ -111,21 +111,22 @@ describe("kotta sync", () => {
     );
   });
 
-  test("replaces Kotta-owned legacy task skill names without touching unowned directories", () => {
-    const ownedLegacy = "define-contract";
-    const unownedLegacy = "start-contract";
-    for (const name of [ownedLegacy, unownedLegacy]) {
+  test("removes a Kotta-owned skill this release no longer ships, and leaves an unowned one alone", () => {
+    // The process-layer skills of the 0.x releases: one installed by Kotta, one that only shares the name.
+    const ownedRetired = "define-task";
+    const unownedRetired = "start-task";
+    for (const name of [ownedRetired, unownedRetired]) {
       mkdirSync(join(skillsHome, name), { recursive: true });
-      writeFileSync(join(skillsHome, name, "SKILL.md"), `legacy ${name}\n`);
+      writeFileSync(join(skillsHome, name, "SKILL.md"), `retired ${name}\n`);
     }
-    writeFileSync(join(skillsHome, ".kotta-installed.json"), `${JSON.stringify({ skills: [ownedLegacy] })}\n`);
+    writeFileSync(join(skillsHome, ".kotta-installed.json"), `${JSON.stringify({ skills: [ownedRetired] })}\n`);
 
     const result = run(["sync"]) as { data: { removed: string[] } };
 
-    expect(result.data.removed).toEqual([ownedLegacy]);
-    expect(existsSync(join(skillsHome, ownedLegacy))).toBe(false);
-    expect(existsSync(join(skillsHome, "define-task/SKILL.md"))).toBe(true);
-    expect(readFileSync(join(skillsHome, unownedLegacy, "SKILL.md"), "utf8")).toContain("legacy");
+    expect(result.data.removed).toEqual([ownedRetired]);
+    expect(existsSync(join(skillsHome, ownedRetired))).toBe(false);
+    expect(readFileSync(join(skillsHome, unownedRetired, "SKILL.md"), "utf8")).toContain("retired");
+    expect(shippedNames()).not.toContain(ownedRetired);
   });
 
   test("writes nothing inside a repository that has no workspace", () => {
@@ -180,28 +181,22 @@ describe("the workspace rules file", () => {
     expect(result.data.pointer).toBe("@.kotta/AGENTS.md");
   });
 
-  test("renders the accepted-commitment threshold and the spec/process ownership boundary", () => {
+  test("renders the four layers, the project-owned model, the one human gate, and no process", () => {
     run(["init"]);
-    const status = run(["status"]) as { data: { activeTasks: unknown[] } };
 
-    expect(status.data.activeTasks).toEqual([]);
     const written = readFileSync(rules(), "utf8").toLowerCase().replace(/\s+/g, " ");
-    expect(written).not.toContain("no change without an active task");
-    expect(written).toContain("a task gates execution of an accepted commitment");
-    expect(written).toContain("a human has accepted");
-    expect(written).toContain("checked against acceptance conditions");
-    expect(written).toContain("shaping, exploration, and specification may run without a task");
-    expect(written).toContain("specification itself is the accepted deliverable");
-    expect(written).toContain("crosses into executing the accepted outcome");
-    // Absorbing one task into another already dropped this clause once; the rule is only
-    // complete when it also says that maintaining Kotta is not the project's work.
-    expect(written).toContain("keeping kotta itself working");
-    expect(written).toContain("kotta is the project's tool, not its deliverable");
-    expect(written).toContain("active task you hold the claim for");
-    expect(written).toContain("ask one focused question");
-    expect(written).toContain("project-owned specification knowledge");
-    expect(written).toContain("kotta-owned execution and lifecycle state");
-    expect(written).toContain("never hand-edit kotta-owned `process/` records");
+    expect(written).toContain("chat → narrative spec (openspec) → technical model (kotta forms) → code");
+    expect(written).toContain("the technical model is the accepted truth");
+    expect(written).toContain("never invent product intent");
+    expect(written).toContain("approval is a human gate");
+    expect(written).toContain("one such gate per change, at the end of planning");
+    expect(written).toContain("`.kotta/spec/` is **project-owned**");
+    expect(written).toContain("there is **no process layer**");
+    expect(written).toContain("never write into `legacy/`");
+    // The retired vocabulary is gone from the rules an agent reads.
+    for (const retired of ["kotta task ", "kotta batch", "kotta observation", "kotta decision", "claim you hold", "--approve"]) {
+      expect(written, `the rules no longer say "${retired}"`).not.toContain(retired);
+    }
   });
 
   test("sync refreshes its own copy and leaves an edited one alone", () => {
@@ -223,16 +218,14 @@ describe("the workspace rules file", () => {
     expect((run(["sync"]) as { data: { agents: { state: string } } }).data.agents.state).toBe("unchanged");
   });
 
-  test("a drifted rules file names the command that resolves it, in sync and in status", () => {
+  test("a drifted rules file names the command that resolves it", () => {
     run(["init"]);
     writeFileSync(rules(), "shortened by hand\n");
 
-    for (const args of [["sync"], ["status"]]) {
-      const said = human(args);
-      expect(said, `${args[0]} names the remedy`).toContain("kotta sync --replace-rules");
-      // A verdict with no remedy is what left this repository behind its own template for two days.
-      expect(said, `${args[0]} names what keeping the edits costs`).toContain("project's own AGENTS.md");
-    }
+    const said = human(["sync"]);
+    expect(said, "sync names the remedy").toContain("kotta sync --replace-rules");
+    // A verdict with no remedy is what left this repository behind its own template for two days.
+    expect(said, "sync names what keeping the edits costs").toContain("project's own AGENTS.md");
     expect(readFileSync(rules(), "utf8"), "naming the remedy changes nothing").toBe("shortened by hand\n");
   });
 
@@ -284,14 +277,11 @@ describe("the workspace rules file", () => {
     expect(offenders.map((path) => path.slice(suite.length + 1))).toEqual([]);
   });
 
-  test("status names a missing and then a drifted rules file", () => {
+  test("sync writes a missing rules file back", () => {
     run(["init"]);
     rmSync(rules());
-    expect((run(["status"]) as { data: { rules: { present: boolean } } }).data.rules.present).toBe(false);
-
-    run(["sync"]);
-    writeFileSync(rules(), "edited\n");
-    expect((run(["status"]) as { data: { rules: { drifted: boolean } } }).data.rules.drifted).toBe(true);
+    expect((run(["sync"]) as { data: { agents: { state: string } } }).data.agents.state).toBe("created");
+    expect(readFileSync(rules(), "utf8")).toContain("## The tool these rules assume");
   });
 
   test("init alone leaves an existing AGENTS.md byte-identical and reports the line to add", () => {
@@ -436,30 +426,12 @@ describe("the workspace rules file", () => {
   });
 });
 
-describe("kotta status reports the skills", () => {
-  test("names a drifted skill and does not repair it", () => {
-    run(["init"]);
-    const name = shippedNames()[0];
-    writeFileSync(join(skillsHome, name, "SKILL.md"), "edited by hand\n");
-
-    const result = run(["status"]) as { data: { skills: { drifted: string[]; installed: number } } };
-
-    expect(result.data.skills.drifted).toEqual([name]);
-    expect(readFileSync(join(skillsHome, name, "SKILL.md"), "utf8")).toEqual("edited by hand\n");
-  });
-
-  test("reports nothing installed before sync has run", () => {
-    execFileSync("node", [cli, "init", "--json"], {
-      cwd: repository,
-      encoding: "utf8",
-      env: { ...process.env, KOTTA_SKILLS_HOME: join(skillsHome, "untouched") },
-    });
-
-    const result = run(["status"]) as { data: { skills: { installed: number; shipped: number; drifted: string[] } } };
-
-    expect(result.data.skills.installed).toBe(0);
-    expect(result.data.skills.shipped).toBeGreaterThan(0);
-    expect(result.data.skills.drifted).toEqual([]);
+describe("the shipped skills", () => {
+  test("carry no process-layer skill", () => {
+    for (const retired of ["start-task", "execute-task", "execute-batch", "submit-review", "close-task", "validate-observation", "define-task"]) {
+      expect(shippedNames(), `${retired} is not shipped`).not.toContain(retired);
+    }
+    expect(shippedNames()).toEqual(expect.arrayContaining(["setup-kotta", "explore-workspace", "requirements-traceability", "consolidate-model", "report-kotta-bug", "use-case-modeling"]));
   });
 });
 

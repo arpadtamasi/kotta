@@ -74,3 +74,14 @@ export function receiptErrors(data: Record<string, unknown>): Array<{ code: stri
   }
   return errors;
 }
+
+/**
+ * The planning gate's receipt (`kotta approve`): the approver is named by the caller who relays the
+ * human's yes, and the basis is the fingerprint of exactly what was approved — the change's model
+ * delta — so `archive` can tell an approved delta from one edited after the yes.
+ */
+export function gateApprovalReceipt(approvedBy: string, basis: string, now: Date = new Date()): ApprovalReceipt {
+  const who = approvedBy.trim();
+  if (!who) throw new Error("An approval names who gave it: pass --by with the human who said yes.");
+  return { approved_by: who, approved_at: now.toISOString(), approval_basis: basis };
+}

@@ -1,33 +1,35 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 
 const cli = resolve("dist/cli/index.js");
 
-describe("workspace reference validation", () => {
-  test("rejects dependencies and blockers that are absent from the current task graph", () => {
-    const root = mkdtempSync(join(tmpdir(), "kotta-dangling-reference-"));
+describe("kotta validate", () => {
+  test("names a node whose edge points at nothing, and passes once the reference resolves", () => {
+    const root = mkdtempSync(join(tmpdir(), "kotta-validate-"));
     execFileSync("git", ["init", "-b", "main"], { cwd: root });
     execFileSync("node", [cli, "init", "--json"], { cwd: root });
-    const created = JSON.parse(execFileSync("node", [cli, "task", "new", "--title", "Release beta", "--type", "feature", "--json"], { cwd: root, encoding: "utf8" })) as { data: { path: string } };
-    const taskPath = created.data.path;
-    writeFileSync(
-      taskPath,
-      readFileSync(taskPath, "utf8")
-        .replace("depends_on: []", "depends_on:\n  - T-999")
-        .replace("blocks: []", "blocks:\n  - O-404"),
-    );
+    const goal = "G-01m0c0000000000000000000g1";
+    writeFileSync(join(root, ".kotta/spec/use-cases/export-00000uc1.md"), [
+      "---", "id: UC-01m0c0000000000000000000c1", "form: use-case", "title: Export a report", "actor: []", `goal: [${goal}]`, "---", "",
+      "## Intent", "Export.", "", "## Preconditions", "None.", "", "## Main success scenario", "It exports.", "", "## Alternatives", "None.", "",
+    ].join("\n"));
 
-    const result = spawnSync("node", [cli, "validate", "--json"], { cwd: root, encoding: "utf8" });
-    expect(result.status).toBe(1);
-    expect(JSON.parse(result.stdout)).toMatchObject({
+    const dangling = spawnSync("node", [cli, "validate", "--json"], { cwd: root, encoding: "utf8" });
+    expect(dangling.status).toBe(1);
+    expect(JSON.parse(dangling.stdout)).toMatchObject({
       ok: false,
       errors: expect.arrayContaining([
-        expect.objectContaining({ code: "DANGLING_REFERENCE", message: expect.stringContaining("depends_on references missing task T-999") }),
-        expect.objectContaining({ code: "DANGLING_REFERENCE", message: expect.stringContaining("blocks references missing task O-404") }),
+        expect.objectContaining({ code: "SPEC_NODE_DANGLING_EDGE", message: expect.stringContaining(goal) }),
+        expect.objectContaining({ code: "SPEC_NODE_MISSING_EDGE", message: expect.stringContaining("actor") }),
       ]),
     });
+    // The human rendering names the failure rather than printing a completed line.
+    const human = spawnSync("node", [cli, "validate"], { cwd: root, encoding: "utf8" });
+    expect(human.status).toBe(1);
+    expect(human.stdout).toContain("kotta validate failed with");
+    expect(human.stdout).not.toContain("The specification validates");
   });
 });

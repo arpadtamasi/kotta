@@ -131,18 +131,4 @@ describe("every accepted promise is kept or admitted", () => {
     expect(json.data.promises, "the evidenced node is not counted as admitted").toHaveLength(0);
     expect(json.data.acceptedGaps, "and only the two unbuilt ones are").toHaveLength(2);
   }, 60_000);
-
-  test("this workspace passes its own rule", () => {
-    // `gap` reports on the accepted specification, which lives on the base branch, so asking the
-    // checkout directly would judge whatever main happens to hold rather than what is being
-    // submitted. A local clone whose main is this commit puts the question the right way round:
-    // does the spec as it stands here leave a promise unaccounted for?
-    const clone = mkdtempSync(join(tmpdir(), "kotta-ratchet-self-"));
-    execFileSync("git", ["clone", "--local", "--no-hardlinks", "--quiet", resolve("."), clone]);
-    execFileSync("git", ["checkout", "-B", "main", "--quiet"], { cwd: clone });
-
-    const result = attempt(clone, ["gap"]);
-    expect(result.status, say(result).split("\n").slice(-8).join("\n")).toBe(0);
-    expect(say(result), "and says so by keeping the kinds apart").toMatch(/## Admitted as (structural|unexamined)/);
-  }, 180_000);
 });

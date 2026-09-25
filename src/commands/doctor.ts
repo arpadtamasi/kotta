@@ -1,7 +1,7 @@
 import { bareNameResolves, invocationLine, kottaInvocation } from "../core/invocation.js";
 
 /**
- * Whether Kotta is reachable from where its work happens (BR-01m0r52vex4j22266nepm5yq8s).
+ * Whether Kotta is reachable from where its work happens.
  *
  * The question a reader actually has is not "is Kotta installed" — they are running it — but "will
  * the name `kotta` mean anything in the shell an agent or a host gets". A non-interactive shell
@@ -27,7 +27,7 @@ export function doctorCommand(environment: NodeJS.ProcessEnv = process.env): Doc
     ? []
     : [{
         code: "BARE_NAME_UNRESOLVED",
-        message: `The name 'kotta' resolves to nothing on this PATH, so a command written as 'kotta …' fails wherever this environment is the one in use — a host spawning the tool server, or an agent working in a worktree. Run it as '${invocationLine(invocation)}', which is what this Kotta is; 'kotta integrate' already records that form, and every execution brief states it.`,
+        message: `The name 'kotta' resolves to nothing on this PATH, so a command written as 'kotta …' fails wherever this environment is the one in use — a host spawning the tool server, or an agent in a non-interactive shell. Run it as '${invocationLine(invocation)}', which is what this Kotta is; 'kotta integrate' already records that form.`,
         path: invocation.entry,
       }];
   return {

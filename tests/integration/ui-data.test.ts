@@ -1,118 +1,50 @@
-import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 import { readWorkspace } from "../../src/commands/ui.js";
 
-describe("one&a migration UI data", () => {
-  const migrationWorkspace = resolve("examples/oneanda-migration/.kotta");
+const cli = resolve("dist/cli/index.js");
+const ACTOR = "A-01m0c0000000000000000000a1";
+const GOAL = "G-01m0c0000000000000000000g1";
+const USE_CASE = "UC-01m0c0000000000000000000c1";
 
-  test.skipIf(!existsSync(migrationWorkspace))("preserves the reviewed source count without treating a guess as a target", () => {
-    const workspace = readWorkspace(migrationWorkspace);
+/** A version-6 workspace with three linked nodes, read from the working tree (no base ref). */
+function workspaceFixture(): string {
+  const root = mkdtempSync(join(tmpdir(), "kotta-ui-data-"));
+  execFileSync("git", ["init", "-b", "main"], { cwd: root });
+  execFileSync("node", [cli, "init", "--json"], { cwd: root });
+  writeFileSync(join(root, ".kotta/spec/actors/operator-00000a1.md"), ["---", `id: ${ACTOR}`, "form: actor", "title: Operator", "---", "", "## Role", "Runs it.", "", "## Goals", "Ship.", "", "## Responsibilities", "Decide.", ""].join("\n"));
+  writeFileSync(join(root, ".kotta/spec/goals/accounted-00000g1.md"), ["---", `id: ${GOAL}`, "form: goal", "title: Work is accounted for", "accepted:", '  - "unexamined: nobody has looked yet"', "---", "", "## Outcome", "Accounted.", "", "## Context", "Now.", "", "## Baseline and target", "0 → 1.", ""].join("\n"));
+  writeFileSync(join(root, ".kotta/spec/use-cases/export-00000c1.md"), ["---", `id: ${USE_CASE}`, "form: use-case", "title: Export a report", `actor: [${ACTOR}]`, `goal: [${GOAL}]`, "---", "", "## Intent", `Export, for ${ACTOR}.`, "", "## Preconditions", "None.", "", "## Main success scenario", "It exports.", "", "## Alternatives", "None.", ""].join("\n"));
+  return root;
+}
 
-    expect(workspace.migration).toMatchObject({
-      legacy_ticket_count: 112,
-      migrated_ticket_count: 113,
-      package_count: 6,
-    });
-    expect(workspace.tasks).toHaveLength(113);
-    expect(workspace.batches).toHaveLength(6);
-    expect(workspace.tasks.find((task) => task.id === "T-001")).toMatchObject({ status: "done" });
-    expect(workspace.batches.find((batch) => batch.id === "P-001")).toMatchObject({
-      status: "done",
-      tasks: ["T-054", "T-055"],
-    });
-    expect(workspace.migration?.split_audit.map((entry: { legacy_id: string }) => entry.legacy_id)).toEqual([
-      "O-1",
-      "O-9",
-      "O-38",
-    ]);
-  });
-
-  test("keeps native workspaces free of migration metadata", () => {
-    const workspace = readWorkspace(resolve("examples/demo-project/.kotta"));
-
-    expect(workspace.migration).toBeNull();
-    expect(workspace.tasks).toHaveLength(4);
-    expect(workspace.tasks.every((task) => task.migration === null)).toBe(true);
-  });
-});
-
-describe("worktree-aware UI data", () => {
-  function task(id: string, status: string, metadata = "") {
-    return `---
-id: ${id}
-title: Effective task
-status: ${status}
-types: [bug]
-profiles: [bug]
-${metadata}---
-# ${id} — Effective task
-
-## Outcome
-
-The effective state is visible.
-`;
-  }
-
-  // Legacy-name fixture on purpose (T-020): the board must read a `.a-team/` workspace unchanged.
-  function workspaceFixture() {
-    const root = mkdtempSync(join(tmpdir(), "kotta-ui-data-"));
-    mkdirSync(join(root, ".a-team/process/tasks"), { recursive: true });
-    writeFileSync(join(root, ".a-team/config.yaml"), "version: 5\nproject:\n  name: fixture\n");
-    writeFileSync(join(root, ".a-team/process/tasks/T-008-effective-task.md"), task("T-008", "defined"));
-    return root;
-  }
-
-  test("uses the active worktree task once with its execution metadata", () => {
-    const root = workspaceFixture();
-    mkdirSync(join(root, ".worktrees/T-008/.a-team/process/tasks"), { recursive: true });
-    writeFileSync(join(root, ".worktrees/T-008/.a-team/process/tasks/T-008-effective-task.md"), task(
-      "T-008",
-      "active",
-      "branch: fix/T-008-effective-task\nassigned_agent: codex\n",
-    ));
-
-    const workspace = readWorkspace(root);
-
-    expect(workspace.tasks.filter((candidate) => candidate.id === "T-008")).toEqual([
-      expect.objectContaining({
-        id: "T-008",
-        status: "active",
-        branch: "fix/T-008-effective-task",
-        assigned_agent: "codex",
-      }),
-    ]);
-    expect(workspace.diagnostics).toEqual([expect.objectContaining({ id: "T-008", message: expect.stringContaining("Legacy execution state") })]);
-  });
-
-  test("retains the coordinator task when no worktree directory exists", () => {
+describe("the board reads the specification", () => {
+  test("every node of every registered form, with its admission and the edges it answers", () => {
     const workspace = readWorkspace(workspaceFixture());
 
-    expect(workspace.tasks).toEqual([expect.objectContaining({ id: "T-008", status: "defined" })]);
-    expect(workspace.diagnostics).toEqual([]);
+    expect(workspace.specForms.map((form) => form.id)).toHaveLength(11);
+    expect(workspace.spec.map((node) => node.id).sort()).toEqual([ACTOR, GOAL, USE_CASE].sort());
+    const useCase = workspace.spec.find((node) => node.id === USE_CASE)!;
+    expect(useCase).toMatchObject({ form: "use-case", title: "Export a report", path: ".kotta/spec/use-cases/export-00000c1.md" });
+    expect(useCase.edges).toEqual({ actor: [ACTOR], goal: [GOAL] });
+    expect(useCase.sections.intent).toBe(`Export, for ${ACTOR}.`);
+    expect(workspace.spec.find((node) => node.id === GOAL)?.accepted).toEqual(["unexamined: nobody has looked yet"]);
+    expect(workspace.notices).toEqual([]);
   });
 
-  test("falls back without duplication when the task worktree is stale", () => {
-    const root = workspaceFixture();
-    mkdirSync(join(root, ".worktrees/T-008/.a-team/process/tasks"), { recursive: true });
-
-    const workspace = readWorkspace(root);
-
-    expect(workspace.tasks).toEqual([expect.objectContaining({ id: "T-008", status: "defined" })]);
-    expect(workspace.diagnostics).toEqual([
-      expect.objectContaining({ entity: "task", id: "T-008", worktree: join(root, ".worktrees/T-008") }),
-    ]);
+  test("carries no process: no tasks, batches, observations, decisions, events or claims", () => {
+    const workspace = readWorkspace(workspaceFixture()) as unknown as Record<string, unknown>;
+    for (const key of ["tasks", "batches", "observations", "decisions", "events", "claims", "migration", "diagnostics"]) {
+      expect(workspace, `the payload has no ${key}`).not.toHaveProperty(key);
+    }
   });
 
-  test("falls back when worktree task metadata is malformed", () => {
+  test("a pre-1.0 workspace is refused, not explained", () => {
     const root = workspaceFixture();
-    mkdirSync(join(root, ".worktrees/T-008/.a-team/process/tasks"), { recursive: true });
-    writeFileSync(join(root, ".worktrees/T-008/.a-team/process/tasks/T-008-effective-task.md"), task("T-999", "active"));
-
-    const workspace = readWorkspace(root);
-
-    expect(workspace.tasks).toEqual([expect.objectContaining({ id: "T-008", status: "defined" })]);
-    expect(workspace.diagnostics[0]?.message).toContain("does not match T-008");
+    mkdirSync(join(root, ".kotta/process/tasks"), { recursive: true });
+    expect(() => readWorkspace(root)).toThrow(/pre-1\.0 Kotta workspace shape[\s\S]*kotta migrate/);
   });
 });

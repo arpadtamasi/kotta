@@ -3,61 +3,38 @@ import { basename, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse, stringify } from "yaml";
 
-
-export const PROCESS_DIRECTORIES = [
-  "tasks",
-  "observations",
-  "batches",
-  "profiles",
-  "claims",
-  "decisions",
-  "events",
-] as const;
-
 /**
- * The version-4 lifecycle-state directories. Their presence *is* the pre-flat shape: state was
- * encoded by the directory a file sat in, so no v5 reader understands them and every command
- * refuses a workspace that still has one, naming the migrate command that flattens it.
+ * The version-6 workspace: `spec/` and nothing that executes. The pre-1.0 shapes kept a `process/`
+ * namespace beside it — tasks, observations, batches, claims, events, decisions, profiles and a
+ * generated index. Kotta 1.0 keeps none of that; `kotta migrate` carries the whole namespace into a
+ * read-only `legacy/` archive and no other command reads or writes either of them.
  */
-export const V4_STATE_DIRECTORIES = [
-  "backlog",
-  "defined",
-  "active",
-  "review",
-  "done",
-  "observations/new",
-  "observations/resolved",
-  "batches/backlog",
-  "batches/defined",
-  "batches/active",
-  "batches/done",
-] as const;
-
-export const WORKSPACE_SCHEMA_VERSION = 5;
+export const WORKSPACE_SCHEMA_VERSION = 6;
 export const SPEC_DIRECTORY = "spec";
+/** Where a migrated workspace keeps its pre-1.0 process state, read-only. */
+export const LEGACY_DIRECTORY = "legacy";
+/** The pre-1.0 namespace. Only `kotta migrate` knows it; everywhere else its presence is a refusal. */
 export const PROCESS_DIRECTORY = "process";
 
-/** The primary workspace directory name: what `init` creates and what discovery looks for first (D-007). */
+/** The primary workspace directory name: what `init` creates and what discovery looks for first. */
 export const WORKSPACE_DIRECTORY = ".kotta";
 
 /** The pre-rename name. Still read, never created; `kotta migrate` moves a real one onto the new name. */
 export const LEGACY_WORKSPACE_DIRECTORY = ".a-team";
 
-/**
- * The pre-vocabulary state directories (D-01kz240dn155hb97h6px6n2p85). Their presence *is* the old
- * shape: no reader outside `kotta migrate` understands them, so every other command refuses a
- * workspace that still has one and names the command that fixes it. The directory *name* of the
- * workspace itself is deliberately not part of this test — `.a-team/` stays readable (D-007), it is
- * only moved when the migration runs.
- */
-export const LEGACY_STATE_DIRECTORIES = [
-  { from: "ready", to: "defined" },
-  { from: "findings", to: "observations" },
-  { from: "packages", to: "batches" },
-] as const;
-
-/** Discovery order: the new name wins, the legacy name keeps every existing workspace working. */
+/** Discovery order: the new name wins, the legacy name keeps an unmigrated workspace findable. */
 export const WORKSPACE_DIRECTORIES = [WORKSPACE_DIRECTORY, LEGACY_WORKSPACE_DIRECTORY] as const;
+
+/**
+ * Every pre-1.0 directory a workspace could carry, in any shape from v1 to v5. Their presence is
+ * what makes a workspace pre-1.0 whatever its config says; migration is the only reader.
+ */
+export const PRE_V6_ENTRIES = [
+  PROCESS_DIRECTORY,
+  "tasks", "observations", "batches", "profiles", "claims", "decisions", "events", "index.md",
+  "backlog", "ready", "defined", "active", "review", "done",
+  "findings", "packages", "forms",
+] as const;
 
 function isWorkspaceDirectory(path: string): boolean {
   try {
@@ -76,12 +53,8 @@ function isSymbolicLink(path: string): boolean {
 }
 
 /**
- * Both names as real directories is an ambiguity only the operator can resolve: two independent
- * workspaces, and Kotta silently reading one of them would hide half the state. `.kotta/` wins
- * (D-007), and the caller says so out loud. A symlink between the names is not ambiguous — it is
- * the supported bridge — so it never triggers this.
- *
- * @returns the warning text, or `undefined` when `root` is unambiguous.
+ * Both names as real directories is an ambiguity only the operator can resolve. `.kotta/` wins, and
+ * the caller says so out loud. A symlink between the names is the supported bridge, never ambiguous.
  */
 export function duplicateWorkspaceWarning(root: string): string | undefined {
   const real = WORKSPACE_DIRECTORIES.filter((name) => {
@@ -92,7 +65,6 @@ export function duplicateWorkspaceWarning(root: string): string | undefined {
   return `Warning: ${root} contains both ${WORKSPACE_DIRECTORY}/ and ${LEGACY_WORKSPACE_DIRECTORY}/ as real directories. Kotta uses ${WORKSPACE_DIRECTORY}/ and ignores ${LEGACY_WORKSPACE_DIRECTORY}/. Merge them, then replace the leftover with a symlink: ln -s ${WORKSPACE_DIRECTORY} ${LEGACY_WORKSPACE_DIRECTORY}`;
 }
 
-/** Once per root per process: discovery runs on every path join, the operator needs the sentence once. */
 const warnedRoots = new Set<string>();
 
 function warnOnDuplicateWorkspace(root: string): void {
@@ -104,13 +76,9 @@ function warnOnDuplicateWorkspace(root: string): void {
 }
 
 /**
- * The workspace directory name inside `root`: `.kotta` when it is there, `.a-team` otherwise (D-007).
- * With no workspace at all the answer is the primary name — that is what would be created next.
- *
- * A symlinked candidate loses to a real sibling directory. During the transition a project bridges the
- * two names with `ln -s`, and only the real directory is a tracked tree in Git — the UI reads state
- * through `git archive`/`ls-tree`, which see a symlink as a link entry, not as the files behind it.
- * Resolving to the real name keeps both symlink directions readable.
+ * The workspace directory name inside `root`: `.kotta` when it is there, `.a-team` otherwise. With
+ * no workspace at all the answer is the primary name — that is what would be created next. A
+ * symlinked candidate loses to a real sibling, because Git plumbing sees a symlink as a link entry.
  */
 export function workspaceDirectoryName(root: string): string {
   const present = WORKSPACE_DIRECTORIES.filter((name) => isWorkspaceDirectory(join(root, name)));
@@ -129,9 +97,9 @@ export function specPath(root: string, ...segments: string[]): string {
   return workspacePath(root, SPEC_DIRECTORY, ...segments);
 }
 
-/** Kotta-owned lifecycle, execution and generated process state. */
-export function processPath(root: string, ...segments: string[]): string {
-  return workspacePath(root, PROCESS_DIRECTORY, ...segments);
+/** The read-only archive of the pre-1.0 process state. Nothing in Kotta 1.0 writes here. */
+export function legacyPath(root: string, ...segments: string[]): string {
+  return workspacePath(root, LEGACY_DIRECTORY, ...segments);
 }
 
 /** True when `root` holds a workspace under either name. */
@@ -139,38 +107,14 @@ export function hasWorkspace(root: string): boolean {
   return WORKSPACE_DIRECTORIES.some((name) => isWorkspaceDirectory(join(root, name)));
 }
 
-/** Both names, for the "no workspace here" messages — the reader may be on either side of the rename. */
+/** Both names, for the "no workspace here" messages. */
 export const WORKSPACE_DIRECTORY_LABEL = WORKSPACE_DIRECTORIES.join(" or ");
 
-/** The pre-vocabulary state directories still present in `root`, in migration order. Empty means current. */
-export function legacyStateDirectories(root: string): string[] {
+/** The pre-1.0 entries still present at the top of the workspace. Empty means nothing to archive. */
+export function preV6Entries(root: string): string[] {
   if (!hasWorkspace(root)) return [];
   const workspace = workspacePath(root);
-  const legacy: string[] = LEGACY_STATE_DIRECTORIES.filter(({ from }) => isWorkspaceDirectory(join(workspace, from))).map(({ from }) => String(from));
-  if (isWorkspaceDirectory(join(workspace, "batches/ready"))) legacy.push("batches/ready");
-  return legacy;
-}
-
-/** The version-4 state directories still present under process/. Empty means flat. */
-export function v4StateDirectories(root: string): string[] {
-  if (!hasWorkspace(root)) return [];
-  return V4_STATE_DIRECTORIES.filter((entry) => isWorkspaceDirectory(processPath(root, entry))).map(String);
-}
-
-/** Flat-v2 process/spec directories that must be migrated rather than partially read. */
-export function flatWorkspaceEntries(root: string): string[] {
-  if (!hasWorkspace(root)) return [];
-  const workspace = workspacePath(root);
-  const known = [
-    ...PROCESS_DIRECTORIES,
-    ...V4_STATE_DIRECTORIES,
-    "forms",
-    "index.md",
-    ...LEGACY_STATE_DIRECTORIES.map(({ from }) => from),
-    "batches/ready",
-    "packages/ready",
-  ];
-  return known.filter((entry) => existsSync(join(workspace, entry)));
+  return PRE_V6_ENTRIES.filter((entry) => existsSync(join(workspace, entry))).map(String);
 }
 
 export function workspaceSchemaVersion(root: string): number | null {
@@ -186,10 +130,8 @@ export function workspaceSchemaVersion(root: string): number | null {
 }
 
 /**
- * A workspace this build will not read, in either direction. The CLI's preAction hook has to tell
- * its own refusal from an unrelated throw, and it used to do that by looking for the words "kotta
- * migrate" in the message — so the first refusal that correctly did not name migrate was swallowed
- * and the command ran anyway. A type says what a substring only guessed at.
+ * A workspace this build will not read, in either direction. A type, so the CLI's preAction hook can
+ * tell its own refusal from an unrelated throw without matching words.
  */
 export class WorkspaceShapeError extends Error {
   readonly standing: ShapeStanding;
@@ -200,20 +142,12 @@ export class WorkspaceShapeError extends Error {
   }
 }
 
-/**
- * Which side of this Kotta's compatibility window a workspace sits on
- * (BR-01m0q89b16xcfasfj1z8mc2hgg). `current` is the only side that may be read.
- */
+/** Which side of this Kotta's window a workspace sits on. `current` is the only side that may be read. */
 export type ShapeStanding = "current" | "older" | "newer" | "unreadable";
 
-/**
- * Where a workspace stands against the shape version this Kotta implements. An absent version is
- * `older`: every workspace predating the stamp is one this Kotta can carry forward. `NaN` means the
- * config was there and could not be parsed, which is neither direction and must not be guessed at.
- */
 export function workspaceShapeStanding(root: string): ShapeStanding {
   const version = workspaceSchemaVersion(root);
-  if (version === WORKSPACE_SCHEMA_VERSION) return "current";
+  if (version === WORKSPACE_SCHEMA_VERSION && preV6Entries(root).length === 0) return "current";
   if (version === null) return "older";
   if (Number.isNaN(version)) return "unreadable";
   return version > WORKSPACE_SCHEMA_VERSION ? "newer" : "older";
@@ -221,11 +155,9 @@ export function workspaceShapeStanding(root: string): ShapeStanding {
 
 /**
  * The refusal a newer workspace gets, wherever it is met. It exists apart from
- * `assertCurrentWorkspaceShape` because `migrate` is exempt from that check — deliberately, so it can
- * read old workspaces at all — and the exemption must not extend to this direction: migrating a newer
- * workspace means rewriting it into an older shape, which destroys what the newer Kotta wrote. That
- * was not hypothetical. A Kotta implementing version 5, meeting a version 6 workspace, called it
- * legacy, named `kotta migrate`, and the plan that came back was `version: 6 → 5`.
+ * `assertCurrentWorkspaceShape` because `migrate` is exempt from that check — deliberately, so it
+ * can read old workspaces at all — and the exemption must not extend to this direction: migration
+ * only ever carries a workspace forward.
  */
 export function assertNotNewerWorkspace(root: string): void {
   if (!hasWorkspace(root)) return;
@@ -245,29 +177,24 @@ export function assertNotNewerWorkspace(root: string): void {
 }
 
 /**
- * The refusal every ordinary command makes on a pre-vocabulary workspace. There is no compatibility
- * layer behind it on purpose: four workspaces exist in the world and all four are migrated by running
- * the command this message names, so a silent fallback would be insurance for nobody — and a reader
- * that half-understands the old shape is worse than one that refuses it.
- *
- * A workspace on the far side of the window is not this refusal's business: it is neither legacy nor
- * migratable, and saying so with this message would send the reader to the command that damages it.
+ * The refusal every ordinary command makes on a pre-1.0 workspace. There is no compatibility layer
+ * behind it on purpose: the old release stays installable under its own version, and 1.0 offers the
+ * migration and does nothing else on a workspace that has not had it.
  */
 export function assertCurrentWorkspaceShape(root: string): void {
   if (!hasWorkspace(root)) return;
   assertNotNewerWorkspace(root);
-  const legacy = legacyStateDirectories(root);
-  const flat = flatWorkspaceEntries(root);
-  const stateDirs = v4StateDirectories(root);
   const version = workspaceSchemaVersion(root);
-  if (!legacy.length && !flat.length && !stateDirs.length && version === WORKSPACE_SCHEMA_VERSION) return;
+  const entries = preV6Entries(root);
+  if (!entries.length && version === WORKSPACE_SCHEMA_VERSION) return;
   const directory = workspaceDirectoryName(root);
-  const entries = [...new Set([...legacy, ...flat, ...stateDirs.map((name) => `${PROCESS_DIRECTORY}/${name}`)])]
-    .map((name) => `${directory}/${name}${name.includes(".") ? "" : "/"}`);
-  if (version !== WORKSPACE_SCHEMA_VERSION) entries.push(`${directory}/config.yaml (schema version ${Number.isFinite(version) ? version : "unreadable"}; expected ${WORKSPACE_SCHEMA_VERSION})`);
+  const listed = entries.map((name) => `${directory}/${name}${name.includes(".") ? "" : "/"}`);
+  if (version !== WORKSPACE_SCHEMA_VERSION) listed.push(`${directory}/config.yaml (schema version ${version === null ? "absent" : version}; expected ${WORKSPACE_SCHEMA_VERSION})`);
   throw new WorkspaceShapeError("older",
-    `${root} uses a legacy Kotta workspace shape: ${entries.join(", ")} predates the flat process layout (state lives in the frontmatter status field alone). `
-    + "Run 'kotta migrate --dry-run' to see exactly what would change, then 'kotta migrate'. No other command reads or writes the legacy shape.",
+    `${root} uses a pre-1.0 Kotta workspace shape: ${listed.join(", ")}. Kotta 1.0 owns the technical specification and keeps no process layer, `
+    + `so it reads only workspaces on shape version ${WORKSPACE_SCHEMA_VERSION}. Run 'kotta migrate --dry-run' to see exactly what would change, then 'kotta migrate': `
+    + `the process state moves untouched into ${directory}/${LEGACY_DIRECTORY}/ as a read-only archive and ${directory}/${SPEC_DIRECTORY}/ stays byte-identical. `
+    + "No other command runs on the old shape. The pre-1.0 release stays installable as @arpadtamasi/kotta@0.11.x if you need the old commands.",
   );
 }
 
@@ -286,78 +213,44 @@ export function findRepositoryRoot(start = process.cwd()): string {
   }
 }
 
+/** The configuration a version-6 workspace carries: project, git and validation, nothing about a process. */
+export function workspaceConfigTemplate(projectName: string, overrides: { baseBranch?: string; protectedBranches?: string[]; strict?: boolean } = {}): Record<string, unknown> {
+  const baseBranch = overrides.baseBranch ?? "main";
+  const protectedBranches = overrides.protectedBranches ?? ["main", "master", "develop"];
+  return {
+    version: WORKSPACE_SCHEMA_VERSION,
+    project: { name: projectName },
+    git: {
+      base_branch: baseBranch,
+      protected_branches: [...new Set([...protectedBranches, baseBranch])],
+    },
+    validation: { strict: overrides.strict ?? true },
+  };
+}
+
+export function workspaceReadmeTemplate(): string {
+  return readFileSync(fileURLToPath(new URL("../../templates/workspace/README.md", import.meta.url)), "utf8");
+}
+
 export function initializeWorkspace(options: InitOptions = {}): { root: string; created: string[] } {
   const root = options.root ?? findRepositoryRoot();
-  // A repository that already carries either name is initialized: `init` never migrates one to the other.
   const existingName = WORKSPACE_DIRECTORIES.find((name) => existsSync(join(root, name)));
   if (existingName) {
     throw new Error(`${existingName} already exists; initialization preserves existing files.`);
   }
   const workspace = join(root, WORKSPACE_DIRECTORY);
-
   const created: string[] = [];
-  for (const directory of PROCESS_DIRECTORIES) {
-    const path = join(workspace, PROCESS_DIRECTORY, directory);
-    mkdirSync(path, { recursive: true });
-    created.push(path);
-  }
   mkdirSync(join(workspace, SPEC_DIRECTORY, "forms"), { recursive: true });
   created.push(join(workspace, SPEC_DIRECTORY, "forms"));
-
-  const config = {
-    version: WORKSPACE_SCHEMA_VERSION,
-    project: { name: options.projectName ?? basename(root) },
-    workflow: {
-      require_human_done_approval: true,
-      allow_agent_observations: true,
-      allow_agent_defined_tasks: false,
-    },
-    // null means Kotta passes no permission flag and the agent's own project
-    // settings decide. Widening this is the operator's deliberate act.
-    agents: { permission_mode: null },
-    git: {
-      base_branch: "main",
-      protected_branches: ["main", "master", "develop"],
-      worktrees: "auto",
-      worktree_root: ".worktrees",
-      branch_pattern: "{prefix}/{id}-{slug}",
-    },
-    batches: { default_parallelism: 2, stop_on_failure: true },
-    validation: {
-      strict: true,
-      reject_unknown_profiles: true,
-      require_verification_for_defined: true,
-      require_review_evidence_for_done: true,
-    },
-  };
-
-  writeFileSync(join(workspace, "config.yaml"), stringify(config));
-  writeFileSync(join(workspace, "README.md"), readFileSync(fileURLToPath(new URL("../../templates/workspace/README.md", import.meta.url)), "utf8"));
-  writeFileSync(join(workspace, PROCESS_DIRECTORY, "index.md"), renderEmptyIndex());
-  const bundledProfiles = fileURLToPath(new URL("../../profiles", import.meta.url));
-  if (existsSync(bundledProfiles)) {
-    for (const filename of readdirSync(bundledProfiles).filter((name) => name.endsWith(".yaml"))) {
-      copyFileSync(join(bundledProfiles, filename), join(workspace, PROCESS_DIRECTORY, "profiles", filename));
-    }
-  }
+  writeFileSync(join(workspace, "config.yaml"), stringify(workspaceConfigTemplate(options.projectName ?? basename(root))));
+  writeFileSync(join(workspace, "README.md"), workspaceReadmeTemplate());
   syncWorkspaceForms(root);
-
-  const gitignore = join(root, ".gitignore");
-  const existing = existsSync(gitignore) ? readFileSync(gitignore, "utf8") : "";
-  if (!existing.split(/\r?\n/).includes(".worktrees/")) {
-    writeFileSync(gitignore, `${existing}${existing && !existing.endsWith("\n") ? "\n" : ""}.worktrees/\n`);
-  }
-  ensureIndexMergeAttribute(root);
-
   return { root, created };
 }
 
 /**
- * Install the data-driven specification form registry into a workspace.
- *
- * Form definitions are project-owned once installed: sync adds newly shipped forms but never
- * replaces an existing YAML file. This also leaves custom forms alongside the bundled registry,
- * so extending the model remains a data change rather than a TypeScript change.
+ * Install the data-driven specification form registry into a workspace. Form definitions are
+ * project-owned once installed: sync adds newly shipped forms but never replaces an existing file.
  */
 export function syncWorkspaceForms(root: string): void {
   const bundledForms = bundledFormsDirectory();
@@ -397,83 +290,4 @@ export function registeredSpecDirectories(root: string, formsDirectory = specPat
     directories.add(validateSpecDirectory(data.directory, path));
   }
   return [...directories].sort();
-}
-
-/** The merge attribute for a workspace under `directory`; the name moved with the rename (T-020). */
-export function indexMergeAttribute(directory: string): string {
-  return `${directory}/${PROCESS_DIRECTORY}/index.md merge=union`;
-}
-
-export const INDEX_MERGE_ATTRIBUTE = indexMergeAttribute(WORKSPACE_DIRECTORY);
-
-/**
- * `index.md` is a generated projection, so two branches that each add an entity have no real
- * disagreement about it. The union driver takes both sides instead of raising a conflict; the next
- * write regenerates the file from disk, so nothing stale survives.
- */
-export function ensureIndexMergeAttribute(root: string): void {
-  const attribute = indexMergeAttribute(workspaceDirectoryName(root));
-  const path = join(root, ".gitattributes");
-  const existing = existsSync(path) ? readFileSync(path, "utf8") : "";
-  const workspaceIndexAttributes = new Set(WORKSPACE_DIRECTORIES.flatMap((directory) => [
-    `${directory}/index.md merge=union`,
-    indexMergeAttribute(directory),
-  ]));
-  const lines = existing.split(/\r?\n/).filter((line) => line && (!workspaceIndexAttributes.has(line) || line === attribute));
-  const withoutDuplicate = lines.filter((line, index) => line !== attribute || lines.indexOf(line) === index);
-  if (!withoutDuplicate.includes(attribute)) withoutDuplicate.push(attribute);
-  const rendered = `${withoutDuplicate.join("\n")}\n`;
-  if (rendered !== existing) writeFileSync(path, rendered);
-}
-
-export function renderEmptyIndex(): string {
-  return `# Kotta Status
-
-> Generated file. Do not edit manually.
-
-## Defined batches
-
-## Active batches
-
-## Defined tasks
-
-## Active tasks
-
-## Review
-
-## Blocked
-
-## New observations
-`;
-}
-
-export function regenerateIndex(root: string): void {
-  const process = processPath(root);
-  if (!existsSync(process)) return;
-  // State lives in the frontmatter alone, so the index groups by the status each file declares.
-  const entries = (directory: string, status: string) => {
-    const path = join(process, directory);
-    if (!existsSync(path)) return [];
-    return readdirSync(path)
-      .filter((name) => name.endsWith(".md"))
-      .sort()
-      .filter((name) => {
-        try {
-          return /^status:\s*(["']?)([a-z-]+)\1\s*$/m.exec(readFileSync(join(path, name), "utf8").slice(0, 2000))?.[2] === status;
-        } catch {
-          return false;
-        }
-      })
-      .map((name) => `- ${name.replace(/\.md$/, "")}`);
-  };
-  const section = (title: string, lines: string[]) => `## ${title}\n\n${lines.length ? lines.join("\n") : "None."}`;
-  writeFileSync(join(process, "index.md"), `# Kotta Status\n\n> Generated file. Do not edit manually.\n\n${[
-    section("Defined batches", entries("batches", "defined")),
-    section("Active batches", entries("batches", "active")),
-    section("Defined tasks", entries("tasks", "defined")),
-    section("Active tasks", entries("tasks", "active")),
-    section("Review", entries("tasks", "review")),
-    section("Blocked", []),
-    section("New observations", entries("observations", "new")),
-  ].join("\n\n")}\n`);
 }

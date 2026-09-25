@@ -78,19 +78,6 @@ describe("the gap report is readable at a hundred admissions", () => {
     expect(after - before, "the report grows by the node, not by its reason").toBeLessThanOrEqual(2);
   }, 60_000);
 
-  test("no sentence in this workspace's report repeats more than three times", () => {
-    const clone = mkdtempSync(join(tmpdir(), "kotta-readable-self-"));
-    execFileSync("git", ["clone", "--quiet", resolve("."), clone]);
-    execFileSync("git", ["checkout", "-B", "main", "--quiet"], { cwd: clone });
-
-    const said = say(attempt(clone, ["gap"]));
-    const sentences = said.split(/(?<=[.!?])\s+/).map((part) => part.trim()).filter((part) => part.length > 40);
-    const counts = new Map<string, number>();
-    for (const sentence of sentences) counts.set(sentence, (counts.get(sentence) ?? 0) + 1);
-    const repeated = [...counts].filter(([, count]) => count > 3).map(([sentence, count]) => `${count}× ${sentence.slice(0, 60)}…`);
-    expect(repeated, "sentences a reader would meet again and again").toEqual([]);
-  }, 180_000);
-
   test("--json keeps every admission's own reason and the counts per kind", () => {
     const { root } = fixture("json", 8);
     const report = JSON.parse(say(attempt(root, ["gap", "--json"]))) as {

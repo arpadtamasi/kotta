@@ -8,7 +8,7 @@ const report = process.argv[2]
 if (!Array.isArray(report) || report.length !== 1) throw new Error("Expected one npm pack result.");
 
 const files = report[0].files.map((entry) => String(entry.path));
-const requiredRoots = ["dist/", "ui-dist/", "profiles/", "schemas/", "skills/", "templates/"];
+const requiredRoots = ["dist/", "ui-dist/", "schemas/", "skills/", "templates/"];
 for (const root of requiredRoots) {
   if (!files.some((path) => path.startsWith(root))) throw new Error(`Packed artifact is missing ${root}`);
 }

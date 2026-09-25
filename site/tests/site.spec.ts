@@ -13,7 +13,7 @@ function declaredVersion(): string {
   return (JSON.parse(readFileSync(resolve("package.json"), "utf8")) as { version: string }).version;
 }
 
-test("renders the approved content task in order", async ({ page }) => {
+test("renders the approved content in order", async ({ page }) => {
   const requests: string[] = [];
   const failedResponses: string[] = [];
   const responseTypes = new Map<string, string>();
@@ -28,27 +28,36 @@ test("renders the approved content task in order", async ({ page }) => {
 
   await expect(page.locator("[data-unit]")).toHaveCount(7);
   expect(await page.locator("[data-unit]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-unit")))).toEqual(["hero", "problem", "arrivals", "workflow", "comparison", "quickstart", "trust"]);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("The last 10% is the whole job.");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Start there.");
-  await expect(page.getByText("checks that run instead of being narrated")).toBeVisible();
-  await expect(page.getByText("run: npx playwright test — verified: exit 0")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "AI can execute more work than you can continuously observe." })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "The agreement becomes executable." })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Prose proposes. The model is what was agreed.");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Keep it beside the code.");
+  await expect(page.getByText("Every node says where it came from and who decided it.")).toBeVisible();
+  await expect(page.getByText("bound: tests/game/pause.test.ts")).toBeVisible();
+  await expect(page.locator(".node-card .prov-badge")).toHaveText(["stated", "decided by a human"]);
+  await expect(page.getByRole("heading", { name: "Prose alone loses what the code needs." })).toBeVisible();
+  await expect(page.locator(".problem-points > div")).toHaveCount(4);
+  await expect(page.getByRole("heading", { name: "One change, one human yes." })).toBeVisible();
+  await expect(page.locator(".mechanism-flow h3")).toHaveText(["Propose", "Plan", "Approve", "Archive"]);
   await expect(page.getByRole("heading", { name: "Three ways in." })).toBeVisible();
   await expect(page.locator(".arrival-list li")).toHaveCount(3);
+  await expect(page.locator(".arrival-list")).toContainText("kotta import openspec");
+  await expect(page.locator(".arrival-list")).toContainText("kotta migrate");
   await expect(page.getByRole("link", { name: "Install Kotta" })).toHaveAttribute("href", "#install");
   await expect(page.getByRole("link", { name: "View on GitHub" })).toHaveAttribute("href", "https://github.com/arpadtamasi/kotta");
-  await expect(page.getByText("Human decision required")).toBeVisible();
-  await expect(page.getByText("One agent · one branch · one isolated worktree.")).toBeVisible();
-  await expect(page.locator("tbody tr")).toHaveCount(5);
-  await expect(page.locator("tbody th")).toHaveText(["Agent chat", "Issue tracker", "Agent runtime", "Spec generator", "Kotta"]);
+  await expect(page.getByText("Accepted at the one gate")).toBeVisible();
+  await expect(page.locator("tbody tr")).toHaveCount(4);
+  await expect(page.locator("tbody th")).toHaveText(["Agent chat", "Issue tracker", "Spec generator", "Kotta"]);
   await expect(page.locator("#install")).toContainText(`@arpadtamasi/kotta@${declaredVersion()}`);
   // One Kotta command, not a pinned third-party installer that leaves out the rules file
   // (BR-01m0zx29x1nvccpr4xwyhjr153).
   await expect(page.locator("#install")).toContainText("kotta init");
   await expect(page.locator("#install")).not.toContainText("npx skills@");
-  await expect(page.locator("#install")).toContainText("/setup-kotta");
-  await expect(page.locator("#install")).toContainText("/define-task");
+  await expect(page.locator("#install")).toContainText("/plan-change");
+  await expect(page.locator("#install")).toContainText("kotta plan <change>");
+  await expect(page.locator("#install")).toContainText("kotta approve <change> --by you");
+  await expect(page.locator("#install")).toContainText("kotta archive <change>");
+  // The page describes 1.0: none of the 0.x process vocabulary is left on it.
+  const text = (await page.locator("body").innerText()).toLowerCase();
+  for (const word of ["task", "claim", "batch", "observation", "worktree", "review gate", ".kotta/process/"]) expect(text, word).not.toContain(word);
   expect([...responseTypes.entries()].find(([path]) => path.endsWith(".css"))?.[1]).toContain("text/css");
   await expect(page.locator("body")).toHaveCSS("background-color", "rgb(243, 242, 242)");
   expect(requests.some((url) => new URL(url).pathname.startsWith("/api/"))).toBe(false);
@@ -63,8 +72,8 @@ test("desktop first viewport carries the offer, action and control mechanism", a
     page.getByRole("heading", { level: 1 }),
     page.getByRole("link", { name: "Install Kotta" }),
     page.getByRole("link", { name: "View on GitHub" }),
-    page.locator(".task-record"),
-    page.getByText("Human decision required"),
+    page.locator(".node-card"),
+    page.getByText("Accepted at the one gate"),
   ];
   for (const essential of essentials) {
     await expect(essential).toBeVisible();

@@ -1,9 +1,8 @@
 # AGENTS.md
 
-This repository runs on **Kotta**. Work is defined, executed, reviewed and closed as plain files
-in `{{workspace}}/`, and every state change goes through Kotta's validated services via calling-chat MCP tools or
-the `kotta` CLI fallback. Read this before you touch
-anything.
+This repository keeps its **technical specification** with **Kotta**: the accepted rules, examples,
+entities, state machines, use cases, stories and interfaces of the product, as plain Markdown files
+under `{{workspace}}/spec/`, each in the shape its form declares. Read this before you touch anything.
 
 ## The tool these rules assume
 
@@ -11,159 +10,132 @@ The rules below are enforced by the `kotta` CLI and by the Kotta MCP server. The
 package do not share a name, so the package cannot be guessed from the command:
 
 ```bash
-npm install --global {{package}}@{{version}}   # or: npx -y -p {{package}}@{{version}} kotta status
+npm install --global {{package}}@{{version}}   # or: npx -y -p {{package}}@{{version}} kotta validate
 ```
 
-If you can install neither — a hosted environment with no network or no npm — you still do not
-hand-edit `{{workspace}}/`. Read the state, prepare the work in a file, say what you could not do, and
-leave every lifecycle change to an environment that has one of the two surfaces.
+If you can install neither — a hosted environment with no network or no npm — read the
+specification as files, draft your proposal in a file, say what you could not run, and leave the
+checks to an environment that has the CLI.
+
+## The four layers
+
+```text
+chat  →  narrative spec (OpenSpec)  →  technical model (Kotta forms)  →  code
+```
+
+The layers are joined by references, never by copies. The conversation is where intent is said; the
+narrative specification is where a change is proposed and argued in prose; the **technical model** is
+the precise, machine-checkable form of what was accepted — and when the two disagree, the technical
+model is the truth and the disagreement is reported, not smoothed over; the code is what keeps the
+promises, and it says which by naming the node it keeps.
+
+A change moves through them in one pass. Its narrative lives in `openspec/changes/<name>/`, with the
+conversation that shaped it distilled into `conversation.md` by `kotta narrative <name> --from <session
+log>` (secrets and personal data filtered before anything is written); planning
+translates it into a **model delta** under that change's `model/`, every node marked with its
+`provenance` (stated, partly inferred or inferred, and who decided it); `kotta plan <name>` measures
+the delta against the accepted model and writes `planning.md`; the human decides it — **the one gate**
+— and `kotta approve <name> --by <who>` records that yes; `kotta archive <name>` then lands exactly
+the approved delta in `{{workspace}}/spec/`, regenerates the narrative from the model, and moves the
+change to the archive, asking nothing again. The `plan-change` skill is the how.
+
+Who writes `openspec/specs/` is the project's choice, `narrative:` in `{{workspace}}/config.yaml`.
+With `generated`, the default, archive regenerates every capability a change touches from the model,
+carrying the nodes' text as written: its Purpose, its requirements (the rules, interfaces and quality
+attributes, with their examples as scenarios), then its use cases and user stories as informative
+sections, never as requirements; with `authored`, people write the narrative, archive writes none
+of it and only reports where a bound requirement disagrees with its node. Either way the model is the
+truth, and an obligation carries its keyword in the model: a rule, an interface's postconditions or
+invariants, a quality attribute's response say SHALL or MUST — in English, as OpenSpec expects,
+whatever the language around it. A change's node without one is refused; an older accepted node is
+warned about. Use cases and user stories stay free-form and need no keyword.
 
 ## The rule everything else follows from
 
-`{{workspace}}/` is the canonical source of truth, with two deliberately different ownership
-boundaries. `{{workspace}}/spec/` is project-owned specification knowledge: its form registry and
-the nodes stored in form-declared directories may be shaped directly. `{{workspace}}/process/` is
-Kotta-owned execution and lifecycle state: tasks, observations, batches, profiles, claims,
-events, decisions, and the generated index. Chat, the board (`kotta ui`), pull requests and CI are
-views or history — they never override these files. The board is read-only. Never hand-edit
-`process/`; use the calling chat's Kotta MCP tools for actions and human approvals, and the CLI for
-automation and recovery. Both validate before writing and name the violated rule when they refuse.
+`{{workspace}}/spec/` is **project-owned**. Its form registry (`spec/forms/*.yaml`) and the nodes
+stored in form-declared directories are yours to shape, in conversation, with the workshop skills or
+by hand — the validator measures a node against its form and names the form's own question for
+every missing part. A node becomes the agreement when it lands on the base branch on a human yes.
+
+There is **no process layer**: no task, no claim, no batch, no observation, no decision record. The
+one receipt left is a change's `approval.yaml`, the record of its one gate. Kotta 1.0 does not track who is doing what; it holds what was agreed and whether
+the code keeps it. `{{workspace}}/legacy/`, where a migrated workspace keeps its pre-1.0 process
+state, is a read-only archive — nothing reads it and nothing writes it.
+
+Chat, the board (`kotta ui`), pull requests and CI are views or history — they never override these
+files. The board is read-only.
 
 ## Orient yourself first
 
 ```bash
-kotta status      # defined / active / review / blocked, and new observations
-kotta validate    # is the workspace consistent
+kotta validate     # does every node satisfy its form, and every edge name a node
+kotta gap          # which accepted promises have no evidence in the code, and which enforcement has no spec behind it
+kotta questions    # which drafts still carry an open question
 ```
 
-Project-specific settings — approval gates, base and protected branches, worktree policy, batch
-parallelism — live in `{{workspace}}/config.yaml`. Read it rather than assuming defaults.
+Project settings — the base branch, the protected branches — live in `{{workspace}}/config.yaml`.
+Read it rather than assuming defaults.
 
-## The lifecycle
+## The model
 
-```text
-backlog → defined → active → review → done
-```
+Every node is one Markdown file with frontmatter: `id`, `form`, `title`, the fields its form
+requires, and the edges it answers (a use case names its `actor` and `goal`; an example names what it
+`subjects`). The registry says which forms exist, where their nodes live, which sections they must
+carry and which edges they must answer. A form the project adds participates the same way, with
+nothing compiled in.
 
-| Step | Command | Who |
-| --- | --- | --- |
-| Capture intent | `kotta task new --title "…" --type <type> [--profile …]` | human, or agent if allowed by config |
-| Formalize | `kotta task define <id> --from <file>`; every acceptance condition maps to a referenced accepted spec node | agent; valid coverage moves it to `defined` |
-| Execute | `kotta task execute <id> --agent <agent>` | agent, in its own claim + branch + worktree |
-| Submit | `kotta task review <id> --evidence "<exact check>=<evidence>" --pull-request <ref>` (repeat evidence per check) | agent |
-| Close | `kotta task close <id> --approve`, after the human said yes in chat | **human decides** (rule 5) |
-| Retire | `kotta task cancel <id> --resolution <resolution> --reason "…" [--superseded-by <id>] --approve`, after the human said yes in chat | **human decides** (rule 5) |
+Identifiers are minted, never typed: `kotta spec new <form> --title "…"` writes a node already
+carrying its id and its form's skeleton, as a draft, committed by nobody. Name a node by its
+**title** wherever a human reads; the id is a key for the machine and appears where something will be
+typed back or nothing else identifies it.
 
-`task execute` does the start, builds the brief and launches a fresh agent context whose only
-input is `kotta task brief <id>`. Resume an interrupted or failed run with `--resume`; a second
-plain `execute` is refused rather than starting a second agent.
+**A promise is evidenced by citation.** The code, test or command definition that keeps a node names
+that node's id, so `kotta gap` finds it in one pass. A node nothing names either has an admission in
+its frontmatter — `accepted: ["<kind>: <reason>"]`, where the kind is `structural`, `unexamined` or
+`unimplemented` — or the report refuses and names it. Keeping a promise without naming it leaves it
+unaccounted for.
 
-`task start --caller` is the explicit inherited-context alternative. It returns the isolated
-worktree to the current caller without launching another agent. Fresh remains the default.
-
-Undecided points are enumerated under `Open decisions`, one list item each, addressed as
-`<id>/Q<n>` by their position. A question is answered by naming the decision record that settled
-it — the item then stays where it stood, so the reasoning survives the answer. A task with no
-unresolved choice may instead use `None`, `N/A`, or `No open decisions` (with or without a final
-period); that is the empty enumeration. Defining is refused while any question is unanswered, and
-it names which ones. `kotta questions [<id>]` lists them for one entity or for the whole workspace.
-A promise is evidenced by citation: the code, test or command definition that keeps an accepted spec node names that node's id, so `kotta gap` can find it in one pass. Keeping a promise without naming it leaves it unaccounted for. Coverage is named, never inferred: each acceptance bullet either contains a referenced spec id or
-has an exact-text entry in frontmatter `coverage` mapping it to one or more ids from `spec`. If the
-accepted specification does not promise a condition, record an observation and amend the spec;
-never widen the task to make the validator pass. The validated coverage map travels in the brief.
-
-A batch may group other batches — `kotta batch add <parent> <child>` takes either kind of member.
-Nesting is grouping only: a child has no coordinator branch and no execution of its own, and
-`batch start` runs leaf batches, never a parent. To carry out a whole parent, read it with
-`kotta batch status <id>`, which reports every task underneath it in dependency order, and work
-that list. Each task keeps its close gate (and any configured compatibility gate); grouping approves nothing.
-
-Inside a running leaf batch, technical dependency readiness is separate from human acceptance. A
-dependency can release the next wave when it is `done`, or when it is in `review` and Git proves its
-feature branch is already in that batch's coordinator branch. `batch start` creates every newly
-released member from the coordinator's current commit and reports that exact baseline. This never
-approves or closes the reviewed predecessor; standalone `task start` still requires dependencies
-to be `done`, and every `review → done` transition still needs the human gate.
-
-`close` ends work that was finished and merged; `cancel` ends work whose purpose is gone, from any
-state before `done`, and it is the only exit for a task a decision made objectless. It always
-records why, and `duplicate` and `obsolete` also require the task or decision that took the
-work's place. It releases the claim and removes the execution worktree, and never deletes the
-branch. Do not close such a task as completed and do not leave it sitting in `active`.
-
-Canonical live state, claims and visible conversation stay on `git.base_branch`; implementation
-worktrees contain code and their original baseline, not a divergent lifecycle copy. Commands invoked
-from any linked worktree route state changes back to the checked-out control worktree.
-
-Where there is only one checkout — a hosted session, or a repository with no linked worktrees — that
-checkout is the control plane, on whatever branch it holds. If that branch is not a protected one,
-`start` adopts it instead of creating a second branch and worktree, and records that it created
-neither, so `close` and `cancel` leave the environment's branch and checkout in place.
-
-Never ask the human to copy an id or go and run a command. Whatever the surface, you drive it: the
-CLI is the whole interface, and where the Kotta MCP server is available its structured tools are an
-equivalent path to the same services. `task_start_caller` is the inherited-context start path.
-`approval_request` is one way to put a decision to the human, and rule 5 is the other; if the
-elicitation is unavailable or refused by the host, ask in plain chat rather than falling back to the
-terminal. `kotta ui` only displays the resulting canonical state and timeline.
+Undecided points in a draft are enumerated under `Open decisions`, one list item each, addressed as
+`<id>/Q<n>` by their position; `kotta questions` lists them. The planning phase of a change is where
+they are answered and where the one human gate stands: `kotta approve` refuses a delta with an open
+question, so a draft with one is a draft, not an agreement.
 
 ## Rules for agents
 
-1. **A task gates execution of an accepted commitment.** Use an active task you hold the
-   claim for when the work executes a product or deliverable commitment a human has accepted and
-   whose outcome can be checked against acceptance conditions. Shaping, exploration, and
-   specification may run without a task while they are discovering or proposing that
-   commitment; they require one when the specification itself is the accepted deliverable or the
-   work crosses into executing the accepted outcome. Keeping Kotta itself working — installing it,
-   syncing it, migrating a workspace, repairing drift — never needs one either: Kotta is the
-   project's tool, not its deliverable, so its upkeep is not the project's work and is not recorded
-   as if it were. Purpose and effect decide, not path or file type. If it is unclear whether a commitment has been accepted, ask one focused question. Always
-   obey stricter project rules, freely shape project-owned `spec/` nodes, and never hand-edit
-   Kotta-owned `process/` records.
-2. **Stay inside the task's scope.** Anything you notice outside it becomes an observation, not
-   a silent fix: `kotta observation new --title "…" --type <type> --evidence "…"`.
-3. **An observation is not a task.** It is dispositioned by `kotta observation validate <id>`
-   and a human-approved `kotta observation resolve <id> --disposition <disposition> --approve`.
-   Before choosing, ask what the accepted specification would have to say for this not to happen
-   again. If the remedy adds behaviour no node states — a capability, an obligation, a refusal —
-   that sentence is the answer, the disposition is `amend-spec`, and the work follows from the
-   landed delta. A plain task is for a promise that is already complete and was simply failed;
-   that case is argued, not assumed.
-4. **Do not invent product intent or accepted trade-offs.** Ask the human. Durable answers are
-   recorded with `kotta decision create --from <file> --approve`, or from the calling chat through
-   `approval_request` with `decision.create`, which carries the draft's text into the question.
-5. **Approval is a human gate — ask for it here, in the conversation.** Put the decision to the
-   human in chat, in their language: what will happen, named by **title**, one line, then a plain
-   yes or no. Never an id, never a command for them to go and run. This is how you write about
-   every entity in the conversation, not only at a gate: name it by its title, and reach for an
-   identifier only where the human will type it back or where nothing else identifies it. A
-   permanent id is unreadable by construction — that is what makes it a good key and a bad name. On an explicit yes **in this
-   conversation, for this exact decision**, you may run the command with `--approve` yourself; the
-   receipt Kotta records is what makes it durable. Anything less than an explicit yes is a no:
-   silence, a yes to a different question, an earlier unrelated yes, or your own judgement that
-   they would obviously agree. If you cannot ask — no human is present — you do not approve.
-6. **One active task = one claim, one feature branch, one worktree.** Parallel work uses
-   separate worktrees. Never execute on a protected branch.
-7. **Review needs acceptance-to-evidence mapping**; closing needs accepted review, integration and
-   verified acceptance conditions.
-8. **Execute from the brief unless `--caller` was explicit.** If the brief plus the code in the worktree is not enough to finish
-   the task, the task is incomplete — record the gap; do not widen your context.
+1. **The technical model is the accepted truth.** When the narrative, the conversation and the
+   nodes disagree, the nodes win and you say where they disagree. You may propose a change to a
+   node; you do not decide one. The change lands when the human says yes. `kotta plan`'s conflict
+   candidates help; they do not replace comparing every claim of a delta with the accepted nodes it
+   touches, and what you find goes into the report marked `judged`.
+2. **Never invent product intent.** Where a form asks for something — a goal, an actor, a rationale —
+   that neither the conversation nor the narrative says, write the question, not an answer. A
+   filled-in guess is worse than a listed gap.
+3. **Stay inside the change you are making.** Anything you notice outside it is said to the human,
+   in chat, as one line — never a silent fix and never a record of its own.
+4. **Approval is a human gate — ask for it here, in the conversation.** Put the decision to the
+   human in their language: what will change, named by title, one line, then a plain yes or no.
+   Anything less than an explicit yes is a no: silence, a yes to a different question, an earlier
+   unrelated yes, or your own judgement that they would obviously agree. If you cannot ask, you do
+   not decide. There is one such gate per change, at the end of planning, and none after it.
+5. **Evidence names its node.** When you implement a promise, cite the node's id where the code
+   keeps it and in the test that proves it; when you cannot yet, admit the gap in the node's
+   frontmatter with its kind and reason rather than leaving `kotta gap` to find it.
+6. **Never write into `legacy/`.** It is the record of how the project worked before 1.0, kept
+   for reading. Nothing in it governs anything now.
 
 ## Skills
 
-If the Kotta skills are installed, prefer them — they encode the how: `explore-workspace`,
-`setup-kotta`, `define-task`, `validate-observation`, `start-task`, `execute-task`,
-`execute-batch`, `submit-review`, `close-task`, `consolidate-model`, `report-kotta-bug`. If they are not installed,
-the CLI above is the whole task; nothing depends on the skills being present. `kotta sync`
-installs them.
+If the Kotta skills are installed, prefer them — they encode the how. `plan-change` carries a
+change from its narrative to the one gate; `setup-kotta` initializes a workspace; `explore-workspace` answers questions across the specification; `requirements-traceability`
+reads the model as a graph and reports what hangs; `consolidate-model` finds one concept living under
+several names; `report-kotta-bug` reports a defect in Kotta itself. `kotta sync` installs them.
 
-For optional specification workshops and analysis, use `impact-mapping`, `story-mapping`,
-`use-case-modeling`, `example-mapping`, `event-storming`, `ubiquitous-language`,
-`quality-scenarios`, `design-by-task`, and `requirements-traceability`. They draft and read
-Markdown specification nodes under `{{workspace}}/spec/`; landing those nodes is how agreement is
-accepted, while the workshop skills themselves perform no lifecycle transition.
+For the specification workshops, use `impact-mapping`, `story-mapping`, `use-case-modeling`,
+`example-mapping`, `event-storming`, `ubiquitous-language`, `quality-scenarios` and
+`design-by-task`. They draft and read Markdown nodes under `{{workspace}}/spec/`; landing those nodes
+on the base branch is how agreement is accepted.
 
-A defect in Kotta itself is not a task here: use `report-kotta-bug`, or the issue form at
+A defect in Kotta itself is not this project's work: use `report-kotta-bug`, or the issue form at
 <https://github.com/arpadtamasi/kotta/issues>.
 
 ---

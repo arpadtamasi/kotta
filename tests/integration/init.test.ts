@@ -7,7 +7,7 @@ import { describe, expect, test } from "vitest";
 const cli = resolve("dist/cli/index.js");
 
 describe("kotta init", () => {
-  test("creates a valid repository-native workspace", () => {
+  test("creates a version-6 workspace: the specification and nothing that executes", () => {
     const repository = mkdtempSync(join(tmpdir(), "kotta-init-"));
     execFileSync("git", ["init", "-b", "main"], { cwd: repository });
 
@@ -17,20 +17,32 @@ describe("kotta init", () => {
     });
 
     expect(JSON.parse(output)).toMatchObject({ ok: true, command: "init" });
-    expect(readFileSync(join(repository, ".kotta/config.yaml"), "utf8")).toContain(
-      "base_branch: main",
-    );
-    expect(readFileSync(join(repository, ".kotta/config.yaml"), "utf8")).toContain("version: 5");
-    expect(readFileSync(join(repository, ".kotta/config.yaml"), "utf8")).not.toContain("require_human_sign_approval");
-    expect(readFileSync(join(repository, ".kotta/process/index.md"), "utf8")).toContain(
-      "Generated file. Do not edit manually.",
-    );
-    expect(existsSync(join(repository, ".kotta/process/profiles/ui.yaml"))).toBe(true);
+    const config = readFileSync(join(repository, ".kotta/config.yaml"), "utf8");
+    expect(config).toContain("version: 6");
+    expect(config).toContain("base_branch: main");
+    expect(config).toContain("protected_branches:");
+    expect(config).toContain("strict: true");
+    // The process configuration is gone with the process.
+    for (const key of ["workflow", "agents", "batches", "worktrees", "worktree_root", "branch_pattern", "reject_unknown_profiles", "require_review_evidence_for_done"]) {
+      expect(config, `config carries no ${key}`).not.toContain(key);
+    }
     expect(existsSync(join(repository, ".kotta/spec/forms/goal.yaml"))).toBe(true);
     expect(existsSync(join(repository, ".kotta/spec/goals"))).toBe(true);
-    expect(readFileSync(join(repository, ".gitattributes"), "utf8")).toContain(".kotta/process/index.md merge=union");
+    expect(existsSync(join(repository, ".kotta/process"))).toBe(false);
+    expect(existsSync(join(repository, ".kotta/legacy"))).toBe(false);
+    expect(existsSync(join(repository, ".gitattributes"))).toBe(false);
+    expect(readFileSync(join(repository, ".kotta/README.md"), "utf8")).toContain("version 6");
     expect(readdirSync(join(repository, ".kotta")).sort()).toEqual([
-      ".kotta-generated.json", "AGENTS.md", "README.md", "config.yaml", "process", "spec",
+      ".kotta-generated.json", "AGENTS.md", "README.md", "config.yaml", "spec",
     ]);
+  });
+
+  test("the fresh workspace validates and is current for every command", () => {
+    const repository = mkdtempSync(join(tmpdir(), "kotta-init-current-"));
+    execFileSync("git", ["init", "-b", "main"], { cwd: repository });
+    execFileSync("node", [cli, "init", "--json"], { cwd: repository });
+
+    expect(JSON.parse(execFileSync("node", [cli, "validate", "--json"], { cwd: repository, encoding: "utf8" }))).toMatchObject({ ok: true, data: { forms: 11, specNodes: 0 } });
+    expect(execFileSync("node", [cli, "migrate", "--dry-run"], { cwd: repository, encoding: "utf8" })).toContain("already on the current shape");
   });
 });

@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Kotta turns human intent into repository-native tasks designed for AI to execute and humans to accept." />
+    <meta name="description" content="Kotta keeps the technical model of your product — rules, examples, entities, use cases, interfaces — beside the narrative spec and the code, as the accepted truth, and says which promises the code keeps." />
     <meta name="theme-color" content="#f3f2f2" />
-    <title>Kotta — Figure out what you want. Let AI execute it.</title>
+    <title>Kotta — The technical model beside your narrative spec</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" />
@@ -44,66 +44,67 @@
         <div class="container hero-grid">
           <div class="hero-copy">
             <h1 id="hero-title">
-              The last 10% is the whole job.
-              <strong>Start there.</strong>
+              Prose proposes. The model is what was agreed.
+              <strong>Keep it beside the code.</strong>
             </h1>
-            <p class="hero-lede">AI made the first 90% cheap. Kotta holds the rest as a contract in your repo: acceptance traced to specification, checks that run instead of being narrated, and a human yes — with a receipt — before anything closes.</p>
+            <p class="hero-lede">Kotta keeps the technical model of your product — rules, examples, entities, state machines, use cases, interfaces — as plain files in your repo, next to the OpenSpec narrative. Every node says where it came from and who decided it. One human yes lands a change. The code names the promise it keeps.</p>
             <div class="hero-actions">
               <a class="button button-primary" href="#install">Install Kotta</a>
               <a class="button button-secondary" href="https://github.com/arpadtamasi/kotta">View on GitHub <span aria-hidden="true">↗</span></a>
             </div>
-            <p class="hero-meta">Local-first · MIT licensed · plain files · no hosted account</p>
+            <p class="hero-meta">chat → narrative spec → technical model → code · MIT licensed · plain files</p>
           </div>
 
-          <aside class="task-record" aria-label="A Kotta task moving from intent to human acceptance">
-            <div class="task-record-head">
-              <span>.kotta/process/tasks/T-042.md</span>
-              <span class="state">review</span>
+          <aside class="node-card" aria-label="A business rule in the technical model, with its provenance and evidence">
+            <div class="node-card-head">
+              <span>.kotta/spec/business-rules/pause-keeps-the-game.md</span>
+              <span class="state">accepted</span>
             </div>
-            <div class="task-title">
-              <span class="task-id">T-042</span>
-              <h2>Make the first viewport explain the product</h2>
+            <div class="node-title">
+              <span class="node-id">business rule · BR-01m1…</span>
+              <h2>Pausing stops the clock and keeps the game</h2>
             </div>
-            <dl class="task-fields">
+            <dl class="node-fields">
               <div>
-                <dt>Intent</dt>
-                <dd>A visitor understands the offer before scrolling.</dd>
+                <dt>Rule</dt>
+                <dd>A paused game SHALL keep its score and its turn; only the clock stops.</dd>
               </div>
               <div>
-                <dt>Spec</dt>
-                <dd>Acceptance cites spec/user-stories/first-viewport.md</dd>
+                <dt>Source</dt>
+                <dd>openspec/changes/add-pause/conversation.md · J3</dd>
               </div>
               <div>
-                <dt>Execution</dt>
-                <dd>One agent · one branch · one isolated worktree.</dd>
+                <dt>Origin</dt>
+                <dd><span class="prov-badge">stated</span> <span class="prov-badge">decided by a human</span></dd>
               </div>
               <div>
                 <dt>Evidence</dt>
-                <dd>run: npx playwright test — verified: exit 0</dd>
+                <dd>bound: tests/game/pause.test.ts</dd>
               </div>
             </dl>
             <div class="human-gate">
               <span class="gate-signal" aria-hidden="true"></span>
-              <span><b>Human decision required</b> The agent cannot accept its own work.</span>
+              <span><b>Accepted at the one gate</b> approval.yaml records who said yes, to exactly which delta.</span>
             </div>
           </aside>
         </div>
         <div class="container install-ribbon" aria-label="Install Kotta">
           <span>Start in any Git repository</span>
-          <code>npm install --global @arpadtamasi/kotta</code>
+          <code>npm install --global @arpadtamasi/kotta@next</code>
           <a href="#install">Full setup ↓</a>
         </div>
       </section>
 
       <section class="problem" id="why" data-unit="problem" aria-labelledby="problem-title">
         <div class="container problem-layout">
-          <h2 id="problem-title">AI can execute more work than you can continuously observe.</h2>
+          <h2 id="problem-title">Prose alone loses what the code needs.</h2>
           <div class="problem-copy">
-            <p class="problem-lede">The bottleneck moved. It is no longer producing code. It is keeping the agreement intact while agents move faster than the conversation around them.</p>
+            <p class="problem-lede">A narrative spec is where a change is argued. It is not where the agreement survives. Measured on real projects, prose keeps losing the same four things.</p>
             <div class="problem-points">
-              <div><b>Chat forgets the promise.</b><span>Intent dissolves into scrollback, follow-ups, and a different session tomorrow.</span></div>
-              <div><b>Agents report “done.”</b><span>The claim arrives before reproducible evidence and human acceptance.</span></div>
-              <div><b>Parallel work shares risk.</b><span>Branches, claims, dependencies, and decisions become coordination by memory.</span></div>
+              <div><b>The why goes unsaid.</b><span>The what and the how are written down; the goals and the stories — why, and for whom — are not.</span></div>
+              <div><b>Structure does not come back.</b><span>Round-trip a model through prose and the goals it served are lost, and invented ones take their place.</span></div>
+              <div><b>Copied promises drift.</b><span>The same interface, copied into two repositories, already says two different things.</span></div>
+              <div><b>The machine decides unnoticed.</b><span>Wherever a gap is filled in silently, an agent made a product decision nobody saw.</span></div>
             </div>
           </div>
         </div>
@@ -112,22 +113,22 @@
       <section class="arrivals" data-unit="arrivals" aria-labelledby="arrivals-title">
         <div class="container">
           <h2 id="arrivals-title">Three ways in.</h2>
-          <p class="arrivals-lede">The specification says what must be true. The code is the implementation. A task connects them — and it cannot close until a human accepts the evidence. Three entries into the same loop.</p>
+          <p class="arrivals-lede">The narrative says what a change is for. The model says precisely what was accepted. The code keeps it and says so. Wherever you start, you arrive at the same model.</p>
           <ol class="arrival-list">
             <li>
-              <h3>New software</h3>
-              <p class="arrival-path"><code>spec → task → code</code></p>
-              <p>You have an idea, not a specification, and you are not going to write one in Word. The workshops run as conversation and land nodes an agent can execute against the same hour.</p>
+              <h3>A new product</h3>
+              <p class="arrival-path"><code>OpenSpec change → /plan-change → model</code></p>
+              <p>Write the change in prose, the way you already do. The planning skill translates it into model nodes, marks where each one came from, and asks for what nobody said instead of inventing it.</p>
             </li>
             <li>
-              <h3>A legacy rewrite</h3>
-              <p class="arrival-path"><code>code → spec → task → code</code></p>
-              <p>The code is the only specification you have, and it will not say which behaviour was ever intended. Read it back out, and the rewrite finally has something to be wrong against.</p>
+              <h3>An OpenSpec repository</h3>
+              <p class="arrival-path"><code>kotta import openspec → kotta plan</code></p>
+              <p>The requirements, scenarios and purposes you already have become a first model, every node marked as the machine’s draft. The planning report lists what the prose never said.</p>
             </li>
             <li>
-              <h3>A codebase already under way</h3>
-              <p class="arrival-path"><code>running system → observation → spec → task → code</code></p>
-              <p>Nobody stops the world to specify it first. What the running system tells you becomes an observation, dispositioned on purpose, never folded into the task you are on.</p>
+              <h3>A Kotta 0.x workspace</h3>
+              <p class="arrival-path"><code>kotta migrate --dry-run → kotta migrate</code></p>
+              <p>The specification stays byte for byte as it is. The old process state moves into a read-only archive, and no identifier is lost on the way.</p>
             </li>
           </ol>
         </div>
@@ -136,21 +137,21 @@
       <section class="mechanism" id="how" data-unit="workflow" aria-labelledby="mechanism-title">
         <div class="container">
           <div class="mechanism-heading">
-            <h2 id="mechanism-title">The agreement becomes executable.</h2>
-            <p>Kotta keeps the promise, the run, and the proof in the repository. Your agent gets a bounded task. You get the final decision.</p>
+            <h2 id="mechanism-title">One change, one human yes.</h2>
+            <p>The narrative proposes, the model is measured, the human decides once, and the rest is mechanical. Nothing asks again after the gate.</p>
           </div>
-          <ol class="mechanism-flow" aria-label="Kotta task lifecycle">
-            <li><span>01</span><h3>Define</h3><p>Write the outcome, scope, acceptance, and verification.</p><code>backlog → defined</code></li>
-            <li><span>02</span><h3>Execute</h3><p>Claim one task on one branch in one isolated worktree.</p><code>defined → active</code></li>
-            <li><span>03</span><h3>Prove</h3><p>Map each acceptance condition to concrete, reproducible evidence.</p><code>active → review</code></li>
-            <li><span>04</span><h3>Accept</h3><p>A human says yes. Kotta records who approved what and when.</p><code>review → done</code></li>
+          <ol class="mechanism-flow" aria-label="The four steps of a change">
+            <li><span>01</span><h3>Propose</h3><p>Argue the change in prose, then translate it into model nodes, each with its provenance.</p><code>/plan-change</code></li>
+            <li><span>02</span><h3>Plan</h3><p>Measure the delta against the accepted model: conflicts, open questions, drift, what the machine decided.</p><code>kotta plan &lt;change&gt;</code></li>
+            <li><span>03</span><h3>Approve</h3><p>The one human gate. You say yes in the chat; Kotta records the receipt.</p><code>kotta approve &lt;change&gt; --by you</code></li>
+            <li><span>04</span><h3>Archive</h3><p>The model is merged, the narrative is regenerated from it, and any drift is reported.</p><code>kotta archive &lt;change&gt;</code></li>
           </ol>
           <div class="repository-line">
-            <code>.kotta/spec/</code><span>what must be true</span>
+            <code>openspec/changes/</code><span>what is proposed</span>
             <i aria-hidden="true">→</i>
-            <code>.kotta/process/</code><span>what is happening</span>
+            <code>.kotta/spec/</code><span>what was accepted</span>
             <i aria-hidden="true">→</i>
-            <code>git history</code><span>what actually happened</span>
+            <code>kotta gap</code><span>what the code keeps</span>
           </div>
         </div>
       </section>
@@ -158,20 +159,19 @@
       <section class="difference" data-unit="comparison" aria-labelledby="difference-title">
         <div class="container">
           <div class="difference-heading">
-            <h2 id="difference-title">Not another agent. The control layer around all of them.</h2>
-            <p>Keep the tools you already use. Kotta gives their work one durable agreement and one legal path to completion.</p>
+            <h2 id="difference-title">Not another spec tool. The layer between prose and code.</h2>
+            <p>Keep the tools you already use. OpenSpec holds the narrative; Kotta holds the model it is measured against. They are partners, not rivals.</p>
           </div>
           <div class="comparison-wrap" tabindex="0" aria-label="Comparison of Kotta with adjacent tools; scroll horizontally to see every column">
             <table>
               <thead>
-                <tr><th scope="col">Layer</th><th scope="col">What it keeps</th><th scope="col">What it controls</th><th scope="col">What “done” means</th></tr>
+                <tr><th scope="col">Layer</th><th scope="col">What it keeps</th><th scope="col">Its strength</th><th scope="col">Where it stops</th></tr>
               </thead>
               <tbody>
-                <tr><th scope="row">Agent chat</th><td data-label="Keeps">The conversation</td><td data-label="Controls">The current run</td><td data-label="Done">The agent says so</td></tr>
-                <tr><th scope="row">Issue tracker</th><td data-label="Keeps">The human-readable issue</td><td data-label="Controls">Status and ownership</td><td data-label="Done">Team convention</td></tr>
-                <tr><th scope="row">Agent runtime</th><td data-label="Keeps">Prompt and execution context</td><td data-label="Controls">Tools and model</td><td data-label="Done">Runtime-specific checks</td></tr>
-                <tr><th scope="row">Spec generator</th><td data-label="Keeps">The spec files</td><td data-label="Controls">Nothing after handoff</td><td data-label="Done">The plan was written</td></tr>
-                <tr class="kotta-row"><th scope="row">Kotta</th><td data-label="Keeps">The accepted repository agreement</td><td data-label="Controls">Claims, Git isolation, gates</td><td data-label="Done">Evidence accepted by a human</td></tr>
+                <tr><th scope="row">Agent chat</th><td data-label="Keeps">The conversation</td><td data-label="Strength">Where intent is first said</td><td data-label="Stops">Scrollback, not an agreement</td></tr>
+                <tr><th scope="row">Issue tracker</th><td data-label="Keeps">Work items and their status</td><td data-label="Strength">Who is doing what</td><td data-label="Stops">Not what the product promises</td></tr>
+                <tr><th scope="row">Spec generator</th><td data-label="Keeps">The narrative spec in prose</td><td data-label="Strength">Proposing and arguing a change</td><td data-label="Stops">Structure and who decided are not machine-checked</td></tr>
+                <tr class="kotta-row"><th scope="row">Kotta</th><td data-label="Keeps">The technical model, with provenance</td><td data-label="Strength">Validation, one gate, evidence in the code</td><td data-label="Stops">Leaves the prose to the narrative, and generates it</td></tr>
               </tbody>
             </table>
           </div>
@@ -181,8 +181,8 @@
       <section class="quickstart" id="install" data-unit="quickstart" aria-labelledby="install-title">
         <div class="container quickstart-layout">
           <div class="quickstart-copy">
-            <h2 id="install-title">Install it. Define one real task.</h2>
-            <p>Kotta runs inside the repository you already have. Node.js 20+ and Git are the only runtime requirements.</p>
+            <h2 id="install-title">Install it. Plan one real change.</h2>
+            <p>Kotta runs inside the repository you already have. Node.js 20+ and Git are the only runtime requirements. This is a pre-release, published under the <code>next</code> tag.</p>
             <ul>
               <li>No service to deploy</li>
               <li>No database to maintain</li>
@@ -193,18 +193,22 @@
           <div class="terminal" aria-label="Kotta installation commands">
             <div class="terminal-head"><span>terminal</span><span>verified setup</span></div>
             <pre tabindex="0"><code><span class="comment"># Install the CLI</span>
-npm install --global @arpadtamasi/kotta@0.11.1
+npm install --global @arpadtamasi/kotta@1.0.0-alpha.1
 
 <span class="comment"># Inside an existing Git repository:
-# workspace, agent skills and the rules your agents read</span>
+# the form registry, the skills and the rules your agents read</span>
 kotta init
 
-<span class="comment"># Or drive it from the chat</span>
-/setup-kotta
-/define-task</code></pre>
+<span class="comment"># From the chat: translate an OpenSpec change into the model</span>
+/plan-change
+
+<span class="comment"># Then measure it, say yes, and land it</span>
+kotta plan &lt;change&gt;
+kotta approve &lt;change&gt; --by you
+kotta archive &lt;change&gt;</code></pre>
             <div class="terminal-result">
-              <span>Created task T-…</span>
-              <strong>Waiting for your approval.</strong>
+              <span>Wrote planning.md</span>
+              <strong>Waiting for your yes.</strong>
             </div>
           </div>
         </div>
@@ -214,9 +218,9 @@ kotta init
     <footer data-unit="trust">
       <section class="closing" aria-labelledby="closing-title">
         <div class="container closing-layout">
-          <h2 id="closing-title">Everything stays where the work already is.</h2>
+          <h2 id="closing-title">The agreement stays where the code already is.</h2>
           <div class="closing-action">
-            <p>Kotta is Hungarian for sheet music: the code is one performance, the score is what lets you play it again. Plain files. Git history. Human acceptance — give the agent a task it can execute, and yourself a result you can actually accept.</p>
+            <p>Kotta is Hungarian for sheet music: the code is one performance, the score is what lets you play it again. Plain files beside the code. The narrative written from the model. One human yes per change — and every promise the code keeps, named.</p>
             <a class="button button-light" href="https://github.com/arpadtamasi/kotta">Explore Kotta on GitHub <span aria-hidden="true">↗</span></a>
           </div>
         </div>

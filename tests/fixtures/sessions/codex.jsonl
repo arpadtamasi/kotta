@@ -1,0 +1,16 @@
+{"timestamp": "2026-09-21T09:00:00.000Z", "type": "session_meta", "payload": {"id": "fixture", "cwd": "/home/bob/work/report", "originator": "codex_cli_rs"}}
+{"timestamp": "2026-09-21T09:00:00.000Z", "type": "response_item", "payload": {"type": "message", "role": "developer", "content": [{"type": "input_text", "text": "<permissions instructions>…</permissions instructions>"}]}}
+{"timestamp": "2026-09-21T09:00:00.000Z", "type": "response_item", "payload": {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "# AGENTS.md instructions for /home/bob/work/report\n\n<INSTRUCTIONS>be nice</INSTRUCTIONS>"}, {"type": "input_text", "text": "<environment_context>\n  <cwd>/home/bob/work/report</cwd>\n</environment_context>"}]}}
+{"timestamp": "2026-09-21T09:00:00.000Z", "type": "turn_context", "payload": {"cwd": "/home/bob/work/report"}}
+{"timestamp": "2026-09-21T09:01:00.000Z", "type": "response_item", "payload": {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "# Context from my IDE setup:\n\n## Open tabs:\n- report.ts: src/report.ts\n\n## My request for Codex:\nAdd an export button to the report page. The staging token is gho_FAKEfakeFAKEfakeFAKEfake1234 and the AWS key AKIAFAKEFAKEFAKEFAKE.\n"}]}}
+{"timestamp": "2026-09-21T09:01:00.000Z", "type": "response_item", "payload": {"type": "reasoning", "summary": []}}
+{"timestamp": "2026-09-21T09:01:00.000Z", "type": "response_item", "payload": {"type": "function_call", "name": "shell", "arguments": "{}", "call_id": "c1"}}
+{"timestamp": "2026-09-21T09:01:00.000Z", "type": "response_item", "payload": {"type": "function_call_output", "call_id": "c1", "output": "ok"}}
+{"timestamp": "2026-09-21T09:02:00.000Z", "type": "response_item", "payload": {"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "I suggest a CSV export first and PDF later. Should I start with CSV?"}]}}
+{"timestamp": "2026-09-21T09:03:00.000Z", "type": "response_item", "payload": {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "no, PDF first"}]}}
+{"timestamp": "2026-09-21T09:05:00.000Z", "type": "response_item", "payload": {"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "Which page size do you need?"}]}}
+{"timestamp": "2026-09-21T09:06:00.000Z", "type": "response_item", "payload": {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "A4. The session cookie was eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJmaXh0dXJlLXVzZXIifQ.c2lnbmF0dXJlLWZpeHR1cmU"}]}}
+{"timestamp": "2026-09-21T09:08:00.000Z", "type": "response_item", "payload": {"type": "message", "role": "assistant", "content": [{"type": "output_text", "text": "Done. I'd recommend adding a test too — want me to?"}]}}
+{"timestamp": "2026-09-21T09:09:00.000Z", "type": "response_item", "payload": {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "<image>"}, {"type": "input_text", "text": "</image>"}]}}
+{"timestamp": "2026-09-21T09:09:00.000Z", "type": "response_item", "payload": {"type": "message", "role": "user", "content": [{"type": "input_text", "text": "yes"}]}}
+{"timestamp": "2026-09-21T09:09:00.000Z", "type": "event_msg", "payload": {"type": "token_count"}}

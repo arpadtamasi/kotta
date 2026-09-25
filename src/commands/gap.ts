@@ -4,6 +4,8 @@ import { readWorkspaceConfig } from "../core/config.js";
 import { parseMarkdown } from "../core/markdown.js";
 import { workspaceDirectoryName } from "../filesystem/workspace.js";
 import { git } from "../git/git.js";
+import { type EvidenceLevel } from "../core/evidence.js";
+import { ROOT_MODULE, discoverModules, isEvidencePath, listedFiles, moduleOf, placeNode } from "../core/modules.js";
 
 export interface GapEvidence {
   kind: "code" | "test" | "command";
@@ -18,6 +20,23 @@ export interface GapNode {
   changed: boolean;
   evidence: GapEvidence[];
   evidenceSought: string;
+  /** none: nothing names the id; cited: a committed file does; bound: a test's own name does. */
+  level: EvidenceLevel;
+  /** The node's module: where its evidence is, or an interface's `module:`. Null when unplaced or straddling. */
+  module: string | null;
+  /** Every module holding evidence for the node. */
+  modules: string[];
+  /** Evidence in more than one module, on a node that is not an interface. */
+  straddler: boolean;
+}
+
+/** One module's promises by evidence level. A straddling node is counted in each of its modules. */
+export interface GapModuleSummary {
+  module: string;
+  promises: number;
+  cited: number;
+  bound: number;
+  none: number;
 }
 
 /**
@@ -55,6 +74,13 @@ export interface GapReportResult {
     /** Nodes the landing commit touched, against the nodes whose agreement it actually moved. */
     landingTouched: number;
     changedNodes: string[];
+    /** Only the nodes of this module are reported, when the report was asked for one. */
+    module: string | null;
+    /** Per module: promises, and how many are cited, bound, or without evidence. */
+    modules: GapModuleSummary[];
+    /** Nodes with no evidence, so no module: counted apart from every module. */
+    unplaced: number;
+    straddlers: string[];
     nodes: GapNode[];
     promises: GapNode[];
     acceptedGaps: AcceptedImplementationGap[];
@@ -73,6 +99,8 @@ interface AcceptedNode {
   title: string;
   path: string;
   accepted: string[];
+  /** Read only on an interface node, where it names the module whose surface the node is. */
+  module: unknown;
 }
 
 const SOURCE_EXTENSIONS = new Set([".c", ".cc", ".cpp", ".cs", ".go", ".java", ".js", ".jsx", ".kt", ".mjs", ".php", ".py", ".rb", ".rs", ".sh", ".ts", ".tsx"]);
@@ -111,21 +139,19 @@ function acceptedNodes(root: string, ref: string, workspace: string): AcceptedNo
         title: String(entity.data.title ?? id).trim(),
         path,
         accepted: Array.isArray(entity.data.accepted) ? entity.data.accepted.map(String) : [],
+        module: entity.data.module,
       });
     }
   }
   return nodes.sort((left, right) => left.title.localeCompare(right.title) || left.id.localeCompare(right.id));
 }
 
-function evidenceKind(path: string): GapEvidence["kind"] {
-  if (/(?:^|\/)(?:test|tests|spec|specs)(?:\/|$)|\.(?:test|spec)\./i.test(path)) return "test";
-  if (/(?:^|\/)(?:bin|cli|commands|scripts)(?:\/|$)|(?:^|\/)package\.json$|\.(?:sh|bash|zsh)$/i.test(path)) return "command";
-  return "code";
-}
-
+/**
+ * Every committed file outside the workspace. A module's published `kotta-spec/` is excluded too: it
+ * is a copy of the specification, and a copy of a promise is not evidence that it is kept.
+ */
 function readableRepositoryFiles(root: string, ref: string, workspace: string): Array<{ path: string; text: string }> {
-  const excluded = `${workspace}/`;
-  return treePaths(root, ref).filter((path) => !path.startsWith(excluded)).flatMap((path) => {
+  return treePaths(root, ref).filter((path) => isEvidencePath(path, workspace)).flatMap((path) => {
     try {
       const text = atRef(root, ref, path);
       return text.includes("\0") || text.length > 1_000_000 ? [] : [{ path, text }];
@@ -258,7 +284,19 @@ export function formatGapReport(data: GapReportResult["data"]): string {
     // Counted apart, because the three ask for opposite work and one total hid that
     // (BR-01m0swjgrreeby1pyfdzf4mf7d). `unimplemented` is the one to read as debt.
     `Promises without evidence: ${data.promises.length} · ${ADMISSION_KINDS.map((kind) => `${kind}: ${data.acceptedGaps.filter((gap) => gap.kind === kind).length}`).join(" · ")}${data.unkinded.length ? ` · admitted without a kind: ${data.unkinded.length}` : ""} · Unspecified enforcement: ${data.reverse.length}`,
+    `Evidence levels: bound ${data.nodes.filter((node) => node.level === "bound").length} · cited ${data.nodes.filter((node) => node.level === "cited").length} · none ${data.nodes.filter((node) => node.level === "none").length}${data.module ? ` · module ${data.module}` : ""}`,
   ];
+  // By module only once a manifest declares one: a single-module repository has nothing to split.
+  if (data.modules.some((row) => row.module !== ROOT_MODULE) || data.straddlers.length) {
+    lines.push("", "## Evidence by module");
+    for (const row of data.modules) lines.push(`- ${row.module}: ${row.promises} promise${row.promises === 1 ? "" : "s"} · bound ${row.bound} · cited ${row.cited} · none ${row.none}`);
+    if (data.unplaced) lines.push(`- no module (no evidence): ${data.unplaced}`);
+    const straddling = data.nodes.filter((node) => node.straddler);
+    if (straddling.length) {
+      lines.push("", "## Straddling promises: evidenced in more than one module");
+      for (const node of straddling) lines.push(`- ${node.title} · ${node.id} — ${node.modules.join(", ")}; move the shared part into an interface (${node.path})`);
+    }
+  }
   const changed = data.nodes.filter((node) => node.changed);
   if (changed.length) {
     lines.push("", "## Latest accepted spec delta");
@@ -310,8 +348,26 @@ export function formatGapReport(data: GapReportResult["data"]): string {
   return `${lines.join("\n")}\n`;
 }
 
+function summarize(nodes: GapNode[], moduleNames: string[]): GapModuleSummary[] {
+  return moduleNames.map((module) => {
+    const mine = nodes.filter((node) => node.modules.includes(module) || (node.module === module && !node.modules.length));
+    return {
+      module,
+      promises: mine.length,
+      cited: mine.filter((node) => node.level === "cited").length,
+      bound: mine.filter((node) => node.level === "bound").length,
+      none: mine.filter((node) => node.level === "none").length,
+    };
+  }).filter((row) => row.promises > 0 || row.module !== ROOT_MODULE);
+}
+
+export interface GapOptions {
+  /** Report only this module's nodes: the ones evidenced in it, and the interfaces that name it. */
+  module?: string;
+}
+
 /** Read only committed bytes from the configured base branch; never refreshes an index or writes. */
-export function gapReport(repositoryRoot: string): GapReportResult {
+export function gapReport(repositoryRoot: string, options: GapOptions = {}): GapReportResult {
   const config = readWorkspaceConfig(repositoryRoot);
   const baseBranch = config.baseBranch;
   const commit = git(repositoryRoot, ["rev-parse", "--verify", `${baseBranch}^{commit}`]);
@@ -319,14 +375,28 @@ export function gapReport(repositoryRoot: string): GapReportResult {
   const nodes = acceptedNodes(repositoryRoot, commit, workspace);
   const files = readableRepositoryFiles(repositoryRoot, commit, workspace);
   const landing = lastSpecLanding(repositoryRoot, commit, workspace);
+  // The modules as the manifests at the same commit declare them: the report reads one commit, whole.
+  const { modules } = discoverModules(listedFiles(repositoryRoot, files));
+  const moduleNames = modules.map((module) => module.name);
+  if (options.module !== undefined && !moduleNames.includes(options.module)) {
+    throw new Error(`No module named '${options.module}' at ${baseBranch}@${commit.slice(0, 7)}. Modules: ${moduleNames.join(", ")}.`);
+  }
 
-  const described = nodes.map((node): GapNode => ({
-    ...node,
-    changed: landing.changedPaths.has(node.path),
-    evidence: files.filter((file) => file.text.includes(node.id)).map((file) => ({ kind: evidenceKind(file.path), path: file.path }))
-      .sort((left, right) => left.kind.localeCompare(right.kind) || left.path.localeCompare(right.path)),
-    evidenceSought: `the exact node id ${node.id} in code, tests, or command definitions on ${baseBranch}@${commit}`,
-  })).sort((left, right) => Number(right.changed) - Number(left.changed) || left.title.localeCompare(right.title) || left.id.localeCompare(right.id));
+  const every = nodes.map((node): GapNode => {
+    const placement = placeNode({ id: node.id, form: node.form, title: node.title, path: node.path, data: { module: node.module } }, files, modules);
+    const { module: _declared, ...rest } = node;
+    return {
+      ...rest,
+      changed: landing.changedPaths.has(node.path),
+      evidence: placement.evidence.map(({ kind, path }) => ({ kind, path })),
+      evidenceSought: `the exact node id ${node.id} in code, tests, or command definitions on ${baseBranch}@${commit}`,
+      level: placement.level,
+      module: placement.module,
+      modules: placement.modules,
+      straddler: placement.straddler,
+    };
+  }).sort((left, right) => Number(right.changed) - Number(left.changed) || left.title.localeCompare(right.title) || left.id.localeCompare(right.id));
+  const described = options.module === undefined ? every : every.filter((node) => node.modules.includes(options.module!) || node.module === options.module);
 
   const promises: GapNode[] = [];
   const acceptedGaps: AcceptedImplementationGap[] = [];
@@ -341,13 +411,18 @@ export function gapReport(repositoryRoot: string): GapReportResult {
     else if (!admission.kind) unkinded.push(node);
     else acceptedGaps.push({ id: node.id, title: node.title, path: node.path, kind: admission.kind, reason: admission.reason, changed: node.changed });
   }
-  const reverse = enforcementSites(files, nodes.map((node) => node.id));
+  const moduleFiles = options.module === undefined ? files : files.filter((file) => moduleOf(file.path, modules) === options.module);
+  const reverse = enforcementSites(moduleFiles, nodes.map((node) => node.id));
   const data: GapReportResult["data"] = {
     baseBranch,
     commit,
     specLanding: landing.commit,
     landingTouched: landing.touched,
     changedNodes: described.filter((node) => node.changed).map((node) => node.id),
+    module: options.module ?? null,
+    modules: summarize(described, options.module === undefined ? moduleNames : [options.module]),
+    unplaced: described.filter((node) => node.module === null && !node.straddler).length,
+    straddlers: described.filter((node) => node.straddler).map((node) => node.id),
     nodes: described,
     promises,
     acceptedGaps,

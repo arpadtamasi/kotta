@@ -1,15 +1,12 @@
 // @vitest-environment jsdom
 //
-// The specification as a destination of its own. The first wave made it legible where a task is
-// read and left it with no way in: 141 nodes reachable only through a task that happened to name
-// them, and a rail calling the flow "observations, tasks, batches" when the chain the product runs
-// is observations → specification → tasks (IF-01m0f0wn898ggsdxa0kh6t6tnw,
-// BR-01m0pw5bc7b1rkg5dct5qgdkmb). The admissions are the other half: three kinds that ask for
-// opposite work, counted apart or not at all (BR-01m0swjgrreeby1pyfdzf4mf7d).
+// The specification is the board's one destination in 1.0: every node of every form, grouped by
+// the form that declares it, with its admission and its place in the graph. The admissions are
+// three kinds that ask for opposite work, counted apart or not at all.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { EntityDrawer, Rail, SpecView, admissionKind, readBoard } from "../../ui/src/App";
-import { task, workspace } from "./fixtures";
+import { EntityDrawer, SpecView, TopBar, admissionKind, readBoard } from "../../ui/src/App";
+import { node, workspace } from "./fixtures";
 
 afterEach(cleanup);
 
@@ -19,29 +16,21 @@ const GAP = "UC-01m0fpqfxjvet99wbz0v1ag64q";
 const REMEDY = "EX-01m0p6c7a46000000000000ex";
 const NAMING = "BR-01m0f0wn89c50fe1mz5yn1nw85";
 
-const node = (id: string, form: string, title: string, over: Record<string, unknown> = {}) => ({
-  id, form, title, path: `.kotta/spec/${form}s/${id.slice(-8)}.md`, accepted: [], edges: {},
-  sections: { intent: "What this node promises." }, ...over,
-});
-
-const executing = task("T-01m120js1qey632tbv5can43ed", "A landing that only re-kinds admissions is not a delta", {
-  status: "done", sections: { outcome: "Delta." }, spec: [GAP],
-});
-
 const populated = workspace({
-  tasks: [executing],
   spec: [
     node(ACTOR, "actor", "Operator", { accepted: ["structural: assigned from the form, not from examining it."] }),
     node(GOAL, "goal", "Work is accounted for"),
     node(GAP, "use-case", "Analyze the implementation gap", {
       accepted: ["unexamined: nobody has checked whether this promise is kept."],
       edges: { actor: [ACTOR], goal: [GOAL] },
+      sections: { intent: `Answer which promises have no evidence, for ${ACTOR}.`, alternatives: "A deliberate gap is listed with its reason." },
     }),
     node(REMEDY, "example", "A remedy that adds a capability amends the specification", {
       accepted: ["unimplemented: the work this names is not done."],
     }),
     node(NAMING, "business-rule", "Identifiers are permanent"),
   ],
+  specForms: [{ id: "use-case", directory: "use-cases", title: "A goal-directed interaction." }],
 });
 
 const board = () => readBoard(populated);
@@ -56,11 +45,10 @@ function renderView(over: Partial<Parameters<typeof SpecView>[0]> = {}) {
 }
 
 describe("the specification view", () => {
-  it("reaches every node without a task that names it, grouped by the form that declares it", () => {
+  it("reaches every node, grouped by the form that declares it", () => {
     const { container } = renderView();
     const groups = [...container.querySelectorAll(".spec-group__head")].map((head) => head.textContent);
 
-    // Every form present is a group, and the node no task names is in it just the same.
     expect(groups.some((head) => head?.startsWith("business-rule"))).toBe(true);
     expect(screen.getByText("Identifiers are permanent")).toBeTruthy();
     expect(screen.getByText("A remedy that adds a capability amends the specification")).toBeTruthy();
@@ -78,10 +66,10 @@ describe("the specification view", () => {
     expect(screen.queryByText("Analyze the implementation gap")).toBeNull();
   });
 
-  it("says whether anything executes a node, and finds one by title", () => {
+  it("says what names a node, and finds one by title", () => {
     renderView();
-    expect(screen.getByText("1 task executes it")).toBeTruthy();
-    expect(screen.getAllByText("no task names it").length).toBe(4);
+    expect(screen.getAllByText("1 node names it").length).toBe(2);
+    expect(screen.getAllByText("nothing names it").length).toBe(3);
 
     cleanup();
     const { container } = renderView({ query: "identifiers" });
@@ -99,45 +87,56 @@ describe("the specification view", () => {
   it("reads the kind an admission names, and nothing from one that names none", () => {
     expect(admissionKind({ accepted: ["structural: assigned from the form."] })).toBe("structural");
     expect(admissionKind({ accepted: [] })).toBeNull();
-    // An admission that names no kind is not filed under a guess (BR-01m0swjgrreeby1pyfdzf4mf7d).
     expect(admissionKind({ accepted: ["nobody has looked at this yet."] })).toBeNull();
   });
-});
 
-describe("the derivation chain the rail names", () => {
-  it("puts the specification between what was noticed and what is executed", () => {
-    render(<Rail view="home" board={board()} running={false} onView={() => {}} onWatch={() => {}} onReport={() => {}} />);
-    const chain = screen.getAllByRole("button").map((item) => item.textContent ?? "");
-    const step = (label: string) => chain.findIndex((text) => text.includes(label));
-
-    expect(step("Observations")).toBeLessThan(step("Specification"));
-    expect(step("Specification")).toBeLessThan(step("Tasks"));
-    expect(step("Tasks")).toBeLessThan(step("Batches"));
+  it("shows no process: no task, batch, claim or approval word anywhere", () => {
+    const { container } = renderView();
+    render(<TopBar workspace={populated} board={board()} onRefresh={() => {}} refreshed={0} />);
+    const text = document.body.textContent?.toLowerCase() ?? "";
+    for (const word of ["task", "batch", "claim", "approval", "observation", "decision"]) expect(text, `no "${word}" on the board`).not.toContain(word);
+    expect(container.textContent).toContain("Read-only");
   });
 });
 
 describe("a node's place in the graph", () => {
-  it("shows the edges it answers, the nodes that answer it, and the tasks that execute it", () => {
-    render(<EntityDrawer id={GAP} workspace={populated} board={board()} onClose={() => {}} onOpen={() => {}} />);
+  it("shows the edges it answers and the nodes that answer it", () => {
+    render(<EntityDrawer id={GAP} board={board()} onClose={() => {}} onOpen={() => {}} />);
 
     // Outgoing: what this node answers, under the field name its own form gave the edge.
     const answers = screen.getByText("Answers").closest("section")!;
     expect(within(answers).getByText("actor")).toBeTruthy();
     expect(within(answers).getByText("Operator")).toBeTruthy();
     expect(within(answers).getByText("Work is accounted for")).toBeTruthy();
+    // The admission is shown as what it is: which kind of gap, and why.
+    expect(screen.getByText(/unexamined: nobody has checked/)).toBeTruthy();
+    expect(screen.getByText(`.kotta/spec/use-cases/analyze-the-implementation-gap-${GAP.slice(-8)}.md`)).toBeTruthy();
 
     // Incoming: read from the other side, never from a reciprocal field this node would carry.
     cleanup();
-    render(<EntityDrawer id={ACTOR} workspace={populated} board={board()} onClose={() => {}} onOpen={() => {}} />);
+    render(<EntityDrawer id={ACTOR} board={board()} onClose={() => {}} onOpen={() => {}} />);
     const answered = screen.getByText("Answered by").closest("section")!;
     expect(within(answered).getByText("Analyze the implementation gap")).toBeTruthy();
     expect(within(answered).getByText("actor")).toBeTruthy();
   });
 
-  it("opens the node an edge names", () => {
+  it("opens the node an edge names, and a node named in prose", () => {
     const onOpen = vi.fn();
-    render(<EntityDrawer id={GAP} workspace={populated} board={board()} onClose={() => {}} onOpen={onOpen} />);
-    fireEvent.click(screen.getByText("Operator"));
+    render(<EntityDrawer id={GAP} board={board()} onClose={() => {}} onOpen={onOpen} />);
+    // The title appears twice on purpose: once as the edge's target, once where the prose names it.
+    const [edge, prose] = screen.getAllByRole("button", { name: /Operator/ });
+    expect(edge.className).toContain("spec-ref");
+    fireEvent.click(edge);
     expect(onOpen).toHaveBeenCalledWith(ACTOR);
+    // In prose the reference reads as its title, with the id kept for recall.
+    expect(prose.className).toContain("ref-s");
+    expect(prose.textContent).toContain(`A-${ACTOR.slice(-8)}`);
+    fireEvent.click(prose);
+    expect(onOpen).toHaveBeenCalledTimes(2);
+  });
+
+  it("a reference to nothing is drawn as dangling, never as a node", () => {
+    render(<EntityDrawer id="UC-01m0c0000000000000000000zz" board={board()} onClose={() => {}} onOpen={() => {}} />);
+    expect(screen.getByText("dangling reference")).toBeTruthy();
   });
 });

@@ -4,26 +4,156 @@ All notable changes to Kotta (called A-Team before 0.3.0) will be documented in 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0-alpha.1] — 2026-09-25
+
+Kotta becomes the owner of the **technical specification** beside the narrative one, and lays the
+process engine of the 0.x releases down. Four layers, joined by references and never by copies:
+chat → narrative spec (OpenSpec) → technical model (Kotta forms) → code. Kotta owns the third. The
+technical model is the accepted truth; the narrative is generated from it, and where the two
+disagree the disagreement is reported, never silently resolved. The OpenSpec change
+`openspec/changes/kotta-1-0-muszaki-spec-reteg/` is the source of the decisions, and its
+`DECISIONS.md` records every point the plan left open. This alpha carries the whole of it: the
+foundation, the planning phase and its one human gate, the module boundaries, the narrative
+distillation, the OpenSpec import and the diagram views.
+
+### Removed — BREAKING
+
+- **The process layer.** The commands `task` (new, define, validate, start, execute, brief, review,
+  close, cancel, reopen, list, show), `batch` (new, add, remove, validate, start, status, close,
+  finalize, list, show), `observation` (new, validate, link, resolve, list, show), `decision`
+  (create, list, show), `claim` (list, release), `status` and `sweep`; every `--approve` gate and
+  the approval receipts; the execution engine (fresh-context agent launch, claims, feature branches,
+  worktrees, the coordinator branch, the execution events); the MCP write and approval tools
+  (`task_*`, `observation_*`, `approval_request`, `task_message_record`, `workspace_status`,
+  `workspace_sweep`, the `*_list`/`*_show` families) and `spec_create`.
+- The process modules behind them: `core/boundary`, `core/claim`, `core/coverage`,
+  `core/decision`, `core/events`, `core/execution-metrics`, `core/operations`, `core/profiles`,
+  `core/review-evidence`, `core/validation`, `filesystem/batches`, `filesystem/entities`,
+  `git/control-plane`, `git/coordinator`.
+- The submission-boundary check that was on `main` after 0.11.1 and never released: it recorded the
+  commit a task's submission stood on and reported work landing past it. It leaves with the task it
+  measured.
+- The published schemas `task`, `batch`, `claim`, `event` and `observation`; the `profiles/`
+  directory; the skills `start-task`, `execute-task`, `execute-batch`, `submit-review`,
+  `close-task`, `validate-observation` and `define-task` (`kotta sync` removes an installed copy it
+  owns); the `templates/workspace/process/` skeleton; the oneanda demo import script.
+- The `a-team` binary alias. The pre-rename `.a-team/` directory is still discovered so that it can
+  be migrated.
+- The board's task, batch, observation, decision and run views, the entity timeline and the CLI
+  sheet.
+- The workspace configuration keys `workflow.*`, `agents.*`, `git.worktrees`,
+  `git.worktree_root`, `git.branch_pattern`, `batches.*`, `validation.reject_unknown_profiles`,
+  `validation.require_verification_for_defined` and `validation.require_review_evidence_for_done`.
+- The `SPEC_REFERENCES_TASK` validation rule: there is no task for a node to reference.
+
+### Changed
+
+- **Workspace shape version 6.** `.kotta/config.yaml` records `version: 6` and carries `project`,
+  `git.base_branch`, `git.protected_branches`, `validation.strict` and, optionally, `narrative`.
+  `spec/` is unchanged. There is no `process/`; `init` creates the form registry, the workspace
+  README, the rules file and nothing else, and writes no `.gitattributes` or `.gitignore` entry.
+- **No compatibility layer, only migration.** Every command on a pre-1.0 workspace — versions 1 to
+  5, under `.kotta/` or `.a-team/` — refuses, names `kotta migrate`, and does nothing else. The last
+  pre-1.0 release stays installable as `@arpadtamasi/kotta@0.11.1`.
+- **`kotta migrate` carries a workspace from any older shape to version 6 in one run.** The whole
+  `process/` namespace moves untouched into `legacy/process/` — through `git mv` where Git tracks
+  it, so history follows — and `legacy/README.md` says what the archive is and which shape wrote it.
+  A v1–v4 shape is first carried to the v5 shape on its way in, so every archive reads alike.
+  `config.yaml` is rewritten to version 6 with every dropped key named in the plan; the workspace
+  README and the rules file are regenerated (a hand-edited rules file is reported and left alone);
+  the generated index's merge attribute leaves `.gitattributes`. `spec/` is left byte-identical and
+  the command proves it after writing, as it proves that no identifier was lost. `--dry-run` prints
+  the identical plan and writes nothing. A workspace with no form registry at all gets the bundled
+  one.
+- `kotta validate` measures the specification alone and prints what it measured. It also measures
+  every open change's `model/` nodes one by one (id, form, fields, sections, required provenance),
+  and reports the module-boundary findings as warnings.
+- `kotta questions` reads the `Open decisions` of specification drafts; a question naming a decision
+  reference counts as answered at face value.
+- `kotta mcp` serves read-only tools: `spec_list`, `spec_show`, `workspace_validate`,
+  `workspace_questions`, `gap_report`. `kotta integrate codex` writes no approval-tool block.
+- `kotta ui` refuses a pre-1.0 workspace instead of explaining it on the board.
+- `kotta sync` removes any installed skill Kotta's manifest owns that this release no longer ships.
+- The rules file (`.kotta/AGENTS.md`) describes the new product: the four layers, the project-owned
+  model, the change layout and the one human gate, evidence by citation, and the read-only archive.
+- A section holding only an HTML comment counts as empty to validation, so a scaffold's hint or an
+  import's note never hides a missing section.
 
 ### Added
 
-- **Submission is a boundary the tool holds, in both directions.** The state machine said so; nothing
-  enforced it, because the record had no anchor — the commit a submission stands on was computed for
-  the evidence table only when a `run:` check happened to be declared, printed into prose, and
-  forgotten. A submission now records that commit always, and the boundary is read from it in both
-  directions. Work that lands on a task's branch after its submission is named by commit in the
-  sweep, before the gate, and again at the close, so a human never accepts it in silence. A claim
-  that committed nothing between its start and its submission is said at submission, where the
-  record can still be corrected. Nothing is refused: a branch that took its base back through a
-  merge and a deliverable that legitimately predates its claim are both honest, and a refusal firing
-  on those would cost more than the silence did. A task that recorded no commit reports nothing —
-  the 132 tasks closed before this are not retroactively accused. Both failures it would have caught
-  were the agent's own, on 2026-08-29. A commit whose whole diff is Kotta's own process records is
-  not work past the boundary: where the control plane and the execution branch are one branch — the
-  adopted single checkout every hosted session has — the submission commits itself one commit after
-  the commit it recorded, and without that exclusion the report fired on every task. A commit
-  touching anything else, `spec/` included, is still reported, even when it touches records too.
+- **The planning phase and the one human gate.** A change is an OpenSpec change directory with its
+  model delta beside the prose: `openspec/changes/<name>/model/<form-directory>/<slug>-<id8>.md` for
+  a new node or an accepted node changed under its own id, `model/REMOVED.md` for removals,
+  `planning.md` for the report, `approval.yaml` for the receipt, and an optional `conversation.md`.
+  - `kotta spec new <form> --into <change>` drafts a node into a change's model delta; the change
+    directory must already exist.
+  - `kotta plan <change>` measures the delta against the accepted model and writes `planning.md`:
+    (a) the structure of the delta, (b) the merged view, (c) conflict candidates — at most ten,
+    ranked, with a hand-written `judged` block between `<!-- kotta:judged -->` markers that survives
+    a re-plan — (d) silences, the open questions the model still asks, (e) narrative drift and
+    (f) provenance, with the list of everything the agent decided on its own.
+  - `kotta approve <change> --by <who>` records the human's yes, given in the conversation, as
+    `approval.yaml`, bound to a hash of the delta. It refuses without a planning report, with a report
+    older than the model it describes, with an open question, or with a delta that does not validate.
+  - `kotta archive <change>` re-runs the mechanical checks, merges the approved model into
+    `.kotta/spec/`, regenerates the narrative, and moves the change to
+    `openspec/changes/archive/<date>-<name>/`. It asks nothing again and commits nothing.
+- **Provenance on every node.** An optional `provenance` block — `level` (`stated`,
+  `partly-inferred`, `inferred`), `decided_by` (`human`, `agent-proposed-human-approved`,
+  `agent-decided`), `sources`, `quote`, and `inferred` (what had to be supplied, required unless
+  stated) — is required on a change's model nodes and published as `schemas/provenance.schema.json`.
+  `kotta spec new` scaffolds it.
+- **The narrative is generated from the model.** On archive each touched capability's
+  `openspec/specs/<capability>/spec.md` is regenerated from the nodes carrying that `capability:`:
+  its Purpose from the goal, `### Requirement:` blocks from business rules, interfaces and quality
+  attributes, `#### Scenario:` blocks from the examples that prove them (an interface with no
+  example gets its own contract as its scenario), and the use cases and user stories as informative
+  `## Use cases` and `## User stories` sections, never as requirements. Each entry carries a
+  `<!-- kotta: ID -->` binding. Drift left after regeneration refuses the archive. Warnings name a
+  requirement with no scenario and a Purpose shorter than OpenSpec's 50 characters; nothing is
+  padded or invented.
+- **`narrative: generated | authored`** in `.kotta/config.yaml` (or, second, `openspec/config.yaml`).
+  `generated`, the default, is the above; with `authored` people write `openspec/specs/`, archive
+  writes none of it and reports each bound requirement's drift as a warning.
+- **Normative sections.** A form declares `normative_sections` (business rule: Rule; interface:
+  Postconditions, Invariants; quality attribute: Response), and one of them must say SHALL or MUST.
+  Missing, it is a warning on an accepted node and an error in a change's model; use cases and user
+  stories stay free-form. The scaffold puts the hint under each such heading as a comment.
+- **Module boundaries.** `kotta modules` lists the modules the manifests declare (npm and pnpm
+  workspaces, `pyproject.toml`, `pubspec.yaml`, Cargo, `go.mod`); no hand-kept module registry. A
+  node's module is derived from where its evidence lives. `kotta modules check` reports a module with
+  an outward surface but no interface node, a node straddling modules, and a reference that crosses a
+  boundary without going through an interface — as warnings; an interface naming an unknown
+  `module:` refuses.
+- **Cross-repository references.** An interface node may carry a `reference:` block (`module`,
+  `version`, `resolve`, optional `id` and `url`) naming another repository's module instead of
+  copying its promise. `kotta modules check` resolves it (file, package or git), reports a pin the
+  core has moved past, and flags an interface whose body is a near-copy of a foreign one.
+  `kotta modules publish-spec <module>` copies a module's interfaces, and the rules and examples
+  bound to them, into `<module>/kotta-spec/` to ship with the package.
+- **Evidence levels.** `kotta gap` reports every accepted node as `none`, `cited` (its id is named
+  in the code) or `bound` (its id is in a test's name; a skipped test does not bind), with a
+  per-module summary; `--module <name>` narrows the report to one module.
+- **Narrative distillation.** `kotta narrative <change> --from <log or directory> [--since <time>]`
+  reads a Claude Code or Codex session log and writes the change's `conversation.md`: the human's
+  sentences of intent, each proposal with the human's answer, the paths turned down, the questions,
+  and what it could not pair — every item with an id and a UTC time, and who decided. Secrets, e-mail
+  addresses, phone numbers and home directories are filtered before anything is written, and the
+  filter says what it removed. A hand-edited distillate is never overwritten. `kotta plan` lists a
+  conversation citation it cannot resolve.
+- **OpenSpec import.** `kotta import openspec [--change <name>]` drafts an existing OpenSpec
+  project's requirements, scenarios and purposes into a new change's model, every node marked
+  `agent-decided`, and leaves what prose cannot state as a note for the planning phase to ask. The
+  narrative is not changed.
+- **Diagram views on the board.** Beside the specification list, `kotta ui` draws the use case
+  diagram, the story map, the entity map and the state machines (Mermaid, bundled and loaded only
+  when a diagram opens), marks every node with its provenance badges, filters to only what the agent
+  decided, and opens the distilled conversation a node's provenance cites. The board gained a dark
+  theme.
+- **The `plan-change` skill** carries a change from its narrative to the one gate: distil the
+  conversation, translate requirement by requirement with provenance on every node, run
+  `kotta plan`, put the report to the human, and record the yes.
+- Releases with a pre-release version are published under the `next` dist-tag, never as `latest`.
 
 ## [0.11.1] - 2026-08-30
 
