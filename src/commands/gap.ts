@@ -10,8 +10,6 @@ import { ROOT_MODULE, discoverModules, isEvidencePath, listedFiles, moduleOf, pl
 export interface GapEvidence {
   kind: "code" | "test" | "command";
   path: string;
-  /** The module the file belongs to, by the manifests at the same commit. */
-  module: string;
 }
 
 export interface GapNode {
@@ -390,7 +388,7 @@ export function gapReport(repositoryRoot: string, options: GapOptions = {}): Gap
     return {
       ...rest,
       changed: landing.changedPaths.has(node.path),
-      evidence: placement.evidence,
+      evidence: placement.evidence.map(({ kind, path }) => ({ kind, path })),
       evidenceSought: `the exact node id ${node.id} in code, tests, or command definitions on ${baseBranch}@${commit}`,
       level: placement.level,
       module: placement.module,
