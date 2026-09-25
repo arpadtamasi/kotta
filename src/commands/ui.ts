@@ -1,7 +1,7 @@
 import { spawn, spawnSync } from "node:child_process";
-import { createReadStream, existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { createReadStream, existsSync, readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
 import { createServer, type Server, type ServerResponse } from "node:http";
-import { basename, dirname, extname, join, normalize, resolve } from "node:path";
+import { basename, dirname, extname, isAbsolute, join, normalize, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import matter from "gray-matter";
 import { parse } from "yaml";
@@ -106,6 +106,15 @@ export function resolveWorkspaceLocation(workspaceOption: string): { workspace: 
   return { workspace: candidate, projectRoot: candidate, directory: basename(candidate) };
 }
 
+/** Where a node came from and who settled it — the frontmatter contract of phase 2, carried as written. */
+export interface BoardProvenance {
+  level?: "stated" | "partly-inferred" | "inferred";
+  decided_by?: "human" | "agent-proposed-human-approved" | "agent-decided";
+  sources: string[];
+  quote?: string;
+  inferred?: string;
+}
+
 export interface BoardSpecNode {
   id: string;
   form: string;
@@ -114,6 +123,35 @@ export interface BoardSpecNode {
   accepted: string[];
   edges: Record<string, string[]>;
   sections: Record<string, string>;
+  /** Present only when the node records it; a node without one is shown without a mark. */
+  provenance?: BoardProvenance;
+  /** The optional capability path (`identity/user-auth`) the diagrams group by. */
+  capability?: string;
+}
+
+const PROVENANCE_LEVELS = ["stated", "partly-inferred", "inferred"] as const;
+const PROVENANCE_DECIDERS = ["human", "agent-proposed-human-approved", "agent-decided"] as const;
+
+/**
+ * The provenance block as the board shows it. Only the enumerated values are carried as a level or
+ * a decider: an unknown word is not guessed into one of the three, it is left unmarked.
+ */
+export function readProvenance(value: unknown): BoardProvenance | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const raw = value as Record<string, unknown>;
+  const text = (field: unknown) => (typeof field === "string" && field.trim() ? field.trim() : undefined);
+  const level = PROVENANCE_LEVELS.find((candidate) => candidate === raw.level);
+  const decider = PROVENANCE_DECIDERS.find((candidate) => candidate === raw.decided_by);
+  const sources = (Array.isArray(raw.sources) ? raw.sources : raw.sources === undefined ? [] : [raw.sources])
+    .filter((source): source is string => typeof source === "string" && source.trim() !== "").map((source) => source.trim());
+  const provenance: BoardProvenance = { sources };
+  if (level) provenance.level = level;
+  if (decider) provenance.decided_by = decider;
+  const quote = text(raw.quote);
+  if (quote) provenance.quote = quote;
+  const inferred = text(raw.inferred);
+  if (inferred) provenance.inferred = inferred;
+  return provenance.level || provenance.decided_by || sources.length || quote || inferred ? provenance : undefined;
 }
 
 export interface BoardWorkspace {
@@ -190,7 +228,11 @@ export function readWorkspace(workspaceOption: string): BoardWorkspace {
   const spec: BoardSpecNode[] = specForms.flatMap((form) => gather(`${SPEC_DIRECTORY}/${form.directory}`).map((entry) => {
     const parsed = matter(readRepoFile(entry.repoPath, entry.fromRef));
     const id = String(parsed.data.id ?? "").trim();
+    const provenance = readProvenance(parsed.data.provenance);
+    const capability = typeof parsed.data.capability === "string" && parsed.data.capability.trim() ? parsed.data.capability.trim() : undefined;
     return {
+      ...(provenance ? { provenance } : {}),
+      ...(capability ? { capability } : {}),
       id,
       form: String(parsed.data.form ?? form.id).trim(),
       title: String(parsed.data.title ?? id).trim(),
@@ -199,7 +241,7 @@ export function readWorkspace(workspaceOption: string): BoardWorkspace {
       accepted: Array.isArray(parsed.data.accepted) ? parsed.data.accepted.map(String) : [],
       // Every frontmatter field that names other nodes, under the name its form gave it.
       edges: Object.fromEntries(Object.entries(parsed.data as Record<string, unknown>)
-        .filter(([field]) => !["id", "form", "title", "accepted"].includes(field))
+        .filter(([field]) => !["id", "form", "title", "accepted", "provenance", "capability"].includes(field))
         .map(([field, value]) => [field, (Array.isArray(value) ? value : [value])
           .filter((candidate): candidate is string => typeof candidate === "string" && MINTED_REFERENCE.test(candidate))])
         .filter(([, ids]) => (ids as string[]).length)) as Record<string, string[]>,
@@ -236,6 +278,47 @@ export function readNotices(workspace: string, useBase: boolean, base: string, f
   const onDisk = workingTreeNodeCount(workspace);
   if (onDisk === 0) return [];
   return [`The board reads ${basename(workspace)}/ from the '${base}' ref, not from the working tree. That ref has no specification nodes while the working tree has ${onDisk} — a change that has not reached '${base}' yet. Commit it and merge it into '${base}'; the board is empty until then, and the workspace is not.`];
+}
+
+/** The one folder the narrative endpoint reads, relative to the served project root. */
+export const NARRATIVE_ROOT = "openspec";
+const NARRATIVE_MAX_BYTES = 1024 * 1024;
+
+export class NarrativeError extends Error {
+  constructor(readonly status: 400 | 404, message: string) { super(message); }
+}
+
+/**
+ * One Markdown file under the project's `openspec/` folder, read from the working tree — the
+ * narrative a node's provenance cites. Refuses, rather than normalises, anything that could leave
+ * that folder: an absolute path, a `..` segment, a backslash, a NUL byte, a non-Markdown file, and
+ * a symbolic link whose target resolves outside it.
+ */
+export function readNarrative(projectRoot: string, requested: unknown): { path: string; content: string } {
+  if (typeof requested !== "string" || !requested.trim()) throw new NarrativeError(400, "Name a file: ?path=openspec/changes/<change>/conversation.md.");
+  const path = requested.trim();
+  if (path.includes("\0") || path.includes("\\") || isAbsolute(path) || /^[A-Za-z]:/.test(path)) {
+    throw new NarrativeError(400, `'${path}' is not a repository-relative path.`);
+  }
+  const segments = path.split("/");
+  if (segments[0] !== NARRATIVE_ROOT || segments.length < 2 || segments.some((segment) => segment === ".." || segment === "." || segment === "")) {
+    throw new NarrativeError(400, `Only files under ${NARRATIVE_ROOT}/ are served, named without '.' or '..' segments; got '${path}'.`);
+  }
+  if (extname(path).toLowerCase() !== ".md") throw new NarrativeError(400, `Only Markdown narrative is served; '${path}' is not a .md file.`);
+  const folder = join(projectRoot, NARRATIVE_ROOT);
+  const candidate = join(projectRoot, ...segments);
+  if (!existsSync(folder) || !existsSync(candidate)) throw new NarrativeError(404, `No such file: ${path}.`);
+  // The lexical checks above keep the name inside the folder; the real path keeps a link from leaving it.
+  const realFolder = realpathSync(folder);
+  const realFile = realpathSync(candidate);
+  const inside = relative(realFolder, realFile);
+  if (!inside || inside.startsWith("..") || isAbsolute(inside) || !realFile.startsWith(realFolder + sep)) {
+    throw new NarrativeError(400, `'${path}' resolves outside ${NARRATIVE_ROOT}/.`);
+  }
+  const stat = statSync(realFile);
+  if (!stat.isFile()) throw new NarrativeError(404, `No such file: ${path}.`);
+  if (stat.size > NARRATIVE_MAX_BYTES) throw new NarrativeError(400, `'${path}' is larger than the narrative limit of ${NARRATIVE_MAX_BYTES} bytes.`);
+  return { path, content: readFileSync(realFile, "utf8") };
 }
 
 function json(response: ServerResponse, status: number, value: unknown): void {
@@ -328,6 +411,7 @@ export async function bindUiServer(server: Server, host: string, requested?: num
 /** Returns the listening server so callers — tests above all — can shut it down. */
 export async function uiCommand(options: { workspace: string; port?: number; host: string; json?: boolean; open?: boolean }, open: BrowserOpener = openInBrowser): Promise<Server> {
   const initial = readWorkspace(options.workspace);
+  const { projectRoot } = resolveWorkspaceLocation(initial.workspace);
   const staticRoot = fileURLToPath(new URL("../../ui-dist", import.meta.url));
   if (!existsSync(join(staticRoot, "index.html"))) throw new Error("UI assets are missing. Run npm run build first.");
   const server = createServer((request, response) => {
@@ -340,6 +424,14 @@ export async function uiCommand(options: { workspace: string; port?: number; hos
     if (url.pathname === "/api/workspace") {
       try { json(response, 200, readWorkspace(initial.workspace)); }
       catch (error) { json(response, 500, { error: error instanceof Error ? error.message : String(error) }); }
+      return;
+    }
+    if (url.pathname === "/api/narrative") {
+      try { json(response, 200, readNarrative(projectRoot, url.searchParams.get("path"))); }
+      catch (error) {
+        if (error instanceof NarrativeError) json(response, error.status, { error: error.message });
+        else json(response, 500, { error: error instanceof Error ? error.message : String(error) });
+      }
       return;
     }
     const requested = url.pathname === "/" ? "index.html" : url.pathname.replace(/^\/+/, "");
