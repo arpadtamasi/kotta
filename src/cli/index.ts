@@ -16,6 +16,9 @@ import { doctorCommand } from "../commands/doctor.js";
 import { syncCommand } from "../commands/sync.js";
 import { gapReport } from "../commands/gap.js";
 import { displayId } from "../core/identity.js";
+import { formatPlan, planChange, type PlanResult } from "../commands/plan.js";
+import { approveChange, formatApprove, type ApproveResult } from "../commands/approve.js";
+import { archiveChange, formatArchive, type ArchiveResult } from "../commands/archive.js";
 
 const program = new Command();
 const packagePath = fileURLToPath(new URL("../../package.json", import.meta.url));
@@ -243,9 +246,27 @@ spec.command("new")
   .description("Mint and scaffold a specification node from its registered form")
   .argument("<form>", "A form id the workspace registry declares")
   .requiredOption("--title <title>", "What the node is called wherever a human reads it")
+  .option("--into <change>", "Draft the node into a change's model delta (openspec/changes/<change>/model/) instead of the accepted specification")
   .option("--json")
-  .action((form: string, options: { title: string; json?: boolean }) => print(newSpecNode({ form, title: options.title }), Boolean(options.json)));
+  .action((form: string, options: { title: string; into?: string; json?: boolean }) => print(newSpecNode({ form, title: options.title, into: options.into }), Boolean(options.json)));
 renderers.set("spec new", (result: unknown) => formatSpecNew(result as SpecNewResult));
+
+// The planning phase: measure a change's model delta, record the one human gate, land what was approved.
+define("plan <change>", (result: unknown) => formatPlan(result as PlanResult))
+  .description("Measure a change's model delta against the accepted model and write its planning.md: structure, conflicts, silences, drift, provenance")
+  .option("--json")
+  .action((change: string, options: { json?: boolean }) => print(planChange(change), Boolean(options.json)));
+
+define("approve <change>", (result: unknown) => formatApprove(result as ApproveResult))
+  .description("Record the human's yes to a planned change's model delta: the one gate, written as approval.yaml")
+  .requiredOption("--by <who>", "The human who said yes in the conversation")
+  .option("--json")
+  .action((change: string, options: { by: string; json?: boolean }) => print(approveChange(change, options.by), Boolean(options.json)));
+
+define("archive <change>", (result: unknown) => formatArchive(result as ArchiveResult))
+  .description("Land an approved change: merge its model into the specification, regenerate the narrative, move it to the archive")
+  .option("--json")
+  .action((change: string, options: { json?: boolean }) => print(archiveChange(change), Boolean(options.json)));
 
 define("sync", renderSync)
   .description("Install the skills Kotta ships, add newly shipped forms, and refresh the workspace rules file")

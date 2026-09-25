@@ -5,6 +5,8 @@ import { mintSpecId, specFilename } from "../core/identity.js";
 import { slugify } from "../core/naming.js";
 import { findRepositoryRoot, specPath } from "../filesystem/workspace.js";
 import { readFormRegistry, type SpecForm } from "../spec/registry.js";
+import { MODEL_DIRECTORY, resolveChange } from "../spec/change.js";
+import { provenanceScaffold } from "../spec/provenance.js";
 
 /**
  * `kotta spec new` — the one command that hands an author a node instead of asking them to type one.
@@ -28,6 +30,8 @@ export interface SpecNewData {
   unanswered: string[];
   /** Body headings the scaffold laid out empty. */
   sections: string[];
+  /** The change whose model delta the node was drafted into; null for the accepted specification. */
+  change: string | null;
 }
 
 export interface SpecNewResult {
@@ -53,6 +57,10 @@ function scaffoldFrontmatter(form: SpecForm, id: string, title: string): { data:
       unanswered.push(field);
     }
   }
+  // Where the content came from travels with the node. A node in a change must answer it; an
+  // accepted node may drop the block, but a present one is measured in full.
+  data.provenance = provenanceScaffold();
+  unanswered.push("provenance");
   return { data, unanswered };
 }
 
@@ -70,7 +78,7 @@ function scaffoldBody(form: SpecForm, title: string): string {
   return lines.join("\n");
 }
 
-export function newSpecNode(options: { form: string; title: string }, repositoryRoot?: string): SpecNewResult {
+export function newSpecNode(options: { form: string; title: string; into?: string }, repositoryRoot?: string): SpecNewResult {
   const root = repositoryRoot ?? findRepositoryRoot();
   const { forms } = readFormRegistry(root);
   if (!forms.length) throw new Error(`No form registry is installed at ${specPath(root, "forms")}. Run 'kotta init' or 'kotta migrate' first.`);
@@ -83,8 +91,10 @@ export function newSpecNode(options: { form: string; title: string }, repository
   const title = options.title.trim();
   if (!title) throw new Error("A node title is required; it is what names the node everywhere a human reads it.");
 
+  // Into a change, the node is part of that change's model delta; the accepted specification is untouched.
+  const change = options.into === undefined ? null : options.into.trim();
   const id = mintSpecId(form.prefix);
-  const directory = specPath(root, form.directory);
+  const directory = change === null ? specPath(root, form.directory) : join(resolveChange(root, change), MODEL_DIRECTORY, form.directory);
   const path = join(directory, specFilename(id, slugify(title)));
   if (existsSync(path)) throw new Error(`${path} already exists. Nothing was written; a scaffold never overwrites a node.`);
 
@@ -95,17 +105,19 @@ export function newSpecNode(options: { form: string; title: string }, repository
   return {
     ok: true,
     command: "spec new",
-    data: { id, form: form.id, title, path: relative(root, path), unanswered, sections: [...form.headings] },
+    data: { id, form: form.id, title, path: relative(root, path), unanswered, sections: [...form.headings], change },
   };
 }
 
 export function formatSpecNew(result: SpecNewResult): string {
   const { data } = result;
-  const lines = [`Drafted ${data.title} (${data.id}) as a ${data.form} at ${data.path}.`];
+  const lines = [`Drafted ${data.title} (${data.id}) as a ${data.form} at ${data.path}${data.change ? `, in the model delta of ${data.change}` : ""}.`];
   if (data.sections.length) lines.push(`Sections to fill: ${data.sections.join(", ")}.`);
   if (data.unanswered.length) lines.push(`Frontmatter to answer: ${data.unanswered.join(", ")}.`);
   lines.push(
-    "This is a draft, and nothing was committed: a shaped node becomes the agreement when it lands on the base branch on a human yes.",
+    data.change
+      ? `This is a draft in the change, and nothing was committed: 'kotta plan ${data.change}' measures the delta, and it lands through the gate ('kotta approve', then 'kotta archive').`
+      : "This is a draft, and nothing was committed: a shaped node becomes the agreement when it lands on the base branch on a human yes.",
     "Until it is filled in, 'kotta validate' names each unanswered part with its form's own question.",
   );
   return lines.join("\n");

@@ -1,26 +1,38 @@
 import { existsSync } from "node:fs";
 import { WORKSPACE_DIRECTORY_LABEL, findRepositoryRoot, workspacePath } from "../filesystem/workspace.js";
-import { readFormRegistry, readSpecNodes, validateSpecWorkspace, type ValidationIssue } from "../spec/registry.js";
+import { listChanges, readChangeModel } from "../spec/change.js";
+import { readFormRegistry, readSpecNodes, validateNodeSet, validateSpecWorkspace, type ValidationIssue } from "../spec/registry.js";
 
 export interface ValidateResult {
   ok: boolean;
   command: "validate";
-  data: { forms: number; specNodes: number };
+  data: { forms: number; specNodes: number; changes: number; changeNodes: number };
   errors: ValidationIssue[];
 }
 
 /**
  * Validate the technical specification: every form in the registry, every node against its form,
- * every edge against the node it names. The root is a parameter because `migrate` reports the
- * validity of what it just produced against the root it migrated.
+ * every edge against the node it names. The nodes an open change proposes under its `model/` are
+ * measured one by one as well, with provenance required; their edges resolve only in the merged view,
+ * which is `kotta plan`'s to measure. The root is a parameter because `migrate` reports the validity
+ * of what it just produced against the root it migrated.
  */
 export function validateWorkspace(repositoryRoot?: string): ValidateResult {
   const root = repositoryRoot ?? findRepositoryRoot();
   if (!existsSync(workspacePath(root))) {
-    return { ok: false, command: "validate", data: { forms: 0, specNodes: 0 }, errors: [{ code: "WORKSPACE_NOT_FOUND", message: `No ${WORKSPACE_DIRECTORY_LABEL} workspace exists at ${root}. Run kotta init first.`, path: root }] };
+    return { ok: false, command: "validate", data: { forms: 0, specNodes: 0, changes: 0, changeNodes: 0 }, errors: [{ code: "WORKSPACE_NOT_FOUND", message: `No ${WORKSPACE_DIRECTORY_LABEL} workspace exists at ${root}. Run kotta init first.`, path: root }] };
   }
   const errors = validateSpecWorkspace(root);
   const { forms } = readFormRegistry(root);
   const specNodes = readSpecNodes(root, forms).nodes.length;
-  return { ok: errors.length === 0, command: "validate", data: { forms: forms.length, specNodes }, errors };
+  let changes = 0;
+  let changeNodes = 0;
+  for (const name of listChanges(root)) {
+    const model = readChangeModel(root, name, forms);
+    if (!model.files.length) continue;
+    changes += 1;
+    changeNodes += model.nodes.length;
+    errors.push(...model.issues, ...validateNodeSet(forms, model.nodes, { requireProvenance: () => true, edges: false }));
+  }
+  return { ok: errors.length === 0, command: "validate", data: { forms: forms.length, specNodes, changes, changeNodes }, errors };
 }

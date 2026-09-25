@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/arpadtamasi/kotta/schemas/provenance.schema.json",
+  "title": "Kotta node provenance",
+  "description": "The 'provenance' block of a specification node's frontmatter: whether its content was stated, partly inferred or inferred, and who decided it. Optional on an accepted node, required on a node a change proposes under openspec/changes/<name>/model/.",
+  "type": "object",
+  "required": ["level", "decided_by"],
+  "properties": {
+    "level": { "enum": ["stated", "partly-inferred", "inferred"] },
+    "decided_by": { "enum": ["human", "agent-proposed-human-approved", "agent-decided"] },
+    "sources": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+    "quote": { "type": ["string", "null"], "description": "At most 30 words; the speaker and a timestamp when it comes from a conversation." },
+    "inferred": { "type": ["string", "null"], "description": "What had to be supplied; required when level is not 'stated'." }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "level": { "enum": ["partly-inferred", "inferred"] } } },
+      "then": { "required": ["inferred"], "properties": { "inferred": { "type": "string", "minLength": 1 } } }
+    },
+    {
+      "if": { "properties": { "level": { "enum": ["stated", "partly-inferred"] } } },
+      "then": { "required": ["sources"], "properties": { "sources": { "minItems": 1 } } }
+    }
+  ],
+  "additionalProperties": false
+}
