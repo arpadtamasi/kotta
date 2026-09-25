@@ -10,7 +10,12 @@ Ez a mappa az OpenSpec-change végrehajtásának ágens-briefjeit tartja, hogy b
 | 2A. tervezés-fázis: provenance, `spec new --into`, `plan`, `approve` (a kapu), `archive`, `plan-change` skill | `spike/k1-plan` (worktree `../kotta-k1-plan`) @ `495563a` | kész, 222 teszt zöld |
 | 2B. modulhatár: `modules`, `modules check`, `modules publish-spec`, `gap` szintek | `spike/k1-modules` (worktree `../kotta-k1-modules`) | kész, 216 teszt zöld; döntések a `DECISIONS.md` „Phase 2B” részében; összefésüléskor a CLI-felület snapshotja (`tests/integration/__snapshots__/surface-snapshot.test.ts.snap`) is újragenerálandó |
 | 2C. diagram-nézet a boardon, provenance-jelölés, narratíva-elérés | `spike/k1-ui` (worktree `../kotta-k1-ui`) | kész, 239 teszt zöld; négy diagram-nézet, provenance-jelölés és -szűrő, `GET /api/narrative`; `ui-dist/` 1,2 MB (Mermaid lustán tölt) |
-| 3. narratíva-desztilláció, OpenSpec-import, a workspace-ek migrálása, végpróba a kaszinón | — | nem kezdtük |
+| összefésülés: 2A+2B+2C egy fejen | `spike/kotta-1.0` @ `6e7711b` | kész, 275 teszt zöld, 16 parancs |
+| végpróba a kaszinón: migrate → plan → approve → archive | `/Users/rp/Dev/phd/oktatas/kaszino-e2e` | kész; 4 javítandó (3A) |
+| 3A. a végpróba javításai | `spike/k3-fix` (worktree `../kotta-k3-fix`) | nem indult |
+| 3B. narratíva-desztilláció (`kotta narrative`) | `spike/k3-narrative` (worktree `../kotta-k3-narrative`) | nem indult |
+| 3C. OpenSpec-import (`kotta import openspec`) | `spike/k3-import` (worktree `../kotta-k3-import`) | nem indult |
+| 3D. a workspace-ek migrálása, kiadás | — | nem kezdtük |
 
 Sorrend: 2A → 2B → 2C egymás után (a párhuzamos indítás egyszerre égeti a keretet), majd a három ág összefésülése `spike/kotta-1.0`-ra (az egyetlen várható ütközés `src/cli/index.ts` parancsregisztrációja), majd 3.
 
