@@ -63,13 +63,14 @@ jobs:
             npm publish "${TARBALL}" --access public --tag "${DIST_TAG}"
           fi
           REGISTRY_VERSION=""
-          for ATTEMPT in {1..12}; do
+          # A provenance-signed publish took more than a minute to index on 2026-09-25.
+          for ATTEMPT in {1..60}; do
             REGISTRY_VERSION="$(npm view "${NAME}@${VERSION}" version 2>/dev/null || true)"
             if test "${REGISTRY_VERSION}" = "${VERSION}"; then
               break
             fi
-            echo "Registry has not indexed ${NAME}@${VERSION} yet (attempt ${ATTEMPT}/12)."
-            sleep 5
+            echo "Registry has not indexed ${NAME}@${VERSION} yet (attempt ${ATTEMPT}/60)."
+            sleep 10
           done
           test "${REGISTRY_VERSION}" = "${VERSION}"
           node scripts/clean-install-canary.mjs "${NAME}@${VERSION}"
