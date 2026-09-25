@@ -62,6 +62,20 @@ openspec/changes/<name>/
    requirement heading lets `kotta plan` report when the prose and the node disagree. Report such a
    drift; do not rewrite either side to make it disappear.
 
+## An imported change
+
+`kotta import openspec` opens a change for an existing OpenSpec project and drafts only what the
+narrative states: a business rule per requirement, an example per scenario proving it, a goal per
+capability Purpose, each `stated` and `agent-decided`. Every section the narrative has no text for
+holds the comment `<!-- kotta import: not derivable … -->` and still counts as empty. Your part:
+
+- derive the actors, use cases, entities and state machines the requirements imply, as new nodes,
+  marked `partly-inferred` or `inferred` with what you supplied — the import drafted none;
+- answer each not-derivable section from the proposal's History (the archived changes) or the
+  sources it names; where none says it, ask — an `## Open decisions` item, never a guess;
+- a rule that is really an interface, a quality attribute or a use case may move to that form:
+  remove the draft and add the right node, keeping its provenance source.
+
 ## Run the measuring
 
 ```bash
