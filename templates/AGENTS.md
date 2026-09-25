@@ -29,7 +29,9 @@ the precise, machine-checkable form of what was accepted — and when the two di
 model is the truth and the disagreement is reported, not smoothed over; the code is what keeps the
 promises, and it says which by naming the node it keeps.
 
-A change moves through them in one pass. Its narrative lives in `openspec/changes/<name>/`; planning
+A change moves through them in one pass. Its narrative lives in `openspec/changes/<name>/`, with the
+conversation that shaped it distilled into `conversation.md` by `kotta narrative <name> --from <session
+log>` (secrets and personal data filtered before anything is written); planning
 translates it into a **model delta** under that change's `model/`, every node marked with its
 `provenance` (stated, partly inferred or inferred, and who decided it); `kotta plan <name>` measures
 the delta against the accepted model and writes `planning.md`; the human decides it — **the one gate**

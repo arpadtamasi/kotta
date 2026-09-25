@@ -32,24 +32,49 @@ openspec/changes/<name>/
   narrative spec `openspec/specs/<path>/spec.md` is generated from those nodes when the change is
   archived — unless the project writes its narrative by hand (see *Generated or authored narrative*).
 
+## Distil the conversation first
+
+If the change was shaped in an agent session, distil it before translating:
+
+```bash
+kotta narrative <name> --from <session log or directory> [--since <ISO time>]
+```
+
+It reads a Claude Code (`~/.claude/projects/<project>/*.jsonl`) or Codex
+(`~/.codex/sessions/**/rollout-*.jsonl`) log and writes `openspec/changes/<name>/conversation.md`:
+the human's own sentences of intent (`SZ1`, `SZ2`…), each proposal paired with the human's answer
+(`J1`…, a one-word "igen" included), the paths the human turned down (`E1`…), the questions with
+their answers (`K1`…), what it could not pair (`P1`…), and the raw source. Secrets, e-mail
+addresses, phone numbers and home directories are filtered before anything is written. Use
+`--since` when one session shaped several changes. A distillate that was edited by hand is never
+overwritten.
+
 ## Translate, with provenance on every node
 
 1. Read the narrative requirement by requirement. For each, decide which form states it (a rule, an
    example, a use case, an interface, a quality attribute, a story…) and read that form's
    `.kotta/spec/forms/<form>.yaml` for its required sections and edges.
-2. Look for the **why** in the narrative first — the proposal's Why, the requirement's own text, the
-   conversation — before you consider it missing. The planning phase asks only for what none of them
-   says.
+2. Look for the **why** in the narrative first — the proposal's Why, the requirement's own text, and
+   `conversation.md` — before you infer anything or consider it missing. Read the conversation before
+   you mark a node `partly-inferred` or `inferred`: a "why" the human said there is `stated`. The
+   planning phase asks only for what none of them says.
 3. Fill `provenance` on every delta node:
 
    ```yaml
    provenance:
      level: stated | partly-inferred | inferred
      decided_by: human | agent-proposed-human-approved | agent-decided
-     sources: ["openspec/changes/<name>/proposal.md · Why", "conversation.md · 10:04"]
+     sources: ["openspec/changes/<name>/proposal.md · Why", "openspec/changes/<name>/conversation.md · J3"]
      quote: "<≤ 30 words; speaker and timestamp when it comes from a conversation>"
      inferred: "<what had to be supplied>"   # required unless level is stated
    ```
+
+   A conversation source is always the repository-relative path
+   `openspec/changes/<name>/conversation.md`, followed by ` · ` (or `#`) and the item it cites — `J3`,
+   `SZ1`, `E2`, `K1` — so the board opens exactly that exchange; `kotta plan` lists a citation it
+   cannot resolve. A `J` item is `agent-proposed-human-approved`; an `SZ` item is `human`; an `E` item
+   records what the human chose instead of the agent's proposal, so cite it for the choice, never for
+   the proposal it turned down. A `P` item is unpaired: read it, and never cite it as an approval.
 
    `stated` means a source says it; quote it. `decided_by: agent-decided` is the honest mark for
    anything you chose that nobody said — it is listed at the gate for the human to see. Never mark
@@ -93,8 +118,9 @@ It reports (a) the delta's structure, (b) the merged model as a whole, (c) confl
 accepted nodes that share an edge with, are named by, or contrast with what the delta changes, and
 lifecycle transitions removed or reversed — ranked, at most ten, each awaiting judgement, (d) the
 silences: open decisions and unanswered form questions, (e) narrative drift, (f) the provenance
-summary with the list of what the machine decided, each with what it rests on. Fix what is
-structurally wrong, re-run, and repeat until only human questions remain.
+summary with the list of what the machine decided, each with what it rests on, and every citation of
+`conversation.md` that does not open at a heading. Fix what is structurally wrong, re-run, and repeat
+until only human questions remain.
 
 ## Judge the conflicts yourself
 

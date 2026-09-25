@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, sep } from "node:path";
 import { parseMarkdown, sections } from "../core/markdown.js";
 import { displayId } from "../core/identity.js";
 import { parseOpenQuestions, unresolvedQuestions } from "../core/questions.js";
@@ -62,6 +62,15 @@ export interface ProvenanceSummary {
   machineDecisions: Array<NodeRef & { inferred: string; quote: string; source: string }>;
 }
 
+export interface ConversationCitations {
+  /** Repository-relative `openspec/changes/<name>/conversation.md`, or null when the change has none. */
+  path: string | null;
+  /** How many delta-node sources cite a conversation. */
+  cited: number;
+  /** Citations the board could not open at the cited part: a wrong path, or a part no heading names. */
+  unresolved: Array<{ node: NodeRef; source: string; reason: string }>;
+}
+
 export interface ChangeAnalysis {
   change: string;
   deltaHash: string;
@@ -79,6 +88,8 @@ export interface ChangeAnalysis {
   drift: NarrativeDrift[];
   /** (f) */
   provenance: ProvenanceSummary;
+  /** The change's distilled conversation, and the provenance citations of it that do not resolve. */
+  conversation: ConversationCitations;
 }
 
 export interface Analysis extends ChangeAnalysis {
@@ -197,6 +208,54 @@ function provenanceSummary(root: string, delta: SpecNode[]): ProvenanceSummary {
   return { nodes: delta.length, unmarked, levels, decidedBy, machineDecisions };
 }
 
+/** A source's file and cited part: `<file> · <part>`, or `<file>#<part>`. */
+export function splitSource(source: string): { file: string; part: string | null } {
+  const [file, ...rest] = source.split(/\s+·\s+/);
+  const anchor = /^([^#\s]+\.md)#(.+)$/i.exec(file.trim());
+  if (anchor && !rest.length) return { file: anchor[1], part: anchor[2].trim() || null };
+  return { file: file.trim(), part: rest.join(" · ").trim() || null };
+}
+
+/** Whether a Markdown heading names the cited part — the same test the board uses to show it. */
+function headingNames(content: string, part: string): boolean {
+  const wanted = part.toLowerCase();
+  let fenced = false;
+  for (const line of content.split(/\r?\n/)) {
+    if (/^\s*```/.test(line)) fenced = !fenced;
+    const heading = !fenced && /^#{1,6}\s+(.+?)\s*#*\s*$/.exec(line);
+    if (heading && heading[1].toLowerCase().includes(wanted)) return true;
+  }
+  return false;
+}
+
+/**
+ * Every delta-node source citing a conversation, checked against the change's `conversation.md`: the
+ * path must be the repository-relative one the board serves, and the cited part a heading in it.
+ * Reported, not blocking — the provenance itself is measured in (a).
+ */
+function conversationCitations(root: string, model: ChangeModel): ConversationCitations {
+  const file = join(model.directory, "conversation.md");
+  const path = relative(root, file).split(sep).join("/");
+  const content = existsSync(file) ? readFileSync(file, "utf8") : null;
+  const unresolved: ConversationCitations["unresolved"] = [];
+  let cited = 0;
+  for (const node of model.nodes) {
+    const provenance = node.data.provenance as { sources?: unknown } | undefined;
+    const sources = Array.isArray(provenance?.sources) ? provenance.sources.filter((source): source is string => typeof source === "string") : [];
+    for (const source of sources) {
+      const { file: named, part } = splitSource(source);
+      if (!/(?:^|\/)conversation\.md$/i.test(named)) continue;
+      cited += 1;
+      const ref = reference(root, node);
+      if (named !== path) unresolved.push({ node: ref, source, reason: `name the conversation as ${path}, the repository-relative path the board opens` });
+      else if (content === null) unresolved.push({ node: ref, source, reason: `the change has no ${path}; distil it with 'kotta narrative'` });
+      else if (!part) unresolved.push({ node: ref, source, reason: "name the part it cites: an item id such as J1, or its time" });
+      else if (!headingNames(parseMarkdown(content).content, part)) unresolved.push({ node: ref, source, reason: `no heading in ${path} names '${part}'` });
+    }
+  }
+  return { path: content === null ? null : path, cited, unresolved };
+}
+
 /** Everything the planning phase knows about a change, computed from disk; nothing is written. */
 export function analyzeChange(root: string, name: string): Analysis {
   const { forms, issues: registryIssues } = readFormRegistry(root);
@@ -254,6 +313,7 @@ export function analyzeChange(root: string, name: string): Analysis {
     silences: { openDecisions, formQuestions },
     drift,
     provenance: provenanceSummary(root, model.nodes),
+    conversation: conversationCitations(root, model),
     forms,
     model,
     accepted,
@@ -370,6 +430,12 @@ export function renderPlanning(analysis: ChangeAnalysis, root: string, generated
   lines.push("What the machine decided alone:", "");
   if (!summary.machineDecisions.length) lines.push("- nothing");
   for (const decision of summary.machineDecisions) lines.push(`- ${named(decision)} — ${machineAccount(decision)}`);
+  lines.push("");
+  const conversation = analysis.conversation;
+  lines.push(conversation.path
+    ? `Conversation: ${conversation.path}, cited ${conversation.cited} time${conversation.cited === 1 ? "" : "s"}. Read it for the why before calling anything inferred.`
+    : "Conversation: none distilled for this change (`kotta narrative`).");
+  for (const citation of conversation.unresolved) lines.push(`- Unresolved: ${named(citation.node)} cites “${citation.source}” — ${citation.reason}.`);
   lines.push("");
   return `${lines.join("\n")}`;
 }

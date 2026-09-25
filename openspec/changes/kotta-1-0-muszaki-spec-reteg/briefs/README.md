@@ -15,6 +15,9 @@ Ez a mappa az OpenSpec-change végrehajtásának ágens-briefjeit tartja, hogy b
 | 3A. a végpróba javításai | `spike/k3-fix` (worktree `../kotta-k3-fix`) | kész, 287 teszt zöld; glossary-kontraszt állításból (a kaszinón 8 → 0 hamis jelölt), (f) quote/forrás, `validate` a change-node-okat is kimondja, SHALL/MUST a modellben (`normative_sections`: figyelmeztetés / change-ben hiba), interfész-szerződés mint scenario, `narrative: generated \| authored`, `judged` blokk a (c)-ben; döntések a `DECISIONS.md` „3A:” pontjaiban |
 | 3B. narratíva-desztilláció (`kotta narrative`) | `spike/k3-narrative` (worktree `../kotta-k3-narrative`) | nem indult |
 | 3C. OpenSpec-import (`kotta import openspec`) | `spike/k3-import` (worktree `../kotta-k3-import`) | kész, 282 teszt zöld; oktat-ai-fixture: 112 szabály + 226 példa + 12 cél vázlat, mind `agent-decided`, a `plan` 486 hiányt nevez; döntések a `DECISIONS.md` „3C:” pontjaiban; összefésüléskor a CLI-snapshot újragenerálandó |
+| 3A. a végpróba javításai | `spike/k3-fix` (worktree `../kotta-k3-fix`) | nem indult |
+| 3B. narratíva-desztilláció (`kotta narrative`) | `spike/k3-narrative` (worktree `../kotta-k3-narrative`) | kész, 293 teszt zöld (+18); `kotta narrative <change> --from <napló\|könyvtár> [--since] [--json]` Claude Code- és Codex-naplóból írja a `conversation.md`-t (SZ/J/E/K/P tételek, szűrés fajtánként); a `plan` (f) listázza a fel nem oldható `conversation.md`-hivatkozásokat; a board a `#rész` alakot is olvassa; döntések a `DECISIONS.md` „Phase 3B” részében; összefésüléskor a CLI-felület snapshotja újragenerálandó |
+| 3C. OpenSpec-import (`kotta import openspec`) | `spike/k3-import` (worktree `../kotta-k3-import`) | nem indult |
 | 3D. a workspace-ek migrálása, kiadás | — | nem kezdtük |
 
 Sorrend: 2A → 2B → 2C egymás után (a párhuzamos indítás egyszerre égeti a keretet), majd a három ág összefésülése `spike/kotta-1.0`-ra (az egyetlen várható ütközés `src/cli/index.ts` parancsregisztrációja), majd 3.

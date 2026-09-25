@@ -21,6 +21,7 @@ import { formatPlan, planChange, type PlanResult } from "../commands/plan.js";
 import { approveChange, formatApprove, type ApproveResult } from "../commands/approve.js";
 import { archiveChange, formatArchive, type ArchiveResult } from "../commands/archive.js";
 import { formatImport, importOpenSpec, type ImportResult } from "../commands/import.js";
+import { formatNarrative, narrativeCommand, type NarrativeResult } from "../commands/narrative.js";
 
 const program = new Command();
 const packagePath = fileURLToPath(new URL("../../package.json", import.meta.url));
@@ -297,6 +298,12 @@ importCommand.command("openspec")
   .option("--json")
   .action((options: { change?: string; json?: boolean }) => print(importOpenSpec({ change: options.change }), Boolean(options.json)));
 renderers.set("import openspec", (result: unknown) => formatImport(result as ImportResult));
+define("narrative <change>", (result: unknown) => formatNarrative(result as NarrativeResult))
+  .description("Distil an agent session log into the change's conversation.md: intent, proposals with the human's answers, paths turned down, questions")
+  .requiredOption("--from <path>", "A Claude Code or Codex session log (.jsonl), or a directory of them")
+  .option("--since <time>", "Only messages at or after this ISO 8601 time")
+  .option("--json")
+  .action((change: string, options: { from: string; since?: string; json?: boolean }) => print(narrativeCommand(change, { from: options.from, since: options.since }), Boolean(options.json)));
 
 define("sync", renderSync)
   .description("Install the skills Kotta ships, add newly shipped forms, and refresh the workspace rules file")
