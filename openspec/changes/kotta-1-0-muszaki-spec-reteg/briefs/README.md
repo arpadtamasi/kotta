@@ -14,7 +14,7 @@ Ez a mappa az OpenSpec-change végrehajtásának ágens-briefjeit tartja, hogy b
 | végpróba a kaszinón: migrate → plan → approve → archive | `/Users/rp/Dev/phd/oktatas/kaszino-e2e` | kész; 4 javítandó (3A) |
 | 3A. a végpróba javításai | `spike/k3-fix` (worktree `../kotta-k3-fix`) | nem indult |
 | 3B. narratíva-desztilláció (`kotta narrative`) | `spike/k3-narrative` (worktree `../kotta-k3-narrative`) | nem indult |
-| 3C. OpenSpec-import (`kotta import openspec`) | `spike/k3-import` (worktree `../kotta-k3-import`) | nem indult |
+| 3C. OpenSpec-import (`kotta import openspec`) | `spike/k3-import` (worktree `../kotta-k3-import`) | kész, 282 teszt zöld; oktat-ai-fixture: 112 szabály + 226 példa + 12 cél vázlat, mind `agent-decided`, a `plan` 486 hiányt nevez; döntések a `DECISIONS.md` „3C:” pontjaiban; összefésüléskor a CLI-snapshot újragenerálandó |
 | 3D. a workspace-ek migrálása, kiadás | — | nem kezdtük |
 
 Sorrend: 2A → 2B → 2C egymás után (a párhuzamos indítás egyszerre égeti a keretet), majd a három ág összefésülése `spike/kotta-1.0`-ra (az egyetlen várható ütközés `src/cli/index.ts` parancsregisztrációja), majd 3.
