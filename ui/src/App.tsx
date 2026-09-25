@@ -1,20 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { agentDecided, type SpecNode } from "./model";
+import { EntityMapView, ProvenanceBadges, ProvenancePanel, ProvenanceSummary, StateMachineView, StoryMapView, UseCaseView, VIEWS, type ViewKey } from "./views";
 
 /* ══ Kotta board ═══════════════════════════════════════
    A read-only projection of the technical specification: every node of every registered form,
-   grouped by form, with its admission and its place in the graph. Nothing here writes; there is
-   no process to drive. Phase 2 adds the diagrams (use case, story map, entity map, state machines)
-   on top of this list. Every colour, space and radius comes from the tokens in styles.css. */
+   grouped by form, with its admission and its place in the graph, and four diagrams of the same
+   model (views.tsx). Nothing here writes; there is no process to drive. Every colour, space and
+   radius comes from the tokens in styles.css. */
 
 /* ── Types ───────────────────────────────────────────── */
-/** One accepted specification node, as its form declares it. */
-export type SpecNode = {
-  id: string; form: string; title: string; path: string; accepted: string[]; sections: Record<string, string>;
-  /** The edges this node answers, by the field its form names them in. */
-  edges?: Record<string, string[]>;
-};
+export type { Provenance, SpecNode } from "./model";
 export type SpecForm = { id: string; directory: string; title: string };
 export type Workspace = {
   project: string; workspace?: string;
@@ -46,7 +43,7 @@ function entityLabel(id: string): string {
   const title = entityTitles.get(id);
   return title ? `${title} · ${id}` : id;
 }
-function titleOf(id: string): string | null {
+export function titleOf(id: string): string | null {
   return entityTitles.get(id) ?? null;
 }
 
@@ -140,11 +137,11 @@ export function readBoard(workspace: Workspace): Board {
 
 /* ── Small presentational bits ───────────────────────── */
 /** The small monospace id marker the design puts beside a title. Never the label on its own. */
-function Tail({ id }: { id: string }) {
+export function Tail({ id }: { id: string }) {
   return <span className="tail tail-s">{displayId(id)}</span>;
 }
 /** A row that opens a node: the title is the accessible name, the id rides in `title`. */
-function EntityButton({ id, className, children, onOpen }: { id: string; className: string; children: ReactNode; onOpen: (id: string) => void }) {
+export function EntityButton({ id, className, children, onOpen }: { id: string; className: string; children: ReactNode; onOpen: (id: string) => void }) {
   return <button type="button" className={className} title={entityLabel(id)} onClick={() => onOpen(id)}>{children}</button>;
 }
 function Placeholder({ rows = 3, label }: { rows?: number; label: string }) {
@@ -170,16 +167,17 @@ export function BrandMark({ size = 22 }: { size?: number }) {
 }
 
 /* ══ The rail ══════════════════════════════════════════
-   One destination for now — the specification. Phase 2 adds the diagram views beside it. */
-export function Rail({ board, refreshed }: { board: Board | null; refreshed: number }) {
+   The specification list, and the four diagrams of the same model beside it. */
+export function Rail({ board, refreshed, view = "spec", onView = () => {} }: { board: Board | null; refreshed: number; view?: ViewKey; onView?: (view: ViewKey) => void }) {
   return <nav className="rail" aria-label="Board sections">
     <div className="rail__brand"><BrandMark size={22} /><span>Kotta</span></div>
     <div className="rail__group">
       <div className="rail__head">the model</div>
-      <button type="button" className="rail__item is-active" aria-current="page">
-        <span className="rail__label">Specification</span>
-        <span className="rail__count">{board ? board.spec.length : "—"}</span>
-      </button>
+      {VIEWS.map((entry) => <button key={entry.key} type="button" className={`rail__item ${view === entry.key ? "is-active" : ""}`}
+        aria-current={view === entry.key ? "page" : undefined} onClick={() => onView(entry.key)}>
+        <span className="rail__label">{entry.label}</span>
+        <span className="rail__count">{board ? (entry.forms.length ? board.spec.filter((node) => (entry.forms as readonly string[]).includes(node.form)).length : board.spec.length) : "—"}</span>
+      </button>)}
     </div>
     <div className="rail__foot">
       <a className="rail__report" href={BUG_REPORT_URL} target="_blank" rel="noreferrer noopener" aria-label="Report a bug in Kotta (opens the GitHub issue form in a new tab)">Report a bug</a>
@@ -227,8 +225,8 @@ export function TopBar({ workspace, board, onRefresh, refreshed }: {
 }
 
 /* ══ The specification view ════════════════════════════ */
-export function SpecView({ board, filter, form, query, onFilter, onForm, onQuery, onOpen }: {
-  board: Board; filter: SpecFilter; form: string; query: string;
+export function SpecView({ board, filter, form, query, agentOnly = false, onFilter, onForm, onQuery, onOpen }: {
+  board: Board; filter: SpecFilter; form: string; query: string; agentOnly?: boolean;
   onFilter: (f: SpecFilter) => void; onForm: (form: string) => void; onQuery: (query: string) => void; onOpen: (id: string) => void;
 }) {
   const term = query.trim().toLowerCase();
@@ -236,7 +234,8 @@ export function SpecView({ board, filter, form, query, onFilter, onForm, onQuery
   const rows = board.spec
     .filter((node) => form === "all" || node.form === form)
     .filter((node) => filter === "all" || (filter === "kept" ? kindOf.get(node.id) === null : kindOf.get(node.id) === filter))
-    .filter((node) => !term || node.title.toLowerCase().includes(term) || node.id.toLowerCase().includes(term));
+    .filter((node) => !term || node.title.toLowerCase().includes(term) || node.id.toLowerCase().includes(term))
+    .filter((node) => !agentOnly || agentDecided(node));
 
   // Counted apart, never as one total: the three ask for opposite work, and "nobody looked" is not
   // the same debt as "many sites realise this and none can name it".
@@ -270,6 +269,7 @@ export function SpecView({ board, filter, form, query, onFilter, onForm, onQuery
       <input type="search" className="filters__search" value={query} placeholder="find by title" aria-label="Find a specification node by title"
         onChange={(event) => onQuery(event.target.value)} />
     </div>
+    {agentOnly && <p className="view__filtered" role="status">Only what the agent decided on its own — the list to read through first.</p>}
     {rows.length === 0 && <p className="view__empty">No node matches. {board.spec.length === 0
       ? "This workspace has no specification yet. A node is drafted from the registered forms in the calling chat, or with the CLI's spec command."
       : "Widen the filters, or clear the search."}</p>}
@@ -282,6 +282,7 @@ export function SpecView({ board, filter, form, query, onFilter, onForm, onQuery
           <span className="spec-row__title">{node.title}</span>
           <span className="spec-row__meta">
             <Tail id={node.id} />
+            <ProvenanceBadges provenance={node.provenance} />
             {kind
               ? <span className={`tag admission admission-${kind}`}>{kind}</span>
               : <span className="tag tag-neutral">no admission</span>}
@@ -365,6 +366,7 @@ export function EntityDrawer({ id, board, onClose, onOpen }: {
     // An admission is a statement about the evidence, not about the agreement, so it is shown as
     // what it is: which kind of gap this node records, and why.
     fields.push(["form", node.form], ["file", node.path]);
+    if (node.capability) fields.push(["capability", node.capability]);
     for (const admission of node.accepted) fields.push(["admitted", admission]);
   }
 
@@ -379,6 +381,7 @@ export function EntityDrawer({ id, board, onClose, onOpen }: {
         ? <div className="drawer__gone"><Dangling field="reference" id={id} /></div>
         : <>
           <h2 className="drawer__title">{node.title}</h2>
+          <ProvenancePanel node={node} onOpen={onOpen} />
           <SpecNeighbours node={node} board={board} onOpen={onOpen} />
           <dl className="drawer__fields">
             {fields.map(([key, value], index) => <div key={`${key}-${index}`}>
@@ -417,6 +420,8 @@ export function App() {
   const [specFilter, setSpecFilter] = useState<SpecFilter>("all");
   const [specForm, setSpecForm] = useState<string>("all");
   const [specQuery, setSpecQuery] = useState<string>("");
+  const [view, setView] = useState<ViewKey>("spec");
+  const [agentOnly, setAgentOnly] = useState(false);
 
   /* One request, always the same one: the board never posts. A failed read keeps the last
      good data on screen and says what failed — a refresh preserves the filters and the drawer. */
@@ -437,10 +442,11 @@ export function App() {
   const board = useMemo(() => (workspace ? readBoard(workspace) : null), [workspace]);
 
   return <div className="app">
-    <Rail board={board} refreshed={refreshed} />
+    <Rail board={board} refreshed={refreshed} view={view} onView={setView} />
     <div className="content">
       <TopBar workspace={workspace} board={board} onRefresh={() => void refresh()} refreshed={refreshed} />
       {workspace?.notices?.length ? <WorkspaceNotices notices={workspace.notices} /> : null}
+      {board && <ProvenanceSummary board={board} agentOnly={agentOnly} onAgentOnly={setAgentOnly} />}
       {workspace && error && <div className="banner" role="alert">
         <b>Last read failed.</b> Tried <code>GET {WORKSPACE_ENDPOINT}</code> — {error}. Showing the last good read.
         <button type="button" className="btn btn-secondary btn-sm" onClick={() => void refresh()}>Retry</button>
@@ -448,8 +454,12 @@ export function App() {
       <main className="stage scroll">
         {!board && <div className="view"><Placeholder rows={6} label="Reading the workspace…" />
           {error && <div className="banner" role="alert"><b>The workspace could not be read.</b> {error}. <button type="button" className="btn btn-secondary btn-sm" onClick={() => void refresh()}>Retry</button></div>}</div>}
-        {board && <SpecView board={board} filter={specFilter} form={specForm} query={specQuery}
+        {board && view === "spec" && <SpecView board={board} filter={specFilter} form={specForm} query={specQuery} agentOnly={agentOnly}
           onFilter={setSpecFilter} onForm={setSpecForm} onQuery={setSpecQuery} onOpen={setDetailId} />}
+        {board && view === "use-cases" && <UseCaseView board={board} agentOnly={agentOnly} onOpen={setDetailId} />}
+        {board && view === "stories" && <StoryMapView board={board} agentOnly={agentOnly} onOpen={setDetailId} />}
+        {board && view === "entities" && <EntityMapView board={board} agentOnly={agentOnly} onOpen={setDetailId} />}
+        {board && view === "states" && <StateMachineView board={board} agentOnly={agentOnly} onOpen={setDetailId} />}
       </main>
     </div>
     {detailId && board && <EntityDrawer id={detailId} board={board} onClose={() => setDetailId(null)} onOpen={setDetailId} />}

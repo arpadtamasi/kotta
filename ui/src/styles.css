@@ -106,7 +106,37 @@
   --accent-fill: var(--color-accent-700);
   /* The Run's completed-work edge is the one semantic hue the base sheet lacks. */
   --run-done: #53a77a;
+  /* Provenance strokes: the diagrams draw a partly inferred node dashed amber and an inferred one
+     dashed red. Plain hex, because Mermaid computes its own shades from them. */
+  --prov-partly: #a35f00;
+  --prov-inferred: #ae1800;
   color-scheme: light;
+}
+
+/* ── Dark ground ─────────────────────────────────────────
+   The same system on an ink ground: the ramps turn over so step 100 is still the quietest fill and
+   step 800 still the strongest text, and every rule above keeps working unchanged. The rail, drawn
+   in the text colour, turns light with it. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #1c1a19;
+    --color-surface: #262322;
+    --color-text: #eeeae9;
+    --color-divider: color-mix(in srgb, #eeeae9 40%, transparent);
+    --color-neutral-100: #2d2b2b; --color-neutral-200: #444141; --color-neutral-300: #605d5d;
+    --color-neutral-400: #7d7979; --color-neutral-500: #9b9797; --color-neutral-600: #bab6b6;
+    --color-neutral-700: #d7d3d3; --color-neutral-800: #eae7e7; --color-neutral-900: #f8f4f4;
+    --color-accent-100: #4d170e; --color-accent-200: #7c1405; --color-accent-300: #ae1800;
+    --color-accent-400: #dd2b0f; --color-accent-600: #ff9783; --color-accent-700: #ffc4b8;
+    --color-accent-800: #ffe0d9; --color-accent-900: #fff2ef;
+    --accent-fill: #ff9783;
+    --shadow-sm: 0 0 0 1px color-mix(in srgb, #eeeae9 12%, transparent);
+    --shadow-md: 0 0 0 1px color-mix(in srgb, #eeeae9 14%, transparent), 0 4px 12px #0008;
+    --shadow-lg: 0 0 0 1px color-mix(in srgb, #eeeae9 16%, transparent), 0 12px 32px #000a;
+    --prov-partly: #e0a040;
+    --prov-inferred: #ff8a73;
+    color-scheme: dark;
+  }
 }
 
 /* ── Design-system base ──────────────────────────────── */
@@ -1064,3 +1094,93 @@ code { font-family: var(--font-mono); }
 .spec-edge { display: grid; grid-template-columns: 90px 1fr; gap: var(--space-2); align-items: start; margin-top: var(--space-1); }
 .spec-edge__field { font-size: 9px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); padding-top: 5px; }
 
+
+/* ══ Provenance ════════════════════════════════════════
+   Two marks per node, both from its own frontmatter: how much was said (level) and who settled
+   it (decider). A node that records neither carries no mark at all. */
+.prov-badges { display: inline-flex; flex-wrap: wrap; gap: var(--space-1); align-items: center; }
+.tag.prov { font-size: 9px; letter-spacing: .08em; background: var(--color-bg); }
+.prov-level-stated { color: var(--color-text); border: 1px solid var(--color-text); }
+.prov-level-partly-inferred { color: var(--color-text); border: 1px dashed var(--prov-partly); box-shadow: inset 3px 0 0 var(--prov-partly); }
+.prov-level-inferred { color: var(--color-text); border: 1px dashed var(--prov-inferred); box-shadow: inset 3px 0 0 var(--prov-inferred); }
+.prov-by-human { color: var(--text-muted); border: 1px solid var(--line-soft); }
+.prov-by-agent-proposed-human-approved { color: var(--color-text); border: 1px solid var(--line-soft); }
+.tag.prov-by-agent-decided { color: var(--color-bg); background: var(--color-text); border: 1px solid var(--color-text); }
+.prov-summary {
+  display: flex; align-items: center; gap: var(--space-2) var(--space-4); flex-wrap: wrap;
+  padding: 7px var(--space-4); border-bottom: 2px solid var(--color-divider); background: var(--color-bg);
+}
+.prov-summary__group { display: inline-flex; gap: var(--space-3); flex-wrap: wrap; }
+.prov-summary__count { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; }
+.prov-summary__count b { font-family: var(--font-mono); font-weight: 600; }
+.prov-summary__unmarked { color: var(--text-muted); }
+.prov-summary__none { font-size: 11.5px; color: var(--text-muted); }
+.prov-summary__filter { margin-left: auto; }
+.view__filtered { margin: 0; padding: var(--space-2) var(--space-4); font-size: 12px; border-bottom: 1px solid var(--line-soft); background: var(--color-surface); }
+
+/* The drawer's answer to "where does this come from". */
+.provenance .prov-badges { margin-bottom: var(--space-2); }
+.provenance__quote { margin: var(--space-2) 0; padding: var(--space-1) var(--space-3); border-left: 3px solid var(--color-text); font-style: italic; }
+.provenance__inferred { font-size: 12.5px; }
+.sources { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: grid; gap: var(--space-3); }
+.source { display: grid; gap: var(--space-1); min-width: 0; }
+.source__cite { font-size: 12px; overflow-wrap: anywhere; }
+.source__cite code { font-size: 11px; }
+.source__section { color: var(--text-muted); }
+.source__note { font-size: 11.5px; color: var(--text-muted); }
+.narrative { margin: 0; padding: var(--space-2) var(--space-3); background: var(--color-surface); border-left: 3px solid var(--line-soft); max-height: 420px; overflow: auto; }
+.narrative__whole summary { cursor: pointer; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+
+/* ══ The diagram views ═════════════════════════════════ */
+.rail__group .rail__item { grid-template-columns: 1fr auto; font-size: 12px; letter-spacing: .04em; margin-inline: calc(-1 * var(--space-4)); width: calc(100% + 2 * var(--space-4)); }
+.diagram { margin: 0; border-bottom: 1px solid var(--line-soft); }
+.diagram__scroll { overflow-x: auto; overflow-y: hidden; padding: var(--space-4); background: var(--color-bg); }
+.diagram__svg svg { display: block; max-width: none; height: auto; }
+.diagram__svg .node, .diagram__svg [id*="flowchart-"] { cursor: pointer; }
+.diagram__drawing, .diagram__failed { margin: 0; font-size: 12.5px; color: var(--text-muted); }
+.diagram__failed { color: var(--color-accent-700); }
+.diagram__caption { padding: 0 var(--space-4) var(--space-2); font-size: 11.5px; color: var(--text-muted); }
+.diagram__source { padding: 0 var(--space-4) var(--space-3); }
+.diagram__source summary { cursor: pointer; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); }
+.diagram__source pre { overflow-x: auto; font-size: 11px; padding: var(--space-2); background: var(--color-surface); border: 1px solid var(--line-soft); }
+.diagram-legend { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin: 0; padding: var(--space-2) var(--space-4); font-size: 11px; color: var(--text-muted); border-bottom: 1px solid var(--line-soft); }
+.diagram-legend__item { display: inline-flex; align-items: center; gap: 6px; }
+.swatch { width: 18px; height: 10px; display: inline-block; border: 2px solid var(--color-text); }
+.swatch-partly { border-style: dashed; border-color: var(--prov-partly); }
+.swatch-inferred { border-style: dashed; border-color: var(--prov-inferred); }
+.diagram-note { margin: 0; padding: var(--space-2) var(--space-4); font-size: 12px; border-bottom: 1px solid var(--line-soft); background: var(--color-surface); }
+
+/* A node in a view's list, opening onto its sections and edges. */
+.node-list { margin-top: var(--space-4); }
+.node-list .spec-group__head { margin: 0; font-family: var(--font-body); font-weight: 400; }
+.node-detail { border-bottom: 1px solid var(--line-soft); }
+.node-detail__summary { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; padding: 10px var(--space-4); cursor: pointer; }
+.node-detail__summary:hover { background: color-mix(in srgb, var(--color-text) 5%, transparent); }
+.node-detail__title { font-size: 13px; }
+.node-detail__meta { display: inline-flex; align-items: center; gap: var(--space-1); flex-wrap: wrap; }
+.node-detail__body { padding: 0 var(--space-4) var(--space-4); display: grid; gap: var(--space-2); justify-items: start; }
+.node-detail__section { width: 100%; border-top: 1px solid var(--line-soft); padding-top: var(--space-2); }
+.prov-card-partly-inferred { border-left: 3px dashed var(--prov-partly); }
+.prov-card-inferred { border-left: 3px dashed var(--prov-inferred); }
+.prov-card-stated { border-left: 3px solid var(--color-text); }
+
+/* The story map: one column per actor, one card per story. */
+.story-map { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(260px, 320px); gap: var(--space-4); overflow-x: auto; padding: var(--space-4); border-bottom: 1px solid var(--line-soft); }
+.story-map__column { display: grid; align-content: start; gap: var(--space-2); min-width: 0; }
+.story-map__actor { margin: 0; padding-bottom: var(--space-1); border-bottom: 2px solid var(--color-text); font-size: 14px; }
+.story-map__actor-button, .story-card__open, .machine__open { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.story-map__actor-button:hover, .story-card__open:hover, .machine__open:hover { text-decoration: underline; }
+.story-card { display: grid; gap: var(--space-2); padding: var(--space-3); background: var(--color-surface); border: 1px solid var(--line-soft); }
+.story-card.prov-card-partly-inferred { border: 1px dashed var(--prov-partly); border-left-width: 3px; }
+.story-card.prov-card-inferred { border: 1px dashed var(--prov-inferred); border-left-width: 3px; }
+.story-card.is-dimmed { opacity: .45; }
+.story-card__title { margin: 0; font-size: 13.5px; }
+.story-card__part .prose { font-size: 12.5px; }
+
+/* One section per state machine. */
+.machine { border-bottom: 2px solid var(--color-divider); }
+.machine__head { display: flex; align-items: center; gap: var(--space-2) var(--space-3); flex-wrap: wrap; padding: var(--space-4) var(--space-4) var(--space-2); }
+.machine__head h3 { margin: 0; }
+.machine__governs { display: inline-flex; align-items: center; gap: var(--space-1); font-size: 11px; color: var(--text-muted); }
+.machine__prose { padding: 0 0 var(--space-3); }
+.machine__prose > .prose { padding: var(--space-2) var(--space-4) 0; }
