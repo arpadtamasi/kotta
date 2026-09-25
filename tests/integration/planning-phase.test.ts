@@ -29,6 +29,8 @@ describe("provenance in validation", () => {
   test("is optional on an accepted node, required on a change's node, and measured in full wherever present", () => {
     const root = planningWorkspace("validate");
     expect(json(root, ["validate"]).body.ok).toBe(true);
+    // The text names the open change's model nodes too, not only the accepted ones.
+    expect(run(root, ["validate"]).stdout.split("\n")[0]).toBe("The specification validates: 6 nodes across 11 forms; 1 open change with 4 model nodes.");
 
     write(root, `${CHANGE}/model/goals/unmarked-000000g9.md`, node(
       { id: "G-01m0p0000000000000000000g9", form: "goal", title: "Unmarked", measured_by: [PROMPT] },

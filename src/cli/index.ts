@@ -66,8 +66,9 @@ function renderGapReport(result: unknown): string {
 }
 
 function renderValidate(result: unknown): string {
-  const { data, warnings = [] } = result as { data: { forms: number; specNodes: number }; warnings?: Array<{ code: string; message: string }> };
-  return [`The specification validates: ${data.specNodes} node${data.specNodes === 1 ? "" : "s"} across ${data.forms} form${data.forms === 1 ? "" : "s"}.`, ...warnings.map((warning) => `Warning: ${warning.code}: ${warning.message}`)].join("\n");
+  const { data, warnings = [] } = result as { data: { forms: number; specNodes: number; changes?: number; changeNodes?: number }; warnings?: Array<{ code: string; message: string }> };
+  const changes = data.changes ? `; ${data.changes} open change${data.changes === 1 ? "" : "s"} with ${data.changeNodes ?? 0} model node${data.changeNodes === 1 ? "" : "s"}` : "";
+  return [`The specification validates: ${data.specNodes} node${data.specNodes === 1 ? "" : "s"} across ${data.forms} form${data.forms === 1 ? "" : "s"}${changes}.`, ...warnings.map((warning) => `Warning: ${warning.code}: ${warning.message}`)].join("\n");
 }
 
 function renderSync(result: unknown): string {
