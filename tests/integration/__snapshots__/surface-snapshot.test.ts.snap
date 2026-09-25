@@ -34,6 +34,8 @@ Commands:
   archive [options] <change>  Land an approved change: merge its model into the
                               specification, regenerate the narrative, move it
                               to the archive
+  import                      Take an existing specification into the technical
+                              model through the planning phase
   sync [options]              Install the skills Kotta ships, add newly shipped
                               forms, and refresh the workspace rules file
   doctor [options]            Report whether Kotta is reachable from where its
@@ -205,6 +207,33 @@ narrative, move it to the archive
 Options:
   --json
   -h, --help  display help for command
+
+### kotta import
+Usage: kotta import [options] [command]
+
+Take an existing specification into the technical model through the planning
+phase
+
+Options:
+  -h, --help          display help for command
+
+Commands:
+  openspec [options]  Draft an OpenSpec project's requirements, scenarios and
+                      purposes into a change's model, for the planning phase to
+                      complete
+  help [command]      display help for command
+
+### kotta import openspec
+Usage: kotta import openspec [options]
+
+Draft an OpenSpec project's requirements, scenarios and purposes into a change's
+model, for the planning phase to complete
+
+Options:
+  --change <name>  The change to open under openspec/changes/; omitted is
+                   import-openspec-<date>
+  --json
+  -h, --help       display help for command
 
 ### kotta sync
 Usage: kotta sync [options]
