@@ -30,7 +30,7 @@ openspec/changes/<name>/
 - A **removed** node: a list item in `model/REMOVED.md` naming its id and the reason.
 - A node that belongs to a capability carries `capability: <path>` (e.g. `game/session`); the
   narrative spec `openspec/specs/<path>/spec.md` is generated from those nodes when the change is
-  archived.
+  archived — unless the project writes its narrative by hand (see *Generated or authored narrative*).
 
 ## Translate, with provenance on every node
 
@@ -58,7 +58,14 @@ openspec/changes/<name>/
    threshold — that no source says, do not fill it with a plausible answer. Write it as an item under
    `## Open decisions` in that node, one question per item. A listed gap is worth more than a
    filled-in guess; the change cannot be approved while one is open, which is the point.
-5. Bind the narrative where it names a node: a `<!-- kotta: <id> -->` line directly under a
+5. **Write every obligation with SHALL or MUST.** A business rule's `Rule`, an interface's
+   `Postconditions` or `Invariants` and a quality attribute's `Response` state the obligation with the
+   normative keyword, in English whatever the language around it, as OpenSpec expects: "The system
+   SHALL ask before it quits", „A rendszer SHALL megerősítést kérni kilépés előtt". The form registry
+   names these sections (`normative_sections`); `kotta validate` and `kotta plan` refuse a change's
+   node without the keyword. The generator carries the text into the narrative as written and never
+   adds the keyword for you, so it has to be there in the node.
+6. Bind the narrative where it names a node: a `<!-- kotta: <id> -->` line directly under a
    requirement heading lets `kotta plan` report when the prose and the node disagree. Report such a
    drift; do not rewrite either side to make it disappear.
 
@@ -72,8 +79,27 @@ It reports (a) the delta's structure, (b) the merged model as a whole, (c) confl
 accepted nodes that share an edge with, are named by, or contrast with what the delta changes, and
 lifecycle transitions removed or reversed — ranked, at most ten, each awaiting judgement, (d) the
 silences: open decisions and unanswered form questions, (e) narrative drift, (f) the provenance
-summary with the list of what the machine decided. Fix what is structurally wrong, re-run, and repeat
-until only human questions remain.
+summary with the list of what the machine decided, each with what it rests on. Fix what is
+structurally wrong, re-run, and repeat until only human questions remain.
+
+## Judge the conflicts yourself
+
+The machine's candidates are an aid, not the measure. They are lexical and narrow on purpose — a
+glossary contrast, for one, is named only when a claim names the term and one of its non-examples and
+states what the non-example denies — so a real contradiction phrased any other way is not on the
+list. **Compare every claim of the delta with the accepted nodes it touches**: the rules, examples,
+glossary terms, entities and use cases it names or that name it, and the ones about the same thing.
+Write each contradiction you find into section (c) of `planning.md`, inside the block `kotta plan`
+keeps for you, one list item each, marked `judged`:
+
+```markdown
+<!-- kotta:judged — the agent's own findings; `kotta plan` keeps this block as written -->
+- judged: *Győzelem 11 pontnál* now counts the 11 on total points; the glossary's *Kint vagyok* says only sure points count.
+<!-- /kotta:judged -->
+```
+
+`kotta plan` re-measures everything else on every run and keeps this block as you wrote it. Put
+every judged contradiction to the human at the gate beside the machine's candidates.
 
 ## Take it to the gate
 
@@ -83,8 +109,8 @@ id:
 - what the change adds, changes and removes, one line each;
 - every open question, asked plainly — record each answer in the node (with its provenance) and
   remove the answered item, then `kotta plan` again;
-- the conflict candidates, as questions ("the example *The quit prompt appears* still expects the
-  prompt — does it still hold?"), never as verdicts;
+- the conflict candidates and your judged contradictions, as questions ("the example *The quit
+  prompt appears* still expects the prompt — does it still hold?"), never as verdicts;
 - the list of what the machine decided alone, so the human can overrule any of it.
 
 Then ask for a plain yes or no to the delta as planned. Only on an explicit yes, in this conversation,
@@ -99,3 +125,16 @@ not validate — re-plan and ask again rather than working around it. After the 
 gate: implement, then `kotta archive <name>` lands exactly the approved delta, regenerates the
 capability narratives from the model, and moves the change to `openspec/changes/archive/`. If the
 delta changes after the yes, the approval no longer holds, and archive says so.
+
+## Generated or authored narrative
+
+Where `openspec/specs/` comes from is the project's setting, `narrative:` in `.kotta/config.yaml`
+(or in `openspec/config.yaml`):
+
+- `generated` (the default): `kotta archive` regenerates each capability the delta touches from the
+  merged model, carrying every section as written. What OpenSpec's strict validation would still call
+  incomplete — a Purpose under fifty characters, a requirement no example proves — is reported as a
+  warning, never filled in: state it in the model (a goal node, an example).
+- `authored`: people write `openspec/specs/`. Archive lands the model and writes no narrative; where
+  a bound requirement says something else than its node, it reports the drift and does not stop.
+  Bring the two together by hand, in whichever direction the human decides.

@@ -106,7 +106,7 @@ export function narrativeShapeWarnings(file: string, content: string): Array<{ c
   const warnings: Array<{ code: string; message: string; path: string }> = [];
   const purpose = normalizeProse(sections(content).get("purpose") ?? "");
   if (purpose.length < MIN_PURPOSE_LENGTH) {
-    warnings.push({ code: "NARRATIVE_PURPOSE_BRIEF", message: `${file} states a Purpose of ${purpose.length} characters; OpenSpec's strict validation wants at least ${MIN_PURPOSE_LENGTH}. State the capability's outcome in a goal node that names it; the generator invents none.`, path: file });
+    warnings.push({ code: "NARRATIVE_PURPOSE_BRIEF", message: `${file} ${purpose.length ? `states a Purpose of ${purpose.length} characters; OpenSpec's strict validation wants at least ${MIN_PURPOSE_LENGTH}` : "states no Purpose: no goal node names this capability"}. State the capability's outcome in a goal node that names it; the generator invents none.`, path: file });
   }
   const lines = content.split(/\r?\n/);
   for (let index = 0; index < lines.length; index += 1) {

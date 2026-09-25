@@ -37,6 +37,15 @@ the delta against the accepted model and writes `planning.md`; the human decides
 the approved delta in `{{workspace}}/spec/`, regenerates the narrative from the model, and moves the
 change to the archive, asking nothing again. The `plan-change` skill is the how.
 
+Who writes `openspec/specs/` is the project's choice, `narrative:` in `{{workspace}}/config.yaml`.
+With `generated`, the default, archive regenerates every capability a change touches from the model,
+carrying the nodes' text as written; with `authored`, people write the narrative, archive writes none
+of it and only reports where a bound requirement disagrees with its node. Either way the model is the
+truth, and an obligation carries its keyword in the model: a rule, an interface's postconditions or
+invariants, a quality attribute's response say SHALL or MUST — in English, as OpenSpec expects,
+whatever the language around it. A change's node without one is refused; an older accepted node is
+warned about.
+
 ## The rule everything else follows from
 
 `{{workspace}}/spec/` is **project-owned**. Its form registry (`spec/forms/*.yaml`) and the nodes
@@ -91,7 +100,9 @@ question, so a draft with one is a draft, not an agreement.
 
 1. **The technical model is the accepted truth.** When the narrative, the conversation and the
    nodes disagree, the nodes win and you say where they disagree. You may propose a change to a
-   node; you do not decide one. The change lands when the human says yes.
+   node; you do not decide one. The change lands when the human says yes. `kotta plan`'s conflict
+   candidates help; they do not replace comparing every claim of a delta with the accepted nodes it
+   touches, and what you find goes into the report marked `judged`.
 2. **Never invent product intent.** Where a form asks for something — a goal, an actor, a rationale —
    that neither the conversation nor the narrative says, write the question, not an answer. A
    filled-in guess is worse than a listed gap.
