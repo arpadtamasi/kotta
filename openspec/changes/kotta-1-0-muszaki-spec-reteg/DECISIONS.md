@@ -47,3 +47,50 @@ of `tasks.md`).
 - **The `SPEC_REFERENCES_TASK` rule is gone.** It forbade a node from naming a task; there is no
   task to name. The "specification never points at execution" idea returns in phase 2 as the
   boundary between the model and the narrative, not as a task-id check.
+- **2C: the board stays English, so the provenance labels are translated.** The brief names the
+  marks in Hungarian; every other word on the board is English and the tests assert it. Level:
+  `stated` / `partly inferred` / `inferred`; decider: `you said it` / `agent proposed, you approved`
+  / `the agent decided`; the filter is "only what the agent decided". A level or decider outside
+  the three enumerated values is left unmarked, never guessed into one of them.
+- **2C: the narrative is read from the working tree, and only a repo-relative change path is
+  fetched.** The board reads `.kotta/` from the base ref, but a change's `conversation.md` and
+  `proposal.md` are in-flight planning that may not be there yet. `GET /api/narrative?path=` serves
+  only `.md` files under `openspec/`, refusing absolute paths, `.`/`..` segments, backslashes, NUL
+  and links whose real path leaves the folder. The drawer fetches a source only when it names
+  `openspec/changes/<…>/<file>.md`; a bare `conversation.md · …` is shown as text, because the board
+  shows accepted `.kotta/spec/` nodes, which have no change folder to resolve a bare name against.
+  Phase 3's distillation should write sources repo-relative.
+- **2C: Mermaid is a pinned devDependency, laid out by dagre, with everything else stubbed.**
+  `mermaid@12.0.0` is bundled into `ui-dist/`, so the CLI never imports it at run time. Mermaid 12
+  lays flowcharts out with ELK by default; the board forces `layout: "dagre"`, and
+  `ui/vite.config.ts` replaces the other diagram types, the ELK and cose-bilkent layouts and KaTeX
+  with a stub that throws, so the published `ui-dist/` is 1.3 MB instead of 5.5 MB. The initial
+  bundle grew 24 kB (365 → 389 kB); Mermaid loads only when a diagram view opens.
+- **2C: the review filter dims in the diagrams and filters in the lists.** Removing every node the
+  agent did not decide would also remove the edges that give the rest their meaning, so the drawing
+  keeps them at reduced opacity; the node lists and the specification list show only the
+  agent-decided nodes.
+- **2C: capability grouping groups the use cases, not the actors and goals.** In the use case
+  diagram the capability subgraphs nest inside the use case column; actors and goals are shared
+  across capabilities and stay in their own columns. The entity map groups every entity; once any
+  node carries a capability, the rest fall into a "no capability" group.
+- **2C: a Transitions line whose reason holds another arrow is prose.** That is a paragraph
+  describing several transitions, and reading only its first would draw a machine the text does not
+  describe. A section with some readable lines is drawn, and its unread lines are listed under the
+  drawing. A terminal state is one named in a sentence that says "terminal" or "végállapot", read
+  from States and the unread lines. All three state machines in this repository's own `.kotta/`
+  are written as paragraphs and are shown as prose, not drawn.
+- **2C: the diagram views read the standard form ids.** `actor`, `goal`, `use-case`,
+  `user-story`, `entity` and `state-machine` are named in `ui/src/model.ts`; a project's own form
+  still appears in the specification list and in every node's edges, but no diagram draws it.
+- **2C: the board had no dark theme; one was added at the token level.** The ramps turn over under
+  `prefers-color-scheme: dark`, and the rail, drawn in the text colour, turns light with them.
+  Diagrams read the tokens on each draw and redraw when the scheme changes. The same commit removed
+  434 stylesheet rules no board component used any more (task, batch, run, approval, timeline…).
+  `ui/UX-SPEC.md` and the old console captures in `ui/spec-assets/` were left; the spec already
+  marks itself superseded.
+- **2C: the accessibility check runs in jsdom.** The brief asks for the axe pattern on every new
+  view; the board has no Playwright suite, so each view's test runs `axe-core` on the rendered
+  container and fails on a serious or critical violation, with `color-contrast` off because jsdom
+  computes no colours. Both themes were drawn once in a real Chromium to check that Mermaid renders
+  and that a drawn node opens its drawer.
