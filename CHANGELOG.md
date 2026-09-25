@@ -4,6 +4,75 @@ All notable changes to Kotta (called A-Team before 0.3.0) will be documented in 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.1] — 2026-09-25
+
+Kotta becomes the owner of the **technical specification** beside the narrative one, and lays the
+process engine of the 0.x releases down. The OpenSpec change
+`openspec/changes/kotta-1-0-muszaki-spec-reteg/` is the source of the decisions; this alpha is its
+first phase — the foundation the planning phase, the module boundaries, the narrative and the
+diagram views are built on.
+
+### Removed — BREAKING
+
+- **The process layer.** The commands `task` (new, define, validate, start, execute, brief, review,
+  close, cancel, reopen, list, show), `batch` (new, add, remove, validate, start, status, close,
+  finalize, list, show), `observation` (new, validate, link, resolve, list, show), `decision`
+  (create, list, show), `claim` (list, release), `status` and `sweep`; every `--approve` gate and
+  the approval receipts; the execution engine (fresh-context agent launch, claims, feature branches,
+  worktrees, the coordinator branch, the execution events); the MCP write and approval tools
+  (`task_*`, `observation_*`, `approval_request`, `task_message_record`, `workspace_status`,
+  `workspace_sweep`, the `*_list`/`*_show` families) and `spec_create`.
+- The process modules behind them: `core/boundary`, `core/claim`, `core/coverage`,
+  `core/decision`, `core/events`, `core/execution-metrics`, `core/operations`, `core/profiles`,
+  `core/review-evidence`, `core/validation`, `filesystem/batches`, `filesystem/entities`,
+  `git/control-plane`, `git/coordinator`.
+- The published schemas `task`, `batch`, `claim`, `event` and `observation`; the `profiles/`
+  directory; the skills `start-task`, `execute-task`, `execute-batch`, `submit-review`,
+  `close-task`, `validate-observation` and `define-task` (`kotta sync` removes an installed copy it
+  owns); the `templates/workspace/process/` skeleton; the oneanda demo import script.
+- The `a-team` binary alias. The pre-rename `.a-team/` directory is still discovered so that it can
+  be migrated.
+- The board's task, batch, observation, decision and run views, the entity timeline and the CLI
+  sheet. The board shows the specification: every node grouped by form, the admissions counted
+  apart, a node's edges in both directions.
+- The workspace configuration keys `workflow.*`, `agents.*`, `git.worktrees`,
+  `git.worktree_root`, `git.branch_pattern`, `batches.*`, `validation.reject_unknown_profiles`,
+  `validation.require_verification_for_defined` and `validation.require_review_evidence_for_done`.
+- The `SPEC_REFERENCES_TASK` validation rule: there is no task for a node to reference.
+
+### Changed
+
+- **Workspace shape version 6.** `.kotta/config.yaml` records `version: 6` and carries `project`,
+  `git.base_branch`, `git.protected_branches` and `validation.strict`. `spec/` is unchanged. There
+  is no `process/`; `init` creates the form registry, the workspace README, the rules file and
+  nothing else, and writes no `.gitattributes` or `.gitignore` entry.
+- **No compatibility layer, only migration.** Every command on a pre-1.0 workspace — versions 1 to
+  5, under `.kotta/` or `.a-team/` — refuses, names `kotta migrate`, and does nothing else. The last
+  pre-1.0 release stays installable as `@arpadtamasi/kotta@0.11.1`.
+- **`kotta migrate` carries a workspace from any older shape to version 6 in one run.** The whole
+  `process/` namespace moves untouched into `legacy/process/` — through `git mv` where Git tracks
+  it, so history follows — and `legacy/README.md` says what the archive is and which shape wrote it.
+  A v1–v4 shape is first carried to the v5 shape on its way in, so every archive reads alike.
+  `config.yaml` is rewritten to version 6 with every dropped key named in the plan; the workspace
+  README and the rules file are regenerated (a hand-edited rules file is reported and left alone);
+  the generated index's merge attribute leaves `.gitattributes`. `spec/` is left byte-identical and
+  the command proves it after writing, as it proves that no identifier was lost. `--dry-run` prints
+  the identical plan and writes nothing. A workspace with no form registry at all gets the bundled
+  one.
+- `kotta validate` measures the specification alone and prints what it measured.
+- `kotta questions` reads the `Open decisions` of specification drafts; a question naming a decision
+  reference counts as answered at face value until the planning phase records answers.
+- `kotta mcp` serves read-only tools: `spec_list`, `spec_show`, `workspace_validate`,
+  `workspace_questions`, `gap_report`. `kotta integrate codex` writes no approval-tool block.
+- `kotta ui` refuses a pre-1.0 workspace instead of explaining it on the board, and serves
+  `/api/workspace` alone.
+- `kotta sync` removes any installed skill Kotta's manifest owns that this release no longer ships.
+- The rules file (`.kotta/AGENTS.md`) describes the new product: the four layers — chat, narrative
+  spec, technical model, code — the project-owned model, evidence by citation, the one human gate at
+  planning, and the read-only archive.
+- `kotta spec new`, `kotta gap`, `kotta sync`, `kotta doctor`, `kotta integrate` and `kotta init`
+  keep working as before on the new shape.
+
 ## [Unreleased]
 
 ### Added

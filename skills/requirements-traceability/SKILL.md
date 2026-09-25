@@ -7,8 +7,8 @@ description: This skill should be used when the user asks to "check requirements
 
 Read the form registry and specification nodes as a graph. Report malformed nodes, broken
 references, unanswered required edges, explicitly accepted gaps, and reverse dependency impact.
-Remain read-only: this report never changes files, runs a lifecycle transition, or gates a definition,
-review, close, validation, build, or deployment.
+Remain read-only: this report never changes files and gates nothing — not a validation, a build or a
+deployment.
 
 Treat the registry as the only source of form-specific knowledge. Never hard-code the eleven
 shipped forms, their directories, edge fields, or required relationships into the analysis. A
@@ -28,8 +28,8 @@ permission to edit dependants.
 
 `kotta validate` reads the form registry and measures every node against it: required frontmatter
 fields, required body headings, duplicate ids, outgoing edges below their `minimum`, references that
-resolve to nothing, references that resolve to the wrong form, a malformed or contradictory form
-file, and any node or form that names a task. Run it first and treat its findings as given.
+resolve to nothing, references that resolve to the wrong form, and a malformed or contradictory form
+file. Run it first and treat its findings as given.
 
 Do not repeat those checks by reading the YAML yourself. They are enforced now, which means a
 workspace that passes `kotta validate` has no structural errors left for this report to find, and a
@@ -89,9 +89,8 @@ accepted:
 ```
 
 `kotta gap` reads three admission kinds — `structural`, `unexamined`, `unimplemented` — and this is
-not optional bookkeeping: a node with no evidence and no such entry makes the command refuse
-(BR-01m0qtshfqhcrrqtz051zm9svr), and so does an admission that names no kind
-(BR-01m0swjgrreeby1pyfdzf4mf7d). Choose `structural` when many sites realise the promise and none
+not optional bookkeeping: a node with no evidence and no such entry makes the command refuse, and so
+does an admission that names no kind. Choose `structural` when many sites realise the promise and none
 could name it, `unexamined` when nobody has looked yet, `unimplemented` when someone looked and it
 is not built. Write the reason for a reader who will meet it a year from now, and delete the entry
 when the promise is kept.

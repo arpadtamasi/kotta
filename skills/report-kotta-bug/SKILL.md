@@ -6,8 +6,8 @@ description: Prepare and, after explicit approval, submit a defect report about 
 # Report a Kotta bug
 
 Report defects in **Kotta itself** — the `kotta` CLI, the bundled skills, the local board,
-or the public site. This never touches the user's own `.kotta` workspace: no task, no
-observation, no decision is created locally by this skill. The destination is always
+or the public site. This never touches the user's own `.kotta` workspace: no node, no
+admission, no file is created locally by this skill. The destination is always
 `arpadtamasi/kotta` on GitHub.
 
 Issue form: `https://github.com/arpadtamasi/kotta/issues/new?template=bug.yml`
@@ -127,14 +127,8 @@ re-expanded one. GitHub remains authoritative for final duplicate detection.
 
 ## 8. For Kotta maintainers only
 
-An incoming GitHub Issue is evidence, not scheduled work. Capture it in the Kotta
-maintainer workspace as a observation and keep the issue URL in the evidence:
-
-```bash
-kotta observation new --title "<issue title>" --type bug \
-  --evidence "https://github.com/arpadtamasi/kotta/issues/<n> — <reported facts>"
-```
-
-The observation stays open until `kotta observation validate` and a human-approved
-`kotta observation resolve --disposition <disposition> --approve`. A GitHub Issue never creates a
-task by itself.
+An incoming GitHub Issue is evidence, not scheduled work. Read it against the technical
+specification: if a node promises the behaviour the report says is broken, the issue is a
+defect against that node and its evidence — name the node in the issue. If no node promises it,
+the issue is a proposal for the specification, to be shaped in conversation and landed on a
+human yes. A GitHub Issue never changes a node by itself.

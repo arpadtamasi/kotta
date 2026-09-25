@@ -13,8 +13,8 @@ This skill finds those collisions and **proposes consolidations in chat**. That 
 
 ## The hard rule
 
-**This skill creates nothing.** No file, no wiki page, no task, no observation, no
-decision, no commit. It reads, it compares, it proposes. Every proposal is a sentence the
+**This skill creates nothing.** No file, no wiki page, no specification node, no
+admission, no commit. It reads, it compares, it proposes. Every proposal is a sentence the
 human accepts, rejects, or rewrites.
 
 The reason is not caution. A collision list that writes itself into a backlog becomes 40
@@ -22,8 +22,9 @@ more items to triage, and the triage queue is already the bottleneck. The value 
 **adjacency** — putting two facts next to each other so a human sees the collision — not the
 paperwork.
 
-If the human decides a proposal should become work, they say so, and the normal Kotta path
-takes over (`kotta observation new`, or a task). Never anticipate that.
+If the human decides a proposal should become a change, they say so, and the normal path
+takes over: a glossary term or an amended node, shaped in conversation and landed on a human
+yes. Never anticipate that.
 
 Say which step you are in: `scoping` → `reading` → `comparing` → `proposing`.
 
@@ -92,17 +93,17 @@ Two signals, both worth reporting:
 
 ### Check 4 — Orphan residue from a closed migration
 
-Read the **Non-goals** of closed tasks, and the transitional notes in specs. Look for
+Read the transitional notes in the specification and the narrative of closed changes. Look for
 things deliberately left behind: an old field name kept for compatibility, an old directory
 name still read, a legacy artefact still parsed.
 
 For each one, ask two questions:
 
 1. Does the named thing still exist?
-2. Does anything — a decision, a task, an observation, a dated note — say **when it goes away**?
+2. Does anything — a node, a narrative entry, a dated note — say **when it goes away**?
 
 Report only when the answer is *yes* then *no*. Deliberate residue with an expiry is fine and
-should not be reported. Deliberate residue without one is the finding: the task preserved
+should not be reported. Deliberate residue without one is the finding: the change preserved
 the decision and nobody preserved the deadline.
 
 ### Check 5 — A missing edge between two documents

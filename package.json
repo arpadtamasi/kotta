@@ -1,7 +1,7 @@
 {
   "name": "@arpadtamasi/kotta",
-  "version": "0.11.1",
-  "description": "Repository-native operating system for human-AI development teams",
+  "version": "1.0.0-alpha.1",
+  "description": "The technical specification beside your code: forms, nodes, evidence",
   "homepage": "https://github.com/arpadtamasi/kotta#readme",
   "repository": {
     "type": "git",
@@ -16,13 +16,11 @@
   },
   "type": "module",
   "bin": {
-    "kotta": "dist/cli/index.js",
-    "a-team": "dist/cli/index.js"
+    "kotta": "dist/cli/index.js"
   },
   "files": [
     "dist",
     "ui-dist",
-    "profiles",
     "schemas",
     "skills",
     "templates"

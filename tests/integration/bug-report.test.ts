@@ -153,71 +153,41 @@ describe("report-kotta-bug skill task", () => {
     expect(fallback).toMatch(/do not retry silently/i);
   });
 
-  test("documents maintainer capture as a observation rather than a task", () => {
+  test("documents maintainer triage as reading the issue against the specification, never as a write", () => {
     const triage = skill.split("## 8. For Kotta maintainers only")[1] ?? "";
-    expect(triage).toContain("kotta observation new --title");
-    expect(triage).toContain("--type bug");
-    expect(triage).toMatch(/A GitHub Issue never creates a\ntask by itself/);
+    expect(triage).toContain("evidence, not scheduled work");
+    expect(triage).toMatch(/A GitHub Issue never changes a node by itself/);
+    expect(triage).not.toContain("kotta observation");
+    expect(triage).not.toContain("kotta task");
     // The user's own workspace is never mutated by reporting.
-    expect(skill).toMatch(/no task, no\nobservation, no decision is created locally/);
+    expect(skill).toMatch(/no node, no\nadmission, no file is created locally/);
   });
 });
 
 describe("documentation", () => {
   const readme = read("README.md");
 
-  test("points installed and public users at the same reporting task", () => {
+  test("points installed and public users at the same reporting path", () => {
     expect(readme).toContain("## Report a bug");
     expect(readme).toContain(ISSUE_FORM_URL);
     expect(readme).toContain("`report-kotta-bug`");
     expect(readme).toMatch(/off by default and\nrequire a separate per-report opt-in/);
     expect(readme).toMatch(/Kotta stores no GitHub\ncredential/);
-    expect(readme).toContain("kotta observation new --title");
+    expect(readme).not.toContain("kotta observation new");
   });
 });
 
-describe("maintainer triage of a submitted issue", () => {
-  test("captures the issue URL as a observation and creates no task", () => {
+describe("reporting never touches the workspace", () => {
+  test("a fresh workspace is byte-identical after the skill's own steps have nothing to write", () => {
     const root = mkdtempSync(join(tmpdir(), "kotta-bug-report-"));
     execFileSync("git", ["init", "-b", "main"], { cwd: root });
-    execFileSync("git", ["config", "user.name", "Test User"], { cwd: root });
-    execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: root });
     writeFileSync(join(root, "README.md"), "fixture\n");
     run(root, ["init"]);
-
-    const issueUrl = "https://github.com/arpadtamasi/kotta/issues/1234";
-    const created = run(root, [
-      "observation", "new",
-      "--title", "kotta task brief fails without profiles",
-      "--type", "bug",
-      "--evidence", `${issueUrl} — reported: \`kotta task brief T-001\` exits 1 on a task with no profiles. Reported version 0.2.2.`,
-    ]) as { ok: boolean; data: { id: string; path: string } };
-    expect(created.ok).toBe(true);
-    const observationId = created.data.id;
-
-    const observation = readFileSync(created.data.path, "utf8");
-    expect(observation).toContain(issueUrl);
-    expect(observation).toContain("Reported version 0.2.2");
-    expect(observation).toContain("observation_type: bug");
-    expect(observation).toContain("status: new");
-    expect(run(root, ["observation", "validate", observationId])).toMatchObject({ ok: true });
-
-    // The issue exists; scheduled work does not follow from that alone.
-    const tasksDirectory = join(root, ".kotta/process/tasks");
-    expect(existsSync(tasksDirectory) ? readdirSync(tasksDirectory).filter((name) => name.endsWith(".md")) : []).toEqual([]);
-
-    // Only an explicitly approved disposition may schedule work.
-    const unapproved = spawnSync("node", [cli, "observation", "resolve", observationId, "--disposition", "create-task", "--json"], { cwd: root, encoding: "utf8" });
-    expect(unapproved.status).not.toBe(0);
-    expect(`${unapproved.stdout}${unapproved.stderr}`).toMatch(/approval/i);
-    expect(readdirSync(tasksDirectory).filter((name) => name.endsWith(".md"))).toEqual([]);
-
-    const resolved = run(root, ["observation", "resolve", observationId, "--disposition", "create-task", "--approve"]) as { ok: boolean; data: { taskId: string } };
-    expect(resolved.ok).toBe(true);
-    const taskFile = readdirSync(tasksDirectory).filter((name) => name.endsWith(".md"));
-    expect(taskFile).toEqual([`kotta-task-brief-fails-without-profiles-${resolved.data.taskId.slice(-8)}.md`]);
-    const createdTask = readFileSync(join(tasksDirectory, taskFile[0]), "utf8");
-    expect(createdTask).toContain(`source_observation: ${observationId}`);
-    expect(createdTask).toMatch(/^status: backlog$/m);
+    const before = readdirSync(join(root, ".kotta")).sort();
+    // The only Kotta command the skill runs is the version read.
+    const version = spawnSync("node", [cli, "--version"], { cwd: root, encoding: "utf8" });
+    expect(version.status).toBe(0);
+    expect(readdirSync(join(root, ".kotta")).sort()).toEqual(before);
+    expect(existsSync(join(root, ".kotta/process"))).toBe(false);
   });
 });
