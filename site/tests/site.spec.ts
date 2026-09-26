@@ -26,15 +26,24 @@ test("renders the approved content in order", async ({ page }) => {
   });
   await page.goto("./");
 
-  await expect(page.locator("[data-unit]")).toHaveCount(8);
-  expect(await page.locator("[data-unit]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-unit")))).toEqual(["hero", "problem", "arrivals", "workflow", "comparison", "board", "quickstart", "trust"]);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Prose proposes. The model is what was agreed.");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Keep it beside the code.");
-  await expect(page.getByText("Every node says where it came from and who decided it.")).toBeVisible();
-  await expect(page.getByText("bound: tests/game/pause.test.ts")).toBeVisible();
-  await expect(page.locator(".node-card .prov-badge")).toHaveText(["stated", "decided by a human"]);
-  await expect(page.getByRole("heading", { name: "Prose alone loses what the code needs." })).toBeVisible();
+  await expect(page.locator("[data-unit]")).toHaveCount(9);
+  expect(await page.locator("[data-unit]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-unit")))).toEqual(["hero", "problem", "adds", "openspec", "workflow", "board", "arrivals", "quickstart", "trust"]);
+  // The message: nobody reads the long spec, so the agent decides; Kotta shows what it decided.
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Nobody reads the long spec. So the agent decides.");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Kotta shows you what it decided.");
+  await expect(page.locator(".hero-lede")).toContainText("OpenSpec already writes the change in prose.");
+  await expect(page.locator(".node-card .prov-badge")).toHaveText(["partly inferred", "the agent decided"]);
+  await expect(page.getByRole("heading", { name: "A spec nobody reads is a spec the agent decides." })).toBeVisible();
   await expect(page.locator(".problem-points > div")).toHaveCount(4);
+  // What Kotta adds to OpenSpec: the technical spec, the diagrams, the marked decisions, the conversation.
+  await expect(page.getByRole("heading", { name: "What Kotta adds to OpenSpec." })).toBeVisible();
+  await expect(page.locator(".adds-list h3")).toHaveText(["A technical spec", "Diagrams", "The machine’s decisions, marked", "The conversation, kept"]);
+  await expect(page.locator(".adds-list")).toContainText("kotta narrative");
+  // Compatibility, with the one command it replaces said out loud.
+  await expect(page.getByRole("heading", { name: "On top of OpenSpec. Compatible with it." })).toBeVisible();
+  await expect(page.locator("tbody th")).toHaveText(["A change", "The accepted state", "Writing specs yourself", "An existing repository", "Landing a change"]);
+  await expect(page.locator("#openspec")).toContainText("openspec validate --specs --strict");
+  await expect(page.locator("#openspec")).toContainText("kotta import openspec");
   await expect(page.getByRole("heading", { name: "One change, one human yes." })).toBeVisible();
   await expect(page.locator(".mechanism-flow h3")).toHaveText(["Propose", "Plan", "Approve", "Archive"]);
   await expect(page.getByRole("heading", { name: "Three ways in." })).toBeVisible();
@@ -43,14 +52,12 @@ test("renders the approved content in order", async ({ page }) => {
   await expect(page.locator(".arrival-list")).toContainText("kotta migrate");
   await expect(page.getByRole("link", { name: "Install Kotta" })).toHaveAttribute("href", "#install");
   await expect(page.getByRole("link", { name: "View on GitHub" })).toHaveAttribute("href", "https://github.com/arpadtamasi/kotta");
-  await expect(page.getByText("Accepted at the one gate")).toBeVisible();
-  await expect(page.locator("tbody tr")).toHaveCount(4);
-  await expect(page.locator("tbody th")).toHaveText(["Agent chat", "Issue tracker", "Spec generator", "Kotta"]);
+  await expect(page.getByText("On the list to read before you say yes")).toBeVisible();
   // The board section: a real screenshot, served from the build, and the decision aid beside it.
   await expect(page.getByRole("heading", { name: "See what the machine decided." })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Kotta, or OpenSpec alone?" })).toBeVisible();
   await expect(page.locator(".decision-aid p")).toHaveCount(2);
-  const shot = page.locator(".board-shot img");
+  const shot = page.locator(".board-view .board-shot img");
   await shot.scrollIntoViewIfNeeded();
   await expect(shot).toHaveAttribute("alt", /provenance badges/);
   await expect.poll(() => shot.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth)).toBe(1440);
@@ -87,7 +94,7 @@ test("desktop first viewport carries the offer, action and control mechanism", a
     page.getByRole("link", { name: "Install Kotta" }),
     page.getByRole("link", { name: "View on GitHub" }),
     page.locator(".node-card"),
-    page.getByText("Accepted at the one gate"),
+    page.getByText("On the list to read before you say yes"),
   ];
   for (const essential of essentials) {
     await expect(essential).toBeVisible();

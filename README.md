@@ -1,12 +1,20 @@
 # Kotta
 
-Kotta keeps the **technical specification** of a product beside its code: the accepted rules,
-examples, entities, state machines, use cases, stories and interfaces, as plain Markdown files in
-the repository, each in the shape its form declares — and it says which of those promises the code
-keeps.
+Nobody reads the long spec, so the agent decides — and nobody sees what it decided. Kotta fixes
+that on top of [OpenSpec](https://github.com/Fission-AI/OpenSpec). OpenSpec already writes the
+change in prose; Kotta adds what prose cannot give you:
 
-> The technical model is the accepted truth. The narrative proposes, the human decides, the code
-> cites what it keeps.
+- **a technical specification** — rules, examples, entities, state machines, use cases, stories and
+  interfaces as short Markdown files in the repository, each checked against the shape its form
+  declares;
+- **diagrams** drawn from it — state machines, use cases, the story map, the entities (`kotta ui`);
+- **the machine's decisions, marked** — every node says who decided it, and one filter leaves only
+  what the agent decided alone;
+- **the conversation, kept** — `kotta narrative` distils the agent session into the change's
+  `conversation.md`, and nodes cite the exchange they came from.
+
+It works in OpenSpec's own directories, and the specs it generates pass
+`openspec validate --specs --strict`; see [Kotta and OpenSpec](docs/openspec.md).
 
 [Documentation](docs/README.md) · [The visual guide](https://arpadtamasi.github.io/kotta/) ·
 [Changelog](CHANGELOG.md)
