@@ -1,6 +1,6 @@
 ---
 change: bizonyitek-csak-kodbol
-generated_at: 2026-09-26T14:22:37.616Z
+generated_at: 2026-09-26T14:22:55.960Z
 delta_hash: sha256:e8429e974d0df98ef1a05d3af7057713c621701d42c87a4b60041d7191513483
 ready_for_approval: true
 ---
