@@ -4,6 +4,42 @@ All notable changes to Kotta (called A-Team before 0.3.0) will be documented in 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+From the OpenSpec change `bizonyitek-csak-kodbol` ("evidence comes from code, not from a copy of the
+specification"), archived under `openspec/changes/archive/2026-09-26-bizonyitek-csak-kodbol/`.
+
+### Fixed
+
+- **A copy of the specification is no longer evidence.** `kotta gap`, `kotta modules check` and the
+  module derivation exclude the repository-root `openspec/` tree — changes, the archive and the
+  generated narrative specs — beside `.kotta/`, published `kotta-spec/` and `node_modules/`. An
+  archived change's `model/` and `approval.yaml`, and the `<!-- kotta: ID -->` binding under every
+  generated requirement, made every landed node read as `cited`, and the generated spec counted as a
+  test file because its path runs through `specs/`. A package's own `openspec/` below the root and a
+  project's own `specs/` directory are not excluded. The hint about uncommitted paths in a `gap`
+  refusal names only paths the filter admits. On the casino example the evidence levels move from
+  184 `cited` to 184 `none`: the code names no node id, and the report now says so.
+- **`kotta import openspec` drafts nothing from a comment.** Every Purpose, requirement and scenario
+  is measured with its Markdown comments removed. The generator's "no goal node names this
+  capability" comment no longer becomes a goal; an empty Purpose is named among the warnings as a
+  capability whose purpose is not stated, and an empty requirement or scenario is named with its
+  capability instead of being drafted.
+- **`kotta migrate` no longer stops on operating-system metadata.** In the older-shape directories it
+  flattens, a fixed list — `.DS_Store`, `._*`, `.Spotlight-V100`, `.Trashes`, `.fseventsd`,
+  `Thumbs.db`, `ehthumbs.db`, `desktop.ini` — is left out of the archive, deleted with its directory,
+  and named in the plan as `leave out` (JSON change kind `omit`). Any other unknown entry still stops
+  the migration, named, with nothing written.
+
+### Changed
+
+- **The report names what it did not count.** `gap --json` carries `excluded` in the head — per
+  excluded class (`workspace`, `openspec-change`, `openspec-archive`, `openspec-spec`,
+  `published-spec`, `dependency`) the files it holds and the evidence-less nodes it names — and
+  `excluded` on each node at level `none`, listing the classes that mention it (its own file aside).
+  `modules check --json` carries the same head and a `none` list with each node's `excluded`. The
+  human-readable output of both says it in one "Not counted as evidence" line.
+
 ## [1.0.0-alpha.1] — 2026-09-25
 
 Kotta becomes the owner of the **technical specification** beside the narrative one, and lays the
