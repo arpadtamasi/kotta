@@ -9,6 +9,16 @@ goal:
 accepted:
   - >-
     structural: Assigned on 2026-08-24 from the form of this node, not from examining the node itself. Many code sites realise a promise of this form and no single one would ever name it, so the absence of its id in the repository measures the instrument rather than the system. Reclassify it if that turns out to be wrong here.
+capability: evidence
+provenance:
+  level: partly-inferred
+  decided_by: agent-decided
+  sources:
+    - "openspec/changes/bizonyitek-csak-kodbol/specs/evidence/spec.md · Requirement: A jelentés kimondja, mit nem számolt"
+    - "openspec/changes/bizonyitek-csak-kodbol/specs/evidence/spec.md · Scenario: Az azonosító csak a specifikáció másolatában szerepel"
+    - "openspec/changes/bizonyitek-csak-kodbol/design.md · 2. A kizárt említések nem tűnnek el, hanem megneveződnek"
+  quote: "a jelentés a kizárt forrásokat megnevezi"
+  inferred: "The wording inside the use case, the capability it now belongs to, and that the uncommitted-path hint reads through the evidence filter were chosen by the agent."
 ---
 
 ## Intent
@@ -21,8 +31,8 @@ An accepted specification on the base branch. A readable repository. Nothing els
 
 ## Main success scenario
 
-The operator asks for the gap. The analysis walks the accepted spec nodes and reports, deterministically and without writing, which promises have no implementing or verifying evidence in the repository - and, in the reverse direction, which enforced behaviors no node states. Each entry names the node by title and the evidence looked for. The subject is the accepted agreement, so the analysis reads the base branch and says which commit it read: evidence that is written but not committed is invisible to it by construction. A fresh landing is checked delta-first: the diff names what changed, so its entries lead the report. What changed means what is promised: a landing that only restates a node's own admission bookkeeping - which kind of gap it is, and why - moved no agreement and is not a delta. Where a landing touched more nodes than it changed agreements in, the report says both numbers, because a delta that is the whole specification names nothing. The report is the input to defining tasks.
+The operator asks for the gap. The analysis walks the accepted spec nodes and reports, deterministically and without writing, which promises have no implementing or verifying evidence in the repository - and, in the reverse direction, which enforced behaviors no node states. Each entry names the node by title and the evidence looked for. The analysis looks only where a promise can be kept or checked: a copy of the specification - the workspace, an OpenSpec change, the archive, a generated narrative, a published package specification - is not searched as evidence, and a node that only such a copy names is reported without evidence, with the excluded sources that name it, so the report itself says why. The subject is the accepted agreement, so the analysis reads the base branch and says which commit it read: evidence that is written but not committed is invisible to it by construction. A fresh landing is checked delta-first: the diff names what changed, so its entries lead the report. What changed means what is promised: a landing that only restates a node's own admission bookkeeping - which kind of gap it is, and why - moved no agreement and is not a delta. Where a landing touched more nodes than it changed agreements in, the report says both numbers, because a delta that is the whole specification names nothing. The report is the input to defining tasks.
 
 ## Alternatives
 
-A node deliberately unimplemented is listed with its recorded reason as an accepted gap, not as a defect. A node that is neither evidenced nor admitted is the one case the analysis refuses over: it names each, and exits non-zero, so a promise cannot stay unaccounted for by nobody having looked. Where uncommitted paths could carry the missing evidence, the refusal says so and names them, so the reader is not sent looking for a defect that a commit would settle - without claiming those files are the evidence, which the analysis has not read, and without letting the promise through. No gap: the report says exactly that. The analysis never creates tasks or observations by itself - what it finds waits for the human line.
+A node deliberately unimplemented is listed with its recorded reason as an accepted gap, not as a defect. A node that is neither evidenced nor admitted is the one case the analysis refuses over: it names each, and exits non-zero, so a promise cannot stay unaccounted for by nobody having looked. Where uncommitted paths could carry the missing evidence, the refusal says so and names them - only paths the evidence filter admits, never an uncommitted copy of the specification -, so the reader is not sent looking for a defect that a commit would settle - without claiming those files are the evidence, which the analysis has not read, and without letting the promise through. No gap: the report says exactly that. The analysis never creates tasks or observations by itself - what it finds waits for the human line.

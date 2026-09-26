@@ -2,11 +2,20 @@
 id: BR-01m0qtshfqhcrrqtz051zm9svr
 form: business-rule
 title: "Every accepted promise is kept or admitted"
+capability: evidence
+provenance:
+  level: partly-inferred
+  decided_by: agent-decided
+  sources:
+    - "openspec/changes/bizonyitek-csak-kodbol/specs/evidence/spec.md · Requirement: Minden elfogadott ígéretről látszik, megépült-e"
+    - "openspec/changes/bizonyitek-csak-kodbol/proposal.md · What Changes"
+  quote: "Bizonyíték SHALL csak olyan fájl lehet, amely az ígéretet betartja vagy ellenőrzi — kód, teszt, parancsdefiníció —; a specifikáció és annak bármely másolata SHALL NOT bizonyítéknak számítani."
+  inferred: "Where the sentence sits in the accepted rule, and the capability it now belongs to, were chosen by the agent; the accepted text is otherwise unchanged."
 ---
 
 ## Rule
 
-An accepted specification node either has evidence — code, a test, or a command definition naming it by its id — or it declares an accepted implementation gap saying why it does not yet. There is no third state. `kotta gap` refuses a workspace holding one: it names each node that is neither, says where evidence was sought, and exits non-zero. Admitting a gap does not dispose of a promise. It is a readable statement that the promise stands and is not yet kept, and removing the admission is part of the work that keeps it.
+An accepted specification node either has evidence — code, a test, or a command definition naming it by its id — or it declares an accepted implementation gap saying why it does not yet. There is no third state. Evidence SHALL be what keeps or checks the promise — code, a test, a command definition — and never what states or copies it: the specification and every copy of it, in the workspace, in a change, in the archive or in a generated narrative, MUST NOT count as evidence. `kotta gap` refuses a workspace holding one: it names each node that is neither, says where evidence was sought, and exits non-zero. Admitting a gap does not dispose of a promise. It is a readable statement that the promise stands and is not yet kept, and removing the admission is part of the work that keeps it.
 
 A promise is evidenced by citation: the site that keeps it names the node id, and the report looks for that identifier and nothing else, because the check has to be fast and exact (D-01m14bh1g2pk1fdwm9wpsmx9zg). Naming the node is therefore a term of the agreement, not a habit of this repository: a task that keeps a promise without citing it leaves the promise unaccounted for, however well the code behaves, and the refusal asks for the citation rather than for an implementation the reader may already have written.
 
