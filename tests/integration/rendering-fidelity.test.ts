@@ -27,7 +27,7 @@ function brokenWorkspace(): string {
 }
 
 describe("a rendering never claims more than the result carries", () => {
-  test("a failed validation is not printed as completed", () => {
+  test("a failed validation is not printed as completed (EX-01m0pw5bc716gdz5qbb8yv6t2m)", () => {
     const root = brokenWorkspace();
     const result = attempt(root, ["validate"]);
     expect(result.status).toBe(1);
@@ -39,7 +39,7 @@ describe("a rendering never claims more than the result carries", () => {
     expect(result.stdout).toContain("Non-examples");
   });
 
-  test("the human rendering and --json never disagree about the outcome", () => {
+  test("the human rendering and --json never disagree about the outcome (EX-01m0pw5bc716gdz5qbb8yv6t2m)", () => {
     const root = brokenWorkspace();
     const human = attempt(root, ["validate"]);
     const json = attempt(root, ["validate", "--json"]);

@@ -25,9 +25,9 @@ const SURFACES = [
 /** `@scope/name@1.2.3` or a prerelease of it, wherever it appears as an instruction to install. */
 const INSTALL_LINE = new RegExp(`${declared.name.replace(/[/\\-]/g, "\\$&")}@(\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.]+)?)`, "g");
 
-describe("every published install line names the declared version", () => {
+describe("every published install line names the declared version (BR-01m0zx29x1nvccpr4xwyhjr153)", () => {
   for (const surface of SURFACES) {
-    test(`${surface.what} is in step with the package`, () => {
+    test(`${surface.what} is in step with the package (EX-01m0zx29x1pnyjsa5dyg4dc6n5)`, () => {
       const text = readFileSync(resolve(surface.path), "utf8");
       const named = [...new Set([...text.matchAll(INSTALL_LINE)].map((match) => match[1]))];
       expect(named.length, `${surface.path} names no install version at all`).toBeGreaterThan(0);
@@ -35,7 +35,7 @@ describe("every published install line names the declared version", () => {
     });
   }
 
-  test("no surface names a version the package does not declare", () => {
+  test("no surface names a version the package does not declare (EX-01m0zx29x1pnyjsa5dyg4dc6n5)", () => {
     const drifted = SURFACES
       .map((surface) => ({ surface, named: [...new Set([...readFileSync(resolve(surface.path), "utf8").matchAll(INSTALL_LINE)].map((match) => match[1]))] }))
       .filter(({ named }) => named.some((version) => version !== declared.version));

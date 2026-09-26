@@ -153,7 +153,8 @@ const renderers = new Map<string, (result: unknown) => string>();
 /**
  * What failed, named, for any command at all. A result carrying errors but no registered renderer
  * used to print as a completed line; deriving the failure from the result's own errors fixes every
- * command at once, including the ones not yet written.
+ * command at once, including the ones not yet written (BR-01m0pw5bc7b1rkg5dct5qgdkmb,
+ * EX-01m0pw5bc716gdz5qbb8yv6t2m).
  */
 function renderFailure(command: string, result: unknown): string {
   const errors = (result as { errors?: unknown }).errors;

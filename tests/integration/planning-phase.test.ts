@@ -166,7 +166,7 @@ describe("kotta plan", () => {
   });
 });
 
-describe("kotta approve", () => {
+describe("kotta approve, the one human gate (BR-01m0f0wn89zb3wfb3t3y4d20a7)", () => {
   test("refuses with the exact list: no report, an open decision, a report older than the model", () => {
     const root = planningWorkspace("approve-refusals");
     const first = json(root, ["approve", "add-pause", "--by", "Ada"]);
@@ -195,7 +195,7 @@ describe("kotta approve", () => {
     expect(refused.body.errors?.map((error) => error.code)).toEqual(["SPEC_NODE_PROVENANCE"]);
   });
 
-  test("records who, when and on what basis — the delta's hash — and names what was approved by title", () => {
+  test("records who, when and on what basis — the delta's hash — and names what was approved by title (EX-01m0f0wn8am4hb2vy03wmn4brs)", () => {
     const root = planningWorkspace("approve");
     answerPause(root);
     const planned = json(root, ["plan", "add-pause"]);
@@ -222,7 +222,7 @@ function approvedWorkspace(label: string): string {
 }
 
 describe("kotta archive", () => {
-  test("refuses without an approval, and refuses a delta edited after the yes", () => {
+  test("refuses without an approval, and refuses a delta edited after the yes (BR-01m0f0wn89zb3wfb3t3y4d20a7)", () => {
     const root = planningWorkspace("archive-unapproved");
     const refused = json(root, ["archive", "add-pause"]);
     expect(refused.status).toBe(1);

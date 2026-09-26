@@ -9,7 +9,8 @@ import type { ValidationIssue } from "../spec/registry.js";
 import { analyzeChange, blockingIssues, readPlanning, type NodeRef } from "./plan.js";
 
 /**
- * `kotta approve <change> --by <who>` — the one human gate, recorded.
+ * `kotta approve <change> --by <who>` — the one human gate, recorded (BR-01m0f0wn89zb3wfb3t3y4d20a7):
+ * the receipt names who said yes, when, and on what basis (EX-01m0f0wn8am4hb2vy03wmn4brs).
  *
  * The human says yes in the conversation; this command only writes the receipt. It refuses, with the
  * exact list, whenever the yes could not have been given on the current delta: no planning report, a

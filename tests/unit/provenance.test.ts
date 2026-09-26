@@ -42,7 +42,7 @@ describe("a node's provenance", () => {
     expect(said).toContain("provenance.decided_by unanswered");
   });
 
-  test("the published schema says exactly what the validator enforces", () => {
+  test("the published schema says exactly what the validator enforces (BR-01m0sj2f8mxydc7zxz6y8xn6b1, EX-01m0sj2f8m02k71b0d5ph3d9qf)", () => {
     const schema = JSON.parse(readFileSync(resolve("schemas/provenance.schema.json"), "utf8")) as {
       required: string[]; properties: Record<string, { enum?: string[] }>; additionalProperties: boolean;
     };
