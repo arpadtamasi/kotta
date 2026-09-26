@@ -31,7 +31,9 @@ jobs:
         run: |
           VERSION="$(node -p "require('./package.json').version")"
           test "${GITHUB_REF_NAME}" = "v${VERSION}"
-          git fetch origin main --depth=1
+          # Full history: a shallow fetch of main sees only its tip, so a tag on the merge commit
+          # one below the tip (the v1.0.0-alpha.1 release) is wrongly reported as not on main.
+          git fetch origin main
           git merge-base --is-ancestor "${GITHUB_SHA}" origin/main
       - name: Install locked dependencies
         run: npm ci
@@ -61,13 +63,14 @@ jobs:
             npm publish "${TARBALL}" --access public --tag "${DIST_TAG}"
           fi
           REGISTRY_VERSION=""
-          for ATTEMPT in {1..12}; do
+          # A provenance-signed publish took more than a minute to index on 2026-09-25.
+          for ATTEMPT in {1..60}; do
             REGISTRY_VERSION="$(npm view "${NAME}@${VERSION}" version 2>/dev/null || true)"
             if test "${REGISTRY_VERSION}" = "${VERSION}"; then
               break
             fi
-            echo "Registry has not indexed ${NAME}@${VERSION} yet (attempt ${ATTEMPT}/12)."
-            sleep 5
+            echo "Registry has not indexed ${NAME}@${VERSION} yet (attempt ${ATTEMPT}/60)."
+            sleep 10
           done
           test "${REGISTRY_VERSION}" = "${VERSION}"
           node scripts/clean-install-canary.mjs "${NAME}@${VERSION}"

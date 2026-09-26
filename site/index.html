@@ -3,9 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Kotta keeps the technical model of your product — rules, examples, entities, use cases, interfaces — beside the narrative spec and the code, as the accepted truth, and says which promises the code keeps." />
+    <meta name="description" content="Nobody reads a long spec, so the agent decides. Kotta adds a technical spec and diagrams on top of OpenSpec, marks every decision the agent made alone, and keeps the conversation it came from." />
     <meta name="theme-color" content="#f3f2f2" />
-    <title>Kotta — The technical model beside your narrative spec</title>
+    <title>Kotta — The technical spec and the diagrams on top of OpenSpec</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&display=swap" />
@@ -31,8 +31,10 @@
         </a>
         <nav aria-label="Primary navigation">
           <a href="#why">Why</a>
-          <a href="#how">How it works</a>
+          <a href="#adds">What it adds</a>
+          <a href="#openspec">OpenSpec</a>
           <a href="#install">Install</a>
+          <a class="nav-docs" href="https://github.com/arpadtamasi/kotta/tree/main/docs">Docs <span aria-hidden="true">↗</span></a>
           <a class="nav-support" href="https://github.com/arpadtamasi/kotta/issues/new?template=bug.yml" target="_blank" rel="noreferrer noopener">Report a bug <span aria-hidden="true">↗</span></a>
           <a class="nav-github" href="https://github.com/arpadtamasi/kotta">GitHub <span aria-hidden="true">↗</span></a>
         </nav>
@@ -44,21 +46,21 @@
         <div class="container hero-grid">
           <div class="hero-copy">
             <h1 id="hero-title">
-              Prose proposes. The model is what was agreed.
-              <strong>Keep it beside the code.</strong>
+              Nobody reads the long spec. So the agent decides.
+              <strong>Kotta shows you what it decided.</strong>
             </h1>
-            <p class="hero-lede">Kotta keeps the technical model of your product — rules, examples, entities, state machines, use cases, interfaces — as plain files in your repo, next to the OpenSpec narrative. Every node says where it came from and who decided it. One human yes lands a change. The code names the promise it keeps.</p>
+            <p class="hero-lede">OpenSpec already writes the change in prose. Kotta adds what prose cannot give you: a technical spec in short, checkable parts, and the diagrams drawn from it. Every decision the agent made on its own is marked, and the conversation it came from is kept beside the change.</p>
             <div class="hero-actions">
               <a class="button button-primary" href="#install">Install Kotta</a>
               <a class="button button-secondary" href="https://github.com/arpadtamasi/kotta">View on GitHub <span aria-hidden="true">↗</span></a>
             </div>
-            <p class="hero-meta">chat → narrative spec → technical model → code · MIT licensed · plain files</p>
+            <p class="hero-meta">On top of your OpenSpec repository · compatible with it · MIT licensed · plain files</p>
           </div>
 
-          <aside class="node-card" aria-label="A business rule in the technical model, with its provenance and evidence">
+          <aside class="node-card" aria-label="A business rule the agent decided on its own, marked as such, waiting for a human yes">
             <div class="node-card-head">
-              <span>.kotta/spec/business-rules/pause-keeps-the-game.md</span>
-              <span class="state">accepted</span>
+              <span>openspec/changes/add-pause/model/business-rules/pause-keeps-the-game.md</span>
+              <span class="state">draft</span>
             </div>
             <div class="node-title">
               <span class="node-id">business rule · BR-01m1…</span>
@@ -70,21 +72,21 @@
                 <dd>A paused game SHALL keep its score and its turn; only the clock stops.</dd>
               </div>
               <div>
-                <dt>Source</dt>
-                <dd>openspec/changes/add-pause/conversation.md · J3</dd>
+                <dt>Asked for</dt>
+                <dd>openspec/changes/add-pause/conversation.md · SZ2</dd>
+              </div>
+              <div>
+                <dt>Filled in</dt>
+                <dd>that the score and the turn survive the pause — nobody said so</dd>
               </div>
               <div>
                 <dt>Origin</dt>
-                <dd><span class="prov-badge">stated</span> <span class="prov-badge">decided by a human</span></dd>
-              </div>
-              <div>
-                <dt>Evidence</dt>
-                <dd>bound: tests/game/pause.test.ts</dd>
+                <dd><span class="prov-badge">partly inferred</span> <span class="prov-badge prov-badge-agent">the agent decided</span></dd>
               </div>
             </dl>
             <div class="human-gate">
               <span class="gate-signal" aria-hidden="true"></span>
-              <span><b>Accepted at the one gate</b> approval.yaml records who said yes, to exactly which delta.</span>
+              <span><b>On the list to read before you say yes</b> One filter leaves only what the agent decided alone.</span>
             </div>
           </aside>
         </div>
@@ -97,40 +99,73 @@
 
       <section class="problem" id="why" data-unit="problem" aria-labelledby="problem-title">
         <div class="container problem-layout">
-          <h2 id="problem-title">Prose alone loses what the code needs.</h2>
+          <h2 id="problem-title">A spec nobody reads is a spec the agent decides.</h2>
           <div class="problem-copy">
-            <p class="problem-lede">A narrative spec is where a change is argued. It is not where the agreement survives. Measured on real projects, prose keeps losing the same four things.</p>
+            <p class="problem-lede">Agents write specs faster than anyone can read them. A thousand lines of requirements get a skim and a yes — and every gap the agent filled in on the way is a product decision nobody saw.</p>
             <div class="problem-points">
-              <div><b>The why goes unsaid.</b><span>The what and the how are written down; the goals and the stories — why, and for whom — are not.</span></div>
-              <div><b>Structure does not come back.</b><span>Round-trip a model through prose and the goals it served are lost, and invented ones take their place.</span></div>
-              <div><b>Copied promises drift.</b><span>The same interface, copied into two repositories, already says two different things.</span></div>
-              <div><b>The machine decides unnoticed.</b><span>Wherever a gap is filled in silently, an agent made a product decision nobody saw.</span></div>
+              <div><b>Prose is written, not read.</b><span>The longer the proposal, the less of it a human checks. The yes covers the parts that were never read.</span></div>
+              <div><b>Gaps are filled in silently.</b><span>Wherever the prose says nothing, the agent picks something, and the pick reads exactly like what you asked for.</span></div>
+              <div><b>The why stays in the chat.</b><span>The reasons, the options turned down and who said yes live in a session log that nobody keeps.</span></div>
+              <div><b>Structure does not survive prose.</b><span>A lifecycle written as paragraphs cannot be checked. Measured on one real spec, prose left all 11 goals and 14 stories unsaid.</span></div>
             </div>
           </div>
         </div>
       </section>
 
-      <section class="arrivals" data-unit="arrivals" aria-labelledby="arrivals-title">
+      <section class="adds" id="adds" data-unit="adds" aria-labelledby="adds-title">
         <div class="container">
-          <h2 id="arrivals-title">Three ways in.</h2>
-          <p class="arrivals-lede">The narrative says what a change is for. The model says precisely what was accepted. The code keeps it and says so. Wherever you start, you arrive at the same model.</p>
-          <ol class="arrival-list">
-            <li>
-              <h3>A new product</h3>
-              <p class="arrival-path"><code>OpenSpec change → /plan-change → model</code></p>
-              <p>Write the change in prose, the way you already do. The planning skill translates it into model nodes, marks where each one came from, and asks for what nobody said instead of inventing it.</p>
-            </li>
-            <li>
-              <h3>An OpenSpec repository</h3>
-              <p class="arrival-path"><code>kotta import openspec → kotta plan</code></p>
-              <p>The requirements, scenarios and purposes you already have become a first model, every node marked as the machine’s draft. The planning report lists what the prose never said.</p>
-            </li>
-            <li>
-              <h3>A Kotta 0.x workspace</h3>
-              <p class="arrival-path"><code>kotta migrate --dry-run → kotta migrate</code></p>
-              <p>The specification stays byte for byte as it is. The old process state moves into a read-only archive, and no identifier is lost on the way.</p>
-            </li>
-          </ol>
+          <div class="adds-heading">
+            <h2 id="adds-title">What Kotta adds to OpenSpec.</h2>
+            <p>OpenSpec is where a change is proposed and argued. Kotta adds the four things that let a human check what was agreed without reading all of it.</p>
+          </div>
+          <div class="adds-layout">
+            <ol class="adds-list">
+              <li>
+                <h3>A technical spec</h3>
+                <p>Rules, examples, entities, state machines, use cases, stories and interfaces — each one a short Markdown file in the shape its form declares, checked by <code>kotta validate</code>. Every missing part is named as the form’s own question.</p>
+              </li>
+              <li>
+                <h3>Diagrams</h3>
+                <p>The state machines, the use cases, the story map and the entities are drawn from those files by <code>kotta ui</code>. A lifecycle is read in a glance, not in forty paragraphs.</p>
+              </li>
+              <li>
+                <h3>The machine’s decisions, marked</h3>
+                <p>Every node says whether it was stated or inferred, and who decided it: you, the agent with your yes, or the agent alone. The last kind is one filter away — the list to read before you approve.</p>
+              </li>
+              <li>
+                <h3>The conversation, kept</h3>
+                <p><code>kotta narrative</code> distils the agent session into the change’s <code>conversation.md</code>: your intent, the proposals you said yes to, the paths you turned down. Secrets and personal data are filtered first; nodes cite the exchange they came from.</p>
+              </li>
+            </ol>
+            <figure class="board-shot adds-shot">
+              <img src="../assets/docs/board-state-machines-en.png" width="1440" height="900" loading="lazy" alt="The Kotta board drawing two state machines of a card-game project, a game and its local save, each marked with who decided it." />
+              <figcaption>State machines drawn from the spec, each marked with who decided it.</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section class="difference" id="openspec" data-unit="openspec" aria-labelledby="openspec-title">
+        <div class="container">
+          <div class="difference-heading">
+            <h2 id="openspec-title">On top of OpenSpec. Compatible with it.</h2>
+            <p>Keep writing changes the way you do. Kotta works in the same directories, adds its files beside yours, and writes specs OpenSpec’s own strict validation accepts — or leaves them to you.</p>
+          </div>
+          <div class="comparison-wrap" tabindex="0" aria-label="What OpenSpec keeps and what Kotta adds beside it; scroll horizontally to see every column">
+            <table>
+              <thead>
+                <tr><th scope="col">Where</th><th scope="col">OpenSpec</th><th scope="col">Kotta on top</th></tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row">A change</th><td data-label="OpenSpec"><code>openspec/changes/&lt;name&gt;/proposal.md</code>, written the way you already write it</td><td data-label="Kotta"><code>model/</code>, <code>conversation.md</code>, <code>planning.md</code> and <code>approval.yaml</code> beside it</td></tr>
+                <tr><th scope="row">The accepted state</th><td data-label="OpenSpec"><code>openspec/specs/&lt;capability&gt;/spec.md</code></td><td data-label="Kotta">generated from the model, every requirement bound to its node, passing <code>openspec validate --specs --strict</code></td></tr>
+                <tr><th scope="row">Writing specs yourself</th><td data-label="OpenSpec">the default</td><td data-label="Kotta"><code>narrative: authored</code>: Kotta writes none of it and reports where a requirement disagrees with its node</td></tr>
+                <tr><th scope="row">An existing repository</th><td data-label="OpenSpec">your requirements, scenarios and purposes</td><td data-label="Kotta"><code>kotta import openspec</code> drafts them as rules, examples and goals, all marked as the agent’s until you say yes</td></tr>
+                <tr><th scope="row">Landing a change</th><td data-label="OpenSpec"><code>openspec archive</code></td><td data-label="Kotta"><code>kotta archive</code> in its place: merges the model, regenerates the specs, moves the change to <code>openspec/changes/archive/</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="difference-note">OpenSpec’s strict check wants SHALL or MUST in every obligation, a scenario for every requirement and a real Purpose. Kotta enforces the keyword on a change and warns about the other two before OpenSpec does; the generator invents none of them.</p>
         </div>
       </section>
 
@@ -156,25 +191,49 @@
         </div>
       </section>
 
-      <section class="difference" data-unit="comparison" aria-labelledby="difference-title">
+      <section class="board-view" id="board" data-unit="board" aria-labelledby="board-title">
+        <div class="container board-layout">
+          <div class="board-copy">
+            <h2 id="board-title">See what the machine decided.</h2>
+            <p class="board-lede"><code>kotta ui</code> draws the model as diagrams and marks every node with where it came from. One filter leaves only what the agent decided on its own: the list to read before you say yes, instead of the whole spec. Open a node and the exchange in the conversation it came from is shown in place.</p>
+            <div class="decision-aid">
+              <h3 id="decision-title">Kotta, or OpenSpec alone?</h3>
+              <p><b>OpenSpec alone</b> is enough for a small change you make on your own, when the requirements and scenarios say everything the code needs.</p>
+              <p><b>Add Kotta</b> when rules, states and interfaces must survive many changes, when an agent fills in gaps and you need to see what it decided, or when modules and repositories rely on one another’s promises.</p>
+            </div>
+            <p class="board-links">
+              <a href="https://github.com/arpadtamasi/kotta/blob/main/docs/getting-started.md">Ten-minute walkthrough <span aria-hidden="true">↗</span></a>
+              <a href="https://github.com/arpadtamasi/kotta/tree/main/docs">Read the docs <span aria-hidden="true">↗</span></a>
+            </p>
+          </div>
+          <figure class="board-shot">
+            <img src="../assets/docs/board-agent-decided-en.png" width="1440" height="900" loading="lazy" alt="The Kotta board on a card-game project, filtered to the nodes the agent decided on its own, each row with its provenance badges." />
+            <figcaption>The board on a small card-game model: 15 nodes, 8 of them decided by the agent alone.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section class="arrivals" data-unit="arrivals" aria-labelledby="arrivals-title">
         <div class="container">
-          <div class="difference-heading">
-            <h2 id="difference-title">Not another spec tool. The layer between prose and code.</h2>
-            <p>Keep the tools you already use. OpenSpec holds the narrative; Kotta holds the model it is measured against. They are partners, not rivals.</p>
-          </div>
-          <div class="comparison-wrap" tabindex="0" aria-label="Comparison of Kotta with adjacent tools; scroll horizontally to see every column">
-            <table>
-              <thead>
-                <tr><th scope="col">Layer</th><th scope="col">What it keeps</th><th scope="col">Its strength</th><th scope="col">Where it stops</th></tr>
-              </thead>
-              <tbody>
-                <tr><th scope="row">Agent chat</th><td data-label="Keeps">The conversation</td><td data-label="Strength">Where intent is first said</td><td data-label="Stops">Scrollback, not an agreement</td></tr>
-                <tr><th scope="row">Issue tracker</th><td data-label="Keeps">Work items and their status</td><td data-label="Strength">Who is doing what</td><td data-label="Stops">Not what the product promises</td></tr>
-                <tr><th scope="row">Spec generator</th><td data-label="Keeps">The narrative spec in prose</td><td data-label="Strength">Proposing and arguing a change</td><td data-label="Stops">Structure and who decided are not machine-checked</td></tr>
-                <tr class="kotta-row"><th scope="row">Kotta</th><td data-label="Keeps">The technical model, with provenance</td><td data-label="Strength">Validation, one gate, evidence in the code</td><td data-label="Stops">Leaves the prose to the narrative, and generates it</td></tr>
-              </tbody>
-            </table>
-          </div>
+          <h2 id="arrivals-title">Three ways in.</h2>
+          <p class="arrivals-lede">The narrative says what a change is for. The model says precisely what was accepted. The code keeps it and says so. Wherever you start, you arrive at the same model.</p>
+          <ol class="arrival-list">
+            <li>
+              <h3>A new product</h3>
+              <p class="arrival-path"><code>OpenSpec change → /plan-change → model</code></p>
+              <p>Write the change in prose, the way you already do. The planning skill translates it into model nodes, marks where each one came from, and asks for what nobody said instead of inventing it.</p>
+            </li>
+            <li>
+              <h3>An OpenSpec repository</h3>
+              <p class="arrival-path"><code>kotta import openspec → kotta plan</code></p>
+              <p>The requirements, scenarios and purposes you already have become a first model, every node marked as the machine’s draft. The planning report lists what the prose never said.</p>
+            </li>
+            <li>
+              <h3>A Kotta 0.x workspace</h3>
+              <p class="arrival-path"><code>kotta migrate --dry-run → kotta migrate</code></p>
+              <p>The specification stays byte for byte as it is. The old process state moves into a read-only archive, and no identifier is lost on the way.</p>
+            </li>
+          </ol>
         </div>
       </section>
 
@@ -220,7 +279,7 @@ kotta archive &lt;change&gt;</code></pre>
         <div class="container closing-layout">
           <h2 id="closing-title">The agreement stays where the code already is.</h2>
           <div class="closing-action">
-            <p>Kotta is Hungarian for sheet music: the code is one performance, the score is what lets you play it again. Plain files beside the code. The narrative written from the model. One human yes per change — and every promise the code keeps, named.</p>
+            <p>Kotta is Hungarian for sheet music: the code is one performance, the score is what lets you play it again. A technical spec you can check, diagrams you can read, the agent’s own decisions marked and the conversation kept — on top of the OpenSpec you already have.</p>
             <a class="button button-light" href="https://github.com/arpadtamasi/kotta">Explore Kotta on GitHub <span aria-hidden="true">↗</span></a>
           </div>
         </div>
@@ -229,6 +288,7 @@ kotta archive &lt;change&gt;</code></pre>
         <div class="container footer-bar-inner">
           <a class="wordmark footer-wordmark" href="#top" aria-label="Back to top">Kotta</a>
           <span>MIT licensed · local-first · repository-native</span>
+          <a href="https://github.com/arpadtamasi/kotta/tree/main/docs">Docs <span aria-hidden="true">↗</span></a>
           <a class="nav-support" href="https://github.com/arpadtamasi/kotta/issues/new?template=bug.yml" target="_blank" rel="noreferrer noopener">Report a bug <span aria-hidden="true">↗</span></a>
           <a href="https://github.com/arpadtamasi/kotta">github.com/arpadtamasi/kotta <span aria-hidden="true">↗</span></a>
         </div>
