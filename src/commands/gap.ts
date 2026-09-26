@@ -5,7 +5,7 @@ import { parseMarkdown } from "../core/markdown.js";
 import { workspaceDirectoryName } from "../filesystem/workspace.js";
 import { git } from "../git/git.js";
 import { type EvidenceLevel } from "../core/evidence.js";
-import { ROOT_MODULE, discoverModules, isEvidencePath, listedFiles, moduleOf, placeNode } from "../core/modules.js";
+import { ROOT_MODULE, discoverModules, excludedLine, excludedMentions, excludedSummary, isEvidencePath, listedFiles, moduleOf, placeNode, type ExcludedClass, type ExcludedSummary } from "../core/modules.js";
 
 export interface GapEvidence {
   kind: "code" | "test" | "command";
@@ -28,6 +28,11 @@ export interface GapNode {
   modules: string[];
   /** Evidence in more than one module, on a node that is not an interface. */
   straddler: boolean;
+  /**
+   * On a node at level `none`, the excluded sources that name it — why it reads `none` although
+   * its id is in the repository (BR-01m3cqmtfyrpdzcppvy0565652). Empty on every other node.
+   */
+  excluded: ExcludedClass[];
 }
 
 /** One module's promises by evidence level. A straddling node is counted in each of its modules. */
@@ -80,6 +85,8 @@ export interface GapReportResult {
     modules: GapModuleSummary[];
     /** Nodes with no evidence, so no module: counted apart from every module. */
     unplaced: number;
+    /** What the report did not count as evidence, said once: files per excluded class, and the nodes without evidence each names. */
+    excluded: ExcludedSummary[];
     straddlers: string[];
     nodes: GapNode[];
     promises: GapNode[];
@@ -147,11 +154,12 @@ function acceptedNodes(root: string, ref: string, workspace: string): AcceptedNo
 }
 
 /**
- * Every committed file outside the workspace. A module's published `kotta-spec/` is excluded too: it
- * is a copy of the specification, and a copy of a promise is not evidence that it is kept.
+ * Every committed file no excluded source holds: not the workspace, not the root `openspec/` tree,
+ * not a published `kotta-spec/`, not `node_modules/`. Each is a copy of the specification or somebody
+ * else's code, and a copy of a promise is not evidence that it is kept (BR-01m3cqmt9yrasdj92kky1kcx0n).
  */
-function readableRepositoryFiles(root: string, ref: string, workspace: string): Array<{ path: string; text: string }> {
-  return treePaths(root, ref).filter((path) => isEvidencePath(path, workspace)).flatMap((path) => {
+function readableRepositoryFiles(root: string, paths: string[], ref: string, workspace: string): Array<{ path: string; text: string }> {
+  return paths.filter((path) => isEvidencePath(path, workspace)).flatMap((path) => {
     try {
       const text = atRef(root, ref, path);
       return text.includes("\0") || text.length > 1_000_000 ? [] : [{ path, text }];
@@ -163,9 +171,11 @@ function readableRepositoryFiles(root: string, ref: string, workspace: string): 
 
 /**
  * Paths the working tree holds uncommitted that could carry the evidence this report went looking
- * for: the accepted specification itself, or any file outside the workspace, which is where
- * evidence lives. Deliberately not read — the report's subject is what landed, and claiming an
- * unread file is the evidence would be the overclaim BR-01m0pw5bc7b1rkg5dct5qgdkmb forbids.
+ * for: only the paths the evidence filter admits. An uncommitted copy of the specification — a
+ * change's planning report, its spec, the workspace — cannot carry evidence either, so it is never
+ * offered as the reason (EX-01m3f1eaacp45n4b5r5h170c3n, UC-01m0fpqfxjvet99wbz0v1ag64q). Deliberately
+ * not read — the report's subject is what landed, and claiming an unread file is the evidence would
+ * be the overclaim BR-01m0pw5bc7b1rkg5dct5qgdkmb forbids.
  */
 function uncommittedEvidencePaths(root: string, workspace: string): string[] {
   const status = git(root, ["status", "--porcelain"]);
@@ -173,7 +183,8 @@ function uncommittedEvidencePaths(root: string, workspace: string): string[] {
   return status.split(/\r?\n/).filter(Boolean)
     // Porcelain v1: two status columns, a space, then the path; a rename carries `old -> new`.
     .map((line) => line.slice(3).split(" -> ").at(-1)!.replace(/^"|"$/g, ""))
-    .filter((path) => path.startsWith(`${workspace}/spec/`) || !path.startsWith(`${workspace}/`))
+    // Porcelain names an untracked directory by itself (`dir/`); the filter reads it like any path.
+    .filter((path) => isEvidencePath(path, workspace))
     .sort();
 }
 
@@ -286,6 +297,9 @@ export function formatGapReport(data: GapReportResult["data"]): string {
     `Promises without evidence: ${data.promises.length} · ${ADMISSION_KINDS.map((kind) => `${kind}: ${data.acceptedGaps.filter((gap) => gap.kind === kind).length}`).join(" · ")}${data.unkinded.length ? ` · admitted without a kind: ${data.unkinded.length}` : ""} · Unspecified enforcement: ${data.reverse.length}`,
     `Evidence levels: bound ${data.nodes.filter((node) => node.level === "bound").length} · cited ${data.nodes.filter((node) => node.level === "cited").length} · none ${data.nodes.filter((node) => node.level === "none").length}${data.module ? ` · module ${data.module}` : ""}`,
   ];
+  // What was not counted, said once in the head (BR-01m3cqmtfyrpdzcppvy0565652).
+  const excluded = excludedLine(data.excluded);
+  if (excluded) lines.push(excluded);
   // By module only once a manifest declares one: a single-module repository has nothing to split.
   if (data.modules.some((row) => row.module !== ROOT_MODULE) || data.straddlers.length) {
     lines.push("", "## Evidence by module");
@@ -321,7 +335,7 @@ export function formatGapReport(data: GapReportResult["data"]): string {
   }
   if (data.promises.length) {
     lines.push("", "## Promises without implementing or verifying evidence");
-    for (const node of data.promises) lines.push(`- ${node.changed ? "[changed] " : ""}${node.title} · ${node.id} — looked for ${node.evidenceSought} (${node.path})`);
+    for (const node of data.promises) lines.push(`- ${node.changed ? "[changed] " : ""}${node.title} · ${node.id} — looked for ${node.evidenceSought}${node.excluded.length ? `; named only in ${node.excluded.join(", ")}, which are not evidence` : ""} (${node.path})`);
   }
   for (const kind of ADMISSION_KINDS) {
     const group = data.acceptedGaps.filter((gap) => gap.kind === kind);
@@ -373,7 +387,8 @@ export function gapReport(repositoryRoot: string, options: GapOptions = {}): Gap
   const commit = git(repositoryRoot, ["rev-parse", "--verify", `${baseBranch}^{commit}`]);
   const workspace = workspaceDirectoryName(repositoryRoot);
   const nodes = acceptedNodes(repositoryRoot, commit, workspace);
-  const files = readableRepositoryFiles(repositoryRoot, commit, workspace);
+  const paths = treePaths(repositoryRoot, commit);
+  const files = readableRepositoryFiles(repositoryRoot, paths, commit, workspace);
   const landing = lastSpecLanding(repositoryRoot, commit, workspace);
   // The modules as the manifests at the same commit declare them: the report reads one commit, whole.
   const { modules } = discoverModules(listedFiles(repositoryRoot, files));
@@ -394,8 +409,15 @@ export function gapReport(repositoryRoot: string, options: GapOptions = {}): Gap
       module: placement.module,
       modules: placement.modules,
       straddler: placement.straddler,
+      excluded: [],
     };
   }).sort((left, right) => Number(right.changed) - Number(left.changed) || left.title.localeCompare(right.title) || left.id.localeCompare(right.id));
+  // A node without evidence says which excluded sources name it, so "why is this none?" has its
+  // answer in the report (BR-01m3cqmtfyrpdzcppvy0565652, EX-01m3cqmvs23cfzrxwfjpvk80dx). The search
+  // is the one evidence already ran, over the excluded paths; only the hit is sorted differently.
+  const unevidenced = every.filter((node) => node.level === "none");
+  const mentions = excludedMentions(repositoryRoot, workspace, unevidenced, commit);
+  for (const node of unevidenced) node.excluded = mentions.get(node.id) ?? [];
   const described = options.module === undefined ? every : every.filter((node) => node.modules.includes(options.module!) || node.module === options.module);
 
   const promises: GapNode[] = [];
@@ -422,6 +444,7 @@ export function gapReport(repositoryRoot: string, options: GapOptions = {}): Gap
     module: options.module ?? null,
     modules: summarize(described, options.module === undefined ? moduleNames : [options.module]),
     unplaced: described.filter((node) => node.module === null && !node.straddler).length,
+    excluded: excludedSummary(paths, workspace, described.filter((node) => node.level === "none")),
     straddlers: described.filter((node) => node.straddler).map((node) => node.id),
     nodes: described,
     promises,

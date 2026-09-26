@@ -9,6 +9,7 @@ import { parseToml, tomlGet, tomlTable, type TomlTable, type TomlValue } from ".
 import { evidenceKind, evidenceLevel, type EvidenceKind, type EvidenceLevel } from "./evidence.js";
 import { workspaceDirectoryName } from "../filesystem/workspace.js";
 import { readFormRegistry, readSpecNodes } from "../spec/registry.js";
+import { ARCHIVE_DIRECTORY, CHANGES_DIRECTORY, OPENSPEC_DIRECTORY } from "../spec/change.js";
 
 /**
  * Modules are what the project's manifests declare, and nothing else (design decision 6): no
@@ -67,11 +68,114 @@ function isPublishedSpec(path: string): boolean {
 }
 
 /**
- * The paths evidence and manifests are read from. A module's published `kotta-spec/` is a copy of the
- * specification, so it is never evidence that the module keeps what it copies.
+ * The sources a node's id is found in and not counted from, by path class (BR-01m3cqmtfyrpdzcppvy0565652).
+ * Six, and each one is a place Kotta itself knows holds a copy of the specification or somebody
+ * else's code — never a directory name pattern.
+ */
+export const EXCLUDED_CLASSES = ["workspace", "openspec-change", "openspec-archive", "openspec-spec", "published-spec", "dependency"] as const;
+export type ExcludedClass = typeof EXCLUDED_CLASSES[number];
+
+const OPENSPEC_ROOT = `${OPENSPEC_DIRECTORY}/`;
+const OPENSPEC_ARCHIVE = `${OPENSPEC_DIRECTORY}/${CHANGES_DIRECTORY}/${ARCHIVE_DIRECTORY}/`;
+const OPENSPEC_CHANGES = `${OPENSPEC_DIRECTORY}/${CHANGES_DIRECTORY}/`;
+
+/**
+ * Which excluded source a repository path lies in, or null when it is a place evidence may be.
+ *
+ * A copy of the specification is not evidence (BR-01m3cqmt9yrasdj92kky1kcx0n): the workspace, the
+ * `openspec/` tree at the repository root — its changes, its archive, its generated narrative specs —
+ * and a package's published `kotta-spec/` all state or copy a promise, and none of them keeps it.
+ * Only the root `openspec/` is excluded: a package's own `openspec/` below the root is that package's
+ * business (EX-01m3f1eampk091v0e0p4y88nga), and a project's own `specs/` directory keeps counting as
+ * tests (EX-01m3cqmvdeqkvkbdzwnbfdzwzz). Anything else in the root `openspec/` tree — its project or
+ * config file — is filed with the generated specs: it is the tree's own description, not a change.
+ */
+export function excludedClass(path: string, workspace: string): ExcludedClass | null {
+  if (path.startsWith(`${workspace}/`)) return "workspace";
+  if (path.startsWith(OPENSPEC_ARCHIVE)) return "openspec-archive";
+  if (path.startsWith(OPENSPEC_CHANGES)) return "openspec-change";
+  if (path.startsWith(OPENSPEC_ROOT)) return "openspec-spec";
+  if (isPublishedSpec(path)) return "published-spec";
+  if (path.split("/").includes("node_modules")) return "dependency";
+  return null;
+}
+
+/**
+ * The paths evidence and manifests are read from: every path no excluded source holds. Evidence is
+ * what keeps or checks a promise, never what states or copies it (BR-01m0qtshfqhcrrqtz051zm9svr),
+ * so a file in an excluded source is neither cited nor a test, whatever its path says — the
+ * generated `openspec/specs/…/spec.md` runs through `specs/` and is still no test
+ * (EX-01m3cqmv7e9rjkte4g40kqm294). `kotta gap`, `kotta modules` and the module derivation read
+ * through this one filter, so a node's module never follows from where a copy of the specification
+ * lies (EX-01m3cqmvk8vfym9tmj34zfdx6p).
  */
 export function isEvidencePath(path: string, workspace: string): boolean {
-  return !path.startsWith(`${workspace}/`) && !isPublishedSpec(path) && !path.split("/").includes("node_modules");
+  return excludedClass(path, workspace) === null;
+}
+
+/** Pathspecs covering every excluded source, so the id search over them stays one `git grep`. */
+function excludedPathspecs(workspace: string): string[] {
+  return [`${workspace}/`, OPENSPEC_ROOT, `:(glob)**/${PUBLISHED_SPEC_DIRECTORY}/**`, ":(glob)**/node_modules/**"];
+}
+
+/**
+ * Which excluded classes mention each node: the same exact-id search `gap` runs over evidence, only
+ * sorted by where the hit lies (BR-01m3cqmtfyrpdzcppvy0565652). A node's own file is not a mention
+ * of it — every accepted node lives in the workspace, and saying so beside each one would name
+ * nothing. Read with one `git grep` over the committed tree at `ref`, or over the working tree —
+ * tracked and untracked but not ignored, the files `workingTreeFiles` lists — when `ref` is omitted.
+ */
+export function excludedMentions(root: string, workspace: string, nodes: Array<{ id: string; path: string }>, ref?: string): Map<string, ExcludedClass[]> {
+  const mentions = new Map<string, Set<ExcludedClass>>();
+  const own = new Map(nodes.map((node) => [node.id, node.path]));
+  const wanted = [...own.keys()].filter(Boolean);
+  if (!wanted.length) return new Map();
+  const args = ["grep", "-o", "-z", "-I", "-F", "-f", "-", ...(ref ? [ref] : ["--untracked"]), "--", ...excludedPathspecs(workspace)];
+  let output = "";
+  try {
+    output = execFileSync("git", args, { cwd: root, input: `${wanted.join("\n")}\n`, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"], maxBuffer: 256 * 1024 * 1024 });
+  } catch (error) {
+    // Exit status 1 is git grep's "no match"; anything else is a real failure worth naming.
+    if ((error as { status?: number }).status !== 1) throw error;
+  }
+  const prefix = ref ? `${ref}:` : "";
+  // With -z every hit is `<path>\0<match>`, one per line.
+  for (const line of output.split("\n")) {
+    const separator = line.indexOf("\0");
+    if (separator < 0) continue;
+    const path = line.slice(line.startsWith(prefix) ? prefix.length : 0, separator);
+    const id = line.slice(separator + 1);
+    if (!own.has(id) || own.get(id) === path) continue;
+    const source = excludedClass(path, workspace);
+    if (!source) continue;
+    mentions.set(id, (mentions.get(id) ?? new Set<ExcludedClass>()).add(source));
+  }
+  return new Map([...mentions].map(([id, classes]) => [id, EXCLUDED_CLASSES.filter((entry) => classes.has(entry))]));
+}
+
+/** One excluded class in the report's head: how many files it holds, and how many nodes without evidence it names. */
+export interface ExcludedSummary { class: ExcludedClass; files: number; nodes: number }
+
+/**
+ * The head of a report's exclusions, said once (BR-01m3cqmtfyrpdzcppvy0565652): each class that
+ * holds a file, in the fixed order, with the count of evidence-less nodes it alone was found in.
+ */
+export function excludedSummary(paths: string[], workspace: string, unevidenced: Array<{ excluded: ExcludedClass[] }>): ExcludedSummary[] {
+  const files = new Map<ExcludedClass, number>();
+  for (const path of paths) {
+    const source = excludedClass(path, workspace);
+    if (source) files.set(source, (files.get(source) ?? 0) + 1);
+  }
+  return EXCLUDED_CLASSES
+    .map((entry) => ({ class: entry, files: files.get(entry) ?? 0, nodes: unevidenced.filter((node) => node.excluded.includes(entry)).length }))
+    .filter((row) => row.files > 0 || row.nodes > 0);
+}
+
+/** The one human-readable line naming what the report did not count. */
+export function excludedLine(summary: ExcludedSummary[]): string | null {
+  if (!summary.length) return null;
+  const named = summary.map((row) => `${row.class} ${row.files} file${row.files === 1 ? "" : "s"}${row.nodes ? ` (names ${row.nodes} node${row.nodes === 1 ? "" : "s"} without evidence)` : ""}`);
+  return `Not counted as evidence, as copies of the specification or dependencies: ${named.join(" · ")}`;
 }
 
 function readable(text: string): string | null {

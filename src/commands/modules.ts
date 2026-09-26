@@ -11,8 +11,13 @@ import {
   analyzeWorkingTree,
   boundaryFindings,
   discoverModules,
+  excludedLine,
+  excludedMentions,
+  excludedSummary,
   referenceFindings,
   workingTreeFiles,
+  type ExcludedClass,
+  type ExcludedSummary,
   type ModuleFinding,
   type ModuleIssue,
   type ReferenceStatus,
@@ -59,6 +64,10 @@ export interface ModulesCheckResult {
     placed: number;
     straddlers: string[];
     unplaced: string[];
+    /** What was not counted as evidence, said once: files per excluded class, and the nodes without evidence each names. */
+    excluded: ExcludedSummary[];
+    /** Every node at level `none`, with the excluded sources that name it: why it has no module. */
+    none: Array<{ id: string; title: string; excluded: ExcludedClass[] }>;
     references: ReferenceStatus[];
     warnings: ModuleFinding[];
     issues: ModuleIssue[];
@@ -76,6 +85,12 @@ export function checkModules(root = findRepositoryRoot(), options: { cacheDirect
   const boundary = boundaryFindings(analysis);
   const references = referenceFindings({ analysis, cacheDirectory: options.cacheDirectory });
   const findings = [...boundary, ...references.findings];
+  // The module derivation reads through the evidence filter, so a node that only a copy of the
+  // specification names has no module (EX-01m3cqmvk8vfym9tmj34zfdx6p); the report says which
+  // excluded sources name it rather than leaving the reader to guess (BR-01m3cqmtfyrpdzcppvy0565652).
+  const unevidenced = analysis.nodes.filter((node) => node.level === "none");
+  const mentions = excludedMentions(root, analysis.workspace, unevidenced);
+  const none = unevidenced.map((node) => ({ id: node.id, title: node.title, excluded: mentions.get(node.id) ?? [] }));
   return {
     ok: !findings.some((finding) => finding.severity === "error"),
     command: "modules check",
@@ -91,6 +106,8 @@ export function checkModules(root = findRepositoryRoot(), options: { cacheDirect
       placed: analysis.nodes.filter((node) => node.module !== null).length,
       straddlers: analysis.nodes.filter((node) => node.straddler).map((node) => node.id),
       unplaced: analysis.nodes.filter((node) => node.module === null && !node.straddler).map((node) => node.id),
+      excluded: excludedSummary(workingTreeFiles(root).paths, analysis.workspace, none),
+      none,
       references: references.references,
       warnings: findings.filter((finding) => finding.severity === "warning"),
       issues: analysis.issues,
@@ -115,6 +132,8 @@ export function renderModulesCheck(result: unknown): string {
   const lines = ["# Module boundary check", ""];
   for (const module of data.modules) lines.push(`- ${module.name} (${module.path}): ${module.nodes} node${module.nodes === 1 ? "" : "s"}, ${module.interfaces} interface${module.interfaces === 1 ? "" : "s"}${module.surface.length ? `; surface ${module.surface.join(", ")}` : ""}`);
   lines.push("", `Placed: ${data.placed} · straddling: ${data.straddlers.length} · no evidence: ${data.unplaced.length}`);
+  const excluded = excludedLine(data.excluded);
+  if (excluded) lines.push(excluded);
   const findings = [...errors, ...data.warnings];
   for (const [code, heading] of Object.entries(HEADINGS)) {
     const group = findings.filter((finding) => finding.code === code);

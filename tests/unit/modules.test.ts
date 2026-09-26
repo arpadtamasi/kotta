@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { bindsInTestName, evidenceLevel } from "../../src/core/evidence.js";
-import { ROOT_MODULE, discoverModules, listedFiles, moduleOf, placeNode, similarity } from "../../src/core/modules.js";
+import { bindsInTestName, evidenceKind, evidenceLevel } from "../../src/core/evidence.js";
+import { ROOT_MODULE, discoverModules, excludedClass, isEvidencePath, listedFiles, moduleOf, placeNode, similarity } from "../../src/core/modules.js";
 import { parseToml } from "../../src/core/toml.js";
 
 const ID = "BR-01m1b00000000000000000000a";
@@ -129,5 +129,30 @@ describe("text similarity", () => {
     const original = Array.from({ length: 40 }, (_, index) => `word${index}`).join(" ");
     expect(similarity(original, original.replace("word7", "other"))).toBeGreaterThan(0.95);
     expect(similarity(original, "a completely different promise about something else")).toBeLessThan(0.2);
+  });
+});
+
+describe("the evidence filter (BR-01m3cqmt9yrasdj92kky1kcx0n)", () => {
+  test("six excluded classes, each a source Kotta knows, and everything else admitted (BR-01m3cqmtfyrpdzcppvy0565652)", () => {
+    expect(excludedClass(".kotta/spec/business-rules/x.md", ".kotta")).toBe("workspace");
+    expect(excludedClass("openspec/changes/next/planning.md", ".kotta")).toBe("openspec-change");
+    expect(excludedClass("openspec/changes/archive/2026-09-26-x/model/business-rules/x.md", ".kotta")).toBe("openspec-archive");
+    expect(excludedClass("openspec/specs/ledger/spec.md", ".kotta")).toBe("openspec-spec");
+    expect(excludedClass("packages/core/kotta-spec/manifest.json", ".kotta")).toBe("published-spec");
+    expect(excludedClass("vendor/node_modules/x/index.js", ".kotta")).toBe("dependency");
+    expect(isEvidencePath("src/ledger.ts", ".kotta")).toBe(true);
+  });
+
+  test("a generated narrative is excluded, so it is never read as a test (EX-01m3cqmv7e9rjkte4g40kqm294)", () => {
+    expect(isEvidencePath("openspec/specs/ledger/spec.md", ".kotta")).toBe(false);
+  });
+
+  test("only the root openspec tree is excluded, not a package's own (EX-01m3f1eampk091v0e0p4y88nga)", () => {
+    expect(isEvidencePath("packages/billing/openspec/specs/x/spec.md", ".kotta")).toBe(true);
+  });
+
+  test("a project's own specs directory is admitted and still counts as tests (EX-01m3cqmvdeqkvkbdzwnbfdzwzz)", () => {
+    expect(isEvidencePath("specs/checkout.spec.ts", ".kotta")).toBe(true);
+    expect(evidenceKind("specs/checkout.spec.ts")).toBe("test");
   });
 });
