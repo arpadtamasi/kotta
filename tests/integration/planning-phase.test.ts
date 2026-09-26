@@ -183,6 +183,22 @@ describe("kotta approve, the one human gate (BR-01m0f0wn89zb3wfb3t3y4d20a7)", ()
     expect(existsSync(join(root, CHANGE, "approval.yaml"))).toBe(false);
   });
 
+  test("an unanswered question refuses the approval by name; an answered one is not named (EX-01m0z873t1cmhybhakq6vwzxb6)", () => {
+    const root = planningWorkspace("approve-questions");
+    write(root, `${CHANGE}/model/business-rules/pause-freezes-${PAUSE.slice(-8)}.md`, node(
+      { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: ["openspec/changes/add-pause/proposal.md · Why"], quote: "a paused game should just quit" } },
+      { Rule: "While a game is paused its clock SHALL NOT advance.", Rationale: "A pause is not play.", Scope: "Timed games.", "Open decisions": "- How long may a pause last? Settled by D-001.\n- Does a pause survive a restart?\n- Who may pause a ranked game?" }));
+    run(root, ["plan", "add-pause"]);
+    const refused = json(root, ["approve", "add-pause", "--by", "Ada"]);
+    expect(refused.status).toBe(1);
+    const open = (refused.body.errors ?? []).filter((error) => error.code === "OPEN_DECISION").map((error) => error.message);
+    expect(open).toHaveLength(2);
+    expect(open[0]).toContain("/Q2: Does a pause survive a restart?");
+    expect(open[1]).toContain("/Q3: Who may pause a ranked game?");
+    expect(open.join("\n")).not.toContain("How long may a pause last?");
+    expect(existsSync(join(root, CHANGE, "approval.yaml"))).toBe(false);
+  });
+
   test("refuses a delta whose structure does not validate", () => {
     const root = planningWorkspace("approve-invalid");
     answerPause(root);
