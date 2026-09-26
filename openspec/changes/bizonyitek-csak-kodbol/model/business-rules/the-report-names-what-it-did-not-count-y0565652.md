@@ -4,18 +4,20 @@ form: business-rule
 title: The report names what it did not count
 capability: evidence
 provenance:
-  level: stated
-  decided_by: agent-decided
+  level: partly-inferred
+  decided_by: agent-proposed-human-approved
   sources:
+    - "chat · rp, 2026-09-26 (the operator's answers to the planning questions)"
     - "openspec/changes/bizonyitek-csak-kodbol/specs/evidence/spec.md · Requirement: A jelentés kimondja, mit nem számolt"
     - "openspec/changes/bizonyitek-csak-kodbol/design.md · 2. A kizárt említések nem tűnnek el, hanem megneveződnek"
     - "openspec/changes/bizonyitek-csak-kodbol/tasks.md · 1.2"
-  quote: "A `gap` és a `modules` jelentés `--json` kimenete SHALL megnevezni a bizonyítékból kizárt forrásokat (útvonal-osztályok szerint)"
+  quote: "rp, 2026-09-26, chat: beside the none-level nodes and once as a summary; workspace and dependency classes too, six in all; the human-readable output names them in one summary line."
+  inferred: "The JSON field name `excluded` was chosen by the agent and not put to the operator: a field name is not a product decision."
 ---
 
 ## Rule
 
-The `--json` output of `kotta gap` and `kotta modules` SHALL name the sources it excluded from evidence, by path class — `openspec-change`, `openspec-archive`, `openspec-spec`, `published-spec` —, and SHALL say beside each node at level `none` which excluded class mentions it, so the reason a node reads `none` can be read from the report itself.
+`kotta gap` and `kotta modules` SHALL name the sources they excluded from evidence, by path class. There are six classes: `workspace` (`.kotta/`), `openspec-change`, `openspec-archive`, `openspec-spec`, `published-spec` (a package's `kotta-spec/`) and `dependency` (`node_modules/`). Beside each node at level `none` the report SHALL say which excluded classes mention it, and the head of the report SHALL summarize the exclusions once; every class, `published-spec` included, follows the same rule. In the `--json` output this SHALL be the field `excluded`. The human-readable output SHALL name the exclusions in one summary line.
 
 ## Rationale
 
@@ -23,11 +25,8 @@ Excluding the specification's copies drops every node they alone mention to `non
 
 ## Scope
 
-The `--json` output of `kotta gap` and `kotta modules`. The exclusion itself is stated in *A copy of the specification is not evidence*.
+The `--json` and the human-readable output of `kotta gap` and `kotta modules`. The exclusion itself is stated in *A copy of the specification is not evidence*.
 
 ## Open decisions
 
-- What is the field called in the `--json` output: `excluded`, `excludedMentions`, or another name? Neither the proposal nor the design names it.
-- Where are exclusions reported: only beside each `none` node (the design's words), or also beside a cited node that an excluded source mentions too, and/or once per report as a summary of the excluded classes? The same question for the existing `published-spec` (`kotta-spec/`) class: per node or per report?
-- Are mentions under `.kotta/` and `node_modules/` also named, as classes of their own, or only the four classes the design lists?
-- Does the human-readable output say it as well, or only `--json`, as the proposal writes?
+None

@@ -8,10 +8,11 @@ subjects:
   - UC-01m0f0wn89x00jkpqpqc2esx9h
 provenance:
   level: stated
-  decided_by: agent-decided
+  decided_by: agent-proposed-human-approved
   sources:
+    - "chat · rp, 2026-09-26 (the operator's answers to the planning questions)"
     - "openspec/changes/bizonyitek-csak-kodbol/specs/migration/spec.md · Scenario: Finder-metaadat a régi workspace-ben"
-  quote: "a migráció lefut, a fájl nem kerül az archívumba, és a terv megnevezi, hogy figyelmen kívül hagyta"
+  quote: "rp, 2026-09-26, chat: the skipped metadata file is deleted with the old directory; the plan names what it left out."
 ---
 
 ## Given
@@ -24,4 +25,4 @@ A v2 workspace whose `batches/` directory holds a `.DS_Store` file.
 
 ## Then
 
-The migration completes, the `.DS_Store` is not carried into the archive, and the plan names it as ignored.
+The migration completes, the `.DS_Store` is not carried into the archive but deleted with the old `batches/` directory, and the plan names it as left out.

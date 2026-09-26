@@ -14,11 +14,12 @@ accepted:
 capability: migration
 provenance:
   level: partly-inferred
-  decided_by: agent-decided
+  decided_by: agent-proposed-human-approved
   sources:
+    - "chat · rp, 2026-09-26 (the operator's answers to the planning questions)"
     - "openspec/changes/bizonyitek-csak-kodbol/specs/migration/spec.md · Requirement: A migráció nem bukik rendszer-metaadaton"
     - "openspec/changes/bizonyitek-csak-kodbol/proposal.md · Why"
-  quote: "Minden más ismeretlen bejegyzésen SHALL továbbra is megállni írás nélkül."
+  quote: "rp, 2026-09-26, chat: the skipped metadata file is deleted with the old directory; the plan names what it left out."
   inferred: "The wording inside the use case and the capability it now belongs to were chosen by the agent."
 ---
 
@@ -36,4 +37,4 @@ A dry run lists every change without writing. The migration renames directories,
 
 ## Alternatives
 
-An older-shape directory holds an entry the migration does not know: it stops, names the entry, and writes nothing. Operating-system metadata - a `.DS_Store`, a `Thumbs.db`, a `desktop.ini` - is not such an entry: it is not part of the workspace, so the migration ignores it, leaves it out of the archive, and names it in its plan. The migration is interrupted: every step derives from disk, so running it again finishes the job. Every other command refuses a pre-migration workspace by naming the migrate command - there is deliberately no compatibility layer behind that refusal. A workspace newer than this Kotta is not this use case at all: migrate refuses it like every other command rather than planning a downgrade.
+An older-shape directory holds an entry the migration does not know: it stops, names the entry, and writes nothing. Operating-system metadata - a fixed list, `.DS_Store`, `._*`, `.Spotlight-V100`, `.Trashes`, `.fseventsd`, `Thumbs.db`, `ehthumbs.db`, `desktop.ini` - is not such an entry: it is not part of the workspace, so the migration leaves it out of the archive, deletes it with the old directory, and names it in its plan. Nothing else is deleted without being carried over. The migration is interrupted: every step derives from disk, so running it again finishes the job. Every other command refuses a pre-migration workspace by naming the migrate command - there is deliberately no compatibility layer behind that refusal. A workspace newer than this Kotta is not this use case at all: migrate refuses it like every other command rather than planning a downgrade.

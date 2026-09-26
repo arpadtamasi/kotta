@@ -18,7 +18,7 @@ provenance:
     - "openspec/changes/bizonyitek-csak-kodbol/specs/evidence/spec.md · Scenario: Az azonosító csak a specifikáció másolatában szerepel"
     - "openspec/changes/bizonyitek-csak-kodbol/design.md · 2. A kizárt említések nem tűnnek el, hanem megneveződnek"
   quote: "a jelentés a kizárt forrásokat megnevezi"
-  inferred: "The wording inside the use case and the capability it now belongs to were chosen by the agent."
+  inferred: "The wording inside the use case, the capability it now belongs to, and that the uncommitted-path hint reads through the evidence filter were chosen by the agent."
 ---
 
 ## Intent
@@ -35,4 +35,4 @@ The operator asks for the gap. The analysis walks the accepted spec nodes and re
 
 ## Alternatives
 
-A node deliberately unimplemented is listed with its recorded reason as an accepted gap, not as a defect. A node that is neither evidenced nor admitted is the one case the analysis refuses over: it names each, and exits non-zero, so a promise cannot stay unaccounted for by nobody having looked. Where uncommitted paths could carry the missing evidence, the refusal says so and names them, so the reader is not sent looking for a defect that a commit would settle - without claiming those files are the evidence, which the analysis has not read, and without letting the promise through. No gap: the report says exactly that. The analysis never creates tasks or observations by itself - what it finds waits for the human line.
+A node deliberately unimplemented is listed with its recorded reason as an accepted gap, not as a defect. A node that is neither evidenced nor admitted is the one case the analysis refuses over: it names each, and exits non-zero, so a promise cannot stay unaccounted for by nobody having looked. Where uncommitted paths could carry the missing evidence, the refusal says so and names them - only paths the evidence filter admits, never an uncommitted copy of the specification -, so the reader is not sent looking for a defect that a commit would settle - without claiming those files are the evidence, which the analysis has not read, and without letting the promise through. No gap: the report says exactly that. The analysis never creates tasks or observations by itself - what it finds waits for the human line.
