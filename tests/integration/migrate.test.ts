@@ -558,6 +558,53 @@ describe("the older shapes reach the archive in the v5 shape, in one run", () =>
   });
 });
 
+/**
+ * Migration skips operating-system metadata and nothing else (BR-01m3cqmtvgmsdxnf78babstw2c,
+ * UC-01m0f0wn89x00jkpqpqc2esx9h): a `.DS_Store` stopped a real migration and wrote nothing.
+ */
+describe("migration skips operating-system metadata and nothing else (BR-01m3cqmtvgmsdxnf78babstw2c)", () => {
+  const files = (directory: string): string[] => Object.keys(snapshot(directory));
+
+  test("Finder metadata does not stop the migration: left out of the archive, deleted with its directory, named in the plan (EX-01m3cqmwbbgp3q325eee22m627)", () => {
+    const root = flatV2Repository("finder");
+    writeFileSync(join(root, ".kotta/batches/.DS_Store"), "\u0000\u0000\u0000\u0001Bud1");
+    // An AppleDouble sidecar ends in .md and is still not a task.
+    writeFileSync(join(root, ".kotta/active/._T-001-shape.md"), "\u0000\u0005\u0016\u0007");
+    writeFileSync(join(root, ".kotta/batches/defined/Thumbs.db"), "thumbs");
+    const before = snapshot(root);
+
+    const dry = invoke(root, ["migrate", "--dry-run"]);
+    expect(dry.status, dry.stderr).toBe(0);
+    expect(snapshot(root), "the dry run writes nothing").toEqual(before);
+    for (const path of [".kotta/batches/.DS_Store", ".kotta/active/._T-001-shape.md", ".kotta/batches/defined/Thumbs.db"]) {
+      expect(dry.stdout).toContain(`leave out  ${path}`);
+    }
+
+    const applied = run(root, ["migrate"]).data as MigrateResult["data"];
+    expect(applied.changes.filter((change) => change.kind === "omit").map((change) => (change as { path: string }).path).sort())
+      .toEqual([".kotta/active/._T-001-shape.md", ".kotta/batches/.DS_Store", ".kotta/batches/defined/Thumbs.db"]);
+    expect(existsSync(join(root, ".kotta/batches")), "the old directory is gone, metadata and all").toBe(false);
+    expect(existsSync(join(root, ".kotta/active"))).toBe(false);
+    const archived = files(join(root, ".kotta/legacy"));
+    expect(archived.filter((path) => /(?:^|\/)(?:\.DS_Store|\._[^/]*|Thumbs\.db)$/.test(path)), "nothing of it reaches the archive").toEqual([]);
+    expect(run(root, ["validate"])).toMatchObject({ ok: true, errors: [] });
+  });
+
+  test("an unknown entry still stops the migration, named, and nothing is written (EX-01m3cqmwhq6b2rvc0cwhpsay21)", () => {
+    const root = flatV2Repository("unknown-entry");
+    writeFileSync(join(root, ".kotta/batches/.DS_Store"), "\u0000\u0000\u0000\u0001Bud1");
+    writeFileSync(join(root, ".kotta/batches/notes.txt"), "somebody's notes\n");
+    const before = snapshot(root);
+
+    const result = invoke(root, ["migrate"]);
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("unexpected entry notes.txt");
+    expect(result.stderr, "the metadata is not what stopped it").not.toContain(".DS_Store");
+    expect(result.stderr).toContain("Nothing was written.");
+    expect(snapshot(root)).toEqual(before);
+  });
+});
+
 describe("a migration hands over a whole workspace, and says whether it holds", () => {
   test("the rules file arrives with the records, as the running package writes it", () => {
     const root = v5Repository("rules");

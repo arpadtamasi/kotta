@@ -37,7 +37,9 @@ export type MigrationChange =
   | { kind: "move"; from: string; to: string }
   | { kind: "create"; path: string }
   | { kind: "remove"; path: string }
-  | { kind: "rewrite"; path: string; fields: string[] };
+  | { kind: "rewrite"; path: string; fields: string[] }
+  /** Operating-system metadata in an older-shape directory: not carried over, deleted with its directory. */
+  | { kind: "omit"; path: string };
 
 /** What became of the generated rules file the migration carried along. */
 export interface MigrateRules {
@@ -142,9 +144,21 @@ function normalizeDates(data: Record<string, unknown>): boolean {
   return normalized;
 }
 
+/**
+ * The operating system's metadata, which is not part of any workspace (BR-01m3cqmtvgmsdxnf78babstw2c).
+ * The list is fixed and not configurable: a migration that stopped on a `.DS_Store` wrote nothing,
+ * and one that skipped anything wider could lose what it did not understand.
+ */
+const OPERATING_SYSTEM_METADATA = [".DS_Store", ".Spotlight-V100", ".Trashes", ".fseventsd", "Thumbs.db", "ehthumbs.db", "desktop.ini"];
+
+export function isOperatingSystemMetadata(name: string): boolean {
+  // `._*` is macOS's AppleDouble sidecar — `._task.md` included, which is not a task.
+  return OPERATING_SYSTEM_METADATA.includes(name) || name.startsWith("._");
+}
+
 function markdownFiles(directory: string): string[] {
   if (!existsSync(directory)) return [];
-  return readdirSync(directory).filter((name) => name.endsWith(".md")).sort().map((name) => join(directory, name));
+  return readdirSync(directory).filter((name) => name.endsWith(".md") && !isOperatingSystemMetadata(name)).sort().map((name) => join(directory, name));
 }
 
 function planEntity(path: string, entity: "task" | "batch" | "observation", directoryState?: string): Rewrite {
@@ -469,23 +483,40 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
   };
 
   const removals: string[] = [];
+  const omissions: string[] = [];
+  /**
+   * An older-shape directory's entries, less the operating system's metadata, which the plan names
+   * as left out and the run deletes with the directory (BR-01m3cqmtvgmsdxnf78babstw2c,
+   * UC-01m0f0wn89x00jkpqpqc2esx9h). It is the only thing a migration deletes without carrying it
+   * over; every other entry is the caller's to know or to stop on.
+   */
+  const workspaceEntries = (relativeDirectory: string): string[] => {
+    const entries = readdirSync(join(workspace, relativeDirectory)).sort();
+    for (const name of entries.filter(isOperatingSystemMetadata)) {
+      omissions.push(`${relativeDirectory}/${name}`);
+      changes.push({ kind: "omit", path: `${label}/${relativeDirectory}/${name}` });
+    }
+    return entries.filter((name) => !isOperatingSystemMetadata(name));
+  };
   const flattened: Array<{ source: string; state: string; entity: "task" | "batch" | "observation" }> = [];
   const flatten = (source: string, target: string, state: string, entity: "task" | "batch" | "observation") => {
     const directory = join(workspace, source);
     if (!existsSync(directory)) return;
-    const entries = readdirSync(directory);
+    const entries = workspaceEntries(source);
+    // Anything else it does not know still stops the migration, named, before a write
+    // (EX-01m3cqmwhq6b2rvc0cwhpsay21).
     const stray = entries.filter((name) => !name.endsWith(".md"));
     if (stray.length) {
       throw new Error(`Migration cannot flatten ${directory}: unexpected entr${stray.length === 1 ? "y" : "ies"} ${stray.join(", ")}. Nothing was written.`);
     }
-    for (const name of entries.filter((entry) => entry.endsWith(".md")).sort()) move(`${source}/${name}`, `${target}/${name}`);
+    for (const name of entries.filter((entry) => entry.endsWith(".md"))) move(`${source}/${name}`, `${target}/${name}`);
     removals.push(source);
     changes.push({ kind: "remove", path: `${label}/${source}` });
     flattened.push({ source, state, entity });
   };
   const removeEmptiedContainer = (container: string, knownStates: string[]) => {
     if (!existsSync(join(workspace, container))) return;
-    const leftover = readdirSync(join(workspace, container)).filter((name) => !knownStates.includes(name));
+    const leftover = workspaceEntries(container).filter((name) => !knownStates.includes(name));
     if (leftover.length) {
       throw new Error(`Migration cannot flatten ${join(workspace, container)}: unexpected entr${leftover.length === 1 ? "y" : "ies"} ${leftover.join(", ")}. Nothing was written.`);
     }
@@ -591,6 +622,8 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
     for (const entry of moves) moveEntry(root, join(applied, entry.from), join(applied, entry.to));
     for (const entry of rewrites) entry.rewrite.write(join(applied, remap(entry.relativePath, moves)));
     if (!existsSync(join(applied, "config.yaml"))) writeFileSync(join(applied, "config.yaml"), stringifyYaml(workspaceConfigTemplate(basename(root))));
+    // Operating-system metadata goes with the directory it sat in: never carried into the archive.
+    for (const path of omissions) rmSync(join(applied, remap(path, moves)), { recursive: true, force: true });
     // Deepest first, so an emptied state directory leaves before its emptied container — at the
     // path the moves left it, which for a state directory under process/ is inside the archive.
     for (const path of [...removals].sort((left, right) => right.length - left.length)) {
@@ -662,6 +695,7 @@ export function formatMigration(result: MigrateResult): string {
   for (const change of data.changes) {
     if (change.kind === "move") lines.push(`  move       ${change.from} → ${change.to}`);
     else if (change.kind === "create") lines.push(`  create     ${change.path}`);
+    else if (change.kind === "omit") lines.push(`  leave out  ${change.path} (operating-system metadata: not carried over, deleted with its directory)`);
     else if (change.kind === "remove") lines.push(`  remove     ${change.path}${change.path === ".gitattributes" ? " (held only the index merge attribute)" : " (emptied state directory)"}`);
     else lines.push(`  rewrite    ${change.path}: ${change.fields.join(", ")}`);
   }
