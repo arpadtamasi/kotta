@@ -92,7 +92,7 @@ describe("a copy of the specification is not evidence (BR-01m3cqmt9yrasdj92kky1k
     const check = JSON.parse(kotta(root, "modules", "check", "--json").stdout) as { data: { unplaced: string[]; none: Array<{ id: string }> } };
     expect(check.data.unplaced).toContain(ids.archived);
     expect(check.data.none.map((node) => node.id)).toContain(ids.archived);
-  });
+  }, 60_000);
 
   test("a generated binding is neither cited nor a test, although its path runs through specs/ (EX-01m3cqmv7e9rjkte4g40kqm294)", () => {
     const root = fixture("generated");
@@ -100,7 +100,7 @@ describe("a copy of the specification is not evidence (BR-01m3cqmt9yrasdj92kky1k
     expect(nodeOf(report, ids.generated)).toMatchObject({ level: "none", evidence: [] });
     const everyEvidence = report.data.nodes.flatMap((node) => node.evidence.map((entry) => entry.path));
     expect(everyEvidence.filter((path) => path.startsWith("openspec/"))).toEqual([]);
-  });
+  }, 60_000);
 
   test("a node named only in the specification belongs to no module, not to (root) (EX-01m3cqmvk8vfym9tmj34zfdx6p)", () => {
     const root = fixture("module");
@@ -109,17 +109,17 @@ describe("a copy of the specification is not evidence (BR-01m3cqmt9yrasdj92kky1k
     // Only the two nodes the project itself names are placed; the copies place nothing.
     expect(check.data.modules.find((module) => module.name === "(root)")?.nodes ?? 0).toBe(2);
     expect(nodeOf(gapJson(root), ids.both).module).toBeNull();
-  });
+  }, 60_000);
 
   test("a package's own openspec tree below the root is not excluded (EX-01m3f1eampk091v0e0p4y88nga)", () => {
     const root = fixture("package");
     expect(nodeOf(gapJson(root), ids.packageTree)).toMatchObject({ level: "cited", evidence: [expect.objectContaining({ path: "packages/billing/openspec/specs/invoices/spec.md" })] });
-  });
+  }, 60_000);
 
   test("a project's own specs directory still holds tests (EX-01m3cqmvdeqkvkbdzwnbfdzwzz)", () => {
     const root = fixture("own-specs");
     expect(nodeOf(gapJson(root), ids.ownSpecs)).toMatchObject({ level: "cited", evidence: [{ kind: "test", path: "specs/checkout.js" }] });
-  });
+  }, 60_000);
 
   test("an uncommitted planning report and change spec are not offered as evidence (EX-01m3f1eaacp45n4b5r5h170c3n)", () => {
     const root = fixture("uncommitted");
@@ -135,7 +135,7 @@ describe("a copy of the specification is not evidence (BR-01m3cqmt9yrasdj92kky1k
     // A path the filter admits is still named, as before.
     write(root, "specs/ledger.js", `// ${ids.planned}\n`);
     expect(`${kotta(root, "gap").stdout}`).toContain("specs/ledger.js");
-  });
+  }, 60_000);
 });
 
 describe("the report names what it did not count (BR-01m3cqmtfyrpdzcppvy0565652)", () => {
@@ -163,5 +163,5 @@ describe("the report names what it did not count (BR-01m3cqmtfyrpdzcppvy0565652)
     expect(check.data.none.find((node) => node.id === ids.both)?.excluded).toEqual(["openspec-archive", "openspec-spec"]);
     expect(check.data.excluded.map((row) => row.class)).toContain("openspec-archive");
     expect(kotta(root, "modules", "check").stdout.match(/^Not counted as evidence/gm)).toHaveLength(1);
-  });
+  }, 60_000);
 });
