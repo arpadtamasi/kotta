@@ -153,7 +153,9 @@ describe("kotta plan", () => {
     expect(broken.body.data.silences.formQuestions.map((issue: { message: string }) => issue.message).join("\n")).toContain("What would break if this rule were violated?");
   });
 
-  test("a removal an accepted node still depends on fails the merged view and is named as a candidate", () => {
+  // A promise the release no longer keeps leaves the model through REMOVED.md, plan, the gate and
+  // archive - never by hand (BR-01m3f47dgh74a0dm9bwv0pwgc3, EX-01m3f47dqm80hbznzm87pfzmgx).
+  test("a removal an accepted node still depends on fails the merged view and is named as a candidate (BR-01m3f47dgh74a0dm9bwv0pwgc3, EX-01m3f47dqm80hbznzm87pfzmgx)", () => {
     const root = planningWorkspace("plan-removed");
     answerPause(root);
     write(root, `${CHANGE}/model/REMOVED.md`, `# Removed\n\n- ${PROMPT} — the prompt example goes\n`);
