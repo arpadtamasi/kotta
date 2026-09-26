@@ -1,0 +1,46 @@
+change: bizonyitek-csak-kodbol
+approved_by: rp
+approved_at: 2026-09-26T14:24:27.439Z
+approval_basis: sha256:e8429e974d0df98ef1a05d3af7057713c621701d42c87a4b60041d7191513483
+approved:
+  added:
+    - id: BR-01m3cqmt9yrasdj92kky1kcx0n
+      title: A copy of the specification is not evidence
+    - id: BR-01m3cqmtvgmsdxnf78babstw2c
+      title: Migration skips operating-system metadata and nothing else
+    - id: BR-01m3cqmtnnwxz7fkyr6d5ch9e6
+      title: The import drafts nothing from a comment
+    - id: BR-01m3cqmtfyrpdzcppvy0565652
+      title: The report names what it did not count
+    - id: EX-01m3cqmvz6thtctkdd760f1n2b
+      title: A comment-only Purpose drafts no goal
+    - id: EX-01m3f1eax7v7xsq6zfsk087v74
+      title: A comment-only scenario is named in a warning
+    - id: EX-01m3cqmv7e9rjkte4g40kqm294
+      title: A generated binding is neither cited nor a test
+    - id: EX-01m3cqmvs23cfzrxwfjpvk80dx
+      title: A node named only in an excluded source says which
+    - id: EX-01m3cqmvk8vfym9tmj34zfdx6p
+      title: A node named only in the specification belongs to no module
+    - id: EX-01m3f1eampk091v0e0p4y88nga
+      title: A package's own openspec tree is not excluded
+    - id: EX-01m3cqmvdeqkvkbdzwnbfdzwzz
+      title: A project's own specs directory still holds tests
+    - id: EX-01m3cqmw5eyqbr0bt3wcrazx8g
+      title: A Purpose with prose drafts from the prose alone
+    - id: EX-01m3cqmv1hf7skvkcp1jcf80np
+      title: An archived change cites nothing
+    - id: EX-01m3f1eaacp45n4b5r5h170c3n
+      title: An uncommitted specification file is not offered as evidence
+    - id: EX-01m3cqmwhq6b2rvc0cwhpsay21
+      title: An unknown entry still stops the migration
+    - id: EX-01m3cqmwbbgp3q325eee22m627
+      title: Finder metadata does not stop the migration
+  changed:
+    - id: BR-01m0qtshfqhcrrqtz051zm9svr
+      title: Every accepted promise is kept or admitted
+    - id: UC-01m0fpqfxjvet99wbz0v1ag64q
+      title: Analyze the implementation gap
+    - id: UC-01m0f0wn89x00jkpqpqc2esx9h
+      title: Migrate a workspace
+  removed: []

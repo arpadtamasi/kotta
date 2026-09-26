@@ -51,9 +51,19 @@ function title(node: SpecNode): string {
   return typeof node.data.title === "string" && node.data.title.trim() ? node.data.title.trim() : node.id;
 }
 
+/**
+ * A section's text with its Markdown comments removed, its lines otherwise as written. Every
+ * narrative section — a Purpose, a requirement, a scenario — is measured on this, so a section that
+ * holds only a comment is empty, and a comment beside prose never reaches a draft
+ * (BR-01m3cqmtnnwxz7fkyr6d5ch9e6).
+ */
+export function stripMarkdownComments(text: string): string {
+  return text.replace(/[ \t]*<!--[\s\S]*?-->/g, "").replace(/[ \t]+$/gm, "").replace(/\n{3,}/g, "\n\n").trim();
+}
+
 /** Whitespace-insensitive, comment-free: the unit two texts are compared in. */
 export function normalizeProse(text: string): string {
-  return text.replace(/<!--[\s\S]*?-->/g, " ").replace(/\s+/g, " ").trim();
+  return stripMarkdownComments(text).replace(/\s+/g, " ").trim();
 }
 
 /**

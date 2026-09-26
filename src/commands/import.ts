@@ -5,7 +5,7 @@ import { mintSpecId, specFilename } from "../core/identity.js";
 import { slugify } from "../core/naming.js";
 import { findRepositoryRoot, specPath } from "../filesystem/workspace.js";
 import { ARCHIVE_DIRECTORY, MODEL_DIRECTORY, OPENSPEC_DIRECTORY, changesPath } from "../spec/change.js";
-import { INFORMATIVE_FORMS, PURPOSE_FORM, REQUIREMENT_FORMS, SCENARIO_FORM, markdownFiles, normalizeProse } from "../spec/narrative.js";
+import { INFORMATIVE_FORMS, PURPOSE_FORM, REQUIREMENT_FORMS, SCENARIO_FORM, markdownFiles, normalizeProse, stripMarkdownComments } from "../spec/narrative.js";
 import { QUOTE_WORD_LIMIT, type Provenance } from "../spec/provenance.js";
 import { readFormRegistry, readSpecNodes, referencesIn, type SpecForm, type SpecNode } from "../spec/registry.js";
 import type { NodeRef } from "./plan.js";
@@ -62,7 +62,7 @@ export function parseCapabilitySpec(content: string): ParsedCapabilitySpec {
   let expectBinding = false;
 
   const closeRequirement = () => {
-    if (requirement) requirements.push({ title: requirement.title, binding: requirement.binding, text: requirement.lines.join("\n").trim(), line: requirement.line, scenarios: requirement.scenarios });
+    if (requirement) requirements.push({ title: requirement.title, binding: requirement.binding, text: stripMarkdownComments(requirement.lines.join("\n")), line: requirement.line, scenarios: requirement.scenarios });
     requirement = undefined;
     scenario = undefined;
     step = undefined;
@@ -120,7 +120,18 @@ export function parseCapabilitySpec(content: string): ParsedCapabilitySpec {
     else if (section === "purpose") purpose.push(line);
   });
   closeRequirement();
-  return { purpose: purpose.join("\n").trim(), purposeBinding, requirements };
+  // Every section is measured without its comments (BR-01m3cqmtnnwxz7fkyr6d5ch9e6): the generator's
+  // "no goal node names this capability" comment is not a purpose, and a step that is only a comment
+  // is not a step.
+  const uncommented = (items: string[]) => items.map(stripMarkdownComments).filter(Boolean);
+  for (const each of requirements) {
+    for (const entry of each.scenarios) {
+      entry.given = uncommented(entry.given);
+      entry.when = uncommented(entry.when);
+      entry.then = uncommented(entry.then);
+    }
+  }
+  return { purpose: stripMarkdownComments(purpose.join("\n")), purposeBinding, requirements };
 }
 
 /** The first sentence of a text, whitespace-normalized and cut to the quote limit: a witness, not a copy. */
@@ -288,6 +299,9 @@ export function importOpenSpec(options: { change?: string } = {}, repositoryRoot
     const source = relative(root, file).split(sep).join("/");
     const parsed = parseCapabilitySpec(readFileSync(file, "utf8"));
 
+    // A Purpose with no text once its comments are gone drafts no goal, and says so: the planning
+    // phase asks for a purpose nobody stated (BR-01m3cqmtnnwxz7fkyr6d5ch9e6, EX-01m3cqmvz6thtctkdd760f1n2b).
+    if (!parsed.purpose) warnings.push(`${capability}: the purpose is not stated — ${source} · Purpose has no text once its comments are removed, so no goal was drafted; the planning phase asks for it.`);
     if (parsed.purpose) {
       const title = `Purpose of ${capability}`;
       const texts = { [goalForm.headings[0].toLowerCase()]: parsed.purpose };
@@ -300,6 +314,12 @@ export function importOpenSpec(options: { change?: string } = {}, repositoryRoot
     let scenarios = 0;
     for (const requirement of parsed.requirements) {
       const where = `${source} · Requirement: ${requirement.title}`;
+      // An empty section yields no draft, and is named rather than skipped in silence. A scenario
+      // proves its requirement's rule, so with no rule drafted its scenarios have nothing to prove.
+      if (!requirement.text) {
+        warnings.push(`${capability}: ${where} has no text once its comments are removed, so no rule was drafted${requirement.scenarios.length ? `, nor an example for its ${requirement.scenarios.length} scenario${requirement.scenarios.length === 1 ? "" : "s"}` : ""}.`);
+        continue;
+      }
       const texts = { [ruleForm.headings[0].toLowerCase()]: requirement.text };
       const extra = { capability, provenance: provenance(where, firstSentence(requirement.text)) };
       const existing = match(BINDABLE_FORMS, requirement.title, requirement.binding, where);
@@ -308,6 +328,11 @@ export function importOpenSpec(options: { change?: string } = {}, repositoryRoot
 
       for (const scenario of requirement.scenarios) {
         const at = `${where} / Scenario: ${scenario.title}`;
+        // A scenario holding only a comment drafts no example (EX-01m3f1eax7v7xsq6zfsk087v74).
+        if (!scenario.given.length && !scenario.when.length && !scenario.then.length) {
+          warnings.push(`${capability}: ${at} has no text once its comments are removed, so no example was drafted.`);
+          continue;
+        }
         const stepTexts = { given: steps(scenario.given), when: steps(scenario.when), then: steps(scenario.then) };
         const quote = firstSentence(scenario.when[0] ?? scenario.given[0] ?? scenario.then[0] ?? "");
         // By title, an example matches only among the ones already proving this rule: a same-titled

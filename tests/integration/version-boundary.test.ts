@@ -42,8 +42,8 @@ function fixture(label: string, version: number | string) {
 /** Commands that read a workspace and are not exempt from the shape check. */
 const READERS = [["validate"], ["gap"], ["questions"], ["spec", "new", "goal", "--title", "x"], ["sync"], ["doctor"]];
 
-describe("a version boundary refuses in both directions", () => {
-  test("a newer workspace is refused by every reading command, naming both versions", () => {
+describe("a version boundary refuses in both directions (BR-01m0q89b16xcfasfj1z8mc2hgg)", () => {
+  test("a newer workspace is refused by every reading command, naming both versions (EX-01m0q89b1693yvwzx0j8tr5zjp)", () => {
     const { root } = fixture("newer", NEWER);
     for (const command of READERS) {
       const result = attempt(root, command);
@@ -55,7 +55,7 @@ describe("a version boundary refuses in both directions", () => {
     }
   }, 60_000);
 
-  test("the newer refusal never says legacy and never names migrate", () => {
+  test("the newer refusal never says legacy and never names migrate (EX-01m0q89b1693yvwzx0j8tr5zjp)", () => {
     const { root } = fixture("wording", NEWER);
     for (const command of [...READERS, ["migrate"], ["migrate", "--dry-run"]]) {
       const said = say(attempt(root, command));
@@ -64,7 +64,7 @@ describe("a version boundary refuses in both directions", () => {
     }
   }, 60_000);
 
-  test("migrate refuses a newer workspace and plans nothing", () => {
+  test("migrate refuses a newer workspace and plans nothing (EX-01m0q89b1693yvwzx0j8tr5zjp)", () => {
     const { root, config } = fixture("migrate", NEWER);
     const before = readFileSync(config, "utf8");
 

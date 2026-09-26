@@ -1,10 +1,10 @@
 import { readEnv } from "./env.js";
 
 /**
- * The receipt an approval-carrying mutation stamps on the entity it approved (BR-…gates,
- * D-009 / T-…receipt). The gate stops being ceremony: after the fact the record shows that an
- * approval happened, who gave it, and on what basis — which is what makes a chat-relayed approval
- * auditable. It records the *claimed* basis; it does not authenticate who typed a terminal command.
+ * The receipt an approval-carrying mutation stamps on the entity it approved
+ * (BR-01m0f0wn89zb3wfb3t3y4d20a7, EX-01m0f0wn8am4hb2vy03wmn4brs; D-009). The gate stops being
+ * ceremony: after the fact the record shows that an approval happened, who gave it, and on what
+ * basis — which is what makes a chat-relayed approval auditable. It records the *claimed* basis; it does not authenticate who typed a terminal command.
  */
 export interface ApprovalReceipt {
   approved_by: string;

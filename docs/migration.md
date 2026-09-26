@@ -28,7 +28,7 @@ kotta migrate              # the same plan, applied
 ```
 
 `--workspace <path>` points it at another repository root or workspace directory. The plan lists
-each change as `move`, `create`, `remove` or `rewrite`, the number of identifiers (all unchanged),
+each change as `move`, `create`, `remove`, `rewrite` or `leave out`, the number of identifiers (all unchanged),
 and whether the result validates.
 
 In one run, from any older shape:
@@ -42,6 +42,12 @@ In one run, from any older shape:
 | `.kotta/README.md`, `.kotta/AGENTS.md` | this Kotta's copies; a hand-edited rules file is reported and left alone |
 | `.gitattributes` | the generated index's merge attribute removed; the file deleted when that was all it held |
 | `spec/` | byte-identical, and the command proves it after writing; a workspace with no registry at all gets the bundled one |
+
+Operating-system metadata in an older-shape directory is not part of the workspace. A fixed list —
+`.DS_Store`, `._*`, `.Spotlight-V100`, `.Trashes`, `.fseventsd`, `Thumbs.db`, `ehthumbs.db`,
+`desktop.ini` — is left out of the archive, deleted with the old directory it sat in, and named in the
+plan as `leave out` (`omit` in `--json`). It is the only thing the migration deletes without carrying
+it over; any other entry it does not know stops the migration, named, with nothing written.
 
 `legacy/README.md` says what the archive is and which shape wrote it. Nothing in Kotta 1.0 reads or
 writes `legacy/`.

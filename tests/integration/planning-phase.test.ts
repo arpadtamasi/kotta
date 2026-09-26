@@ -153,7 +153,9 @@ describe("kotta plan", () => {
     expect(broken.body.data.silences.formQuestions.map((issue: { message: string }) => issue.message).join("\n")).toContain("What would break if this rule were violated?");
   });
 
-  test("a removal an accepted node still depends on fails the merged view and is named as a candidate", () => {
+  // A promise the release no longer keeps leaves the model through REMOVED.md, plan, the gate and
+  // archive - never by hand (BR-01m3f47dgh74a0dm9bwv0pwgc3, EX-01m3f47dqm80hbznzm87pfzmgx).
+  test("a removal an accepted node still depends on fails the merged view and is named as a candidate (BR-01m3f47dgh74a0dm9bwv0pwgc3, EX-01m3f47dqm80hbznzm87pfzmgx)", () => {
     const root = planningWorkspace("plan-removed");
     answerPause(root);
     write(root, `${CHANGE}/model/REMOVED.md`, `# Removed\n\n- ${PROMPT} — the prompt example goes\n`);
@@ -166,7 +168,7 @@ describe("kotta plan", () => {
   });
 });
 
-describe("kotta approve", () => {
+describe("kotta approve, the one human gate (BR-01m0f0wn89zb3wfb3t3y4d20a7)", () => {
   test("refuses with the exact list: no report, an open decision, a report older than the model", () => {
     const root = planningWorkspace("approve-refusals");
     const first = json(root, ["approve", "add-pause", "--by", "Ada"]);
@@ -183,6 +185,22 @@ describe("kotta approve", () => {
     expect(existsSync(join(root, CHANGE, "approval.yaml"))).toBe(false);
   });
 
+  test("an unanswered question refuses the approval by name; an answered one is not named (EX-01m0z873t1cmhybhakq6vwzxb6)", () => {
+    const root = planningWorkspace("approve-questions");
+    write(root, `${CHANGE}/model/business-rules/pause-freezes-${PAUSE.slice(-8)}.md`, node(
+      { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: ["openspec/changes/add-pause/proposal.md · Why"], quote: "a paused game should just quit" } },
+      { Rule: "While a game is paused its clock SHALL NOT advance.", Rationale: "A pause is not play.", Scope: "Timed games.", "Open decisions": "- How long may a pause last? Settled by D-001.\n- Does a pause survive a restart?\n- Who may pause a ranked game?" }));
+    run(root, ["plan", "add-pause"]);
+    const refused = json(root, ["approve", "add-pause", "--by", "Ada"]);
+    expect(refused.status).toBe(1);
+    const open = (refused.body.errors ?? []).filter((error) => error.code === "OPEN_DECISION").map((error) => error.message);
+    expect(open).toHaveLength(2);
+    expect(open[0]).toContain("/Q2: Does a pause survive a restart?");
+    expect(open[1]).toContain("/Q3: Who may pause a ranked game?");
+    expect(open.join("\n")).not.toContain("How long may a pause last?");
+    expect(existsSync(join(root, CHANGE, "approval.yaml"))).toBe(false);
+  });
+
   test("refuses a delta whose structure does not validate", () => {
     const root = planningWorkspace("approve-invalid");
     answerPause(root);
@@ -195,7 +213,7 @@ describe("kotta approve", () => {
     expect(refused.body.errors?.map((error) => error.code)).toEqual(["SPEC_NODE_PROVENANCE"]);
   });
 
-  test("records who, when and on what basis — the delta's hash — and names what was approved by title", () => {
+  test("records who, when and on what basis — the delta's hash — and names what was approved by title (EX-01m0f0wn8am4hb2vy03wmn4brs)", () => {
     const root = planningWorkspace("approve");
     answerPause(root);
     const planned = json(root, ["plan", "add-pause"]);
@@ -222,7 +240,7 @@ function approvedWorkspace(label: string): string {
 }
 
 describe("kotta archive", () => {
-  test("refuses without an approval, and refuses a delta edited after the yes", () => {
+  test("refuses without an approval, and refuses a delta edited after the yes (BR-01m0f0wn89zb3wfb3t3y4d20a7)", () => {
     const root = planningWorkspace("archive-unapproved");
     const refused = json(root, ["archive", "add-pause"]);
     expect(refused.status).toBe(1);

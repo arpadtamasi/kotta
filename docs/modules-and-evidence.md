@@ -30,12 +30,13 @@ A module's **surface** is what other modules may rely on: `exports`, `main`, `ty
 
 ## A node's module is where its evidence is
 
-A node has no `module:` field. Kotta finds every committed file that names its id and takes the
-modules those files are in:
+A node has no `module:` field. Kotta finds every file that names its id — outside the excluded
+sources below — and takes the modules those files are in:
 
 - one module: that is the node's module;
 - several: the node **straddles** them — a promise no single module keeps alone;
-- none: the node is unplaced (it has no evidence yet).
+- none: the node is unplaced (it has no evidence yet). A node that only a copy of the specification
+  names is unplaced too, never `(root)`.
 
 The exception is an **interface** node: its `module:` names the module whose surface it states, and
 an interface cited from several modules is the point, not a straddle.
@@ -103,7 +104,7 @@ every accepted node at one level:
 
 | Level | Meaning |
 | --- | --- |
-| `none` | no committed file outside `.kotta/` (and outside `node_modules/` and published `kotta-spec/`) names the id |
+| `none` | no committed file outside the excluded sources names the id |
 | `cited` | some such file names it |
 | `bound` | a test's own name carries it |
 
@@ -143,9 +144,36 @@ source code with no node id in the four lines above it. That list does not refus
 interfaces naming it. With more than one module, the report adds evidence by module and lists the
 straddling promises.
 
-**Known limit in 1.0.0-alpha.1.** `gap` reads every committed file outside `.kotta/`, and that
-includes `openspec/`. An archived change's `model/` and `approval.yaml`, and the narrative generated
-from the model, all carry node ids, so after `kotta archive` every landed node reads as at least
-`cited`, and a generated spec under a `specs/` directory counts as a test file. Read the evidence
-paths the report lists before trusting a level. On the casino repository, whose code names no node
-id, `gap` reports all 184 nodes as `cited`, every one of them through `openspec/`.
+### What is not evidence
+
+Evidence is what keeps or checks a promise — code, a test, a command definition — never what states
+or copies it. `gap`, `modules check` and the module derivation read through one filter that leaves
+out six classes of source:
+
+| Class | Path |
+| --- | --- |
+| `workspace` | `.kotta/` — the specification itself |
+| `openspec-change` | `openspec/changes/<name>/` at the repository root |
+| `openspec-archive` | `openspec/changes/archive/` — an archived change's `model/` and `approval.yaml` |
+| `openspec-spec` | the rest of the root `openspec/` tree — the generated narrative specs |
+| `published-spec` | any `kotta-spec/` a package publishes |
+| `dependency` | anything under `node_modules/` |
+
+The exclusion names the sources Kotta knows, not a directory name: a package's own `openspec/` below
+the root is read, and a project's own `specs/` directory still counts as tests. A file in an excluded
+source is never a test, whatever its path. The hint a refusal gives about uncommitted paths names only
+paths the filter admits.
+
+The report says what it did not count. Its head has one line, and `--json` the field `excluded`: per
+class, how many files it holds and how many evidence-less nodes it names. Every node at level `none`
+carries its own `excluded` list — the classes that mention it, its own file aside — so "why is this
+node none?" is answered in the report:
+
+```text
+Evidence levels: bound 0 · cited 0 · none 184
+Not counted as evidence, as copies of the specification or dependencies: workspace 208 files (names 92 nodes without evidence) · openspec-archive 197 files (names 184 nodes without evidence) · openspec-spec 7 files (names 131 nodes without evidence)
+```
+
+That is the casino repository: its code names no node id, so every node is `none` until the code
+that keeps a promise names it. `modules check --json` carries the same head and a `none` list with
+each node's `excluded`.

@@ -157,7 +157,9 @@ export function workspaceShapeStanding(root: string): ShapeStanding {
  * The refusal a newer workspace gets, wherever it is met. It exists apart from
  * `assertCurrentWorkspaceShape` because `migrate` is exempt from that check — deliberately, so it
  * can read old workspaces at all — and the exemption must not extend to this direction: migration
- * only ever carries a workspace forward.
+ * only ever carries a workspace forward. A version boundary refuses in both directions
+ * (BR-01m0q89b16xcfasfj1z8mc2hgg); a newer workspace is refused, not downgraded
+ * (EX-01m0q89b1693yvwzx0j8tr5zjp).
  */
 export function assertNotNewerWorkspace(root: string): void {
   if (!hasWorkspace(root)) return;
