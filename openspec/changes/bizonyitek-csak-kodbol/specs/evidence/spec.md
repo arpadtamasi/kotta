@@ -21,9 +21,15 @@ specifikáció és annak bármely másolata SHALL NOT bizonyítéknak számítan
 
 ### Requirement: A specifikáció másolata nem bizonyíték
 <!-- kotta: BR-01m3cqmt9yrasdj92kky1kcx0n -->
-A bizonyíték-szűrő SHALL kizárni a `.kotta/` workspace-t, az `openspec/` fát, a csomagok kiadott
-`kotta-spec/` mappáit és a `node_modules/` alatti fájlokat. Ugyanezt a szűrőt SHALL használni a
-modul-levezetés is, hogy egy node modulja ne a specifikáció másolatának helyéből adódjon.
+A bizonyíték-szűrő SHALL kizárni minden azonosító-keresésből a `.kotta/` workspace-t, a repó
+gyökerében álló `openspec/` fát — a change-eket, az archívumot és a generált narratív specet —,
+a csomagok kiadott `kotta-spec/` mappáit és a `node_modules/` alatti fájlokat. A `kotta gap` és a
+modul-levezetés SHALL ugyanezt az egy szűrőt használni, hogy egy node modulja sose a specifikáció
+másolatának helyéből adódjon; a nem commitolt útvonalak ajánlása is ezen a szűrőn megy át. Kizárt
+forrásban lévő fájl SHALL NOT tesztnek számítani attól, hogy útvonalában `specs/` szerepel. A
+kizárás MUST a Kotta által ismert spec-forrásokat nevezze, nem könyvtárnév-mintát: a projekt saját
+`specs/` könyvtára továbbra is teszt, és egy csomag gyökér alatti saját `openspec/` fája nincs
+kizárva.
 
 #### Scenario: Archivált change a repóban
 - **WHEN** egy change archiválása után a `model/` másolat és az `approval.yaml` az
@@ -38,9 +44,14 @@ modul-levezetés is, hogy egy node modulja ne a specifikáció másolatának hel
 
 ### Requirement: A jelentés kimondja, mit nem számolt
 <!-- kotta: BR-01m3cqmtfyrpdzcppvy0565652 -->
-A `gap` és a `modules` jelentés `--json` kimenete SHALL megnevezni a bizonyítékból kizárt
-forrásokat (útvonal-osztályok szerint), hogy egy `none` szintű node oka a jelentésből olvasható
-legyen.
+A `kotta gap` és a `kotta modules` SHALL megnevezni a bizonyítékból kizárt forrásokat
+útvonal-osztály szerint. Hat osztály van: `workspace` (`.kotta/`), `openspec-change`,
+`openspec-archive`, `openspec-spec`, `published-spec` (egy csomag `kotta-spec/`-je) és
+`dependency` (`node_modules/`). Minden `none` szintű node mellett a jelentés SHALL kimondani,
+melyik kizárt osztály említi, és a jelentés feje SHALL egyszer összesíteni a kizárásokat; minden
+osztályra, a `published-spec`-re is, ugyanez a szabály. A `--json` kimenetben ez SHALL az
+`excluded` mező legyen; az ember-olvasható kimenet SHALL egy összesítő sorban nevezni meg a
+kizárásokat.
 
 #### Scenario: Node csak kizárt helyen említve
 - **WHEN** egy node azonosítója egy kizárt forrásban szerepel, és máshol nem
