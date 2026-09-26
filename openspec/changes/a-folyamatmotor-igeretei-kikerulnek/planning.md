@@ -1,6 +1,6 @@
 ---
 change: a-folyamatmotor-igeretei-kikerulnek
-generated_at: 2026-09-26T15:13:13.420Z
+generated_at: 2026-09-26T19:17:26.813Z
 delta_hash: sha256:9a4e7dfbbdfd863fd10f149845a54f71469fa61fda6d7ad0e2cdb8d2fe1d879a
 ready_for_approval: true
 ---
