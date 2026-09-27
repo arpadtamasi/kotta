@@ -83,6 +83,15 @@ overwritten.
    threshold — that no source says, do not fill it with a plausible answer. Write it as an item under
    `## Open decisions` in that node, one question per item. A listed gap is worth more than a
    filled-in guess; the change cannot be approved while one is open, which is the point.
+   **Write every question for someone who has not read the code or the specification.** The human
+   at the gate knows the product, not the files. A question that assumes they know what a rule
+   says, what a term means, or how the code behaves is not answerable. Each item carries, in plain
+   words: what the rule or example is about (one sentence, no file names, no ids); what the
+   specification says today, quoted where it helps; why the answer matters (what changes for the
+   user or the product depending on it); the options you see, and what each one would mean; and
+   your suggestion, marked as yours. A reader who has never opened the repository must be able to
+   answer with one line. The same goes for a judged contradiction, a conflict candidate, and every
+   line you bring to the gate.
 5. **Write every obligation with SHALL or MUST.** A business rule's `Rule`, an interface's
    `Postconditions` or `Invariants` and a quality attribute's `Response` state the obligation with the
    normative keyword, in English whatever the language around it, as OpenSpec expects: "The system
@@ -145,7 +154,8 @@ every judged contradiction to the human at the gate beside the machine's candida
 ## Take it to the gate
 
 Put the decision to the human in the conversation, in their language, named by **title**, never by
-id:
+id, and written for someone who has not read the code or the specification — say what each thing
+is and why it matters before you ask about it:
 
 - what the change adds, changes and removes, one line each;
 - every open question, asked plainly — record each answer in the node (with its provenance) and
