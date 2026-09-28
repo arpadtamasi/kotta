@@ -193,11 +193,11 @@ describe("the workspace rules file", () => {
     expect(written).toContain("`.kotta/spec/` is **project-owned**");
     expect(written).toContain("there is **no process layer**");
     expect(written).toContain("never write into `legacy/`");
-    // Code follows the gate (BR-01m3kdq88m3bgye3xnn9q6hsr2): the rules forbid applying a change
-    // before its delta is approved and archived, naming the OpenSpec skill that would skip it.
-    expect(written).toContain("code follows the gate");
-    expect(written).toContain("with `opsx:apply` or by hand");
-    expect(written).toContain("before its model delta is approved and archived");
+    // Say when the code runs ahead of the spec (BR-01m3kdq88m3bgye3xnn9q6hsr2): a one-line signal,
+    // never a stop, naming the OpenSpec skill that implements without the gate.
+    expect(written).toContain("say when the code runs ahead of the spec");
+    expect(written).toContain("with `opsx:apply` or by");
+    expect(written).toContain("do not stop or wait for it");
     // The retired vocabulary is gone from the rules an agent reads.
     for (const retired of ["kotta task ", "kotta batch", "kotta observation", "kotta decision", "claim you hold", "--approve"]) {
       expect(written, `the rules no longer say "${retired}"`).not.toContain(retired);

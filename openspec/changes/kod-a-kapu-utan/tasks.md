@@ -10,4 +10,4 @@
 - [x] 2.1 `kotta init` és `kotta sync` létrehozza a hiányzó `CLAUDE.md`-t `@AGENTS.md` sorral, a meglévőt jelzi és békén hagyja, `--link-agents` hozzáfűz; tesztek; `docs/agents.md`, `docs/getting-started.md`.
 
 ## 3. Ellenőrzés
-- [ ] 3.1 `npm run typecheck`, `npm test`, `kotta validate`, CHANGELOG-bejegyzés.
+- [x] 3.1 `npm run typecheck`, `npm test`, `kotta validate`, CHANGELOG-bejegyzés.

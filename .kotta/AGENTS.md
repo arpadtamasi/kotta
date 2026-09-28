@@ -123,11 +123,11 @@ question, so a draft with one is a draft, not an agreement.
    frontmatter with its kind and reason rather than leaving `kotta gap` to find it.
 6. **Never write into `legacy/`.** It is the record of how the project worked before 1.0, kept
    for reading. Nothing in it governs anything now.
-7. **Code follows the gate.** Do not implement a change's tasks — with `opsx:apply` or by hand —
-   before its model delta is approved and archived. Asked to apply a change that has not been
-   through the gate, say that planning comes first, run `plan-change`, and put the delta to the
-   human. A change that adds, changes and removes no promise — documentation, a pure refactor —
-   needs no delta: say so in one line, then go ahead.
+7. **Say when the code runs ahead of the spec.** Implement as asked — with `opsx:apply` or by
+   hand — whether or not the change has been through the gate. When what you write keeps, changes
+   or drops a promise the accepted model does not state, say so in one line, name the promise in
+   plain words, and offer `plan-change`. Do not stop or wait for it. Work that touches no promise
+   needs no word about the spec.
 
 ## Skills
 

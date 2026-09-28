@@ -40,9 +40,9 @@ And seven rules:
    less than an explicit yes is a no. One gate per change, at the end of planning.
 5. Evidence names its node.
 6. Never write into `legacy/`.
-7. Code follows the gate: a change's tasks are implemented, with `opsx:apply` or by hand, only once
-   its delta is approved and archived; asked to apply one that is not, plan it first and say so. A
-   change that touches no promise says so in one line and goes ahead.
+7. Say when the code runs ahead of the spec: implement as asked; when the code keeps, changes or
+   drops a promise the model does not state, say so in one line and offer `plan-change`, without
+   stopping. Work that touches no promise needs no word about the spec.
 
 ## The skills
 
