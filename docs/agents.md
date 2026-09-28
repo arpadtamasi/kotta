@@ -30,7 +30,7 @@ What it tells every agent:
 - **Evidence names its node**: cite the id where the code keeps a promise and in the test that proves
   it, or admit the gap with its kind.
 
-And six rules:
+And seven rules:
 
 1. The technical model is the accepted truth; propose changes to nodes, never decide them, and mark
    your own contradiction findings `judged`.
@@ -40,6 +40,9 @@ And six rules:
    less than an explicit yes is a no. One gate per change, at the end of planning.
 5. Evidence names its node.
 6. Never write into `legacy/`.
+7. Code follows the gate: a change's tasks are implemented, with `opsx:apply` or by hand, only once
+   its delta is approved and archived; asked to apply one that is not, plan it first and say so. A
+   change that touches no promise says so in one line and goes ahead.
 
 ## The skills
 

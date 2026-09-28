@@ -37,7 +37,8 @@ translates it into a **model delta** under that change's `model/`, every node ma
 the delta against the accepted model and writes `planning.md`; the human decides it — **the one gate**
 — and `kotta approve <name> --by <who>` records that yes; `kotta archive <name>` then lands exactly
 the approved delta in `{{workspace}}/spec/`, regenerates the narrative from the model, and moves the
-change to the archive, asking nothing again. The `plan-change` skill is the how.
+change to the archive, asking nothing again. The `plan-change` skill is the how. Code comes last: a
+change's tasks are implemented only once its delta is approved and archived.
 
 Who writes `openspec/specs/` is the project's choice, `narrative:` in `{{workspace}}/config.yaml`.
 With `generated`, the default, archive regenerates every capability a change touches from the model,
@@ -122,6 +123,11 @@ question, so a draft with one is a draft, not an agreement.
    frontmatter with its kind and reason rather than leaving `kotta gap` to find it.
 6. **Never write into `legacy/`.** It is the record of how the project worked before 1.0, kept
    for reading. Nothing in it governs anything now.
+7. **Code follows the gate.** Do not implement a change's tasks — with `opsx:apply` or by hand —
+   before its model delta is approved and archived. Asked to apply a change that has not been
+   through the gate, say that planning comes first, run `plan-change`, and put the delta to the
+   human. A change that adds, changes and removes no promise — documentation, a pure refactor —
+   needs no delta: say so in one line, then go ahead.
 
 ## Skills
 
