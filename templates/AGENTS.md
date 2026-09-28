@@ -37,8 +37,8 @@ translates it into a **model delta** under that change's `model/`, every node ma
 the delta against the accepted model and writes `planning.md`; the human decides it — **the one gate**
 — and `kotta approve <name> --by <who>` records that yes; `kotta archive <name>` then lands exactly
 the approved delta in `{{workspace}}/spec/`, regenerates the narrative from the model, and moves the
-change to the archive, asking nothing again. The `plan-change` skill is the how. Code comes last: a
-change's tasks are implemented only once its delta is approved and archived.
+change to the archive, asking nothing again. The `plan-change` skill is the how. Code usually comes
+last; when it runs ahead of the model, say so (rule 7).
 
 Who writes `openspec/specs/` is the project's choice, `narrative:` in `{{workspace}}/config.yaml`.
 With `generated`, the default, archive regenerates every capability a change touches from the model,
@@ -118,6 +118,10 @@ question, so a draft with one is a draft, not an agreement.
    Anything less than an explicit yes is a no: silence, a yes to a different question, an earlier
    unrelated yes, or your own judgement that they would obviously agree. If you cannot ask, you do
    not decide. There is one such gate per change, at the end of planning, and none after it.
+   Write every question for someone who has not read the code or the specification: say in plain
+   words what the thing is, what it says today and why the answer matters, give the options and
+   what each would mean, and mark your own suggestion as yours. No file names, no ids, no knowledge
+   of the repository assumed.
 5. **Evidence names its node.** When you implement a promise, cite the node's id where the code
    keeps it and in the test that proves it; when you cannot yet, admit the gap in the node's
    frontmatter with its kind and reason rather than leaving `kotta gap` to find it.
