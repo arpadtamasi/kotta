@@ -2,7 +2,7 @@
 
 Kotta keeps the technical model of a product — its rules, examples, entities, state machines, use
 cases, stories and interfaces — beside the OpenSpec narrative and the code, as the accepted truth.
-These pages describe 1.0.0-alpha.1.
+These pages describe 1.0.0-alpha.2.
 
 ## Start here
 

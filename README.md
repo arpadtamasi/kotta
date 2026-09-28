@@ -19,7 +19,7 @@ It works in OpenSpec's own directories, and the specs it generates pass
 [Documentation](docs/README.md) · [The visual guide](https://arpadtamasi.github.io/kotta/) ·
 [Changelog](CHANGELOG.md)
 
-> **1.0.0-alpha.1 is a breaking release.** The process engine of the 0.x releases — tasks, claims,
+> **1.0 is a breaking release.** The process engine of the 0.x releases — tasks, claims,
 > worktrees, batches, review gates, observations, decision records — is gone. See
 > [Migrating from 0.x](docs/migration.md) and the [changelog](CHANGELOG.md). The last pre-1.0
 > release stays installable as `@arpadtamasi/kotta@0.11`.
@@ -43,7 +43,7 @@ disagree, the disagreement is reported rather than smoothed over. See [Concepts]
 Node.js 20 or newer, Git, and a coding-agent host that reads skills from `~/.claude/skills`.
 
 ```bash
-npm install --global @arpadtamasi/kotta@1.0.0-alpha.1   # or @arpadtamasi/kotta@next
+npm install --global @arpadtamasi/kotta@1.0.0-alpha.2   # or @arpadtamasi/kotta@next
 kotta --version
 ```
 
