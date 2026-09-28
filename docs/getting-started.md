@@ -10,7 +10,7 @@ You need Node.js 20 or newer, Git, and a coding-agent host that reads skills fro
 `~/.claude/skills`.
 
 ```bash
-npm install --global @arpadtamasi/kotta@next     # or the exact version: @arpadtamasi/kotta@1.0.0-alpha.1
+npm install --global @arpadtamasi/kotta@next     # or the exact version: @arpadtamasi/kotta@1.0.0-alpha.2
 kotta --version
 ```
 

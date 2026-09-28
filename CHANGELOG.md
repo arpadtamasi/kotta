@@ -4,7 +4,7 @@ All notable changes to Kotta (called A-Team before 0.3.0) will be documented in 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0-alpha.2] — 2026-09-28
 
 From the OpenSpec change `bizonyitek-csak-kodbol` ("evidence comes from code, not from a copy of the
 specification"), archived under `openspec/changes/archive/2026-09-26-bizonyitek-csak-kodbol/`.
@@ -39,6 +39,27 @@ specification"), archived under `openspec/changes/archive/2026-09-26-bizonyitek-
   `excluded` on each node at level `none`, listing the classes that mention it (its own file aside).
   `modules check --json` carries the same head and a `none` list with each node's `excluded`. The
   human-readable output of both says it in one "Not counted as evidence" line.
+
+### Added
+
+- **`kotta init` and `kotta sync` write the project's `CLAUDE.md`.** Claude Code reads `CLAUDE.md`,
+  not `AGENTS.md`, so on a Claude Code host the Kotta rules were never read. When a project has an
+  `AGENTS.md` and no `CLAUDE.md`, Kotta creates one with `@AGENTS.md`; an existing `CLAUDE.md`
+  without the line is reported and left byte-identical; `--link-agents` appends it once
+  (`openspec/changes/archive/2026-09-28-kod-a-kapu-utan/`).
+- **Rule 7 of the rules file: say when the code runs ahead of the spec.** A signal, not a barrier:
+  the agent implements as asked; when the code keeps, changes or drops a promise the accepted model
+  does not state, it says so in one line and offers `plan-change`, without stopping.
+
+### Changed
+
+- The rules file and the `plan-change` skill ask every question at the gate for someone who has not
+  read the code or the specification: what the thing is, what it says today, why the answer
+  matters, the options and the agent's suggestion marked as such.
+- `plan-change` names the order plan → gate → archive → implement (it said "implement, then
+  archive").
+- The accepted model no longer promises the removed process engine: 17 nodes left through the
+  approved change `a-folyamatmotor-igeretei-kikerulnek`; Kotta's own `kotta gap` exits 0.
 
 ## [1.0.0-alpha.1] — 2026-09-25
 
