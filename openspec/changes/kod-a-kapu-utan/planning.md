@@ -1,6 +1,6 @@
 ---
 change: kod-a-kapu-utan
-generated_at: 2026-09-28T07:13:26.905Z
+generated_at: 2026-09-28T07:14:47.722Z
 delta_hash: sha256:b488582a200435e1ef3ca860f2f6d692781b720f112d67694987f1b4987ce33c
 ready_for_approval: true
 ---
