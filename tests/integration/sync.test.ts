@@ -438,6 +438,7 @@ describe("the project's CLAUDE.md", () => {
   type ClaudeResult = { data: { claudeFile: { state: string; line: string } | null } };
 
   test("init creates it when there is none, including the project's AGENTS.md, and says so", () => {
+    // Kotta owns its rules file, never the project's (BR-01m0f1djtb5dkb76tjzq4x3ffh).
     const initialised = run(["init"]) as ClaudeResult;
 
     expect(initialised.data.claudeFile?.state).toBe("created");
@@ -465,6 +466,7 @@ describe("the project's CLAUDE.md", () => {
   });
 
   test("an existing CLAUDE.md without the line is reported and left byte-identical", () => {
+    // Kotta owns its rules file, never the project's (BR-01m0f1djtb5dkb76tjzq4x3ffh).
     const own = "# Our Claude notes\n\nPrefer small commits.\n";
     writeFileSync(claude(), own);
 
@@ -479,6 +481,7 @@ describe("the project's CLAUDE.md", () => {
   });
 
   test("--link-agents appends the include once and keeps every prior byte in order", () => {
+    // Kotta owns its rules file, never the project's (BR-01m0f1djtb5dkb76tjzq4x3ffh).
     const own = "# Our Claude notes\n\nPrefer small commits.\n";
     writeFileSync(claude(), own);
     run(["init"]);

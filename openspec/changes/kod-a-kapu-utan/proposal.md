@@ -29,7 +29,7 @@ különben elhagyja". Az ügynök kihagyja a Kottát, és ennek két valós oka 
 - **A `CLAUDE.md` hivatkozás.** A `kotta init` és a `kotta sync` létrehozza a projekt `CLAUDE.md`-jét
   `@AGENTS.md` sorral, ha nincs; ha van, de a sor hiányzik, jelzi és békén hagyja (`--link-agents`
   hozzáfűzheti). Ez a meglévő szabály — *Kotta owns its rules file, never the project's* —
-  alkalmazása a Claude Code által olvasott fájlra; külön kódváltozásként megy.
+  alkalmazása a Claude Code által olvasott fájlra; a szabály node-ja ebben a change-ben bővül vele.
 
 ## Capabilities
 
