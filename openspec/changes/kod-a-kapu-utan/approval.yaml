@@ -1,0 +1,16 @@
+change: kod-a-kapu-utan
+approved_by: rp
+approved_at: 2026-09-28T07:36:15.741Z
+approval_basis: sha256:b1f72769011ab20544295687c518f8ff5218748aee64054a759f3facdc1ae277
+approved:
+  added:
+    - id: BR-01m3kdq88m3bgye3xnn9q6hsr2
+      title: Say when the code runs ahead of the spec
+    - id: EX-01m3kdq8kg96c3151xrkb7tgy4
+      title: Code ahead of the model is named in one line
+    - id: EX-01m3kdq91dfgf22v9s587hhk1d
+      title: Work that touches no promise says nothing about the spec
+  changed:
+    - id: BR-01m0f1djtb5dkb76tjzq4x3ffh
+      title: Kotta owns its rules file, never the project's
+  removed: []
