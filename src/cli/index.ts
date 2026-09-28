@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { initCommand } from "../commands/init.js";
 import { openQuestions, type EntityQuestions } from "../commands/questions.js";
-import { REPLACE_RULES_REMEDY, type WorkspaceAgentsState } from "../commands/agents.js";
+import { REPLACE_RULES_REMEDY, type ProjectClaudeState, type WorkspaceAgentsState } from "../commands/agents.js";
 import { validateWorkspace } from "../commands/validate.js";
 import { resolveWorkspaceLocation, uiCommand } from "../commands/ui.js";
 import { formatMigration, migrateWorkspace } from "../commands/migrate.js";
@@ -35,6 +35,16 @@ function print(result: unknown, json: boolean): void {
 
 type AgentsSummary = { path: string; state: WorkspaceAgentsState; discardedLines?: number } | null;
 type ProjectAgentsSummary = { path: string; state: "created" | "linked" | "migrated" | "already-linked"; line: string } | null;
+type ClaudeFileSummary = { path: string; state: ProjectClaudeState; line: string } | null;
+
+/** What happened to the project's CLAUDE.md — the file Claude Code reads instead of AGENTS.md. */
+function claudeLines(claude: ClaudeFileSummary | undefined): string[] {
+  if (!claude) return [];
+  if (claude.state === "created") return [`The project had no CLAUDE.md, which Claude Code reads instead of AGENTS.md; Kotta created ${claude.path} including it with ${claude.line}.`];
+  if (claude.state === "linked") return [`Added a Kotta section to ${claude.path}, including AGENTS.md with ${claude.line}.`];
+  if (claude.state === "unlinked") return [`Kotta did not touch the project's CLAUDE.md, and it does not include AGENTS.md, so Claude Code will not read the rules. To include it, ask the human, then re-run with --link-agents; the line is: ${claude.line}`];
+  return [];
+}
 
 /** A title long enough to recognise, short enough to keep one item to one line. */
 function truncate(text: string, width: number): string {
@@ -74,7 +84,7 @@ function renderValidate(result: unknown): string {
 }
 
 function renderSync(result: unknown): string {
-  const data = (result as { data: { target: unknown; created: string[]; updated: string[]; unchanged: string[]; skipped: string[]; removed: string[]; agents?: AgentsSummary; projectAgents?: ProjectAgentsSummary; pointer?: string | null } }).data;
+  const data = (result as { data: { target: unknown; created: string[]; updated: string[]; unchanged: string[]; skipped: string[]; removed: string[]; agents?: AgentsSummary; projectAgents?: ProjectAgentsSummary; claudeFile?: ClaudeFileSummary; pointer?: string | null } }).data;
   const changed = [
     data.created.length ? `${data.created.length} installed` : "",
     data.updated.length ? `${data.updated.length} updated` : "",
@@ -85,18 +95,20 @@ function renderSync(result: unknown): string {
   // A name collision is reported, never resolved: Kotta cannot know what put the other skill
   // there, so it does not get to decide the directory is disposable.
   if (data.skipped.length) lines.push(`Left alone — another skill already uses the name: ${data.skipped.join(", ")}.`);
-  lines.push(...agentsLines(data.agents, data.projectAgents, data.pointer));
+  lines.push(...agentsLines(data.agents, data.projectAgents, data.pointer), ...claudeLines(data.claudeFile));
   return lines.join("\n");
 }
 
 function renderInit(result: unknown): string {
-  const data = (result as { data: { root: unknown; skills?: { created: string[]; updated: string[]; unchanged: string[] }; agents?: AgentsSummary; projectAgents?: ProjectAgentsSummary; pointer?: string | null } }).data;
+  const data = (result as { data: { root: unknown; skills?: { created: string[]; updated: string[]; unchanged: string[] }; agents?: AgentsSummary; projectAgents?: ProjectAgentsSummary; claudeFile?: ClaudeFileSummary; pointer?: string | null } }).data;
   const installed = data.skills ? data.skills.created.length + data.skills.updated.length + data.skills.unchanged.length : 0;
   const written = ["the workspace"];
-  if (data.projectAgents?.state === "created") written.push("the AGENTS.md it created for you");
+  const created = [data.projectAgents?.state === "created" ? "AGENTS.md" : "", data.claudeFile?.state === "created" ? "CLAUDE.md" : ""].filter(Boolean);
+  if (created.length) written.push(`the ${created.join(" and ")} it created for you`);
   return [
     `Created workspace at ${String(data.root)}${installed ? `, and ${installed} skills are installed.` : "."}`,
     ...agentsLines(data.agents, data.projectAgents, data.pointer),
+    ...claudeLines(data.claudeFile),
     `Nothing here is committed yet. Look it over, then commit ${written.join(" and ")}.`,
   ].join("\n");
 }
@@ -216,7 +228,7 @@ function define(signature: string, render?: (result: unknown) => string, resultC
 define("init", renderInit)
   .description("Create a .kotta workspace: the form registry, the rules file, the skills")
   .option("--project-name <name>")
-  .option("--link-agents", "Link the project's AGENTS.md to the workspace rules, migrating a recognized legacy Kotta prelude after the human said yes")
+  .option("--link-agents", "Link the project's AGENTS.md (and its CLAUDE.md) to the workspace rules, migrating a recognized legacy Kotta prelude after the human said yes")
   .option("--json")
   .action((options: { projectName?: string; linkAgents?: boolean; json?: boolean }) => print(initCommand(options.projectName, { linkAgents: options.linkAgents }), Boolean(options.json)));
 
@@ -308,7 +320,7 @@ define("narrative <change>", (result: unknown) => formatNarrative(result as Narr
 
 define("sync", renderSync)
   .description("Install the skills Kotta ships, add newly shipped forms, and refresh the workspace rules file")
-  .option("--link-agents", "Link the project's AGENTS.md to the workspace rules, migrating a recognized legacy Kotta prelude after the human said yes")
+  .option("--link-agents", "Link the project's AGENTS.md (and its CLAUDE.md) to the workspace rules, migrating a recognized legacy Kotta prelude after the human said yes")
   .option("--replace-rules", "Discard local edits to the workspace rules file and take Kotta's copy; without this an edited file is never replaced")
   .option("--json")
   .action((options: { linkAgents?: boolean; replaceRules?: boolean; json?: boolean }) => print(syncCommand({ linkAgents: options.linkAgents, replaceRules: options.replaceRules }), Boolean(options.json)));
