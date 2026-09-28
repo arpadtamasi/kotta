@@ -29,11 +29,14 @@ kotta init
 Created workspace at /path/to/repo, and 14 skills are installed.
 Rules: created /path/to/repo/.kotta/AGENTS.md.
 The project had no AGENTS.md; Kotta created /path/to/repo/AGENTS.md pointing at the rules with @.kotta/AGENTS.md.
-Nothing here is committed yet. Look it over, then commit the workspace and the AGENTS.md it created for you.
+The project had no CLAUDE.md, which Claude Code reads instead of AGENTS.md; Kotta created /path/to/repo/CLAUDE.md including it with @AGENTS.md.
+Nothing here is committed yet. Look it over, then commit the workspace and the AGENTS.md and CLAUDE.md it created for you.
 ```
 
 `init` writes `.kotta/` (the form registry under `spec/forms/`, one directory per form, the
 workspace `README.md`, `config.yaml` and the rules file `AGENTS.md`) and installs the shipped skills.
+Where the project has no `AGENTS.md` or `CLAUDE.md`, it creates them, each one line away from the
+rules; an existing one is left alone and the line to add is reported.
 If you use Codex, connect Kotta's read-only tools to its project chat:
 
 ```bash

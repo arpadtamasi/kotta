@@ -11,6 +11,11 @@ package actually running, and points the project's own `AGENTS.md` at it with `@
 pointer to an existing one only with `--link-agents`. `kotta sync` refreshes the rules file after an
 upgrade; a hand-edited copy is reported as drifted and left alone until `kotta sync --replace-rules`.
 
+Claude Code reads `CLAUDE.md`, not `AGENTS.md`, so on that host the rules would be installed and
+never read. `init` and `sync` therefore also create the project's `CLAUDE.md` when there is none,
+including `AGENTS.md` with the line `@AGENTS.md`. An existing `CLAUDE.md` that includes neither
+`AGENTS.md` nor `.kotta/AGENTS.md` is reported and left alone; `--link-agents` appends the line.
+
 What it tells every agent:
 
 - **The four layers**, and that the technical model is the accepted truth: when the narrative, the
@@ -25,7 +30,7 @@ What it tells every agent:
 - **Evidence names its node**: cite the id where the code keeps a promise and in the test that proves
   it, or admit the gap with its kind.
 
-And six rules:
+And seven rules:
 
 1. The technical model is the accepted truth; propose changes to nodes, never decide them, and mark
    your own contradiction findings `judged`.
@@ -35,6 +40,9 @@ And six rules:
    less than an explicit yes is a no. One gate per change, at the end of planning.
 5. Evidence names its node.
 6. Never write into `legacy/`.
+7. Say when the code runs ahead of the spec: implement as asked; when the code keeps, changes or
+   drops a promise the model does not state, say so in one line and offer `plan-change`, without
+   stopping. Work that touches no promise needs no word about the spec.
 
 ## The skills
 

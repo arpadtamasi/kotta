@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { initializeWorkspace } from "../filesystem/workspace.js";
-import { PROJECT_AGENTS_FILE, linkProjectAgents, pointerLine, syncWorkspaceAgents } from "./agents.js";
+import { PROJECT_AGENTS_FILE, linkProjectAgents, pointerLine, syncProjectClaude, syncWorkspaceAgents } from "./agents.js";
 import { syncSkills } from "./sync.js";
 
 /**
@@ -11,7 +11,8 @@ import { syncSkills } from "./sync.js";
  * them.
  *
  * The skills install is global and idempotent, so running `init` in a second repository costs
- * nothing. The project's own `AGENTS.md` is touched only with `linkAgents`, or created when absent.
+ * nothing. The project's own `AGENTS.md` is touched only with `linkAgents`, or created when absent;
+ * so is its `CLAUDE.md`, which Claude Code reads instead (BR-01m0f1djtb5dkb76tjzq4x3ffh).
  */
 export function initCommand(projectName?: string, options: { linkAgents?: boolean } = {}) {
   const result = initializeWorkspace({ projectName });
@@ -19,5 +20,6 @@ export function initCommand(projectName?: string, options: { linkAgents?: boolea
   const agents = syncWorkspaceAgents(result.root);
   const projectFileMissing = !existsSync(join(result.root, PROJECT_AGENTS_FILE));
   const projectAgents = options.linkAgents || projectFileMissing ? linkProjectAgents(result.root) : null;
-  return { ok: true, command: "init", data: { root: result.root, skills: skills.data, agents, projectAgents, pointer: pointerLine(result.root) } };
+  const claudeFile = syncProjectClaude(result.root, { link: options.linkAgents });
+  return { ok: true, command: "init", data: { root: result.root, skills: skills.data, agents, projectAgents, claudeFile, pointer: pointerLine(result.root) } };
 }

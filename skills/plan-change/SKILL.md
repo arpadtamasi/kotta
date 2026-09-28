@@ -173,9 +173,12 @@ kotta approve <name> --by "<the human's name>"
 
 `approve` refuses if the report is older than the model, if a decision is open, or if the delta does
 not validate — re-plan and ask again rather than working around it. After the yes there is no second
-gate: implement, then `kotta archive <name>` lands exactly the approved delta, regenerates the
-capability narratives from the model, and moves the change to `openspec/changes/archive/`. If the
-delta changes after the yes, the approval no longer holds, and archive says so.
+gate: `kotta archive <name>` lands exactly the approved delta, regenerates the capability narratives
+from the model, and moves the change to `openspec/changes/archive/`. The natural order is plan →
+gate → archive → implement, so the code keeps accepted nodes and cites their ids. It is not a
+barrier: when code gets ahead of the model, say so in one line and offer this skill (*Say when the
+code runs ahead of the spec*). If the delta changes after the yes, the approval no longer holds, and
+archive says so.
 
 ## Generated or authored narrative
 
