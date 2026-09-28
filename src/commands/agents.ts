@@ -227,3 +227,61 @@ export function linkProjectAgents(repositoryRoot?: string): ProjectAgentsResult 
   writeFileSync(path, `${current}${separator}${pointerBlock(line)}\n`);
   return { path, state: "linked", line };
 }
+
+/**
+ * Claude Code reads `CLAUDE.md`, not `AGENTS.md`. On that host a project whose `AGENTS.md` points
+ * at the rules still installs rules nobody reads, so the same policy reaches one file further
+ * (BR-01m0f1djtb5dkb76tjzq4x3ffh): where there is no `CLAUDE.md`, Kotta creates it with the one
+ * include line, unasked — there is nothing to protect; where there is one without the line, it is
+ * reported and left alone, and only `--link-agents` appends to it.
+ *
+ * The file includes the project's `AGENTS.md`, never Kotta's rules directly: the project's own
+ * instructions live there too, and a Claude Code agent should read the same thing any other does.
+ */
+export const PROJECT_CLAUDE_FILE = "CLAUDE.md";
+export const CLAUDE_POINTER_LINE = `@${PROJECT_AGENTS_FILE}`;
+
+export type ProjectClaudeState = "created" | "linked" | "already-linked" | "unlinked";
+
+export interface ProjectClaudeResult {
+  path: string;
+  state: ProjectClaudeState;
+  line: string;
+}
+
+function claudePointerBlock(): string {
+  return [
+    "Claude Code reads this file rather than AGENTS.md. The project's agent instructions, Kotta's",
+    "rules among them, live there and are included here:",
+    "",
+    CLAUDE_POINTER_LINE,
+  ].join("\n");
+}
+
+/** A line that includes the project's AGENTS.md, or Kotta's rules directly, already reaches them. */
+function claudeFileReachesRules(content: string, root: string): boolean {
+  if (/^[ \t]*@(?:\.\/)?AGENTS\.md[ \t]*\r?$/m.test(content)) return true;
+  return content.includes(`@${workspaceDirectoryName(root)}/${WORKSPACE_AGENTS_FILE}`);
+}
+
+/**
+ * Make sure a Claude Code agent reaches the rules. Returns null when the project has no
+ * `AGENTS.md` to include: a pointer at a file that does not exist reaches nothing.
+ */
+export function syncProjectClaude(repositoryRoot?: string, options: { link?: boolean } = {}): ProjectClaudeResult | null {
+  const root = repositoryRoot ?? findRepositoryRoot();
+  if (!existsSync(join(root, PROJECT_AGENTS_FILE))) return null;
+  const path = join(root, PROJECT_CLAUDE_FILE);
+  const line = CLAUDE_POINTER_LINE;
+
+  if (!existsSync(path)) {
+    writeFileSync(path, `${claudePointerBlock()}\n`);
+    return { path, state: "created", line };
+  }
+  const current = readFileSync(path, "utf8");
+  if (claudeFileReachesRules(current, root)) return { path, state: "already-linked", line };
+  if (!options.link) return { path, state: "unlinked", line };
+  const separator = current.endsWith("\n\n") ? "" : current.endsWith("\n") ? "\n" : "\n\n";
+  writeFileSync(path, `${current}${separator}## Kotta\n\n${claudePointerBlock()}\n`);
+  return { path, state: "linked", line };
+}

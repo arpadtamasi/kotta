@@ -382,7 +382,7 @@ describe("the workspace rules file", () => {
     // Init writes a reviewable result and commits nothing, naming what it wrote
     // (D-01m14ccbcvntfbkwxty56sybak, D-01m14dvygt52rpywdv818s5pe0).
     expect(printed).toContain("Nothing here is committed yet");
-    expect(printed).toContain("the AGENTS.md it created for you");
+    expect(printed).toContain("the AGENTS.md and CLAUDE.md it created for you");
     expect(execFileSync("git", ["status", "--porcelain", "--", "AGENTS.md"], { cwd: repository, encoding: "utf8" }).trim())
       .toBe("?? AGENTS.md");
   });
@@ -423,6 +423,88 @@ describe("the workspace rules file", () => {
     const reworded = run(["sync", "--link-agents"]) as { data: { projectAgents: { state: string } } };
     expect(reworded.data.projectAgents.state).toBe("already-linked");
     expect(readFileSync(projectAgents(), "utf8")).toBe("See .kotta/AGENTS.md for the workflow rules.\n");
+  });
+});
+
+describe("the project's CLAUDE.md", () => {
+  // Claude Code reads CLAUDE.md, not AGENTS.md: without the include, the rules are installed and
+  // never read on that host. Same policy as the project's AGENTS.md (BR-01m0f1djtb5dkb76tjzq4x3ffh).
+  const claude = () => join(repository, "CLAUDE.md");
+  type ClaudeResult = { data: { claudeFile: { state: string; line: string } | null } };
+
+  test("init creates it when there is none, including the project's AGENTS.md, and says so", () => {
+    const initialised = run(["init"]) as ClaudeResult;
+
+    expect(initialised.data.claudeFile?.state).toBe("created");
+    const written = readFileSync(claude(), "utf8");
+    expect(written.split("\n")).toContain("@AGENTS.md");
+    expect(written, "it says what the reference is").toContain("Claude Code reads this file");
+  });
+
+  test("init names the created file among what the operator commits, and commits nothing", () => {
+    const printed = human(["init"]);
+    expect(printed).toContain("The project had no CLAUDE.md");
+    expect(printed).toContain("commit the workspace and the AGENTS.md and CLAUDE.md it created for you");
+    expect(execFileSync("git", ["status", "--porcelain", "--", "CLAUDE.md"], { cwd: repository, encoding: "utf8" }).trim())
+      .toBe("?? CLAUDE.md");
+  });
+
+  test("sync creates a missing one too, and a second run changes nothing", () => {
+    run(["init"]);
+    rmSync(claude());
+
+    expect((run(["sync"]) as ClaudeResult).data.claudeFile?.state).toBe("created");
+    const once = readFileSync(claude(), "utf8");
+    expect((run(["sync"]) as ClaudeResult).data.claudeFile?.state).toBe("already-linked");
+    expect(readFileSync(claude(), "utf8")).toBe(once);
+  });
+
+  test("an existing CLAUDE.md without the line is reported and left byte-identical", () => {
+    const own = "# Our Claude notes\n\nPrefer small commits.\n";
+    writeFileSync(claude(), own);
+
+    const initialised = run(["init"]) as ClaudeResult;
+    expect(initialised.data.claudeFile?.state).toBe("unlinked");
+    expect(readFileSync(claude(), "utf8")).toBe(own);
+
+    const said = human(["sync"]);
+    expect(said).toContain("Kotta did not touch the project's CLAUDE.md");
+    expect(said).toContain("--link-agents; the line is: @AGENTS.md");
+    expect(readFileSync(claude(), "utf8")).toBe(own);
+  });
+
+  test("--link-agents appends the include once and keeps every prior byte in order", () => {
+    const own = "# Our Claude notes\n\nPrefer small commits.\n";
+    writeFileSync(claude(), own);
+    run(["init"]);
+
+    expect((run(["sync", "--link-agents"]) as ClaudeResult).data.claudeFile?.state).toBe("linked");
+    const after = readFileSync(claude(), "utf8");
+    expect(after.startsWith(own)).toBe(true);
+    expect(after.trimEnd().endsWith("@AGENTS.md")).toBe(true);
+
+    expect((run(["sync", "--link-agents"]) as ClaudeResult).data.claudeFile?.state).toBe("already-linked");
+    expect(readFileSync(claude(), "utf8")).toBe(after);
+  });
+
+  test("a CLAUDE.md that already includes the rules, either way, is left alone", () => {
+    writeFileSync(claude(), "@AGENTS.md\n");
+    expect((run(["init"]) as ClaudeResult).data.claudeFile?.state).toBe("already-linked");
+    expect(readFileSync(claude(), "utf8")).toBe("@AGENTS.md\n");
+
+    const direct = "Notes.\n\n@.kotta/AGENTS.md\n";
+    writeFileSync(claude(), direct);
+    expect((run(["sync", "--link-agents"]) as ClaudeResult).data.claudeFile?.state).toBe("already-linked");
+    expect(readFileSync(claude(), "utf8")).toBe(direct);
+  });
+
+  test("no AGENTS.md to include, no CLAUDE.md written", () => {
+    run(["init"]);
+    rmSync(join(repository, "AGENTS.md"));
+    rmSync(claude());
+
+    expect((run(["sync"]) as ClaudeResult).data.claudeFile).toBeNull();
+    expect(existsSync(claude())).toBe(false);
   });
 });
 

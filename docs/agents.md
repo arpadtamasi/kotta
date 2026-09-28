@@ -11,6 +11,11 @@ package actually running, and points the project's own `AGENTS.md` at it with `@
 pointer to an existing one only with `--link-agents`. `kotta sync` refreshes the rules file after an
 upgrade; a hand-edited copy is reported as drifted and left alone until `kotta sync --replace-rules`.
 
+Claude Code reads `CLAUDE.md`, not `AGENTS.md`, so on that host the rules would be installed and
+never read. `init` and `sync` therefore also create the project's `CLAUDE.md` when there is none,
+including `AGENTS.md` with the line `@AGENTS.md`. An existing `CLAUDE.md` that includes neither
+`AGENTS.md` nor `.kotta/AGENTS.md` is reported and left alone; `--link-agents` appends the line.
+
 What it tells every agent:
 
 - **The four layers**, and that the technical model is the accepted truth: when the narrative, the

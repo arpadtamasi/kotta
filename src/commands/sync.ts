@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readEnv } from "../core/env.js";
 import { findRepositoryRoot, hasWorkspace, syncWorkspaceForms } from "../filesystem/workspace.js";
-import { linkProjectAgents, pointerLine, syncWorkspaceAgents } from "./agents.js";
+import { linkProjectAgents, pointerLine, syncProjectClaude, syncWorkspaceAgents } from "./agents.js";
 
 /**
  * Kotta ships its skills inside the package, but nothing has ever installed them — so the
@@ -165,7 +165,8 @@ export function syncSkills(environment: NodeJS.ProcessEnv = process.env): SyncRe
  *
  * The project's own `AGENTS.md` is a third thing and is not Kotta's. `linkAgents` appends one
  * pointer line to it after a human said yes; without the flag the pointer is only reported, so the
- * calling agent can quote the exact line when it asks.
+ * calling agent can quote the exact line when it asks. Its `CLAUDE.md`, which Claude Code reads
+ * instead, is created when absent and otherwise follows the same flag (BR-01m0f1djtb5dkb76tjzq4x3ffh).
  */
 export function syncCommand(options: { linkAgents?: boolean; replaceRules?: boolean } = {}, environment: NodeJS.ProcessEnv = process.env) {
   const skills = syncSkills(environment);
@@ -175,7 +176,8 @@ export function syncCommand(options: { linkAgents?: boolean; replaceRules?: bool
   if (root) syncWorkspaceForms(root);
   const agents = root ? syncWorkspaceAgents(root, { replace: options.replaceRules }) : null;
   const projectAgents = root && options.linkAgents ? linkProjectAgents(root) : null;
-  return { ok: true as const, command: "sync" as const, data: { ...skills.data, agents, projectAgents, pointer: root ? pointerLine(root) : null } };
+  const claudeFile = root ? syncProjectClaude(root, { link: options.linkAgents }) : null;
+  return { ok: true as const, command: "sync" as const, data: { ...skills.data, agents, projectAgents, claudeFile, pointer: root ? pointerLine(root) : null } };
 }
 
 /**

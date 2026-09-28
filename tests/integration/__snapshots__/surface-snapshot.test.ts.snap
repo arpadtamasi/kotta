@@ -61,9 +61,9 @@ Create a .kotta workspace: the form registry, the rules file, the skills
 
 Options:
   --project-name <name>
-  --link-agents          Link the project's AGENTS.md to the workspace rules,
-                         migrating a recognized legacy Kotta prelude after the
-                         human said yes
+  --link-agents          Link the project's AGENTS.md (and its CLAUDE.md) to the
+                         workspace rules, migrating a recognized legacy Kotta
+                         prelude after the human said yes
   --json
   -h, --help             display help for command
 
@@ -261,9 +261,9 @@ Install the skills Kotta ships, add newly shipped forms, and refresh the
 workspace rules file
 
 Options:
-  --link-agents    Link the project's AGENTS.md to the workspace rules,
-                   migrating a recognized legacy Kotta prelude after the human
-                   said yes
+  --link-agents    Link the project's AGENTS.md (and its CLAUDE.md) to the
+                   workspace rules, migrating a recognized legacy Kotta prelude
+                   after the human said yes
   --replace-rules  Discard local edits to the workspace rules file and take
                    Kotta's copy; without this an edited file is never replaced
   --json
