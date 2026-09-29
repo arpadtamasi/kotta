@@ -121,7 +121,8 @@ A proposal that does not name a winner is not a proposal. Apply this order:
 
 1. **The accepted user-facing vocabulary wins**, when the project has one. If a spec says
    "these are the words the product uses", that is the answer, and the code is what moves.
-2. **Otherwise, the name a decision record names wins.** It was already argued.
+2. **Otherwise, the name an accepted node or an archived change's proposal chose wins.** It was
+   already argued.
 3. **Otherwise, the name at the widest boundary wins** — the wire or storage name, because it
    has the most external readers.
 4. **Code-internal convenience never wins.** A name that exists because it was easier to type

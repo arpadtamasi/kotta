@@ -5,17 +5,31 @@ What Kotta holds, why, and the handful of rules everything else follows from.
 ## Four layers
 
 ```text
-chat  →  narrative spec (OpenSpec)  →  technical model (Kotta forms)  →  code
+chat  →  change (proposal + model delta)  →  technical model (Kotta forms)  →  code
 ```
 
 | Layer | Where it lives | What it is for |
 | --- | --- | --- |
-| Chat | the agent session; optionally `openspec/changes/<name>/conversation.md` | where intent is said |
-| Narrative spec | `openspec/changes/<name>/`, `openspec/specs/` | where a change is proposed and argued in prose |
+| Chat | the agent session; optionally `.kotta/changes/<name>/conversation.md` | where intent is said |
+| Change | `.kotta/changes/<name>/`: `proposal.md` and the model delta under `model/` | where a change is proposed, argued in prose and translated into nodes |
 | Technical model | `.kotta/spec/` | the precise, machine-checkable form of what was accepted |
 | Code | the rest of the repository | what keeps the promises, naming the node it keeps |
 
-The layers are joined by references, never by copies. Kotta owns the third one.
+The layers are joined by references, never by copies. Kotta owns the second and the third.
+
+## Where a change lives
+
+Every request to specify, propose or plan something starts as a change, opened with
+`kotta change new <name>`: `.kotta/changes/<name>/` with a `proposal.md` (Why, What changes, Open
+decisions) and an empty `model/`. Not a free-standing `SPEC.md`, not a document beside the code, not
+an OpenSpec change — whether or not the project uses OpenSpec. `kotta archive` moves a landed change
+to `.kotta/changes/archive/<date>-<name>/`.
+
+OpenSpec is optional. With `narrative: none`, the default, the model is the only specification and
+nothing under `openspec/` is written or checked. A project that keeps an OpenSpec narrative sets
+`narrative: generated` (archive writes `openspec/specs/` from the model) or `authored` (people write
+it, Kotta reports where it disagrees). See [Configuration](configuration.md) and
+[Kotta and OpenSpec](openspec.md).
 
 ## The model is the accepted truth
 
@@ -23,9 +37,9 @@ A node is one Markdown file: frontmatter (`id`, `form`, `title`, the edges its f
 the sections its form requires. The [form registry](forms.md) under `.kotta/spec/forms/` says which
 shapes exist. A node becomes the agreement when it lands on the base branch after a human yes.
 
-When the narrative and the model disagree, the model wins and the disagreement is reported. By
-default the narrative under `openspec/specs/` is generated from the model on archive, so the two
-cannot drift apart silently.
+When a proposal or a narrative and the model disagree, the model wins and the disagreement is
+reported. A project that keeps an OpenSpec narrative usually has it generated from the model on
+archive (`narrative: generated`), so the two cannot drift apart silently.
 
 Why a model beside the prose, measured on the operator's own projects:
 
@@ -45,7 +59,7 @@ Every node a change proposes carries a `provenance` block (optional on accepted 
 provenance:
   level: stated | partly-inferred | inferred
   decided_by: human | agent-proposed-human-approved | agent-decided
-  sources: ["openspec/changes/<name>/proposal.md · Why"]
+  sources: [".kotta/changes/<name>/proposal.md · Why"]
   quote: "at most 30 words"
   inferred: "what had to be supplied"    # required unless level is stated
 ```
@@ -96,7 +110,7 @@ See [Modules and evidence](modules-and-evidence.md).
 
 ## Drift is reported, never smoothed
 
-`kotta plan` reports narrative requirements that disagree with the node they are bound to;
+Where the project keeps an OpenSpec narrative, `kotta plan` reports narrative requirements that disagree with the node they are bound to;
 `kotta archive` refuses while regenerated prose still disagrees; with `narrative: authored` it warns
 instead. No command rewrites either side to make a disagreement disappear. Which side moves is the
 human's call.
@@ -113,5 +127,5 @@ interface, copied into two repositories, already said different things in each.
 
 The figures on this page are the operator's measurements on their own projects in September 2026,
 recorded in the change that planned 1.0:
-[`openspec/changes/kotta-1-0-muszaki-spec-reteg/proposal.md`](../openspec/changes/kotta-1-0-muszaki-spec-reteg/proposal.md)
+[`.kotta/changes/kotta-1-0-muszaki-spec-reteg/proposal.md`](../.kotta/changes/kotta-1-0-muszaki-spec-reteg/proposal.md)
 (in Hungarian). The casino figure is from that project's `planning.md`.

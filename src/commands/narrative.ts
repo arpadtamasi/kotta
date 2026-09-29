@@ -6,11 +6,11 @@ import { distill, type Distillate, type Pair } from "../conversation/distill.js"
 import { REDACTION_KINDS, redact, type RedactionCounts } from "../conversation/redact.js";
 import { readSession, sessionFiles, type Session, type SkipReason, type Utterance } from "../conversation/sessions.js";
 import { findRepositoryRoot } from "../filesystem/workspace.js";
-import { resolveChange } from "../spec/change.js";
+import { changesPath, resolveChange } from "../spec/change.js";
 
 /**
  * `kotta narrative <change> --from <log|directory> [--since <time>]` — the conversation behind a
- * change, distilled into `openspec/changes/<change>/conversation.md`.
+ * change, distilled into `.kotta/changes/<change>/conversation.md`.
  *
  * It keeps what the planning phase has to cite: the human's own sentences of intent, each agent
  * proposal with the human's answer (a one-word "igen" included) and its time, the paths the human
@@ -95,7 +95,7 @@ function body(change: string, result: Distillate): string[] {
   const lines = [
     `# Beszélgetés: ${change}`,
     "",
-    "A `kotta narrative` desztillátuma. Az időpontok UTC-ben. A párosítás heurisztikus: egy emberi üzenet az előtte álló ágens-üzenetre felel; ahol ez bizonytalan, a pár a „Párosítatlan” alatt áll. Az ember mondatai szó szerint, az ágenséi kivonatosan. Hivatkozás: `openspec/changes/" + change + "/conversation.md · <azonosító>`, pl. `· J1`.",
+    "A `kotta narrative` desztillátuma. Az időpontok UTC-ben. A párosítás heurisztikus: egy emberi üzenet az előtte álló ágens-üzenetre felel; ahol ez bizonytalan, a pár a „Párosítatlan” alatt áll. Az ember mondatai szó szerint, az ágenséi kivonatosan. Hivatkozás: `.kotta/changes/" + change + "/conversation.md · <azonosító>`, pl. `· J1`.",
     "",
     "## Szándék",
     "",
@@ -177,7 +177,7 @@ export interface NarrativeOptions { from: string; since?: string; repositoryRoot
 export function narrativeCommand(name: string, options: NarrativeOptions): NarrativeResult {
   const root = options.repositoryRoot ?? findRepositoryRoot();
   const directory = resolveChange(root, name);
-  const change = relative(join(root, "openspec", "changes"), directory);
+  const change = relative(changesPath(root), directory);
   let since: Date | undefined;
   if (options.since !== undefined) {
     since = new Date(options.since);

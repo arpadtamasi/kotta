@@ -333,7 +333,7 @@ describe("a v5 workspace, the last pre-1.0 shape", () => {
     }
     expect(readFileSync(join(root, ".kotta/README.md"), "utf8")).toContain("version 6");
     expect(readFileSync(join(root, ".gitattributes"), "utf8")).toBe("*.md text\n");
-    expect(readFileSync(join(root, ".kotta/AGENTS.md"), "utf8")).toContain("The four layers");
+    expect(readFileSync(join(root, ".kotta/AGENTS.md"), "utf8")).toContain("Where a change lives");
     expect(readFileSync(join(root, ".gitignore"), "utf8"), "the project's own ignore file is not Kotta's to edit").toBe(".worktrees/\n");
 
     // Recorded as a rename in the index, so history follows the archive.

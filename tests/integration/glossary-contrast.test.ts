@@ -15,7 +15,7 @@ import { cli, json, write } from "./planning-fixture.js";
  */
 
 const FIXTURE = resolve("tests/fixtures/casino-contrast");
-const CHANGE = "openspec/changes/casino";
+const CHANGE = ".kotta/changes/casino";
 const KINT_VAGYOK = "GT-01m37bpemcx5q1dky049ta3xxx";
 const GYOZELEM = "BR-01m37bp5e8ws0mrd2qmhxr4twj";
 

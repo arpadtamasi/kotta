@@ -47,7 +47,7 @@ export const DEFAULT_NORMATIVE_SECTIONS: Record<string, string[]> = {
   "quality-attribute": ["Response"],
 };
 
-/** The OpenSpec convention: the obligation is stated with SHALL or MUST, in English, whatever the language around it. */
+/** The OpenSpec convention, required only where an OpenSpec narrative is kept: the obligation is stated with SHALL or MUST, in English, whatever the language around it. */
 export const NORMATIVE_KEYWORD = /\b(?:SHALL|MUST)\b/;
 
 export interface SpecNode {
@@ -132,7 +132,7 @@ export function readSpecNodes(root: string, forms: SpecForm[]): { nodes: SpecNod
 
 /**
  * Every node stored in a form-declared directory under `base`. The accepted specification is one such
- * base (`.kotta/spec/`); a change's model delta is another (`openspec/changes/<name>/model/`).
+ * base (`.kotta/spec/`); a change's model delta is another (`.kotta/changes/<name>/model/`).
  */
 export function readNodesUnder(base: string, forms: SpecForm[]): { nodes: SpecNode[]; issues: ValidationIssue[] } {
   const nodes: SpecNode[] = [];

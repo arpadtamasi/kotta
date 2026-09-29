@@ -68,10 +68,11 @@ capability, and its sections.
 
 ![A node with its provenance](../assets/docs/board-node-provenance.png)
 
-When a source cites a file under `openspec/` — a change's `conversation.md · J3` — the board fetches
-it from `/api/narrative?path=<repository-relative path>` and shows the cited part in place, with the
-whole file folded below. The endpoint serves only Markdown files under `openspec/`, up to 1 MB, read
-from the working tree, and refuses absolute paths, `.` or `..` segments and links that lead outside.
+When a source cites a change's file — `.kotta/changes/<name>/conversation.md · J3` — the board
+fetches it from `/api/narrative?path=<repository-relative path>` and shows the cited part in place,
+with the whole file folded below. The endpoint serves only Markdown files under `.kotta/changes/`
+and, for provenance written when changes lived there, under `openspec/`, up to 1 MB, read from the
+working tree, and refuses absolute paths, `.` or `..` segments and links that lead outside.
 
 ## The rest of the header
 

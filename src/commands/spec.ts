@@ -7,6 +7,7 @@ import { findRepositoryRoot, specPath } from "../filesystem/workspace.js";
 import { readFormRegistry, type SpecForm } from "../spec/registry.js";
 import { MODEL_DIRECTORY, resolveChange } from "../spec/change.js";
 import { provenanceScaffold } from "../spec/provenance.js";
+import { requiresNormativeKeyword } from "../core/config.js";
 
 /**
  * `kotta spec new` — the one command that hands an author a node instead of asking them to type one.
@@ -30,9 +31,9 @@ export interface SpecNewData {
   unanswered: string[];
   /** Body headings the scaffold laid out empty. */
   sections: string[];
-  /** The sections of those that must state the obligation with SHALL or MUST. */
+  /** The sections of those that must state the obligation with SHALL or MUST; empty where no OpenSpec narrative is kept. */
   normative: string[];
-  /** The change whose model delta the node was drafted into; null for the accepted specification. */
+  /** The change whose model delta the node was drafted into (`.kotta/changes/<change>/model/`); null for the accepted specification. */
   change: string | null;
 }
 
@@ -68,9 +69,9 @@ function scaffoldFrontmatter(form: SpecForm, id: string, title: string): { data:
 
 const NORMATIVE_HINT = "<!-- State the obligation with SHALL or MUST, in English whatever the language around it: \"The system SHALL …\", „A rendszer SHALL …\". A change's node without one is refused. -->";
 
-function scaffoldBody(form: SpecForm, title: string): string {
+function scaffoldBody(form: SpecForm, title: string, keyword: boolean): string {
   const lines = [`# ${title}`, ""];
-  const normative = new Set(form.normative.map((heading) => heading.toLowerCase()));
+  const normative = new Set(keyword ? form.normative.map((heading) => heading.toLowerCase()) : []);
   for (const heading of form.headings) {
     // The obligation is written with its keyword from the first draft; the comment does not count as content.
     if (normative.has(heading.toLowerCase())) lines.push(`## ${heading}`, "", NORMATIVE_HINT, "", "");
@@ -108,13 +109,14 @@ export function newSpecNode(options: { form: string; title: string; into?: strin
   if (existsSync(path)) throw new Error(`${path} already exists. Nothing was written; a scaffold never overwrites a node.`);
 
   const { data, unanswered } = scaffoldFrontmatter(form, id, title);
+  const keyword = requiresNormativeKeyword(root);
   mkdirSync(directory, { recursive: true });
-  writeFileSync(path, renderMarkdown(data, scaffoldBody(form, title)));
+  writeFileSync(path, renderMarkdown(data, scaffoldBody(form, title, keyword)));
 
   return {
     ok: true,
     command: "spec new",
-    data: { id, form: form.id, title, path: relative(root, path), unanswered, sections: [...form.headings], normative: [...form.normative], change },
+    data: { id, form: form.id, title, path: relative(root, path), unanswered, sections: [...form.headings], normative: keyword ? [...form.normative] : [], change },
   };
 }
 

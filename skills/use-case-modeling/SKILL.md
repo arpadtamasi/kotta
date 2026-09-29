@@ -29,7 +29,7 @@ Ask whether the actor can observe each system response, which guarantee survives
 must be true when the interaction ends. Draft the likely flow before asking follow-ups. Mark uncertain
 facts as assumptions in prose; never hand over an empty use-case template.
 
-Ask Kotta for the node — `kotta spec new use-case --title "…"`, or `spec_create` from the chat — and fill in the sections it lays out; identifiers and filenames are minted, never typed.
+Ask Kotta for the node inside the change you are working in — `kotta spec new use-case --title "…" --into <change>`, after `kotta change new <change>` if none is open — and fill in the sections it lays out; identifiers and filenames are minted, never typed.
 Supply `actor` and `goal` directly. Supply evidence through example nodes whose `subjects` includes
 the use-case id.
 

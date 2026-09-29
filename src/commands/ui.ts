@@ -9,6 +9,7 @@ import { sections } from "../core/markdown.js";
 import { MINTED_BODY } from "../core/identity.js";
 import { ENV_PREFIX, readEnv } from "../core/env.js";
 import { SPEC_DIRECTORY, WORKSPACE_DIRECTORIES, WORKSPACE_SCHEMA_VERSION, WorkspaceShapeError, assertCurrentWorkspaceShape, hasWorkspace, workspaceDirectoryName } from "../filesystem/workspace.js";
+import { changesFolder } from "../spec/change.js";
 
 function git(root: string, args: string[]): { ok: boolean; out: string } {
   const result = spawnSync("git", args, { cwd: root, encoding: "utf8", maxBuffer: 256 * 1024 * 1024 });
@@ -280,7 +281,14 @@ export function readNotices(workspace: string, useBase: boolean, base: string, f
   return [`The board reads ${basename(workspace)}/ from the '${base}' ref, not from the working tree. That ref has no specification nodes while the working tree has ${onDisk} — a change that has not reached '${base}' yet. Commit it and merge it into '${base}'; the board is empty until then, and the workspace is not.`];
 }
 
-/** The one folder the narrative endpoint reads, relative to the served project root. */
+/**
+ * The folders the narrative endpoint reads, relative to the served project root: a change's own
+ * folder, and OpenSpec's tree, which older provenance still cites.
+ */
+export function narrativeRoots(projectRoot: string): string[] {
+  return [changesFolder(projectRoot), NARRATIVE_ROOT];
+}
+/** OpenSpec's tree, read for provenance written when changes lived there. */
 export const NARRATIVE_ROOT = "openspec";
 const NARRATIVE_MAX_BYTES = 1024 * 1024;
 
@@ -289,23 +297,28 @@ export class NarrativeError extends Error {
 }
 
 /**
- * One Markdown file under the project's `openspec/` folder, read from the working tree — the
- * narrative a node's provenance cites. Refuses, rather than normalises, anything that could leave
- * that folder: an absolute path, a `..` segment, a backslash, a NUL byte, a non-Markdown file, and
- * a symbolic link whose target resolves outside it.
+ * One Markdown file under a change's folder (`.kotta/changes/`) or the project's `openspec/` folder,
+ * read from the working tree — the narrative a node's provenance cites. Refuses, rather than
+ * normalises, anything that could leave that folder: an absolute path, a `..` segment, a backslash, a
+ * NUL byte, a non-Markdown file, and a symbolic link whose target resolves outside it.
  */
 export function readNarrative(projectRoot: string, requested: unknown): { path: string; content: string } {
-  if (typeof requested !== "string" || !requested.trim()) throw new NarrativeError(400, "Name a file: ?path=openspec/changes/<change>/conversation.md.");
+  const roots = narrativeRoots(projectRoot);
+  if (typeof requested !== "string" || !requested.trim()) throw new NarrativeError(400, `Name a file: ?path=${roots[0]}/<change>/conversation.md.`);
   const path = requested.trim();
   if (path.includes("\0") || path.includes("\\") || isAbsolute(path) || /^[A-Za-z]:/.test(path)) {
     throw new NarrativeError(400, `'${path}' is not a repository-relative path.`);
   }
   const segments = path.split("/");
-  if (segments[0] !== NARRATIVE_ROOT || segments.length < 2 || segments.some((segment) => segment === ".." || segment === "." || segment === "")) {
-    throw new NarrativeError(400, `Only files under ${NARRATIVE_ROOT}/ are served, named without '.' or '..' segments; got '${path}'.`);
+  const root = roots.find((candidate) => {
+    const parts = candidate.split("/");
+    return segments.length > parts.length && parts.every((part, index) => segments[index] === part);
+  });
+  if (!root || segments.some((segment) => segment === ".." || segment === "." || segment === "")) {
+    throw new NarrativeError(400, `Only files under ${roots.join("/ or ")}/ are served, named without '.' or '..' segments; got '${path}'.`);
   }
   if (extname(path).toLowerCase() !== ".md") throw new NarrativeError(400, `Only Markdown narrative is served; '${path}' is not a .md file.`);
-  const folder = join(projectRoot, NARRATIVE_ROOT);
+  const folder = join(projectRoot, ...root.split("/"));
   const candidate = join(projectRoot, ...segments);
   if (!existsSync(folder) || !existsSync(candidate)) throw new NarrativeError(404, `No such file: ${path}.`);
   // The lexical checks above keep the name inside the folder; the real path keeps a link from leaving it.
@@ -313,7 +326,7 @@ export function readNarrative(projectRoot: string, requested: unknown): { path: 
   const realFile = realpathSync(candidate);
   const inside = relative(realFolder, realFile);
   if (!inside || inside.startsWith("..") || isAbsolute(inside) || !realFile.startsWith(realFolder + sep)) {
-    throw new NarrativeError(400, `'${path}' resolves outside ${NARRATIVE_ROOT}/.`);
+    throw new NarrativeError(400, `'${path}' resolves outside ${root}/.`);
   }
   const stat = statSync(realFile);
   if (!stat.isFile()) throw new NarrativeError(404, `No such file: ${path}.`);

@@ -29,7 +29,7 @@ failure, and which compatibility promise external consumers rely on. Draft from 
 label assumptions, then ask precise questions. Never ask the user to populate an empty task
 shell.
 
-Ask Kotta for the node — `kotta spec new interface --title "…"`, or `spec_create` from the chat — and fill in the sections it lays out; identifiers and filenames are minted, never typed. Make the
+Ask Kotta for the node inside the change you are working in — `kotta spec new interface --title "…" --into <change>`, after `kotta change new <change>` if none is open — and fill in the sections it lays out; identifiers and filenames are minted, never typed. Make the
 reference canonical on the consuming use case or entity through its `interfaces` field; avoid a
 reciprocal `used_by` list on the interface.
 

@@ -18,8 +18,12 @@ including `AGENTS.md` with the line `@AGENTS.md`. An existing `CLAUDE.md` that i
 
 What it tells every agent:
 
-- **The four layers**, and that the technical model is the accepted truth: when the narrative, the
+- **The four layers**, and that the technical model is the accepted truth: when a proposal, the
   conversation and the nodes disagree, the nodes win and the agent says where they disagree.
+- **Every request to specify, propose or plan starts as a change**, opened with `kotta change new
+  <name>` under `.kotta/changes/<name>/` — never a free-standing `SPEC.md`, never an OpenSpec change,
+  never a new `openspec/` folder. OpenSpec is optional (`narrative:` in `.kotta/config.yaml`, `none`
+  by default), and only with an OpenSpec narrative does an obligation carry SHALL or MUST.
 - **`.kotta/spec/` is project-owned.** Nodes are shaped in conversation, with the workshop skills or
   by hand; a node becomes the agreement when it lands on the base branch on a human yes. There is no
   process layer, and `legacy/` is never written.
@@ -52,14 +56,15 @@ skill of the same name that Kotta does not own, and remove owned skills a releas
 
 | Skill | Use it to |
 | --- | --- |
-| `plan-change` | carry an OpenSpec change from its narrative to the one gate: distil, translate with provenance, `kotta plan`, ask, record the yes |
+| `plan-change` | open a change and carry it from its proposal to the one gate: distil, translate with provenance, `kotta plan`, ask, record the yes |
 | `setup-kotta` | initialize a workspace, or migrate a pre-1.0 one |
 | `explore-workspace` | answer questions across the specification and its legacy archive: what touches this, what is open, what has no evidence |
 | `requirements-traceability` | read the model as a graph: dangling edges, coverage, the impact of changing a node |
 | `consolidate-model` | find one concept living under several names across code, docs, schemas and storage, and propose consolidations |
 | `report-kotta-bug` | report a defect in Kotta itself as a GitHub issue, after showing you the exact text |
 
-The specification workshops draft nodes with you, in conversation:
+The specification workshops draft nodes with you, in conversation, into the change you are working
+in (`kotta spec new <form> --title "…" --into <change>`), never straight into `.kotta/spec/`:
 
 | Skill | Drafts |
 | --- | --- |

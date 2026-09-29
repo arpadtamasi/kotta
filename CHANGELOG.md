@@ -4,6 +4,43 @@ All notable changes to Kotta (called A-Team before 0.3.0) will be documented in 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.3] — 2026-09-29
+
+### Changed
+
+- **A change is Kotta's own, and lives in the workspace.** A change is now `.kotta/changes/<name>/`
+  — `proposal.md`, `conversation.md`, `model/`, `planning.md`, `approval.yaml` — and `kotta archive`
+  moves it to `.kotta/changes/archive/`. Before, it lived in OpenSpec's `openspec/changes/`, so an
+  agent asked for a proposal in a project with no OpenSpec either created an OpenSpec tree to put it
+  in or wrote a free-standing document that never became a change. `plan`, `approve`, `archive`,
+  `narrative`, `spec new --into` and `import openspec` all work on the new folder; the board opens a
+  cited `conversation.md` there, and still under `openspec/` for older provenance.
+- **OpenSpec is optional.** `narrative:` takes `none`, `generated` or `authored`, and the default is
+  `none`: the model is the only specification, and nothing under `openspec/` is written or checked.
+  `generated` and `authored` keep their meaning. The SHALL/MUST keyword on a rule, an interface's
+  postconditions or invariants and a quality attribute's response is required only where an OpenSpec
+  narrative is kept; with `none` an obligation is written plainly, in the project's language, and
+  `spec new` no longer asks for the keyword.
+- **The rules file and the skills say where a proposal starts.** Every request to specify, propose
+  or plan something opens a change; never a `SPEC.md`, never an OpenSpec change, never a new
+  `openspec/` folder. The workshop skills draft nodes into a change (`spec new --into`) instead of
+  straight into the accepted specification, and no longer name a `spec_create` tool that does not
+  exist. The layer picture is `chat → change → technical model → code`.
+
+### Added
+
+- **`kotta change new <name> [--title]`** opens a change with a proposal skeleton (Why, What changes,
+  Open decisions) and an empty `model/`. **`kotta change list`** names the open changes and any left
+  in `openspec/changes/`.
+- **`kotta migrate` takes the changes out of OpenSpec's folder**, on a current workspace as well as
+  in the pre-1.0 migration: every open change moves to `.kotta/changes/`, an archived change with a
+  Kotta model or receipt to `.kotta/changes/archive/`, and OpenSpec's own history stays. Provenance
+  naming the old folder is rewritten in a change not yet approved; an approved change moves
+  byte-identical, and the report says so. A workspace with `openspec/specs/` and no `narrative:`
+  setting gets `narrative: generated`, so archive keeps doing what it did.
+- `kotta validate` warns `CHANGE_STRANDED` for a change left in `openspec/changes/`, and
+  `NARRATIVE_UNSET` for OpenSpec specs with no `narrative:` setting.
+
 ## [1.0.0-alpha.2] — 2026-09-28
 
 From the OpenSpec change `bizonyitek-csak-kodbol` ("evidence comes from code, not from a copy of the

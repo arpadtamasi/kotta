@@ -13,9 +13,12 @@ import {
 } from "../filesystem/workspace.js";
 import { REPLACE_RULES_REMEDY, WORKSPACE_AGENTS_FILE, syncWorkspaceAgents } from "./agents.js";
 import { validateWorkspace } from "./validate.js";
+import { applyChangeMigration, planChangeMigration, type ChangeMigrationPlan } from "./migrate-changes.js";
+import { CHANGES_DIRECTORY } from "../spec/change.js";
 
 /**
- * `kotta migrate` — one command that carries a workspace from any pre-1.0 shape to version 6.
+ * `kotta migrate` — one command that carries a workspace from any pre-1.0 shape to version 6, and
+ * takes a version-6 workspace's changes out of OpenSpec's folder into its own (`migrate-changes.ts`).
  *
  * Kotta 1.0 owns the technical specification and keeps no process layer. The migration therefore
  * does two things and nothing else: it carries the pre-1.0 process state — whatever shape it is in,
@@ -104,7 +107,7 @@ const OBSERVATION_DISPOSITIONS: Record<string, string> = {
 const CLAIM_KEYS: Record<string, string> = { ticket: "task", contract: "task" };
 
 /** The config keys version 6 keeps. Everything else configured a process that no longer exists. */
-const KEPT_TOP_LEVEL_KEYS = ["version", "project", "git", "validation"];
+const KEPT_TOP_LEVEL_KEYS = ["version", "project", "git", "validation", "narrative"];
 const KEPT_GIT_KEYS = ["base_branch", "protected_branches"];
 const KEPT_VALIDATION_KEYS = ["strict"];
 
@@ -383,10 +386,25 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
   // 2. Already there? Version 6 with nothing pre-1.0 left at the top of the workspace.
   const preEntries = readdirSync(workspace).filter((name) => ([PROCESS_DIRECTORY, ...PROCESS_DIRECTORIES, ...TASK_STATES, "ready", "findings", "packages", "forms", "index.md"] as string[]).includes(name));
   if (!movesWorkspace && fromVersion === WORKSPACE_SCHEMA_VERSION && !preEntries.length) {
+    const plan = planChangeMigration(root, basename(workspace));
+    if (!plan.moves.length && !plan.narrative) {
+      return {
+        ok: true,
+        command: "migrate",
+        data: { root, workspace, dryRun, current: true, fromVersion, changes: [], ids: idsBefore, notes: [], rules: null, validation: null },
+      };
+    }
+    const planned = changeMigrationChanges(plan, basename(workspace));
+    let validation: MigrateValidation | null = null;
+    if (!dryRun) {
+      applyChangeMigration(root, basename(workspace), plan);
+      const report = validateWorkspace(root);
+      validation = { ok: report.ok, errors: report.errors };
+    }
     return {
       ok: true,
       command: "migrate",
-      data: { root, workspace, dryRun, current: true, fromVersion, changes: [], ids: idsBefore, notes: [], rules: null, validation: null },
+      data: { root, workspace, dryRun, current: false, fromVersion, changes: planned, ids: idsBefore, notes: plan.notes, rules: null, validation },
     };
   }
   if (movesWorkspace) changes.push({ kind: "move", from: LEGACY_WORKSPACE_DIRECTORY, to: WORKSPACE_DIRECTORY });
@@ -414,7 +432,7 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
   const reservedRoots = new Set([
     ...PROCESS_DIRECTORIES.map((directory) => directory.split("/")[0]),
     ...TASK_STATES.map(String),
-    ...["ready", "findings", "packages", SPEC_DIRECTORY, PROCESS_DIRECTORY, LEGACY_DIRECTORY, "forms"],
+    ...["ready", "findings", "packages", SPEC_DIRECTORY, PROCESS_DIRECTORY, LEGACY_DIRECTORY, "forms", CHANGES_DIRECTORY],
   ]);
   for (const directory of specDirectories) {
     validateSpecDirectory(directory, formDirectory);
@@ -610,6 +628,10 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
   const attributesEmpty = attributesRendered.trim() === "";
   if (attributesChange) changes.push(attributesEmpty ? { kind: "remove", path: ".gitattributes" } : { kind: "rewrite", path: ".gitattributes", fields: ["index merge attribute removed"] });
 
+  // Changes kept in OpenSpec's folder move into the workspace, as they do for a version-6 workspace.
+  const changePlan = planChangeMigration(root, WORKSPACE_DIRECTORY);
+  changes.push(...changeMigrationChanges(changePlan, WORKSPACE_DIRECTORY));
+
   // The one document every agent in this project reads moves with the records.
   changes.push({ kind: "rewrite", path: `${WORKSPACE_DIRECTORY}/${WORKSPACE_AGENTS_FILE}`, fields: ["rules file → this Kotta's copy"] });
 
@@ -644,6 +666,7 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
     }
     // The same writer `sync` uses, so drift is decided in one place: a hand-edited file is
     // reported, never replaced.
+    applyChangeMigration(root, WORKSPACE_DIRECTORY, changePlan);
     rules = syncWorkspaceAgents(root);
   }
 
@@ -666,8 +689,19 @@ export function migrateWorkspace(options: { dryRun?: boolean } = {}, repositoryR
   return {
     ok: true,
     command: "migrate",
-    data: { root, workspace: finalWorkspace, dryRun, current: false, fromVersion, changes, ids: idsAfter, notes: baseRefNotes(root, dryRun), rules, validation },
+    data: { root, workspace: finalWorkspace, dryRun, current: false, fromVersion, changes, ids: idsAfter, notes: [...changePlan.notes, ...baseRefNotes(root, dryRun)], rules, validation },
   };
+}
+
+/** The change migration, in the report's own terms. */
+function changeMigrationChanges(plan: ChangeMigrationPlan, workspace: string): MigrationChange[] {
+  const planned: MigrationChange[] = [];
+  for (const entry of plan.moves) {
+    planned.push({ kind: "move", from: entry.from, to: entry.to });
+    for (const file of entry.rewrite) planned.push({ kind: "rewrite", path: `${entry.to}/${file}`, fields: [`provenance sources ${entry.from}/ → ${entry.to}/`] });
+  }
+  if (plan.narrative) planned.push({ kind: "rewrite", path: `${workspace}/config.yaml`, fields: ["narrative: generated (openspec/specs/ is kept, as it was before narrative defaulted to none)"] });
+  return planned;
 }
 
 /**
@@ -687,7 +721,9 @@ export function formatMigration(result: MigrateResult): string {
   const { data } = result;
   if (data.current) return `${data.workspace} is already on the current shape (version ${WORKSPACE_SCHEMA_VERSION}); nothing to migrate.`;
   const from = data.fromVersion === null ? "an unversioned workspace" : `shape version ${data.fromVersion}`;
-  const lines = [
+  const lines = data.fromVersion === WORKSPACE_SCHEMA_VERSION ? [
+    `kotta migrate${data.dryRun ? " --dry-run" : ""} — the workspace is on version ${WORKSPACE_SCHEMA_VERSION}; its changes ${data.dryRun ? "would move" : "moved"} out of OpenSpec's folder into ${basename(data.workspace)}/changes/.${data.dryRun ? " Nothing was written." : ""}`,
+  ] : [
     data.dryRun
       ? `kotta migrate --dry-run — ${data.changes.length} change${data.changes.length === 1 ? "" : "s"} planned for ${data.workspace}, from ${from} to version ${WORKSPACE_SCHEMA_VERSION}. Nothing was written.`
       : `kotta migrate — ${data.changes.length} change${data.changes.length === 1 ? "" : "s"} applied to ${data.workspace}, from ${from} to version ${WORKSPACE_SCHEMA_VERSION}.`,

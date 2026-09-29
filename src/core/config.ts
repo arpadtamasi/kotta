@@ -21,8 +21,13 @@ export function readWorkspaceConfig(root: string): WorkspaceConfig {
   return { baseBranch, protectedBranches: [...new Set([...configured, baseBranch])] };
 }
 
-/** Who writes the narrative specs under `openspec/specs/`. */
-export const NARRATIVE_MODES = ["generated", "authored"] as const;
+/**
+ * Whether the project keeps an OpenSpec narrative beside the model, and who writes it. `none`, the
+ * default: the model is the only specification and nothing is written under `openspec/`. `generated`:
+ * archive regenerates `openspec/specs/` from the model. `authored`: people write it, and Kotta only
+ * reports where it disagrees with the model.
+ */
+export const NARRATIVE_MODES = ["none", "generated", "authored"] as const;
 export type NarrativeMode = typeof NARRATIVE_MODES[number];
 
 export interface NarrativeSetting { mode: NarrativeMode; source: string | null; error?: string }
@@ -34,8 +39,8 @@ function readYaml(path: string): Record<string, unknown> | null {
 }
 
 /**
- * `narrative: generated | authored`, read from the workspace config first and OpenSpec's
- * `openspec/config.yaml` second; `generated` when neither says. An unknown value is an error for the
+ * `narrative: none | generated | authored`, read from the workspace config first and OpenSpec's
+ * `openspec/config.yaml` second; `none` when neither says. An unknown value is an error for the
  * caller to name, never silently a default.
  */
 export function readNarrativeSetting(root: string): NarrativeSetting {
@@ -44,7 +49,15 @@ export function readNarrativeSetting(root: string): NarrativeSetting {
     const value = readYaml(path)?.narrative;
     if (value === undefined || value === null) continue;
     if (typeof value === "string" && (NARRATIVE_MODES as readonly string[]).includes(value)) return { mode: value as NarrativeMode, source: path };
-    return { mode: "generated", source: path, error: `${path} sets narrative to '${String(value)}'; it is ${NARRATIVE_MODES.join(" or ")}.` };
+    return { mode: "none", source: path, error: `${path} sets narrative to '${String(value)}'; it is ${NARRATIVE_MODES.join(", ")}.` };
   }
-  return { mode: "generated", source: null };
+  return { mode: "none", source: null };
+}
+
+/**
+ * The obligation keyword (SHALL or MUST) is OpenSpec's convention, required only where an OpenSpec
+ * narrative is kept: a generated requirement carries the node's sentence, and OpenSpec rejects one without it.
+ */
+export function requiresNormativeKeyword(root: string): boolean {
+  return readNarrativeSetting(root).mode !== "none";
 }

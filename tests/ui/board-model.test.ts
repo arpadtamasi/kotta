@@ -103,14 +103,14 @@ describe("a state machine", () => {
 
 describe("a node's sources", () => {
   it("fetches only a change folder's Markdown narrative, and cites the section it names", () => {
-    expect(parseSource("openspec/changes/checkout/conversation.md · Accounting")).toEqual({ file: "openspec/changes/checkout/conversation.md", section: "Accounting", narrative: true });
+    expect(parseSource(".kotta/changes/checkout/conversation.md · Accounting")).toEqual({ file: ".kotta/changes/checkout/conversation.md", section: "Accounting", narrative: true });
     expect(parseSource("proposal.md · Why").narrative).toBe(false);
-    expect(parseSource("openspec/changes/../secret.md").narrative).toBe(false);
+    expect(parseSource(".kotta/changes/../secret.md").narrative).toBe(false);
     expect(parseSource("openspec/specs/x/spec.md").narrative).toBe(false);
   });
 
   it("reads a `#` anchor as the cited section, as `kotta narrative` suggests", () => {
-    expect(parseSource("openspec/changes/checkout/conversation.md#J2")).toEqual({ file: "openspec/changes/checkout/conversation.md", section: "J2", narrative: true });
+    expect(parseSource(".kotta/changes/checkout/conversation.md#J2")).toEqual({ file: ".kotta/changes/checkout/conversation.md", section: "J2", narrative: true });
     expect(narrativeSection("## Javaslatok\n\n### J1 · 10:04\n\nigen\n\n### J2 · 10:09\n\n> mehet\n", "J2")).toBe("### J2 · 10:09\n\n> mehet");
   });
 

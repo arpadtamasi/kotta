@@ -31,16 +31,16 @@ test("renders the approved content in order", async ({ page }) => {
   // The message: nobody reads the long spec, so the agent decides; Kotta shows what it decided.
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Nobody reads the long spec. So the agent decides.");
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Kotta shows you what it decided.");
-  await expect(page.locator(".hero-lede")).toContainText("OpenSpec already writes the change in prose.");
+  await expect(page.locator(".hero-lede")).toContainText("A change is proposed in prose.");
   await expect(page.locator(".node-card .prov-badge")).toHaveText(["partly inferred", "the agent decided"]);
   await expect(page.getByRole("heading", { name: "A spec nobody reads is a spec the agent decides." })).toBeVisible();
   await expect(page.locator(".problem-points > div")).toHaveCount(4);
-  // What Kotta adds to OpenSpec: the technical spec, the diagrams, the marked decisions, the conversation.
-  await expect(page.getByRole("heading", { name: "What Kotta adds to OpenSpec." })).toBeVisible();
+  // What Kotta adds to a spec in prose: the technical spec, the diagrams, the marked decisions, the conversation.
+  await expect(page.getByRole("heading", { name: "What Kotta adds to a spec in prose." })).toBeVisible();
   await expect(page.locator(".adds-list h3")).toHaveText(["A technical spec", "Diagrams", "The machine’s decisions, marked", "The conversation, kept"]);
   await expect(page.locator(".adds-list")).toContainText("kotta narrative");
-  // Compatibility, with the one command it replaces said out loud.
-  await expect(page.getByRole("heading", { name: "On top of OpenSpec. Compatible with it." })).toBeVisible();
+  // OpenSpec is optional; compatibility, with the one command it replaces said out loud.
+  await expect(page.getByRole("heading", { name: "OpenSpec optional. Compatible with it." })).toBeVisible();
   await expect(page.locator("tbody th")).toHaveText(["A change", "The accepted state", "Writing specs yourself", "An existing repository", "Landing a change"]);
   await expect(page.locator("#openspec")).toContainText("openspec validate --specs --strict");
   await expect(page.locator("#openspec")).toContainText("kotta import openspec");

@@ -152,10 +152,10 @@ out six classes of source:
 
 | Class | Path |
 | --- | --- |
-| `workspace` | `.kotta/` — the specification itself |
-| `openspec-change` | `openspec/changes/<name>/` at the repository root |
-| `openspec-archive` | `openspec/changes/archive/` — an archived change's `model/` and `approval.yaml` |
-| `openspec-spec` | the rest of the root `openspec/` tree — the generated narrative specs |
+| `workspace` | `.kotta/` — the specification itself, and every change under `.kotta/changes/`, archived ones included |
+| `openspec-change` | `openspec/changes/<name>/` at the repository root — OpenSpec's own changes, or one an earlier release left there |
+| `openspec-archive` | `openspec/changes/archive/` — OpenSpec's archive, and an archived change's `model/` and `approval.yaml` from before changes moved into the workspace |
+| `openspec-spec` | the rest of the root `openspec/` tree — the narrative specs, where the project keeps them |
 | `published-spec` | any `kotta-spec/` a package publishes |
 | `dependency` | anything under `node_modules/` |
 

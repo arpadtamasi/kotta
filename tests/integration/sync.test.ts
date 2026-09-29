@@ -181,26 +181,29 @@ describe("the workspace rules file", () => {
     expect(result.data.pointer).toBe("@.kotta/AGENTS.md");
   });
 
-  test("renders the four layers, the project-owned model, the one human gate, and no process", () => {
+  test("renders where a change lives, the project-owned model, the one human gate, and no process", () => {
     run(["init"]);
 
     const written = readFileSync(rules(), "utf8").toLowerCase().replace(/\s+/g, " ");
-    expect(written).toContain("chat → narrative spec (openspec) → technical model (kotta forms) → code");
+    expect(written).toContain("chat → change (proposal + model delta) → technical model (kotta forms) → code");
+    // Every proposal starts as a change in the workspace.
+    expect(written).toContain("every request to specify, propose or plan something starts as a change");
+    expect(written).toContain("`.kotta/changes/<name>/`, opened with `kotta change new <name>`");
     expect(written).toContain("the technical model is the accepted truth");
     expect(written).toContain("never invent product intent");
     expect(written).toContain("approval is a human gate");
     expect(written).toContain("one such gate per change, at the end of planning");
     expect(written).toContain("`.kotta/spec/` is **project-owned**");
-    expect(written).toContain("there is **no process layer**");
-    expect(written).toContain("never write into `legacy/`");
+    expect(written).toContain("`.kotta/legacy/`, where there is one, is read-only");
     // Say when the code runs ahead of the spec (BR-01m3kdq88m3bgye3xnn9q6hsr2): a one-line signal,
-    // never a stop, naming the OpenSpec skill that implements without the gate.
+    // never a stop, whether or not the change has been through the gate.
     expect(written).toContain("say when the code runs ahead of the spec");
-    expect(written).toContain("with `opsx:apply` or by");
+    expect(written).toContain("implement as asked, whether or not the change has been through the gate");
     expect(written).toContain("do not stop or wait for it");
-    // The retired vocabulary is gone from the rules an agent reads.
-    for (const retired of ["kotta task ", "kotta batch", "kotta observation", "kotta decision", "claim you hold", "--approve"]) {
-      expect(written, `the rules no longer say "${retired}"`).not.toContain(retired);
+    // What the rules name, an agent reaches for: a tool the project may not use, or a concept Kotta
+    // retired, is not named at all — not even to forbid it.
+    for (const unnamed of ["openspec", "opsx", "observation", "batch", "process layer", "decision record", "kotta task", "--approve"]) {
+      expect(written, `the rules do not name "${unnamed}"`).not.toContain(unnamed);
     }
   });
 

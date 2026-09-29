@@ -7,6 +7,7 @@ import { findRepositoryRoot, specPath } from "../filesystem/workspace.js";
 import { OPENSPEC_DIRECTORY, PLANNING_FILE, deltaHash, readChangeModel, type ChangeModel } from "../spec/change.js";
 import { claimSentences, glossaryContrasts, readContent } from "../spec/contrast.js";
 import { markdownFiles, narrativeDrift, type NarrativeDrift } from "../spec/narrative.js";
+import { readNarrativeSetting, requiresNormativeKeyword } from "../core/config.js";
 import { PROVENANCE_DECIDERS, PROVENANCE_LEVELS, readProvenance } from "../spec/provenance.js";
 import { formIssues, normativeIssues, readFormRegistry, readSpecNodes, referencesIn, validateNodeSet, type SpecForm, type SpecNode, type ValidationIssue } from "../spec/registry.js";
 
@@ -63,7 +64,7 @@ export interface ProvenanceSummary {
 }
 
 export interface ConversationCitations {
-  /** Repository-relative `openspec/changes/<name>/conversation.md`, or null when the change has none. */
+  /** Repository-relative `.kotta/changes/<name>/conversation.md`, or null when the change has none. */
   path: string | null;
   /** How many delta-node sources cite a conversation. */
   cited: number;
@@ -272,7 +273,7 @@ export function analyzeChange(root: string, name: string): Analysis {
   if (!model.nodes.length && !model.removed.length) {
     structure.push({ code: "CHANGE_MODEL_EMPTY", message: `The change '${model.name}' proposes no model delta: model/ holds no node and no ${"REMOVED.md"} entry. Translate the narrative into nodes first (the plan-change skill).`, path: model.modelDirectory });
   }
-  structure.push(...validateNodeSet(forms, mergedNodes, { subject: inDelta, requireProvenance: inDelta }), ...normativeIssues(forms, model.nodes));
+  structure.push(...validateNodeSet(forms, mergedNodes, { subject: inDelta, requireProvenance: inDelta }), ...(requiresNormativeKeyword(root) ? normativeIssues(forms, model.nodes) : []));
   for (const id of model.removed) {
     if (!acceptedById.has(id)) structure.push({ code: "CHANGE_REMOVED_UNKNOWN", message: `model/REMOVED.md removes ${id}, which is not an accepted node.`, path: join(model.modelDirectory, "REMOVED.md") });
     if (deltaIds.has(id)) structure.push({ code: "CHANGE_REMOVED_AND_CHANGED", message: `model/REMOVED.md removes ${id}, and model/ also carries a new version of it. A node is either changed or removed.`, path: join(model.modelDirectory, "REMOVED.md") });
@@ -293,7 +294,8 @@ export function analyzeChange(root: string, name: string): Analysis {
 
   // The change's narrative describes the model after the change; the accepted narrative, the model before it.
   const mergedById = new Map(mergedNodes.map((node) => [node.id, node]));
-  const drift = [
+  // Only a project that keeps an OpenSpec narrative has one to compare.
+  const drift = readNarrativeSetting(root).mode === "none" ? [] : [
     ...markdownFiles(join(model.directory, "specs")).flatMap((file) => narrativeDrift(root, file, readFileSync(file, "utf8"), mergedById, forms)),
     ...markdownFiles(join(root, OPENSPEC_DIRECTORY, "specs")).flatMap((file) => narrativeDrift(root, file, readFileSync(file, "utf8"), acceptedById, forms)),
   ];

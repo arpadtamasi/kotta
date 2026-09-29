@@ -1,13 +1,27 @@
 # The planning phase
 
-How a change goes from prose to the accepted model: the layout, what each command checks, when it
-refuses, and what `archive` generates.
+How a change goes from prose to the accepted model: opening it, the layout, what each command
+checks, when it refuses, and what `archive` generates.
+
+## Opening a change
+
+Every request to specify, propose or plan something starts as a change, in the workspace:
+
+```bash
+kotta change new <name> [--title "…"]
+```
+
+It writes `.kotta/changes/<name>/proposal.md` with three sections — **Why**, **What changes**,
+**Open decisions** — and an empty `model/`, and nothing else. Never a free-standing `SPEC.md`, never
+an OpenSpec change, never a new `openspec/` folder, whether or not the project uses OpenSpec.
+`kotta change list` lists the open changes, and names any an earlier release left under
+`openspec/changes/`, where no command reads them any more (`kotta migrate` moves them).
 
 ## The layout of a change
 
 ```text
-openspec/changes/<name>/
-  proposal.md, specs/**                    the narrative (OpenSpec's own files)
+.kotta/changes/<name>/
+  proposal.md                              why, what changes, open decisions, in prose
   conversation.md                          optional: the distilled conversation (kotta narrative)
   model/<form-directory>/<slug>-<id8>.md   a new node, or an accepted node changed under its own id
   model/REMOVED.md                         accepted nodes the change removes, one list item per id, with why
@@ -15,14 +29,14 @@ openspec/changes/<name>/
   approval.yaml                            written by kotta approve
 ```
 
-- **New node:** `kotta spec new <form> --title "…" --into <name>`. The change directory must
-  already exist.
+- **New node:** `kotta spec new <form> --title "…" --into <name>`. The change must already be
+  open (`kotta change new`); the workshop skills draft their nodes the same way.
 - **Changed node:** copy the accepted file from `.kotta/spec/<form-directory>/` into the same
   directory under `model/`, keep its `id`, edit the copy. A node keeps its form.
 - **Removed node:** a list item in `model/REMOVED.md` naming its id and the reason. A node is either
   changed or removed, never both.
-- A node that belongs to a capability carries `capability: <path>`; that is what `archive`
-  generates `openspec/specs/<path>/spec.md` from.
+- A node that belongs to a capability carries `capability: <path>`; where the project keeps a
+  generated OpenSpec narrative, that is what `archive` generates `openspec/specs/<path>/spec.md` from.
 
 Any other file under `model/` is refused as a stray.
 
@@ -31,19 +45,21 @@ Any other file under `model/` is refused as a stray.
 The `plan-change` skill does the translation in the chat:
 
 1. It distils the conversation first, when the change was shaped in an agent session.
-2. It reads the narrative requirement by requirement, picks the form that states each one, and reads
-   that form's required sections and edges.
-3. It looks for the why in the proposal, the requirement and the conversation before calling
-   anything inferred, and fills `provenance` on every node.
-4. It writes every obligation with SHALL or MUST: a rule's Rule, an interface's Postconditions or
-   Invariants, a quality attribute's Response. A change's node without the keyword is refused.
+2. It reads the proposal claim by claim, picks the form that states each one, and reads that form's
+   required sections and edges.
+3. It looks for the why in the proposal, the claim and the conversation before calling anything
+   inferred, and fills `provenance` on every node.
+4. Where the project keeps an OpenSpec narrative (`narrative: generated` or `authored`), it writes
+   every obligation with SHALL or MUST: a rule's Rule, an interface's Postconditions or Invariants, a
+   quality attribute's Response; a change's node without the keyword is refused. With
+   `narrative: none`, the default, it writes the obligation plainly, in the project's language.
 5. It runs `kotta plan`, fixes what is structural, and adds the contradictions it finds itself to the
    report's `judged` block.
 6. It puts the delta to the human, by title, and records the yes only on an explicit yes.
 
 It never invents intent. Where a form asks for something no source says, it writes a question under
 `## Open decisions` in that node. It never marks its own choice `human`, and never edits the
-narrative to fit the model.
+proposal to fit the model.
 
 ## `kotta plan <change>`
 
@@ -54,11 +70,11 @@ sections, in this order:
 | Section | What it reports |
 | --- | --- |
 | `## Delta` | the nodes added, changed and removed, by title |
-| `## (a) Structure of the delta` | each delta node against its form: sections, required edges, id, provenance, the SHALL/MUST keyword |
+| `## (a) Structure of the delta` | each delta node against its form: sections, required edges, id, provenance, and the SHALL/MUST keyword where an OpenSpec narrative is kept |
 | `## (b) The merged view` | the accepted model with the delta applied, validated as a whole |
 | `## (c) Conflict candidates` | accepted nodes the delta may falsify, ranked, at most ten; then the `judged` block |
 | `## (d) Silences` | open decisions, and questions a form asks that nothing answers |
-| `## (e) Narrative drift` | bound narrative requirements that say something else than their node |
+| `## (e) Narrative drift` | bound narrative requirements that say something else than their node; always empty with `narrative: none` |
 | `## (f) Provenance` | counts by level and by decider, the list of what the machine decided alone, and the conversation citations that do not resolve |
 
 The conflict candidates are mechanical: a lifecycle transition removed or reversed, an accepted node
@@ -107,18 +123,21 @@ refusal leaves the repository as it was. It refuses when:
 | `APPROVAL_UNREADABLE`, `INCOMPLETE_APPROVAL_RECEIPT` | the receipt is not valid YAML, or lacks a field |
 | `APPROVAL_STALE` | `model/` no longer hashes to the approved basis: plan again and ask again |
 | `REMOVED_STILL_REFERENCED` | a node still names a node the change removes |
-| `ARCHIVE_EXISTS` | `openspec/changes/archive/<date>-<name>/` already exists |
+| `ARCHIVE_EXISTS` | `.kotta/changes/archive/<date>-<name>/` already exists |
 | `NARRATIVE_DRIFT` | with `narrative: generated`, a bound requirement still disagrees with its node after regeneration |
-| `CONFIG_INVALID` | `narrative:` has a value other than `generated` or `authored` |
+| `CONFIG_INVALID` | `narrative:` has a value other than `none`, `generated` or `authored` |
 | any structural code | the delta or the merged model does not validate |
 
 Then it copies each delta node into `.kotta/spec/<form-directory>/` (replacing a same-id node),
-deletes the removed nodes, regenerates the narrative, and moves the change directory to
-`openspec/changes/archive/<YYYY-MM-DD>-<name>/`. It commits nothing.
+deletes the removed nodes, regenerates the OpenSpec narrative where one is kept, and moves the
+change directory to `.kotta/changes/archive/<YYYY-MM-DD>-<name>/`. It commits nothing.
 
 ## What `archive` generates
 
-With `narrative: generated` (the default), each capability the delta touches gets
+With `narrative: none`, the default, nothing: the model is the only specification, and nothing under
+`openspec/` is written or checked.
+
+With `narrative: generated`, each capability the delta touches gets
 `openspec/specs/<capability>/spec.md`, rebuilt from the merged model:
 
 | Part | From |

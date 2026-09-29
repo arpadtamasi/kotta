@@ -50,7 +50,7 @@ export function createKottaMcpServer(repositoryRoot?: string): McpServer {
       instructions: [
         "Kotta owns this repository's technical specification: the accepted rules, examples, entities, state machines, use cases, stories and interfaces under the workspace's spec/ directory.",
         "These tools read it. Use them to orient before proposing a change instead of reading the workspace directories yourself.",
-        "Nothing here writes: a node is drafted with 'kotta spec new' and becomes the agreement when it lands on the base branch on a human yes.",
+        "Nothing here writes: a proposal opens as a change with 'kotta change new', its nodes are drafted into it with 'kotta spec new --into', and they become the agreement through the change's one human gate.",
       ].join(" "),
     },
   );

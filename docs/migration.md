@@ -42,6 +42,15 @@ In one run, from any older shape:
 | `.kotta/README.md`, `.kotta/AGENTS.md` | this Kotta's copies; a hand-edited rules file is reported and left alone |
 | `.gitattributes` | the generated index's merge attribute removed; the file deleted when that was all it held |
 | `spec/` | byte-identical, and the command proves it after writing; a workspace with no registry at all gets the bundled one |
+| `openspec/changes/<name>/` | `.kotta/changes/<name>/`: every open change, OpenSpec proposal or Kotta delta alike |
+| `openspec/changes/archive/<dir>/` with a `model/`, `planning.md` or `approval.yaml` | `.kotta/changes/archive/<dir>/`; OpenSpec's own history (a proposal with no model) stays |
+| `narrative:` unset, with specs under `openspec/specs/` | `narrative: generated`, so archive keeps regenerating them as it did before the default became `none` |
+
+The last three rows also run on a workspace already on version 6: up to 1.0.0-alpha.2 a change
+lived in OpenSpec's folder, and `kotta migrate` is how it gets into the workspace. In a moved change
+that is not approved, provenance sources naming the old folder are rewritten to the new one; an
+approved change moves byte-identical, because its receipt is a hash of its model, and the report
+says so.
 
 Operating-system metadata in an older-shape directory is not part of the workspace. A fixed list —
 `.DS_Store`, `._*`, `.Spotlight-V100`, `.Trashes`, `.fseventsd`, `Thumbs.db`, `ehthumbs.db`,
@@ -59,7 +68,8 @@ writes `legacy/`.
 - **Fail before write.** Every conflict — both `.a-team/` and `.kotta/` present, an archive already
   there, a directory it cannot classify — is found before anything is written, and the message ends
   with "Nothing was written."
-- **Idempotent.** A second run reports that the workspace is already on the current shape.
+- **Idempotent.** A second run reports that the workspace is already on the current shape, with no
+  change left under `openspec/changes/`.
 - **Forward only.** A workspace written by a newer Kotta is named as newer, with both versions, and
   answered by upgrading Kotta.
 - **Reported, not repaired.** If the carried specification does not validate, the migration says so

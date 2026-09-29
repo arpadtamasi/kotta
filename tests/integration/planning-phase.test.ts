@@ -16,7 +16,7 @@ import {
  * accepted truth; a disagreement is reported, never smoothed over" are what these tests hold.
  */
 
-const CHANGE = "openspec/changes/add-pause";
+const CHANGE = ".kotta/changes/add-pause";
 const today = () => new Date().toISOString().slice(0, 10);
 
 /** Push a file's mtime into the future, so "changed after the report" does not hang on clock resolution. */
@@ -70,7 +70,7 @@ describe("kotta spec new --into", () => {
     const refused = run(root, ["spec", "new", "goal", "--title", "Anything", "--into", "no-such-change"]);
     expect(refused.status).toBe(1);
     expect(refused.stderr).toContain("No change 'no-such-change' exists");
-    expect(existsSync(join(root, "openspec/changes/no-such-change"))).toBe(false);
+    expect(existsSync(join(root, ".kotta/changes/no-such-change"))).toBe(false);
   });
 });
 
@@ -121,11 +121,11 @@ describe("kotta plan", () => {
     answerPause(root);
     // Decided by the agent, but stated: nothing was supplied, so the report shows the words it came from.
     write(root, `${CHANGE}/model/examples/timer-holds-${HOLD.slice(-8)}.md`, node(
-      { id: HOLD, form: "example", title: "The timer holds while paused", subjects: [PAUSE], provenance: { level: "stated", decided_by: "agent-decided", sources: ["openspec/changes/add-pause/proposal.md · Why"], quote: "a paused game should just quit" } },
+      { id: HOLD, form: "example", title: "The timer holds while paused", subjects: [PAUSE], provenance: { level: "stated", decided_by: "agent-decided", sources: [".kotta/changes/add-pause/proposal.md · Why"], quote: "a paused game should just quit" } },
       { Given: "a game paused at 01:10", When: "a minute passes", Then: "the clock still shows 01:10" }));
     expect(json(root, ["plan", "add-pause"]).status).toBe(0);
     let report = readFileSync(join(root, CHANGE, "planning.md"), "utf8");
-    expect(report).toContain("The timer holds while paused (EX-000000e3) — from “a paused game should just quit” (openspec/changes/add-pause/proposal.md · Why)");
+    expect(report).toContain("The timer holds while paused (EX-000000e3) — from “a paused game should just quit” (.kotta/changes/add-pause/proposal.md · Why)");
     expect(report).toContain("Game lifecycle (SM-000000s1) — that a finished game can be restarted");
     expect(report).not.toContain("no account of what was supplied");
 
@@ -188,7 +188,7 @@ describe("kotta approve, the one human gate (BR-01m0f0wn89zb3wfb3t3y4d20a7)", ()
   test("an unanswered question refuses the approval by name; an answered one is not named (EX-01m0z873t1cmhybhakq6vwzxb6)", () => {
     const root = planningWorkspace("approve-questions");
     write(root, `${CHANGE}/model/business-rules/pause-freezes-${PAUSE.slice(-8)}.md`, node(
-      { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: ["openspec/changes/add-pause/proposal.md · Why"], quote: "a paused game should just quit" } },
+      { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: [".kotta/changes/add-pause/proposal.md · Why"], quote: "a paused game should just quit" } },
       { Rule: "While a game is paused its clock SHALL NOT advance.", Rationale: "A pause is not play.", Scope: "Timed games.", "Open decisions": "- How long may a pause last? Settled by D-001.\n- Does a pause survive a restart?\n- Who may pause a ranked game?" }));
     run(root, ["plan", "add-pause"]);
     const refused = json(root, ["approve", "add-pause", "--by", "Ada"]);
@@ -284,7 +284,7 @@ describe("kotta archive", () => {
     expect(normalizeProse(statement)).toContain("**Rationale** A pause is not play.");
 
     // The change, with its planning report and receipt, lives on in the archive.
-    const destination = join(root, `openspec/changes/archive/${today()}-add-pause`);
+    const destination = join(root, `.kotta/changes/archive/${today()}-add-pause`);
     expect(existsSync(join(root, CHANGE))).toBe(false);
     for (const file of ["approval.yaml", "planning.md", "proposal.md", "model"]) expect(existsSync(join(destination, file))).toBe(true);
   });

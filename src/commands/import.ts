@@ -4,7 +4,8 @@ import { parseMarkdown, renderMarkdown } from "../core/markdown.js";
 import { mintSpecId, specFilename } from "../core/identity.js";
 import { slugify } from "../core/naming.js";
 import { findRepositoryRoot, specPath } from "../filesystem/workspace.js";
-import { ARCHIVE_DIRECTORY, MODEL_DIRECTORY, OPENSPEC_DIRECTORY, changesPath } from "../spec/change.js";
+import { ARCHIVE_DIRECTORY, MODEL_DIRECTORY, OPENSPEC_DIRECTORY, changesPath, openSpecChangesPath } from "../spec/change.js";
+import { readNarrativeSetting } from "../core/config.js";
 import { INFORMATIVE_FORMS, PURPOSE_FORM, REQUIREMENT_FORMS, SCENARIO_FORM, markdownFiles, normalizeProse, stripMarkdownComments } from "../spec/narrative.js";
 import { QUOTE_WORD_LIMIT, type Provenance } from "../spec/provenance.js";
 import { readFormRegistry, readSpecNodes, referencesIn, type SpecForm, type SpecNode } from "../spec/registry.js";
@@ -13,6 +14,9 @@ import type { NodeRef } from "./plan.js";
 /**
  * `kotta import openspec` — take an existing OpenSpec project into the technical model through the
  * planning phase, not by translation.
+ *
+ * OpenSpec is a source here, never the change's home: the change opens under `.kotta/changes/`, and
+ * nothing under `openspec/` is written.
  *
  * The mechanical half only: it opens a change, writes a proposal saying what was imported and from
  * where, and drafts into the change's `model/` exactly what the narrative states — every requirement
@@ -347,7 +351,7 @@ export function importOpenSpec(options: { change?: string } = {}, repositoryRoot
     capabilities.push({ capability, file: source, requirements: parsed.requirements.length, scenarios, purpose: Boolean(parsed.purpose) });
   }
 
-  const archiveRoot = changesPath(root, ARCHIVE_DIRECTORY);
+  const archiveRoot = openSpecChangesPath(root, ARCHIVE_DIRECTORY);
   const archived = existsSync(archiveRoot)
     ? readdirSync(archiveRoot).filter((entry) => statSync(join(archiveRoot, entry)).isDirectory()).sort().map((entry) => relative(root, join(archiveRoot, entry)).split(sep).join("/"))
     : [];
@@ -360,6 +364,9 @@ export function importOpenSpec(options: { change?: string } = {}, repositoryRoot
     `Run the plan-change skill on ${name}: it derives the actors, use cases, entities and state machines from proposal.md and the narrative, asking where neither says, and answers the sections marked not derivable.`,
     `Then 'kotta plan ${name}' measures the delta, and the human decides it at the gate ('kotta approve', then 'kotta archive').`,
   ];
+  if (readNarrativeSetting(root).source === null) {
+    next.push(`No config sets 'narrative:', so after the import the model is the only specification and archive leaves ${relative(root, specsRoot).split(sep).join("/")}/ alone. Ask the human whether to keep it: narrative: generated (Kotta writes it from the model) or narrative: authored (people keep writing it, Kotta reports drift).`);
+  }
 
   const proposal = renderProposal({ name, capabilities, archived, drafted, added: added.length, modified, warnings, source: relative(root, specsRoot).split(sep).join("/") });
   mkdirSync(directory, { recursive: true });

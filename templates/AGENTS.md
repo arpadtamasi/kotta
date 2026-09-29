@@ -17,39 +17,29 @@ If you can install neither — a hosted environment with no network or no npm �
 specification as files, draft your proposal in a file, say what you could not run, and leave the
 checks to an environment that has the CLI.
 
-## The four layers
+## Where a change lives
 
 ```text
-chat  →  narrative spec (OpenSpec)  →  technical model (Kotta forms)  →  code
+chat  →  change (proposal + model delta)  →  technical model (Kotta forms)  →  code
 ```
 
-The layers are joined by references, never by copies. The conversation is where intent is said; the
-narrative specification is where a change is proposed and argued in prose; the **technical model** is
-the precise, machine-checkable form of what was accepted — and when the two disagree, the technical
-model is the truth and the disagreement is reported, not smoothed over; the code is what keeps the
-promises, and it says which by naming the node it keeps.
+The layers are joined by references, never by copies. The conversation is where intent is said; a
+**change** is where it is proposed, argued in prose and translated into nodes; the **technical
+model** is the precise, machine-checkable form of what was accepted — and when a proposal and the
+model disagree, the model is the truth and the disagreement is reported, not smoothed over; the code
+is what keeps the promises, and it says which by naming the node it keeps.
 
-A change moves through them in one pass. Its narrative lives in `openspec/changes/<name>/`, with the
-conversation that shaped it distilled into `conversation.md` by `kotta narrative <name> --from <session
-log>` (secrets and personal data filtered before anything is written); planning
-translates it into a **model delta** under that change's `model/`, every node marked with its
-`provenance` (stated, partly inferred or inferred, and who decided it); `kotta plan <name>` measures
-the delta against the accepted model and writes `planning.md`; the human decides it — **the one gate**
-— and `kotta approve <name> --by <who>` records that yes; `kotta archive <name>` then lands exactly
-the approved delta in `{{workspace}}/spec/`, regenerates the narrative from the model, and moves the
-change to the archive, asking nothing again. The `plan-change` skill is the how. Code usually comes
-last; when it runs ahead of the model, say so (rule 7).
-
-Who writes `openspec/specs/` is the project's choice, `narrative:` in `{{workspace}}/config.yaml`.
-With `generated`, the default, archive regenerates every capability a change touches from the model,
-carrying the nodes' text as written: its Purpose, its requirements (the rules, interfaces and quality
-attributes, with their examples as scenarios), then its use cases and user stories as informative
-sections, never as requirements; with `authored`, people write the narrative, archive writes none
-of it and only reports where a bound requirement disagrees with its node. Either way the model is the
-truth, and an obligation carries its keyword in the model: a rule, an interface's postconditions or
-invariants, a quality attribute's response say SHALL or MUST — in English, as OpenSpec expects,
-whatever the language around it. A change's node without one is refused; an older accepted node is
-warned about. Use cases and user stories stay free-form and need no keyword.
+**Every request to specify, propose or plan something starts as a change**, and a change has one
+home: `{{workspace}}/changes/<name>/`, opened with `kotta change new <name>`. The change holds `proposal.md` (why, what changes, what is still undecided, in prose), the
+conversation that shaped it, distilled into `conversation.md` by `kotta narrative <name> --from
+<session log>` (secrets and personal data filtered before anything is written), and the **model
+delta** under `model/`, every node marked with its `provenance` (stated, partly inferred or inferred,
+and who decided it). `kotta plan <name>` measures the delta against the accepted model and writes
+`planning.md`; the human decides it — **the one gate** — and `kotta approve <name> --by <who>`
+records that yes; `kotta archive <name>` then lands exactly the approved delta in
+`{{workspace}}/spec/` and moves the change to `{{workspace}}/changes/archive/`, asking nothing again.
+The `plan-change` skill is the how. Code usually comes last; when it runs ahead of the model, say so
+(rule 7).
 
 ## The rule everything else follows from
 
@@ -58,10 +48,8 @@ stored in form-declared directories are yours to shape, in conversation, with th
 by hand — the validator measures a node against its form and names the form's own question for
 every missing part. A node becomes the agreement when it lands on the base branch on a human yes.
 
-There is **no process layer**: no task, no claim, no batch, no observation, no decision record. The
-one receipt left is a change's `approval.yaml`, the record of its one gate. Kotta 1.0 does not track who is doing what; it holds what was agreed and whether
-the code keeps it. `{{workspace}}/legacy/`, where a migrated workspace keeps its pre-1.0 process
-state, is a read-only archive — nothing reads it and nothing writes it.
+Kotta holds what was agreed and whether the code keeps it. The one receipt it writes is a change's
+`approval.yaml`, the record of its one gate.
 
 Chat, the board (`kotta ui`), pull requests and CI are views or history — they never override these
 files. The board is read-only.
@@ -72,6 +60,7 @@ files. The board is read-only.
 kotta validate     # does every node satisfy its form, and every edge name a node
 kotta gap          # which accepted promises have no evidence in the code, and which enforcement has no spec behind it
 kotta questions    # which drafts still carry an open question
+kotta change list  # which changes are open
 ```
 
 Project settings — the base branch, the protected branches — live in `{{workspace}}/config.yaml`.
@@ -103,13 +92,13 @@ question, so a draft with one is a draft, not an agreement.
 
 ## Rules for agents
 
-1. **The technical model is the accepted truth.** When the narrative, the conversation and the
+1. **The technical model is the accepted truth.** When a proposal, the conversation and the
    nodes disagree, the nodes win and you say where they disagree. You may propose a change to a
    node; you do not decide one. The change lands when the human says yes. `kotta plan`'s conflict
    candidates help; they do not replace comparing every claim of a delta with the accepted nodes it
    touches, and what you find goes into the report marked `judged`.
 2. **Never invent product intent.** Where a form asks for something — a goal, an actor, a rationale —
-   that neither the conversation nor the narrative says, write the question, not an answer. A
+   that neither the conversation nor the proposal says, write the question, not an answer. A
    filled-in guess is worse than a listed gap.
 3. **Stay inside the change you are making.** Anything you notice outside it is said to the human,
    in chat, as one line — never a silent fix and never a record of its own.
@@ -125,10 +114,10 @@ question, so a draft with one is a draft, not an agreement.
 5. **Evidence names its node.** When you implement a promise, cite the node's id where the code
    keeps it and in the test that proves it; when you cannot yet, admit the gap in the node's
    frontmatter with its kind and reason rather than leaving `kotta gap` to find it.
-6. **Never write into `legacy/`.** It is the record of how the project worked before 1.0, kept
-   for reading. Nothing in it governs anything now.
-7. **Say when the code runs ahead of the spec.** Implement as asked — with `opsx:apply` or by
-   hand — whether or not the change has been through the gate. When what you write keeps, changes
+6. **`{{workspace}}/legacy/`, where there is one, is read-only.** It is the archive of a workspace
+   migrated from before 1.0, kept for reading; nothing in it governs anything now.
+7. **Say when the code runs ahead of the spec.** Implement as asked, whether or not the change has
+   been through the gate. When what you write keeps, changes
    or drops a promise the accepted model does not state, say so in one line, name the promise in
    plain words, and offer `plan-change`. Do not stop or wait for it. Work that touches no promise
    needs no word about the spec.
@@ -136,14 +125,15 @@ question, so a draft with one is a draft, not an agreement.
 ## Skills
 
 If the Kotta skills are installed, prefer them — they encode the how. `plan-change` carries a
-change from its narrative to the one gate; `setup-kotta` initializes a workspace; `explore-workspace` answers questions across the specification; `requirements-traceability`
+change from its proposal to the one gate; `setup-kotta` initializes a workspace; `explore-workspace` answers questions across the specification; `requirements-traceability`
 reads the model as a graph and reports what hangs; `consolidate-model` finds one concept living under
 several names; `report-kotta-bug` reports a defect in Kotta itself. `kotta sync` installs them.
 
 For the specification workshops, use `impact-mapping`, `story-mapping`, `use-case-modeling`,
 `example-mapping`, `event-storming`, `ubiquitous-language`, `quality-scenarios` and
-`design-by-task`. They draft and read Markdown nodes under `{{workspace}}/spec/`; landing those nodes
-on the base branch is how agreement is accepted.
+`design-by-task`. They read the accepted nodes under `{{workspace}}/spec/` and draft new ones into a
+change (`kotta spec new <form> --title "…" --into <change>`), never straight into the accepted
+specification: a drafted node reaches it through the change's one gate.
 
 A defect in Kotta itself is not this project's work: use `report-kotta-bug`, or the issue form at
 <https://github.com/arpadtamasi/kotta/issues>.

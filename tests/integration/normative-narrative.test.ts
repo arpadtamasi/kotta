@@ -1,10 +1,10 @@
 import { spawnSync } from "node:child_process";
-import { appendFileSync, cpSync, existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { boundRequirements, narrativeShapeWarnings } from "../../src/spec/narrative.js";
-import { GAME, GOAL, PAUSE as PAUSE_RULE, QUIT, answerPause, id, json, node, planningWorkspace, run, write } from "./planning-fixture.js";
+import { GAME, GOAL, PAUSE as PAUSE_RULE, QUIT, answerPause, id, json, node, planningWorkspace, run, setNarrative, write } from "./planning-fixture.js";
 
 /**
  * The obligation's keyword lives in the model, and the narrative is generated from the model or
@@ -15,11 +15,11 @@ import { GAME, GOAL, PAUSE as PAUSE_RULE, QUIT, answerPause, id, json, node, pla
  * beforehand. `narrative: authored` stops archive writing `openspec/specs` and leaves it to report.
  */
 
-const CHANGE = "openspec/changes/add-pause";
+const CHANGE = ".kotta/changes/add-pause";
 const PAUSE = id("BR", "b2");
 const IFACE = id("IF", "f1");
 const pauseRule = (rule: string) => node(
-  { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: ["openspec/changes/add-pause/proposal.md · Why"] } },
+  { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: [".kotta/changes/add-pause/proposal.md · Why"] } },
   { Rule: rule, Rationale: "A pause is not play.", Scope: "Timed games.", "Open decisions": "None." });
 
 describe("the normative keyword", () => {
@@ -51,7 +51,7 @@ describe("the normative keyword", () => {
     const root = planningWorkspace("normative-interface");
     answerPause(root);
     const iface = (postconditions: string) => node(
-      { id: IFACE, form: "interface", title: "Pause command", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: ["openspec/changes/add-pause/proposal.md · Why"] } },
+      { id: IFACE, form: "interface", title: "Pause command", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: [".kotta/changes/add-pause/proposal.md · Why"] } },
       { Purpose: "Pauses a running game.", Preconditions: "The game is running.", Postconditions: postconditions, Invariants: "The score is unchanged.", Failures: "A game already paused is refused." });
     write(root, `${CHANGE}/model/interfaces/pause-command-${IFACE.slice(-8)}.md`, iface("The game is paused."));
     const refused = json(root, ["validate"]);
@@ -88,10 +88,10 @@ describe("the generated narrative", () => {
   test("gives an interface its own contract as the scenario, and says what OpenSpec will still refuse", () => {
     const root = approved("contract", (base) => {
       write(base, `${CHANGE}/model/interfaces/pause-command-${IFACE.slice(-8)}.md`, node(
-        { id: IFACE, form: "interface", title: "Pause command", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: ["openspec/changes/add-pause/proposal.md · Why"] } },
+        { id: IFACE, form: "interface", title: "Pause command", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: [".kotta/changes/add-pause/proposal.md · Why"] } },
         { Purpose: "Pauses a running game.", Preconditions: "The game is running.", Postconditions: "The game SHALL be paused.", Invariants: "The score is unchanged.", Failures: "A game already paused is refused." }));
       write(base, `${CHANGE}/model/entities/game-${GAME.slice(-8)}.md`, node(
-        { id: GAME, form: "entity", title: "Game", used_by: [QUIT], interfaces: [IFACE], provenance: { level: "stated", decided_by: "human", sources: ["openspec/changes/add-pause/proposal.md · Why"] } },
+        { id: GAME, form: "entity", title: "Game", used_by: [QUIT], interfaces: [IFACE], provenance: { level: "stated", decided_by: "human", sources: [".kotta/changes/add-pause/proposal.md · Why"] } },
         { Meaning: "One play-through.", Identity: "A session id.", Attributes: "Score, clock.", Invariants: "The clock never runs backwards." }));
     });
     const archived = json(root, ["archive", "add-pause"]);
@@ -109,7 +109,7 @@ describe("the generated narrative", () => {
     const RESUME = id("UC", "c2");
     const STORY = id("US", "s2");
     const QA = id("QA", "q1");
-    const stated = { level: "stated", decided_by: "human", sources: ["openspec/changes/add-pause/proposal.md · Why"] };
+    const stated = { level: "stated", decided_by: "human", sources: [".kotta/changes/add-pause/proposal.md · Why"] };
     const at = (form: string, slug: string, key: string) => `${CHANGE}/model/${form}/${slug}-${key.slice(-8)}.md`;
     const example = (key: string, title: string, subjects: string[], when: string) => write(root, at("examples", title.toLowerCase().replace(/\W+/g, "-"), key), node(
       { id: key, form: "example", title, subjects, provenance: stated }, { Given: "a running game", When: when, Then: "the game answers at once" }));
@@ -195,7 +195,7 @@ describe("narrative: authored", () => {
 
   test("archive writes no narrative and reports the drift without stopping", () => {
     const root = approved("authored");
-    appendFileSync(join(root, ".kotta/config.yaml"), "narrative: authored\n");
+    setNarrative(root, "authored");
     write(root, "openspec/specs/game/rules/spec.md", drifting);
     const archived = json(root, ["archive", "add-pause"]);
     expect(archived.status).toBe(0);
@@ -209,6 +209,7 @@ describe("narrative: authored", () => {
 
   test("is read from openspec/config.yaml as well, and an unknown value is refused", () => {
     const root = approved("authored-openspec");
+    setNarrative(root, null);
     write(root, "openspec/config.yaml", "schema: spec-driven\nnarrative: authored\n");
     const text = run(root, ["archive", "add-pause"]);
     expect(text.status).toBe(0);
@@ -216,7 +217,7 @@ describe("narrative: authored", () => {
     expect(existsSync(join(root, "openspec/specs/game/session/spec.md"))).toBe(false);
 
     const refused = approved("authored-invalid");
-    appendFileSync(join(refused, ".kotta/config.yaml"), "narrative: handwritten\n");
+    setNarrative(refused, "handwritten");
     const result = json(refused, ["archive", "add-pause"]);
     expect(result.status).toBe(1);
     expect(result.body.errors).toEqual([expect.objectContaining({ code: "CONFIG_INVALID", message: expect.stringContaining("'handwritten'") })]);

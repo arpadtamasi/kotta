@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { stringify } from "yaml";
@@ -48,11 +48,22 @@ export const QUIT_RULE_AFTER = "The game SHALL ask “Quit? Y/N” before it end
 
 const stated = (source: string) => ({ level: "stated", decided_by: "human", sources: [source], quote: "a paused game should just quit — operator, 2026-09-25 10:02" });
 
+/**
+ * Sets `narrative:` in the workspace config, or removes it with null. The fixture keeps an OpenSpec
+ * narrative (`generated`), because its drift and regeneration are what several tests measure.
+ */
+export function setNarrative(root: string, mode: string | null): void {
+  const path = join(root, ".kotta/config.yaml");
+  const kept = readFileSync(path, "utf8").split("\n").filter((line) => !line.startsWith("narrative:")).join("\n").replace(/\n*$/, "\n");
+  writeFileSync(path, mode === null ? kept : `${kept}narrative: ${mode}\n`);
+}
+
 /** A fresh repository with an accepted specification and the `add-pause` change. */
-export function planningWorkspace(label: string): string {
+export function planningWorkspace(label: string, narrative: string | null = "generated"): string {
   const root = mkdtempSync(join(tmpdir(), `kotta-planning-${label}-`));
   execFileSync("git", ["init", "-b", "main"], { cwd: root });
   execFileSync("node", [cli, "init", "--json"], { cwd: root });
+  setNarrative(root, narrative);
   const spec = ".kotta/spec";
   write(root, `${spec}/goals/finish-games-${GOAL.slice(-8)}.md`, node(
     { id: GOAL, form: "goal", title: "Players finish the games they start", capability: "game/session", measured_by: [PROMPT] },
@@ -73,19 +84,19 @@ export function planningWorkspace(label: string): string {
     { id: TERM, form: "glossary-term", title: "Quit" },
     { Definition: "Ending a game before it is over.", Usage: "The player quits.", "Non-examples": "- pause — stops the clock, but does not end the game" }));
 
-  const change = "openspec/changes/add-pause";
+  const change = ".kotta/changes/add-pause";
   write(root, `${change}/proposal.md`, "# Add pause\n\n## Why\n\nA paused game should just quit.\n");
   write(root, `${change}/model/business-rules/quit-confirmation-${QUIT.slice(-8)}.md`, node(
-    { id: QUIT, form: "business-rule", title: "Quitting asks for confirmation", capability: "game/session", provenance: stated("openspec/changes/add-pause/proposal.md · Why") },
+    { id: QUIT, form: "business-rule", title: "Quitting asks for confirmation", capability: "game/session", provenance: stated(".kotta/changes/add-pause/proposal.md · Why") },
     { Rule: QUIT_RULE_AFTER, Rationale: "An accidental quit loses the game; a paused one is already stopped.", Scope: "Every running or paused game." }));
   write(root, `${change}/model/state-machines/game-lifecycle-${LIFECYCLE.slice(-8)}.md`, node(
-    { id: LIFECYCLE, form: "state-machine", title: "Game lifecycle", entity: [GAME], provenance: { level: "partly-inferred", decided_by: "agent-decided", sources: ["openspec/changes/add-pause/proposal.md · Why"], inferred: "that a finished game can be restarted" } },
+    { id: LIFECYCLE, form: "state-machine", title: "Game lifecycle", entity: [GAME], provenance: { level: "partly-inferred", decided_by: "agent-decided", sources: [".kotta/changes/add-pause/proposal.md · Why"], inferred: "that a finished game can be restarted" } },
     { "Governed lifecycle": "A game from start to end.", States: "running, paused, over", Transitions: "- running -> paused\n- paused -> over\n- over -> running" }));
   write(root, `${change}/model/business-rules/pause-freezes-${PAUSE.slice(-8)}.md`, node(
-    { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session", provenance: stated("openspec/changes/add-pause/proposal.md · Why") },
+    { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session", provenance: stated(".kotta/changes/add-pause/proposal.md · Why") },
     { Rule: "While a game is paused its clock SHALL NOT advance.", Rationale: "A pause is not play.", Scope: "Timed games.", "Open decisions": "- How long may a pause last?" }));
   write(root, `${change}/model/examples/timer-holds-${HOLD.slice(-8)}.md`, node(
-    { id: HOLD, form: "example", title: "The timer holds while paused", subjects: [PAUSE], provenance: stated("openspec/changes/add-pause/proposal.md · Why") },
+    { id: HOLD, form: "example", title: "The timer holds while paused", subjects: [PAUSE], provenance: stated(".kotta/changes/add-pause/proposal.md · Why") },
     { Given: "a game paused at 01:10", When: "a minute passes", Then: "the clock still shows 01:10" }));
   write(root, `${change}/specs/session/spec.md`, [
     "## ADDED Requirements", "", "### Requirement: Quit confirmation", `<!-- kotta: ${QUIT} -->`, "The game SHALL quit immediately.", "",
@@ -95,7 +106,7 @@ export function planningWorkspace(label: string): string {
 
 /** Answer the open question the fixture leaves, the way an agent records the human's answer. */
 export function answerPause(root: string): void {
-  write(root, `openspec/changes/add-pause/model/business-rules/pause-freezes-${PAUSE.slice(-8)}.md`, node(
-    { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session", provenance: stated("openspec/changes/add-pause/proposal.md · Why") },
+  write(root, `.kotta/changes/add-pause/model/business-rules/pause-freezes-${PAUSE.slice(-8)}.md`, node(
+    { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session", provenance: stated(".kotta/changes/add-pause/proposal.md · Why") },
     { Rule: "While a game is paused its clock SHALL NOT advance.", Rationale: "A pause is not play.", Scope: "Timed games.", "Open decisions": "None." }));
 }

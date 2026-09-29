@@ -39,7 +39,7 @@ actor, settle the role boundary, goals, responsibilities, and at least one story
 references its id. Keep a human name out of the title unless the individual, rather than the role,
 is truly the actor.
 
-Ask Kotta for each node — `kotta spec new <form> --title "…"`, or `spec_create` from the chat — and
+Ask Kotta for each node inside the change you are working in — `kotta spec new <form> --title "…" --into <change>`, after `kotta change new <change>` if none is open — and
 fill in the sections it lays out. The id, the directory and the filename come from the form's own
 registry entry; none of them is typed by hand.
 

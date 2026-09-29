@@ -9,7 +9,8 @@
 kotta narrative <change> --from <log or directory> [--since <ISO 8601 time>]
 ```
 
-- `<change>` must exist under `openspec/changes/`.
+- `<change>` must exist under `.kotta/changes/` (`kotta change new <change>` opens it). A change
+  still under `openspec/changes/` is refused with the `git mv` that moves it.
 - `--from` is one `.jsonl` log, or a directory: every `.jsonl` under it is read, in name order, and
   files that are neither format are listed as skipped.
 - `--since` keeps only messages at or after that time. Use it when one session shaped several
@@ -31,13 +32,13 @@ longer than 4000 characters are counted as skipped, by reason.
 A run on a five-message session:
 
 ```text
-Distilled 5 messages from 1 session log into openspec/changes/add-pause/conversation.md.
+Distilled 5 messages from 1 session log into .kotta/changes/add-pause/conversation.md.
 Intent: 1. Proposals approved: 1. Turned down: 1. Questions answered: 0. Unpaired: 0.
 Filtered before writing: e-mail 1.
 ```
 
 The file has frontmatter (`change`, `generated_by: kotta narrative`, `generated_at`, `since` when
-given, and a `digest` of the body) and these sections. In 1.0.0-alpha.2 the headings and labels are
+given, and a `digest` of the body) and these sections. In 1.0.0-alpha.3 the headings and labels are
 written in Hungarian:
 
 | Section | Items | What it holds |
@@ -78,10 +79,10 @@ A node's provenance cites an item by the repository-relative path and the item i
 provenance:
   level: stated
   decided_by: agent-proposed-human-approved
-  sources: ["openspec/changes/add-pause/conversation.md · J1"]
+  sources: [".kotta/changes/add-pause/conversation.md · J1"]
 ```
 
-`openspec/changes/add-pause/conversation.md#J1` works too. The `plan-change` skill cites a `J` item
+`.kotta/changes/add-pause/conversation.md#J1` works too. The `plan-change` skill cites a `J` item
 as `agent-proposed-human-approved`, an `SZ` item as `human`, an `E` item only for what the human chose
 instead, and never cites a `P` item as an approval.
 

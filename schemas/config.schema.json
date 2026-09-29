@@ -22,8 +22,8 @@
       "additionalProperties": false
     },
     "narrative": {
-      "description": "Who writes openspec/specs: 'generated' (default) — kotta archive regenerates each touched capability from the model; 'authored' — people write it, and archive only reports where it disagrees with the model.",
-      "enum": ["generated", "authored"]
+      "description": "Whether the project keeps an OpenSpec narrative beside the model: 'none' (default) — the model is the only specification and nothing under openspec/ is written or checked; 'generated' — kotta archive regenerates each touched capability of openspec/specs from the model; 'authored' — people write openspec/specs, and archive only reports where it disagrees with the model. The SHALL/MUST keyword is required only with 'generated' or 'authored'.",
+      "enum": ["none", "generated", "authored"]
     },
     "validation": {
       "type": "object",

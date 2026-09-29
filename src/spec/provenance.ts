@@ -4,7 +4,7 @@
  * Every statement in the technical model says whether it was said, partly inferred or inferred, and
  * who decided it: a human, a human on the agent's proposal, or the agent alone. The field is optional
  * on an accepted node (most were written before it existed) and required on every node a change
- * proposes under `openspec/changes/<name>/model/`, because that is where the planning phase has to be
+ * proposes under `.kotta/changes/<name>/model/`, because that is where the planning phase has to be
  * able to say which of its "why"s nobody said. The same rules are published as
  * `schemas/provenance.schema.json`; a test keeps the two identical.
  */
