@@ -1,12 +1,12 @@
 # CLI reference
 
-Every `kotta` command and option, as `kotta <command> --help` prints them in 1.0.0-alpha.2, grouped
+Every `kotta` command and option, as `kotta <command> --help` prints them in 1.0.0-alpha.3, grouped
 by what you use them for.
 
 ## Conventions
 
-- **`--json`** (on every command except `mcp`, and on the leaf subcommands of `spec`, `modules` and
-  `import`) prints the result as one JSON object: `ok`, `command`, `data`, and the `errors` that made
+- **`--json`** (on every command except `mcp`, and on the leaf subcommands of `spec`, `change`,
+  `modules` and `import`) prints the result as one JSON object: `ok`, `command`, `data`, and the `errors` that made
   it fail.
 - **Exit codes.** A command exits 1 when its result is not `ok` or when it throws (a missing change,
   an unknown module, a pre-1.0 workspace); otherwise 0. `gap` and `plan` still print their whole
@@ -35,6 +35,9 @@ by what you use them for.
 - `migrate --workspace <path>`: Repository root or workspace directory; omitted uses the repository
   around the cwd.
 - `migrate --dry-run`: Report every change without writing anything.
+- `migrate` on a current (version 6) workspace still moves every change an earlier release left
+  under `openspec/changes/` into `.kotta/changes/`, and writes `narrative: generated` when
+  `openspec/specs/` holds specs and nothing sets the key. See [Kotta and OpenSpec](openspec.md#moving-changes-out-of-openspecchanges).
 - `integrate <host>`: Supported host: codex. Any other host is an error.
 - `doctor` exits 1 when the bare name `kotta` resolves to nothing on this `PATH`
   (`BARE_NAME_UNRESOLVED`), and names the full invocation to use instead.
@@ -50,9 +53,11 @@ by what you use them for.
 | `kotta modules check [options]` | Check module boundaries and cross-repository references: missing interfaces, straddling nodes, references across a boundary, stale pins, drifted copies |
 | `kotta modules publish-spec [options] <module>` | Copy a module's interface nodes and the rules and examples bound to them into `<module>/kotta-spec/`, to ship with the package |
 
-- `validate` also measures every open change's `model/` nodes on their own (provenance required,
-  SHALL/MUST required) and prints warnings that do not fail it: accepted nodes without the keyword,
-  and module-boundary warnings.
+- `validate` also measures every open change's `model/` nodes on their own (provenance required;
+  SHALL/MUST required where the project keeps an OpenSpec narrative) and prints warnings that do not
+  fail it: accepted nodes without the keyword (again only with an OpenSpec narrative),
+  module-boundary warnings, `NARRATIVE_UNSET` when `openspec/specs/` holds specs and no `narrative:`
+  is set, and `CHANGE_STRANDED` for each change directory left under `openspec/changes/`.
 - `questions [id]`: one node's questions, or every node's, each addressed as `<id>/Q<n>`.
 - `gap --module <name>`: Report only the promises of one module: those evidenced in it, and the
   interfaces naming it. `gap` exits 1 while a promise has neither evidence nor an admission.
@@ -66,25 +71,34 @@ See [Modules and evidence](modules-and-evidence.md).
 
 | Command | Description |
 | --- | --- |
+| `kotta change new [options] <name>` | Open a change: .kotta/changes/<name>/ with a proposal.md to write and an empty model/ for the planning phase |
+| `kotta change list [options]` | List the open changes, and any an earlier release left under openspec/changes/ |
 | `kotta spec new [options] <form>` | Mint and scaffold a specification node from its registered form |
 | `kotta narrative [options] <change>` | Distil an agent session log into the change's conversation.md: intent, proposals with the human's answers, paths turned down, questions |
 | `kotta plan [options] <change>` | Measure a change's model delta against the accepted model and write its planning.md: structure, conflicts, silences, drift, provenance |
 | `kotta approve [options] <change>` | Record the human's yes to a planned change's model delta: the one gate, written as approval.yaml |
-| `kotta archive [options] <change>` | Land an approved change: merge its model into the specification, regenerate the narrative, move it to the archive |
+| `kotta archive [options] <change>` | Land an approved change: merge its model into the specification, regenerate the OpenSpec narrative where one is kept, move it to the archive |
 | `kotta import openspec [options]` | Draft an OpenSpec project's requirements, scenarios and purposes into a change's model, for the planning phase to complete |
 
+- `change new <name>`: Lowercase letters, digits, '.', '_' and '-'; not `archive`. Refused when
+  the change already exists.
+- `change new --title <title>`: The proposal's heading; omitted is the name in words. The
+  proposal has three sections — Why, What changes, Open decisions.
+- `change list` names each stranded change under `openspec/changes/` with the `git mv` that moves
+  it; `kotta migrate` moves them all.
 - `spec new <form>`: A form id the workspace registry declares.
 - `spec new --title <title>` (required): What the node is called wherever a human reads it.
 - `spec new --into <change>`: Draft the node into a change's model delta
-  (`openspec/changes/<change>/model/`) instead of the accepted specification.
+  (`.kotta/changes/<change>/model/`) instead of the accepted specification. The sections that
+  must say SHALL or MUST carry a hint only where the project keeps an OpenSpec narrative.
 - `narrative --from <path>` (required): A Claude Code or Codex session log (.jsonl), or a directory
   of them.
 - `narrative --since <time>`: Only messages at or after this ISO 8601 time.
 - `plan` always writes `planning.md`, and exits 1 while the delta's structure, the merged view or an
   open decision blocks.
 - `approve --by <who>` (required): The human who said yes in the conversation.
-- `import openspec --change <name>`: The change to open under openspec/changes/; omitted is
-  `import-openspec-<date>`.
+- `import openspec --change <name>`: The change to open under `.kotta/changes/`; omitted is
+  `import-openspec-<date>`. OpenSpec is the source; nothing under `openspec/` is written.
 
 See [The planning phase](planning-phase.md), [The distilled conversation](narrative.md) and
 [Kotta and OpenSpec](openspec.md).

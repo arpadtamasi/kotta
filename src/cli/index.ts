@@ -22,6 +22,7 @@ import { approveChange, formatApprove, type ApproveResult } from "../commands/ap
 import { archiveChange, formatArchive, type ArchiveResult } from "../commands/archive.js";
 import { formatImport, importOpenSpec, type ImportResult } from "../commands/import.js";
 import { formatNarrative, narrativeCommand, type NarrativeResult } from "../commands/narrative.js";
+import { changeList, formatChangeList, formatChangeNew, newChange, type ChangeListResult, type ChangeNewResult } from "../commands/change.js";
 
 const program = new Command();
 const packagePath = fileURLToPath(new URL("../../package.json", import.meta.url));
@@ -281,10 +282,25 @@ spec.command("new")
   .description("Mint and scaffold a specification node from its registered form")
   .argument("<form>", "A form id the workspace registry declares")
   .requiredOption("--title <title>", "What the node is called wherever a human reads it")
-  .option("--into <change>", "Draft the node into a change's model delta (openspec/changes/<change>/model/) instead of the accepted specification")
+  .option("--into <change>", "Draft the node into a change's model delta (.kotta/changes/<change>/model/) instead of the accepted specification")
   .option("--json")
   .action((form: string, options: { title: string; into?: string; json?: boolean }) => print(newSpecNode({ form, title: options.title, into: options.into }), Boolean(options.json)));
 renderers.set("spec new", (result: unknown) => formatSpecNew(result as SpecNewResult));
+
+// Where every proposal starts: a change of Kotta's own, whether or not the project uses OpenSpec.
+const change = program.command("change").description("Open and list changes: a proposal and its model delta, under .kotta/changes/");
+change.command("new")
+  .description("Open a change: .kotta/changes/<name>/ with a proposal.md to write and an empty model/ for the planning phase")
+  .argument("<name>", "Lowercase letters, digits, '.', '_' and '-'")
+  .option("--title <title>", "The proposal's heading; omitted is the name in words")
+  .option("--json")
+  .action((name: string, options: { title?: string; json?: boolean }) => print(newChange({ name, title: options.title }), Boolean(options.json)));
+renderers.set("change new", (result: unknown) => formatChangeNew(result as ChangeNewResult));
+change.command("list")
+  .description("List the open changes, and any an earlier release left under openspec/changes/")
+  .option("--json")
+  .action((options: { json?: boolean }) => print(changeList(), Boolean(options.json)));
+renderers.set("change list", (result: unknown) => formatChangeList(result as ChangeListResult));
 
 // The planning phase: measure a change's model delta, record the one human gate, land what was approved.
 define("plan <change>", (result: unknown) => formatPlan(result as PlanResult))
@@ -299,7 +315,7 @@ define("approve <change>", (result: unknown) => formatApprove(result as ApproveR
   .action((change: string, options: { by: string; json?: boolean }) => print(approveChange(change, options.by), Boolean(options.json)));
 
 define("archive <change>", (result: unknown) => formatArchive(result as ArchiveResult))
-  .description("Land an approved change: merge its model into the specification, regenerate the narrative, move it to the archive")
+  .description("Land an approved change: merge its model into the specification, regenerate the OpenSpec narrative where one is kept, move it to the archive")
   .option("--json")
   .action((change: string, options: { json?: boolean }) => print(archiveChange(change), Boolean(options.json)));
 
@@ -307,7 +323,7 @@ define("archive <change>", (result: unknown) => formatArchive(result as ArchiveR
 const importCommand = program.command("import").description("Take an existing specification into the technical model through the planning phase");
 importCommand.command("openspec")
   .description("Draft an OpenSpec project's requirements, scenarios and purposes into a change's model, for the planning phase to complete")
-  .option("--change <name>", "The change to open under openspec/changes/; omitted is import-openspec-<date>")
+  .option("--change <name>", "The change to open under .kotta/changes/; omitted is import-openspec-<date>")
   .option("--json")
   .action((options: { change?: string; json?: boolean }) => print(importOpenSpec({ change: options.change }), Boolean(options.json)));
 renderers.set("import openspec", (result: unknown) => formatImport(result as ImportResult));

@@ -24,4 +24,4 @@ migration path and the release process.
 process engine; the shipped template ([templates/AGENTS.md](templates/AGENTS.md)) describes the 1.0
 product. `kotta migrate --dry-run` shows what carrying this workspace over would do; the migration
 itself is a later phase of the OpenSpec change under
-[openspec/changes/kotta-1-0-muszaki-spec-reteg/](openspec/changes/kotta-1-0-muszaki-spec-reteg/).
+[.kotta/changes/kotta-1-0-muszaki-spec-reteg/](.kotta/changes/kotta-1-0-muszaki-spec-reteg/).

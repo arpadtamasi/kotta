@@ -1,22 +1,23 @@
 # Kotta documentation
 
 Kotta keeps the technical model of a product — its rules, examples, entities, state machines, use
-cases, stories and interfaces — beside the OpenSpec narrative and the code, as the accepted truth.
-These pages describe 1.0.0-alpha.2.
+cases, stories and interfaces — beside the changes that propose it and the code, as the accepted truth.
+These pages describe 1.0.0-alpha.3.
 
 ## Start here
 
 - [Getting started](getting-started.md) — install, set up a repository, and carry one change from
   prose to the model in ten minutes.
-- [Concepts](concepts.md) — the four layers, provenance, the one human gate, evidence by citation,
+- [Concepts](concepts.md) — the four layers, where a change lives, provenance, the one human gate, evidence by citation,
   and the measurements behind them.
 
 ## Guides
 
-- [The planning phase](planning-phase.md) — the layout of a change, what `plan`, `approve` and
+- [The planning phase](planning-phase.md) — opening a change, its layout, what `plan`, `approve` and
   `archive` check and refuse, and what `archive` generates.
-- [Kotta and OpenSpec](openspec.md) — when OpenSpec alone is enough, the `<!-- kotta: ID -->`
-  binding, generated specs, and importing an OpenSpec repository.
+- [Kotta and OpenSpec](openspec.md) — OpenSpec as an optional companion: importing an OpenSpec
+  repository, a generated or authored narrative with its `<!-- kotta: ID -->` binding, and moving
+  changes out of `openspec/changes/`.
 - [The distilled conversation](narrative.md) — `kotta narrative` and `conversation.md`.
 - [Modules and evidence](modules-and-evidence.md) — modules from manifests, boundary checks,
   cross-repository references, and `kotta gap`.

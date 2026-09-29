@@ -16,7 +16,7 @@ export const PAYMENT = "E-01m0f0wn89mpzqng8411pkart2";
 export const INVOICE = "E-01m0f0wn89mpzqng8411pkart3";
 export const ORDER_MACHINE = "SM-01m0f0wn89m2xwd4z4mk9p71d5";
 export const PAYMENT_MACHINE = "SM-01m0f0wn89m2xwd4z4mk9p71d2";
-export const CONVERSATION = "openspec/changes/checkout/conversation.md";
+export const CONVERSATION = ".kotta/changes/checkout/conversation.md";
 
 export const modelWorkspace = workspace({
   spec: [

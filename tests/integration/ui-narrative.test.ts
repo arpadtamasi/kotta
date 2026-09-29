@@ -9,7 +9,7 @@ import { NarrativeError, readNarrative, readProvenance, readWorkspace, uiCommand
 const cli = resolve("dist/cli/index.js");
 const GOAL = "G-01m0c0000000000000000000g1";
 const RULE = "BR-01m0c0000000000000000000b1";
-const CONVERSATION = "openspec/changes/checkout/conversation.md";
+const CONVERSATION = ".kotta/changes/checkout/conversation.md";
 
 /** A version-6 workspace with provenance on its nodes and a change folder carrying the narrative. */
 function fixture(): string {
@@ -21,11 +21,11 @@ function fixture(): string {
     "---", "", "## Outcome", "Paid.", ""].join("\n"));
   writeFileSync(join(root, ".kotta/spec/business-rules/card-00000b1.md"), ["---", `id: ${RULE}`, "form: business-rule", "title: A card is charged once", `goal: [${GOAL}]`,
     "provenance:", "  level: guessed", "  decided_by: agent-decided", "---", "", "## Rule", "Once.", ""].join("\n"));
-  mkdirSync(join(root, "openspec/changes/checkout"), { recursive: true });
+  mkdirSync(join(root, ".kotta/changes/checkout"), { recursive: true });
   writeFileSync(join(root, CONVERSATION), "# Conversation\n\n## Payment\n\nAnna: nobody ships unpaid.\n");
-  writeFileSync(join(root, "openspec/changes/checkout/notes.txt"), "not markdown");
+  writeFileSync(join(root, ".kotta/changes/checkout/notes.txt"), "not markdown");
   writeFileSync(join(root, "secret.md"), "outside the narrative folder");
-  symlinkSync(join(root, "secret.md"), join(root, "openspec/changes/checkout/escape.md"));
+  symlinkSync(join(root, "secret.md"), join(root, ".kotta/changes/checkout/escape.md"));
   return root;
 }
 
@@ -65,9 +65,9 @@ describe("the narrative endpoint", () => {
     ["an absolute path", join(tmpdir(), "secret.md")],
     ["a path outside openspec/", ".kotta/config.yaml"],
     ["a backslash", "openspec\\..\\secret.md"],
-    ["a NUL byte", "openspec/changes/checkout/conversation.md\0.md"],
-    ["a non-Markdown file", "openspec/changes/checkout/notes.txt"],
-    ["a link that leaves the folder", "openspec/changes/checkout/escape.md"],
+    ["a NUL byte", ".kotta/changes/checkout/conversation.md\0.md"],
+    ["a non-Markdown file", ".kotta/changes/checkout/notes.txt"],
+    ["a link that leaves the folder", ".kotta/changes/checkout/escape.md"],
     ["a dot segment", "openspec/./changes/checkout/conversation.md"],
   ])("refuses %s", (_label, path) => {
     const root = fixture();
@@ -76,7 +76,7 @@ describe("the narrative endpoint", () => {
   });
 
   test("answers 404 for a file that is not there", () => {
-    try { readNarrative(fixture(), "openspec/changes/checkout/missing.md"); expect.unreachable(); }
+    try { readNarrative(fixture(), ".kotta/changes/checkout/missing.md"); expect.unreachable(); }
     catch (error) { expect((error as NarrativeError).status).toBe(404); }
   });
 
@@ -93,12 +93,12 @@ describe("the narrative endpoint", () => {
       const ok = await get(encodeURIComponent(CONVERSATION));
       expect(ok.status).toBe(200);
       expect((await ok.json() as { content: string }).content).toContain("nobody ships unpaid");
-      for (const path of ["openspec/..%2Fsecret.md", "%2E%2E%2Fsecret.md", "openspec%2F%2E%2E%2Fsecret.md", encodeURIComponent("openspec/changes/checkout/escape.md")]) {
+      for (const path of ["openspec/..%2Fsecret.md", "%2E%2E%2Fsecret.md", "openspec%2F%2E%2E%2Fsecret.md", encodeURIComponent(".kotta/changes/checkout/escape.md")]) {
         const refused = await get(path);
         expect(refused.status, path).toBe(400);
         expect(await refused.text()).not.toContain("outside the narrative folder");
       }
-      expect((await get(encodeURIComponent("openspec/changes/checkout/missing.md"))).status).toBe(404);
+      expect((await get(encodeURIComponent(".kotta/changes/checkout/missing.md"))).status).toBe(404);
       expect((await fetch(`${base}/api/narrative?path=${encodeURIComponent(CONVERSATION)}`, { method: "POST" })).status).toBe(405);
     });
   });

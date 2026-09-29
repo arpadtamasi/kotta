@@ -2,13 +2,15 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { MINTED_BODY } from "../core/identity.js";
+import { workspaceDirectoryName, workspacePath } from "../filesystem/workspace.js";
 import { readNodesUnder, type SpecForm, type SpecNode, type ValidationIssue } from "./registry.js";
 
 /**
- * The shape of a change on disk, shared by `spec new --into`, `plan`, `approve` and `archive`:
+ * The shape of a change on disk, shared by `change new`, `spec new --into`, `plan`, `approve` and
+ * `archive`. A change is Kotta's own, inside the workspace, whether or not the project uses OpenSpec:
  *
- *   openspec/changes/<name>/
- *     proposal.md, specs/**        the narrative (OpenSpec's)
+ *   .kotta/changes/<name>/
+ *     proposal.md                  why and what, in prose, with the questions still open
  *     conversation.md              the distilled conversation, optional
  *     model/<form-directory>/<slug>-<id8>.md   the model delta: a new node, or an accepted one with the same id
  *     model/REMOVED.md             accepted nodes the change removes, one list item naming each id
@@ -16,8 +18,10 @@ import { readNodesUnder, type SpecForm, type SpecNode, type ValidationIssue } fr
  *     approval.yaml                the gate's receipt, written by `kotta approve`
  */
 
-export const OPENSPEC_DIRECTORY = "openspec";
 export const CHANGES_DIRECTORY = "changes";
+/** OpenSpec's tree, read only when the project uses OpenSpec: its narrative, and changes to import. */
+export const OPENSPEC_DIRECTORY = "openspec";
+export const PROPOSAL_FILE = "proposal.md";
 export const ARCHIVE_DIRECTORY = "archive";
 export const MODEL_DIRECTORY = "model";
 export const REMOVED_FILE = "REMOVED.md";
@@ -27,24 +31,57 @@ export const APPROVAL_FILE = "approval.yaml";
 const NAME = /^[a-z0-9][a-z0-9._-]*$/;
 const NODE_ID = new RegExp(`\\b[A-Za-z]{1,4}-${MINTED_BODY}\\b`, "g");
 
+/** Inside the workspace: `.kotta/changes/<segments>`. */
 export function changesPath(root: string, ...segments: string[]): string {
+  return workspacePath(root, CHANGES_DIRECTORY, ...segments);
+}
+
+/** The repository-relative changes folder, `.kotta/changes`, as a path is written in a source or a message. */
+export function changesFolder(root: string): string {
+  return `${workspaceDirectoryName(root)}/${CHANGES_DIRECTORY}`;
+}
+
+/** OpenSpec's own changes folder, `openspec/changes/<segments>`. Kotta writes nothing there. */
+export function openSpecChangesPath(root: string, ...segments: string[]): string {
   return join(root, OPENSPEC_DIRECTORY, CHANGES_DIRECTORY, ...segments);
+}
+
+export function assertChangeName(name: string): string {
+  const trimmed = name.trim();
+  if (!NAME.test(trimmed) || trimmed === ARCHIVE_DIRECTORY) {
+    throw new Error(`'${name}' is not a change name; name it in lowercase letters, digits, '.', '_' and '-', and not '${ARCHIVE_DIRECTORY}'.`);
+  }
+  return trimmed;
 }
 
 /** The change directory for `name`, refused unless it exists and is not the archive. */
 export function resolveChange(root: string, name: string): string {
-  const trimmed = name.trim();
-  if (!NAME.test(trimmed) || trimmed === ARCHIVE_DIRECTORY) {
-    throw new Error(`'${name}' is not a change name; a change is a directory under ${OPENSPEC_DIRECTORY}/${CHANGES_DIRECTORY}/ named in lowercase letters, digits, '.', '_' and '-', and not '${ARCHIVE_DIRECTORY}'.`);
-  }
+  const trimmed = assertChangeName(name);
   const directory = changesPath(root, trimmed);
   if (!existsSync(directory) || !statSync(directory).isDirectory()) {
-    throw new Error(`No change '${trimmed}' exists at ${relative(root, directory)}/. Create the change (its proposal) first; Kotta adds the model beside it.`);
+    const stranded = openSpecChangesPath(root, trimmed);
+    if (existsSync(stranded) && statSync(stranded).isDirectory()) {
+      throw new Error(`The change '${trimmed}' is at ${relative(root, stranded)}/, OpenSpec's folder; a Kotta change lives at ${relative(root, directory)}/. Move it there: git mv ${relative(root, stranded)} ${relative(root, directory)}`);
+    }
+    throw new Error(`No change '${trimmed}' exists at ${relative(root, directory)}/. Open it with 'kotta change new ${trimmed}'.`);
   }
   return directory;
 }
 
-/** Open changes: every directory under `openspec/changes/` except the archive. */
+/**
+ * Open changes under `openspec/changes/`: where an earlier release kept them, and where no command
+ * reads them any more. `kotta migrate` moves them into the workspace.
+ */
+export function strandedChanges(root: string): string[] {
+  const directory = openSpecChangesPath(root);
+  if (!existsSync(directory)) return [];
+  return readdirSync(directory, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && entry.name !== ARCHIVE_DIRECTORY)
+    .map((entry) => entry.name)
+    .sort();
+}
+
+/** Open changes: every directory under `.kotta/changes/` except the archive. */
 export function listChanges(root: string): string[] {
   const directory = changesPath(root);
   if (!existsSync(directory)) return [];

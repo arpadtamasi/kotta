@@ -29,7 +29,7 @@ Ask what qualifies, what almost qualifies but does not, who uses the term, and w
 loses if a collision exists. Draft the definition and examples from available evidence before asking
 for a decision. Never ask for an alphabetic list of empty glossary entries.
 
-Ask Kotta for the node — `kotta spec new glossary-term --title "…"`, or `spec_create` from the chat — and fill in the sections it lays out; identifiers and filenames are minted, never typed.
+Ask Kotta for the node inside the change you are working in — `kotta spec new glossary-term --title "…" --into <change>`, after `kotta change new <change>` if none is open — and fill in the sections it lays out; identifiers and filenames are minted, never typed.
 Use prose links to related ids when helpful; glossary terms have no mandatory edges. Keep a term in
 the language in which the domain uses it, regardless of the skill's English instructions.
 

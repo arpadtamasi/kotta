@@ -17,7 +17,8 @@ import { analyzeChange, type NodeRef } from "./plan.js";
  * into the accepted specification (a new node added, a same-id node replaced, a REMOVED node deleted
  * unless an accepted node still names it), regenerates the narrative of every capability the delta
  * touches from the merged model, checks that every bound narrative requirement agrees with its node,
- * and moves the change under `openspec/changes/archive/<date>-<name>/`. Every check runs before the
+ * and moves the change under `.kotta/changes/archive/<date>-<name>/`. The narrative is OpenSpec's and
+ * optional: with `narrative: none`, the default, nothing under `openspec/` is read or written. Every check runs before the
  * first write, so a refusal leaves the repository as it was.
  */
 
@@ -30,7 +31,7 @@ export interface ArchiveResult {
     added: NodeRef[];
     replaced: NodeRef[];
     removed: NodeRef[];
-    /** Who writes `openspec/specs`: regenerated from the model, or written by people and only compared. */
+    /** Who writes `openspec/specs`: nobody (no OpenSpec narrative), regenerated from the model, or written by people and only compared. */
     narrative: NarrativeMode;
     /** Narrative specs regenerated, relative to the repository root. */
     narratives: string[];
@@ -117,7 +118,7 @@ export function archiveChange(name: string, repositoryRoot?: string, now: Date =
   }
 
   // The generated prose is checked against the model it came from, with every other narrative, before anything is written.
-  const files = new Set([...markdownFiles(specsRoot), ...generated.keys()]);
+  const files = new Set([...(setting.mode === "none" ? [] : markdownFiles(specsRoot)), ...generated.keys()]);
   const drift = [...files].sort().flatMap((file) => narrativeDrift(root, file, generated.get(file) ?? readFileSync(file, "utf8"), mergedById, forms));
   const driftMessage = (item: NarrativeDrift) => item.kind === "missing-node" ? `${item.file}:${item.line} requirement '${item.requirement}' is bound to ${item.id}, which the merged model does not hold.` : `${item.file}:${item.line} requirement '${item.requirement}' disagrees with ${item.node} (${displayId(item.id)}): the narrative says “${item.narrative}”, the model says “${item.model}”.`;
   const warnings: ValidationIssue[] = setting.mode === "authored"
@@ -169,7 +170,9 @@ export function formatArchive(result: ArchiveResult): string {
   for (const node of data.added) lines.push(`  added    ${node.title} (${displayId(node.id)})`);
   for (const node of data.replaced) lines.push(`  replaced ${node.title} (${displayId(node.id)})`);
   for (const node of data.removed) lines.push(`  removed  ${node.title} (${displayId(node.id)})`);
-  if (data.narrative === "authored") {
+  if (data.narrative === "none") {
+    lines.push("The project keeps no OpenSpec narrative (narrative: none), so nothing under openspec/ was written.");
+  } else if (data.narrative === "authored") {
     lines.push(`The narrative is authored, so openspec/specs was not written; ${data.drift.length ? `${data.drift.length} requirement${data.drift.length === 1 ? "" : "s"} there disagree${data.drift.length === 1 ? "s" : ""} with the model, reported below, not repaired.` : "every bound requirement there agrees with the model."}`);
   } else {
     lines.push(data.narratives.length ? `Regenerated from the model, and checked against it: ${data.narratives.join(", ")}.` : "No node names a capability, so no narrative was regenerated.");

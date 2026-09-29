@@ -75,7 +75,7 @@ function smallProject(label: string): string {
 }
 
 function modelNodes(root: string, change: string) {
-  return markdownFiles(join(root, "openspec/changes", change, "model")).map((path) => ({ path, ...matter(readFileSync(path, "utf8")) }));
+  return markdownFiles(join(root, ".kotta/changes", change, "model")).map((path) => ({ path, ...matter(readFileSync(path, "utf8")) }));
 }
 
 describe("parsing an OpenSpec capability spec", () => {
@@ -134,7 +134,7 @@ describe("kotta import openspec", () => {
     // The narrative is only read.
     expect(markdownFiles(join(root, "openspec/specs")).map((file) => readFileSync(file, "utf8"))).toEqual(narrative);
 
-    const proposal = readFileSync(join(root, "openspec/changes/import-game/proposal.md"), "utf8");
+    const proposal = readFileSync(join(root, ".kotta/changes/import-game/proposal.md"), "utf8");
     expect(proposal).toContain("2 capabilities, 4 requirements, 6 scenarios");
     expect(proposal).toContain("Not drafted: actors, use cases, entities and state machines.");
   });
@@ -148,7 +148,7 @@ describe("kotta import openspec", () => {
     const nodes = modelNodes(root, "import-game");
     const rules = nodes.filter((item) => item.data.title === "Quitting asks for confirmation");
     expect(rules).toHaveLength(1);
-    expect(rules[0].path).toBe(join(root, `openspec/changes/import-game/model/business-rules/quit-confirmation-${EXISTING.slice(-8)}.md`));
+    expect(rules[0].path).toBe(join(root, `.kotta/changes/import-game/model/business-rules/quit-confirmation-${EXISTING.slice(-8)}.md`));
     expect(rules[0].content).toContain("## Rule\n\nThe game SHALL ask “Quit? Y/N” before it ends a running game.");
     expect(rules[0].content).toContain("## Rationale\n\nAn accidental quit loses the game.");
     // The accepted specification itself is untouched.
@@ -190,7 +190,7 @@ describe("kotta import openspec", () => {
     const refused = run(root, ["import", "openspec"]);
     expect(refused.status).toBe(1);
     expect(refused.stderr).toContain("No OpenSpec capability spec was found");
-    expect(existsSync(join(root, "openspec/changes"))).toBe(false);
+    expect(existsSync(join(root, ".kotta/changes"))).toBe(false);
   });
 });
 
@@ -221,7 +221,7 @@ describe("import after: the oktat-ai narrative spec", () => {
     expect(planned.body.data.drift).toEqual([]);
 
     expect(markdownFiles(join(root, "openspec/specs")).map((file) => readFileSync(file, "utf8"))).toEqual(before);
-    expect(readdirSync(join(root, "openspec/changes/import-oktat-ai/model")).sort()).toEqual(["business-rules", "examples", "goals"]);
+    expect(readdirSync(join(root, ".kotta/changes/import-oktat-ai/model")).sort()).toEqual(["business-rules", "examples", "goals"]);
   });
 });
 
@@ -249,7 +249,7 @@ describe("the import drafts nothing from a comment (BR-01m3cqmtnnwxz7fkyr6d5ch9e
     expect(modelNodes(root, "import-ledger").filter((item) => item.data.form === "goal")).toEqual([]);
     const warning = (imported.body.data.warnings as string[]).find((entry) => entry.includes("purpose is not stated"));
     expect(warning, "the capability is named among the warnings").toMatch(/^ledger: the purpose is not stated/);
-    expect(readFileSync(join(root, "openspec/changes/import-ledger/proposal.md"), "utf8")).toContain("ledger: the purpose is not stated");
+    expect(readFileSync(join(root, ".kotta/changes/import-ledger/proposal.md"), "utf8")).toContain("ledger: the purpose is not stated");
   });
 
   test("a comment-only scenario drafts no example, and a warning names the capability and the scenario (EX-01m3f1eax7v7xsq6zfsk087v74)", () => {

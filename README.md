@@ -1,8 +1,7 @@
 # Kotta
 
 Nobody reads the long spec, so the agent decides — and nobody sees what it decided. Kotta fixes
-that on top of [OpenSpec](https://github.com/Fission-AI/OpenSpec). OpenSpec already writes the
-change in prose; Kotta adds what prose cannot give you:
+that. A change is proposed in prose, as it always was; Kotta adds what prose cannot give you:
 
 - **a technical specification** — rules, examples, entities, state machines, use cases, stories and
   interfaces as short Markdown files in the repository, each checked against the shape its form
@@ -13,8 +12,9 @@ change in prose; Kotta adds what prose cannot give you:
 - **the conversation, kept** — `kotta narrative` distils the agent session into the change's
   `conversation.md`, and nodes cite the exchange they came from.
 
-It works in OpenSpec's own directories, and the specs it generates pass
-`openspec validate --specs --strict`; see [Kotta and OpenSpec](docs/openspec.md).
+A change lives in the workspace, under `.kotta/changes/<name>/`. [OpenSpec](https://github.com/Fission-AI/OpenSpec)
+is optional: a project that keeps an OpenSpec narrative gets it generated from the model, and those
+specs pass `openspec validate --specs --strict`; see [Kotta and OpenSpec](docs/openspec.md).
 
 [Documentation](docs/README.md) · [The visual guide](https://arpadtamasi.github.io/kotta/) ·
 [Changelog](CHANGELOG.md)
@@ -29,11 +29,11 @@ It works in OpenSpec's own directories, and the specs it generates pass
 Four layers, joined by references and never by copies:
 
 ```text
-chat  →  narrative spec (OpenSpec)  →  technical model (Kotta forms)  →  code
+chat  →  change (proposal + model delta)  →  technical model (Kotta forms)  →  code
 ```
 
-The conversation is where intent is said; an OpenSpec change is where it is proposed and argued in
-prose; the **technical model** is the precise, machine-checkable form of what was accepted; the code
+The conversation is where intent is said; a **change** is where it is proposed, argued in prose and
+translated into nodes; the **technical model** is the precise, machine-checkable form of what was accepted; the code
 keeps the promises and names the node it keeps. Kotta owns the third layer. Every node says where it
 came from and who decided it, a change lands on one human yes, and when the prose and the model
 disagree, the disagreement is reported rather than smoothed over. See [Concepts](docs/concepts.md).
@@ -43,7 +43,7 @@ disagree, the disagreement is reported rather than smoothed over. See [Concepts]
 Node.js 20 or newer, Git, and a coding-agent host that reads skills from `~/.claude/skills`.
 
 ```bash
-npm install --global @arpadtamasi/kotta@1.0.0-alpha.2   # or @arpadtamasi/kotta@next
+npm install --global @arpadtamasi/kotta@1.0.0-alpha.3   # or @arpadtamasi/kotta@next
 kotta --version
 ```
 
@@ -55,13 +55,13 @@ last 0.x release.
 ```bash
 kotta init                                   # the form registry, the rules file, the skills
 kotta integrate codex                        # optional: the read-only tools in Codex's project chat
-# write openspec/changes/<name>/proposal.md, the way you write OpenSpec changes
+kotta change new <name>                      # opens .kotta/changes/<name>/; write its proposal.md
 kotta narrative <name> --from <session log>  # optional: who decided what, into conversation.md
 /plan-change                                 # in the chat: the prose becomes model nodes, with provenance
 kotta plan <name>                            # measure the delta; writes planning.md
 # the agent puts the delta to you; you say yes in the chat
 kotta approve <name> --by <you>              # the one gate, recorded as approval.yaml
-kotta archive <name>                         # merge the model, regenerate openspec/specs, archive the change
+kotta archive <name>                         # merge the model, archive the change
 kotta ui                                     # the read-only board, after you commit
 ```
 
@@ -69,7 +69,7 @@ The whole walkthrough, on a real project: [Getting started](docs/getting-started
 
 ## Kotta or OpenSpec alone
 
-OpenSpec alone is enough for a small change, worked alone, where the requirements and scenarios say
+Kotta does not need OpenSpec, and OpenSpec does not need Kotta. OpenSpec alone is enough for a small change, worked alone, where the requirements and scenarios say
 everything the code needs. Add Kotta when the product has rules, states and interfaces that must
 survive many changes; when an agent fills in gaps and you need to see which decisions it made alone;
 or when modules and repositories rely on one another's promises. Writing a delta as nodes takes
@@ -80,7 +80,7 @@ longer than prose; that is the price. See [Kotta and OpenSpec](docs/openspec.md)
 - [Getting started](docs/getting-started.md) — install and the first change
 - [Concepts](docs/concepts.md) — the four layers, provenance, the one gate, evidence
 - [The planning phase](docs/planning-phase.md) — `plan`, `approve`, `archive`, and every refusal
-- [Kotta and OpenSpec](docs/openspec.md) — the binding, generated specs, `kotta import openspec`
+- [Kotta and OpenSpec](docs/openspec.md) — the optional narrative, `kotta import openspec`, moving changes out of `openspec/changes/`
 - [The distilled conversation](docs/narrative.md) — `kotta narrative`
 - [Modules and evidence](docs/modules-and-evidence.md) — `kotta modules`, `kotta gap`
 - [The board](docs/board.md) — `kotta ui`

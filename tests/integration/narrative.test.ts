@@ -19,11 +19,12 @@ const CODEX = resolve("tests/fixtures/sessions/codex.jsonl");
 function repository(label: string): string {
   const root = mkdtempSync(join(tmpdir(), `kotta-narrative-${label}-`));
   execFileSync("git", ["init", "-q", "-b", "main"], { cwd: root });
-  mkdirSync(join(root, "openspec/changes/add-pause"), { recursive: true });
+  run(root, ["init", "--json"]);
+  mkdirSync(join(root, ".kotta/changes/add-pause"), { recursive: true });
   return root;
 }
 
-const conversation = (root: string, change = "add-pause") => readFileSync(join(root, `openspec/changes/${change}/conversation.md`), "utf8");
+const conversation = (root: string, change = "add-pause") => readFileSync(join(root, `.kotta/changes/${change}/conversation.md`), "utf8");
 
 /** The text of one `##` section, down to the next. */
 function section(content: string, heading: string): string {
@@ -39,7 +40,7 @@ describe("kotta narrative", () => {
     const result = json(root, ["narrative", "add-pause", "--from", CLAUDE]);
     expect(result.status).toBe(0);
     expect(result.body.data).toMatchObject({
-      change: "add-pause", conversation: "openspec/changes/add-pause/conversation.md",
+      change: "add-pause", conversation: ".kotta/changes/add-pause/conversation.md",
       counts: { intents: 1, approved: 1, rejected: 1, questions: 1, unpaired: 1 },
       sources: [{ format: "claude-code", human: 5, agent: 4 }],
     });
@@ -144,7 +145,7 @@ describe("kotta narrative", () => {
     expect(json(root, ["narrative", "add-pause", "--from", CODEX]).status).toBe(0);
     expect(conversation(root)).toContain("Add an export button");
 
-    const path = join(root, "openspec/changes/add-pause/conversation.md");
+    const path = join(root, ".kotta/changes/add-pause/conversation.md");
     writeFileSync(path, conversation(root).replace("> no, PDF first", "> no, PDF first — and A4 only"));
     const refused = json(root, ["narrative", "add-pause", "--from", CLAUDE]);
     expect(refused.status).toBe(1);
@@ -170,22 +171,22 @@ describe("the planning phase reads the conversation", () => {
     expect(json(root, ["plan", "add-pause"]).body.data.conversation).toEqual({ path: null, cited: 0, unresolved: [] });
 
     expect(json(root, ["narrative", "add-pause", "--from", CLAUDE]).status).toBe(0);
-    const cite = (sources: string[]) => write(root, `openspec/changes/add-pause/model/business-rules/quit-confirmation-${QUIT.slice(-8)}.md`, node(
+    const cite = (sources: string[]) => write(root, `.kotta/changes/add-pause/model/business-rules/quit-confirmation-${QUIT.slice(-8)}.md`, node(
       { id: QUIT, form: "business-rule", title: "Quitting asks for confirmation", capability: "game/session", provenance: { level: "stated", decided_by: "agent-proposed-human-approved", sources, quote: "Javaslom, hogy a megerősítő ablak a futó játéknál maradjon meg. — igen (ember, 10:06)" } },
       { Rule: "The game SHALL ask “Quit? Y/N” before it ends a running game.", Rationale: "r", Scope: "s" }));
 
-    cite(["openspec/changes/add-pause/conversation.md · J1", "openspec/changes/add-pause/conversation.md#E1"]);
+    cite([".kotta/changes/add-pause/conversation.md · J1", ".kotta/changes/add-pause/conversation.md#E1"]);
     let data = json(root, ["plan", "add-pause"]).body.data;
-    expect(data.conversation).toEqual({ path: "openspec/changes/add-pause/conversation.md", cited: 2, unresolved: [] });
-    expect(readFileSync(join(root, "openspec/changes/add-pause/planning.md"), "utf8")).toContain("Conversation: openspec/changes/add-pause/conversation.md, cited 2 times.");
+    expect(data.conversation).toEqual({ path: ".kotta/changes/add-pause/conversation.md", cited: 2, unresolved: [] });
+    expect(readFileSync(join(root, ".kotta/changes/add-pause/planning.md"), "utf8")).toContain("Conversation: .kotta/changes/add-pause/conversation.md, cited 2 times.");
 
-    cite(["conversation.md · J1", "openspec/changes/add-pause/conversation.md · J9", "openspec/changes/add-pause/conversation.md"]);
+    cite(["conversation.md · J1", ".kotta/changes/add-pause/conversation.md · J9", ".kotta/changes/add-pause/conversation.md"]);
     data = json(root, ["plan", "add-pause"]).body.data;
     expect(data.conversation.unresolved.map((item: { reason: string }) => item.reason)).toEqual([
       expect.stringContaining("repository-relative path"),
-      "no heading in openspec/changes/add-pause/conversation.md names 'J9'",
+      "no heading in .kotta/changes/add-pause/conversation.md names 'J9'",
       expect.stringContaining("name the part it cites"),
     ]);
-    expect(readFileSync(join(root, "openspec/changes/add-pause/planning.md"), "utf8")).toContain("- Unresolved: Quitting asks for confirmation");
+    expect(readFileSync(join(root, ".kotta/changes/add-pause/planning.md"), "utf8")).toContain("- Unresolved: Quitting asks for confirmation");
   });
 });

@@ -10,7 +10,7 @@ You need Node.js 20 or newer, Git, and a coding-agent host that reads skills fro
 `~/.claude/skills`.
 
 ```bash
-npm install --global @arpadtamasi/kotta@next     # or the exact version: @arpadtamasi/kotta@1.0.0-alpha.2
+npm install --global @arpadtamasi/kotta@next     # or the exact version: @arpadtamasi/kotta@1.0.0-alpha.3
 kotta --version
 ```
 
@@ -47,13 +47,18 @@ Commit what `init` wrote. Kotta itself never commits.
 
 ## Your first change
 
-A change is an OpenSpec change directory. Kotta adds the model beside the prose.
+Every proposal starts as a change in the workspace: a proposal in prose, and the model delta beside
+it. You do not need OpenSpec for any of it.
 
-### 1. Write the change in prose
+### 1. Open the change and write it in prose
 
-Write `openspec/changes/<name>/proposal.md` (and `specs/` if you use them) the way you already do,
-with OpenSpec's tooling or by hand. Kotta only needs the directory to exist. The casino change
-opened like this:
+```bash
+kotta change new <name> --title "…"
+```
+
+It opens `.kotta/changes/<name>/` with a `proposal.md` to write — **Why**, **What changes**, **Open
+decisions** — and an empty `model/`. Write the proposal by hand or let the agent write it from the
+conversation. The casino change opened like this:
 
 ```markdown
 ## Why
@@ -73,13 +78,12 @@ If the change was shaped in an agent session, keep who decided what:
 kotta narrative <name> --from ~/.claude/projects/<project>/<session>.jsonl
 ```
 
-It writes `openspec/changes/<name>/conversation.md`. See [The distilled conversation](narrative.md).
+It writes `.kotta/changes/<name>/conversation.md`. See [The distilled conversation](narrative.md).
 
 ### 3. Translate the prose into the model, in the chat
 
-Ask your agent to plan the change, or type `/plan-change`. The skill reads the proposal, the specs
-and the conversation, requirement by requirement, and writes nodes under
-`openspec/changes/<name>/model/`, each with a `provenance` block. Where nobody said why, it writes a
+Ask your agent to plan the change, or type `/plan-change`. The skill reads the proposal and the
+conversation, claim by claim, and writes nodes under `.kotta/changes/<name>/model/`, each with a `provenance` block. Where nobody said why, it writes a
 question instead of an answer. A rule from the casino model:
 
 ```yaml
@@ -111,7 +115,7 @@ To add a node by hand: `kotta spec new <form> --title "…" --into <name>`.
 kotta plan <name>
 ```
 
-`plan` writes `openspec/changes/<name>/planning.md` and exits non-zero while anything blocks. The
+`plan` writes `.kotta/changes/<name>/planning.md` and exits non-zero while anything blocks. The
 casino report's last section:
 
 ```text
@@ -161,9 +165,13 @@ Implement, naming the node ids where the code keeps them. Then:
 kotta archive <name>
 ```
 
-`archive` merges the approved delta into `.kotta/spec/`, regenerates
-`openspec/specs/<capability>/spec.md` for every capability the delta touches, and moves the change
-to `openspec/changes/archive/<date>-<name>/`. A generated requirement, bound to its node:
+`archive` merges the approved delta into `.kotta/spec/` and moves the change to
+`.kotta/changes/archive/<date>-<name>/`. That is all it does with `narrative: none`, the default.
+
+A project that keeps an OpenSpec narrative sets `narrative: generated` in `.kotta/config.yaml`; then
+`archive` also regenerates `openspec/specs/<capability>/spec.md` for every capability the delta
+touches, and every obligation is written with SHALL or MUST. A generated requirement, bound to its
+node:
 
 ```markdown
 ### Requirement: Exports are CSV only
@@ -181,8 +189,10 @@ CSV is the only format our customers open.
 - **THEN** A CSV file with a header and two rows is downloaded.
 ```
 
-(This one is from a two-node demo run with the released CLI. The casino's `openspec/specs/` was
-generated during the alpha, before use cases and stories moved to their own informative sections.)
+(This one is from a two-node demo run with the released CLI. The casino change ran under
+`openspec/changes/` during the alpha, before changes moved into the workspace, and its
+`openspec/specs/` was generated before use cases and stories moved to their own informative
+sections.)
 
 ### 7. Look at it
 
@@ -202,4 +212,5 @@ there.
 - [Concepts](concepts.md): why the model is the accepted truth.
 - [The planning phase](planning-phase.md): every refusal and what it means.
 - [Forms](forms.md): the eleven shapes a node can take.
-- [Kotta and OpenSpec](openspec.md): importing an existing OpenSpec repository.
+- [Kotta and OpenSpec](openspec.md): importing an existing OpenSpec repository, keeping an OpenSpec
+  narrative, and moving changes out of `openspec/changes/`.

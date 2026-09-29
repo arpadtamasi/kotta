@@ -26,6 +26,8 @@ Commands:
                                 asks, or every draft's at once
   spec                          Draft specification nodes from the registered
                                 forms
+  change                        Open and list changes: a proposal and its model
+                                delta, under .kotta/changes/
   plan [options] <change>       Measure a change's model delta against the
                                 accepted model and write its planning.md:
                                 structure, conflicts, silences, drift,
@@ -34,8 +36,9 @@ Commands:
                                 model delta: the one gate, written as
                                 approval.yaml
   archive [options] <change>    Land an approved change: merge its model into
-                                the specification, regenerate the narrative,
-                                move it to the archive
+                                the specification, regenerate the OpenSpec
+                                narrative where one is kept, move it to the
+                                archive
   import                        Take an existing specification into the
                                 technical model through the planning phase
   narrative [options] <change>  Distil an agent session log into the change's
@@ -178,10 +181,48 @@ Arguments:
 Options:
   --title <title>  What the node is called wherever a human reads it
   --into <change>  Draft the node into a change's model delta
-                   (openspec/changes/<change>/model/) instead of the accepted
+                   (.kotta/changes/<change>/model/) instead of the accepted
                    specification
   --json
   -h, --help       display help for command
+
+### kotta change
+Usage: kotta change [options] [command]
+
+Open and list changes: a proposal and its model delta, under .kotta/changes/
+
+Options:
+  -h, --help            display help for command
+
+Commands:
+  new [options] <name>  Open a change: .kotta/changes/<name>/ with a proposal.md
+                        to write and an empty model/ for the planning phase
+  list [options]        List the open changes, and any an earlier release left
+                        under openspec/changes/
+  help [command]        display help for command
+
+### kotta change new
+Usage: kotta change new [options] <name>
+
+Open a change: .kotta/changes/<name>/ with a proposal.md to write and an empty
+model/ for the planning phase
+
+Arguments:
+  name             Lowercase letters, digits, '.', '_' and '-'
+
+Options:
+  --title <title>  The proposal's heading; omitted is the name in words
+  --json
+  -h, --help       display help for command
+
+### kotta change list
+Usage: kotta change list [options]
+
+List the open changes, and any an earlier release left under openspec/changes/
+
+Options:
+  --json
+  -h, --help  display help for command
 
 ### kotta plan
 Usage: kotta plan [options] <change>
@@ -208,7 +249,7 @@ Options:
 Usage: kotta archive [options] <change>
 
 Land an approved change: merge its model into the specification, regenerate the
-narrative, move it to the archive
+OpenSpec narrative where one is kept, move it to the archive
 
 Options:
   --json
@@ -236,7 +277,7 @@ Draft an OpenSpec project's requirements, scenarios and purposes into a change's
 model, for the planning phase to complete
 
 Options:
-  --change <name>  The change to open under openspec/changes/; omitted is
+  --change <name>  The change to open under .kotta/changes/; omitted is
                    import-openspec-<date>
   --json
   -h, --help       display help for command

@@ -15,7 +15,7 @@ const data = workspace({
     node(GOAL, "goal", "Work is accounted for"),
     node(RULE, "business-rule", "Identifiers are permanent", {
       edges: { goal: [GOAL] }, accepted: ["unimplemented: nothing keeps it yet"],
-      provenance: { level: "stated", decided_by: "human", sources: ["openspec/changes/ids/conversation.md · Ids"] },
+      provenance: { level: "stated", decided_by: "human", sources: [".kotta/changes/ids/conversation.md · Ids"] },
     }),
   ],
   notices: ["The board reads .kotta/ from the 'main' ref, not from the working tree."],
@@ -27,7 +27,7 @@ beforeEach(() => {
   calls = [];
   vi.stubGlobal("fetch", (input: unknown, init?: { method?: string }) => {
     calls.push({ url: String(input), method: init?.method ?? "GET" });
-    const body = String(input).startsWith("/api/narrative") ? { path: "openspec/changes/ids/conversation.md", content: "## Ids\n\nNever reused." } : data;
+    const body = String(input).startsWith("/api/narrative") ? { path: ".kotta/changes/ids/conversation.md", content: "## Ids\n\nNever reused." } : data;
     return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(body) } as Response);
   });
 });

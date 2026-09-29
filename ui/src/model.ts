@@ -60,8 +60,9 @@ export function parseSource(source: string): { file: string; section: string | n
   const anchor = rest.length ? null : /^([^#\s]+\.md)#(.+)$/i.exec(file.trim());
   const section = (anchor ? anchor[2] : rest.join(" · ")).trim() || null;
   const trimmed = anchor ? anchor[1] : file.trim();
-  // Only the change folder's narrative is fetched; any other file is shown as the text it is.
-  const narrative = /^openspec\/changes\/(?:[^/]+\/)+[^/]+\.md$/i.test(trimmed) && !trimmed.split("/").some((part) => part === ".." || part === ".");
+  // Only a change folder's narrative is fetched — Kotta's own, or OpenSpec's where older provenance cites it;
+  // any other file is shown as the text it is.
+  const narrative = /^(?:\.kotta|\.a-team|openspec)\/changes\/(?:[^/]+\/)+[^/]+\.md$/i.test(trimmed) && !trimmed.split("/").some((part) => part === ".." || part === ".");
   return { file: trimmed, section, narrative };
 }
 
