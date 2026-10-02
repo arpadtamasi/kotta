@@ -5,18 +5,18 @@ title: Say when the code runs ahead of the spec
 capability: planning-phase
 provenance:
   level: partly-inferred
-  decided_by: human
+  decided_by: agent-proposed-human-approved
   sources:
+    - ".kotta/changes/fejlesztes-az-archive-elott/conversation.md · P3"
     - "chat with the operator, 2026-09-28"
-    - "openspec/changes/kod-a-kapu-utan/proposal.md · Why"
-  quote: "rp, 2026-09-28, chat: „igen, de ne legyen erőszakos — csak jelezze, ha elúszik a spec”"
-  inferred: "The operator set the rule's force (a signal, never a stop) and its trigger (the spec drifting). The wording — one line, naming the promise, offering the planning phase, silence when no promise is touched — is the agent's."
+  quote: "rp, 2026-10-01 18:02 UTC: 4 ok"
+  inferred: "The rule is the accepted one, and the operator set its force on 2026-09-28. The added sentence - no signal for a promise an approved open change states - was proposed by the agent and accepted by the operator."
 ---
 # Say when the code runs ahead of the spec
 
 ## Rule
 
-An agent MAY implement a change — through the OpenSpec `opsx:apply` skill or by hand — whether or not its model delta has been through the gate. When the code it writes keeps, changes or drops a promise the accepted model does not state, the agent SHALL say so to the human in one line, naming the promise in plain words, and SHALL offer the planning phase (`plan-change`) to bring the model up to the code. It SHALL NOT stop, refuse or delay the work for this. When the work touches no promise — documentation, a pure refactor — it says nothing about the spec.
+An agent MAY implement a change — through the OpenSpec `opsx:apply` skill or by hand — whether or not its model delta has been through the gate. When the code it writes keeps, changes or drops a promise the accepted model does not state, the agent SHALL say so to the human in one line, naming the promise in plain words, and SHALL offer the planning phase (`plan-change`) to bring the model up to the code. It SHALL NOT stop, refuse or delay the work for this. A promise that an approved change, still open, already states is not ahead of the spec: code that builds such a change needs no signal, for that promise has been through the gate and waits only for its archive. When the work touches no promise — documentation, a pure refactor — it says nothing about the spec.
 
 ## Rationale
 

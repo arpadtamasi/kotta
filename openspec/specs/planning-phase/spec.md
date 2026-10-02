@@ -8,9 +8,33 @@
 
 ## Requirements
 
+### Requirement: A change is built before it is archived
+<!-- kotta: BR-01m3w9ajdxbf04ph4y97dmry35 -->
+An approved change SHALL stay open, in the workspace's changes directory, while the code that keeps its promises is written; `kotta archive` is the act that closes it, once the change is built or the human says to close it. The shipped rules file and the `plan-change` skill SHALL name the order plan → gate → implement → archive, and an agent that has just recorded the human's yes SHALL offer the work the change describes as the next step, not the archive. `kotta archive` SHALL refuse a change that holds a promise neither evidenced nor admitted - a node of its delta that no code, test or command definition names and that carries no admission -, SHALL name each such node, and SHALL leave the repository as it was; evidence is sought as the gap report seeks it for an open change. That refusal is a check and no second gate: nobody is asked anything again. The order is advice and never a barrier: an approval is not a permission to write code and its absence is not a prohibition, and *Say when the code runs ahead of the spec* holds as it stands.
+
+**Rationale**
+
+The operator, shown an offer to archive a change of which nothing was built yet: "ha archive-olom, akkor mit fejlesztünk?" While a change is open it is the answer to that question: the proposal, the delta and the approval sit in one place, and what is left of it can be measured. Archived first, the change leaves for the archive before any of it exists, its unbuilt promises dissolve into the workspace-wide list of admitted gaps, and each needs an `unimplemented` admission written only so that the landing is not refused. The reason the earlier order gave - that code should cite accepted nodes - never required it: an identifier is minted when the node is drafted into the change, and it does not change when the node lands.
+
+**Scope**
+
+Every change in a Kotta workspace; the shipped rules file and the `plan-change` skill, which carry the order to the agent. Not the gate: `kotta approve` asks and refuses what it did. Not the CLI as an enforcer of the order: it does not see code being written.
+
+#### Scenario: After the yes the agent offers the work, not the archive
+<!-- kotta: EX-01m3w9ajm1gfn90q2a0m2pgw8m -->
+- **GIVEN** A planned change with no open decision, six of whose user stories no code keeps yet. The human says yes at the gate, and the agent records it with `kotta approve`.
+- **WHEN** The agent says what comes next.
+- **THEN** It offers to build what the change describes, and says that the change stays open until that is done. It neither runs `kotta archive` nor offers it as the next step. `kotta change list` still lists the change as open.
+
+#### Scenario: Archive refuses a change with an unaccounted promise
+<!-- kotta: EX-01m3wa6fbrg18wtsvfrdab0wn9 -->
+- **GIVEN** An approved change whose delta adds three nodes. A test names the first, the second carries an `unimplemented` admission with its reason, and nothing names the third, which admits nothing.
+- **WHEN** `kotta archive` runs on that change.
+- **THEN** It refuses, names the third node by title and says where evidence was sought. Nothing is merged, nothing is moved and nothing is written. Once the third node is either named by the code that keeps it or admitted with a reason, the same command lands the change, asking nobody anything.
+
 ### Requirement: Say when the code runs ahead of the spec
 <!-- kotta: BR-01m3kdq88m3bgye3xnn9q6hsr2 -->
-An agent MAY implement a change — through the OpenSpec `opsx:apply` skill or by hand — whether or not its model delta has been through the gate. When the code it writes keeps, changes or drops a promise the accepted model does not state, the agent SHALL say so to the human in one line, naming the promise in plain words, and SHALL offer the planning phase (`plan-change`) to bring the model up to the code. It SHALL NOT stop, refuse or delay the work for this. When the work touches no promise — documentation, a pure refactor — it says nothing about the spec.
+An agent MAY implement a change — through the OpenSpec `opsx:apply` skill or by hand — whether or not its model delta has been through the gate. When the code it writes keeps, changes or drops a promise the accepted model does not state, the agent SHALL say so to the human in one line, naming the promise in plain words, and SHALL offer the planning phase (`plan-change`) to bring the model up to the code. It SHALL NOT stop, refuse or delay the work for this. A promise that an approved change, still open, already states is not ahead of the spec: code that builds such a change needs no signal, for that promise has been through the gate and waits only for its archive. When the work touches no promise — documentation, a pure refactor — it says nothing about the spec.
 
 **Rationale**
 
@@ -19,6 +43,12 @@ The operator's concern was that an agent working from an OpenSpec change leaves 
 **Scope**
 
 Every agent working in a Kotta repository, on any host, on any change. The signal is the agent's, carried by the shipped rules file; the CLI does not see code being written and enforces nothing. `kotta gap` remains the after-the-fact measure of the same drift.
+
+#### Scenario: Building an approved change needs no signal
+<!-- kotta: EX-01m3wa6fk1b8anb3dxn48rz5e0 -->
+- **GIVEN** An approved change, still open, one of whose user stories promises that water can be logged. The accepted model says nothing about water.
+- **WHEN** The agent writes the code that logs water, naming the story's id where the code keeps it.
+- **THEN** It says nothing about the spec and offers no planning: the promise is stated by the approved change. Had no approved change stated it, the same code would have earned the one-line signal.
 
 #### Scenario: Code ahead of the model is named in one line
 <!-- kotta: EX-01m3kdq8kg96c3151xrkb7tgy4 -->
