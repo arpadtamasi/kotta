@@ -173,13 +173,13 @@
         <div class="container">
           <div class="mechanism-heading">
             <h2 id="mechanism-title">One change, one human yes.</h2>
-            <p>The proposal proposes, the model is measured, the human decides once, and the rest is mechanical. Nothing asks again after the gate.</p>
+            <p>The proposal proposes, the model is measured, the human decides once, and then the change is built. Nothing asks again after the gate.</p>
           </div>
           <ol class="mechanism-flow" aria-label="The four steps of a change">
             <li><span>01</span><h3>Propose</h3><p>Open a change, argue it in prose, then translate it into model nodes, each with its provenance.</p><code>kotta change new &lt;change&gt;</code></li>
             <li><span>02</span><h3>Plan</h3><p>Measure the delta against the accepted model: conflicts, open questions, drift, what the machine decided.</p><code>kotta plan &lt;change&gt;</code></li>
             <li><span>03</span><h3>Approve</h3><p>The one human gate. You say yes in the chat; Kotta records the receipt.</p><code>kotta approve &lt;change&gt; --by you</code></li>
-            <li><span>04</span><h3>Archive</h3><p>The model is merged and the change archived; OpenSpec specs, where you keep them, are regenerated from it, and any drift is reported.</p><code>kotta archive &lt;change&gt;</code></li>
+            <li><span>04</span><h3>Archive</h3><p>The change stays open while you build it, and the gap report shows what is left. Then the model is merged and the change archived; OpenSpec specs, where you keep them, are regenerated from it.</p><code>kotta archive &lt;change&gt;</code></li>
           </ol>
           <div class="repository-line">
             <code>.kotta/changes/</code><span>what is proposed</span>
@@ -262,9 +262,10 @@ kotta init
 kotta change new &lt;change&gt;
 /plan-change
 
-<span class="comment"># Then measure it, say yes, and land it</span>
+<span class="comment"># Then measure it, say yes, build it, and land it</span>
 kotta plan &lt;change&gt;
 kotta approve &lt;change&gt; --by you
+kotta gap --change &lt;change&gt;
 kotta archive &lt;change&gt;</code></pre>
             <div class="terminal-result">
               <span>Wrote planning.md</span>

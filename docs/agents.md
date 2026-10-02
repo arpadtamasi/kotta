@@ -37,16 +37,20 @@ What it tells every agent:
 And seven rules:
 
 1. The technical model is the accepted truth; propose changes to nodes, never decide them, and mark
-   your own contradiction findings `judged`.
+   your own contradiction findings `judged`. Between a change's approval and its archive, the
+   approved delta is the agreement for the nodes it touches.
 2. Never invent product intent: where a form asks for something nobody said, write the question.
 3. Stay inside the change; say anything outside it to the human in one line.
 4. Approval is a human gate, asked in the conversation, by title, for a plain yes or no. Anything
-   less than an explicit yes is a no. One gate per change, at the end of planning.
-5. Evidence names its node.
+   less than an explicit yes is a no. One gate per change, at the end of planning; after the yes
+   the agent offers the work, not the archive, and the change stays open until it is built.
+5. Evidence names its node. An unbuilt node of an approved open change needs no admission; what is
+   still unkept at the archive is admitted, or `kotta archive` refuses it.
 6. Never write into `legacy/`.
 7. Say when the code runs ahead of the spec: implement as asked; when the code keeps, changes or
-   drops a promise the model does not state, say so in one line and offer `plan-change`, without
-   stopping. Work that touches no promise needs no word about the spec.
+   drops a promise that neither the model nor an approved open change states, say so in one line
+   and offer `plan-change`, without stopping. Building an approved change, or work that touches no
+   promise, needs no word about the spec.
 
 ## The skills
 

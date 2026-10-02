@@ -100,7 +100,7 @@ Ready for the gate: put the delta, the candidates and the machine's decisions to
 ## `kotta approve <change> --by <who>`
 
 Records the human's yes as `approval.yaml`: `change`, `approved_by`, `approved_at`,
-`approval_basis` (the `sha256:` hash of every file under `model/`) and the approved nodes by id and
+`approval_basis` (the `sha256:` hash of every file under `model/`, without the nodes' `accepted:` entries) and the approved nodes by id and
 title. It refuses, listing every reason, when:
 
 | Code | Why |
@@ -112,9 +112,22 @@ title. It refuses, listing every reason, when:
 
 `--by` names the human who said yes. Kotta records the claim; it does not authenticate it.
 
+## Between the yes and the archive
+
+The approved change stays open while it is built. The order is plan → gate → implement → archive:
+the code cites the node ids, which were minted when the nodes were drafted, and until the archive
+the approved delta is the agreement for the nodes it touches.
+
+`kotta gap` measures the change where the work is: it reads the change and its evidence from the
+commit that is checked out, and after the accepted model it prints a section per approved open
+change — evidenced, admitted, and *the work that remains*. `kotta gap --change <name>` prints that
+change alone. Neither refuses over an open change's unbuilt promises, and an unbuilt node needs no
+admission while the change is open. A change that was never approved, whose delta changed after the
+approval, or that is not committed on the checked-out branch is named and not measured.
+
 ## `kotta archive <change>`
 
-Lands the approved delta. It asks nothing again, and every check runs before the first write, so a
+Closes the change once it is built: lands the approved delta. It asks nothing again, and every check runs before the first write, so a
 refusal leaves the repository as it was. It refuses when:
 
 | Code | Why |
@@ -122,11 +135,15 @@ refusal leaves the repository as it was. It refuses when:
 | `APPROVAL_MISSING` | there is no `approval.yaml` |
 | `APPROVAL_UNREADABLE`, `INCOMPLETE_APPROVAL_RECEIPT` | the receipt is not valid YAML, or lacks a field |
 | `APPROVAL_STALE` | `model/` no longer hashes to the approved basis: plan again and ask again |
+| `UNACCOUNTED_PROMISE` | a delta node is neither kept nor admitted: no code, test or command definition on the checked-out commit names its id, and it carries no `accepted:` entry |
 | `REMOVED_STILL_REFERENCED` | a node still names a node the change removes |
 | `ARCHIVE_EXISTS` | `.kotta/changes/archive/<date>-<name>/` already exists |
 | `NARRATIVE_DRIFT` | with `narrative: generated`, a bound requirement still disagrees with its node after regeneration |
 | `CONFIG_INVALID` | `narrative:` has a value other than `none`, `generated` or `authored` |
 | any structural code | the delta or the merged model does not validate |
+
+The fingerprint leaves a node's `accepted:` entry out, so an admission written after the yes — the
+way a still unbuilt node passes `UNACCOUNTED_PROMISE` — does not make the approval stale.
 
 Then it copies each delta node into `.kotta/spec/<form-directory>/` (replacing a same-id node),
 deletes the removed nodes, regenerates the OpenSpec narrative where one is kept, and moves the

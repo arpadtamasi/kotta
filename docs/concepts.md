@@ -87,8 +87,11 @@ open.
 
 A change has exactly one approval: at the end of planning, on the model delta. The human says yes in
 the conversation; `kotta approve <change> --by <who>` records it in `approval.yaml`, bound to a hash
-of the delta. `kotta archive` then lands exactly that delta and asks nothing again. There is no task,
-claim, review or close step. See [The planning phase](planning-phase.md).
+of the delta. The approved change stays open while the code that keeps it is written, and
+`kotta gap` lists what is left of it; between approval and archive the approved delta is the
+agreement for the nodes it touches. `kotta archive` then lands exactly that delta and asks nothing
+again — it refuses only a node that is neither kept nor admitted. There is no task, claim, review or
+close step. See [The planning phase](planning-phase.md).
 
 Why: the 0.x process layer measured as ceremony. On the operator's projects 54–72% of commits were
 state bookkeeping, and after a week of plain OpenSpec work the operator reported not missing Kotta.
@@ -106,6 +109,10 @@ base branch and reports every accepted node at one of three levels:
 
 A node nothing names either admits the gap in its frontmatter
 (`accepted: ["unimplemented: <reason>"]`, or `structural`, or `unexamined`) or the report refuses.
+
+An approved change that is still open is measured too, in a section of its own: `kotta gap` reads it
+and its evidence from the commit that is checked out, names the nodes nothing keeps yet as the work
+that remains, and does not refuse over them. `kotta gap --change <name>` reports that change alone.
 See [Modules and evidence](modules-and-evidence.md).
 
 ## Drift is reported, never smoothed

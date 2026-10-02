@@ -158,13 +158,35 @@ kotta approve <name> --by "<the human's name>"
 ```
 
 `approve` refuses if the report is older than the model, if a decision is open, or if the delta does
-not validate — re-plan and ask again rather than working around it. After the yes there is no second
-gate: `kotta archive <name>` lands exactly the approved delta and moves the change to
-`.kotta/changes/archive/`. The natural order is plan →
-gate → archive → implement, so the code keeps accepted nodes and cites their ids. It is not a
-barrier: when code gets ahead of the model, say so in one line and offer this skill (*Say when the
-code runs ahead of the spec*). If the delta changes after the yes, the approval no longer holds, and
-archive says so.
+not validate — re-plan and ask again rather than working around it.
+
+## After the yes: build, then archive
+
+The natural order is plan → gate → implement → archive. Once the yes is recorded, **offer the work
+the change describes as the next step, not the archive**: the approved change stays open while the
+code that keeps it is written, and between approval and archive the approved delta is the agreement
+for the nodes it touches. An id is minted when its node is drafted, so the code cites it from the
+first line.
+
+```bash
+kotta gap                    # after the accepted model, a section per approved open change
+kotta gap --change <name>    # only that change: which of its promises nothing names yet
+```
+
+The report reads the change and its evidence from the commit that is checked out — the working
+branch — and the accepted model from the base branch. It never refuses over an open change's unbuilt
+promises: they are the work that remains, and they need no admission while the change is open.
+
+`kotta archive <name>` closes the change: it lands exactly the approved delta and moves the change
+to `.kotta/changes/archive/`. There is no second gate, but there is a check — it refuses a node that
+no committed code, test or command definition names and that admits no gap, and names each. Build
+it, or admit it in the node (`accepted: ["unimplemented: <reason>"]`); an admission written after
+the yes does not change what was approved. Any other change to the delta after the yes means the
+approval no longer holds, and archive says so.
+
+The order is advice, not a barrier: when code gets ahead of what was agreed — a promise neither the
+accepted model nor an approved open change states — say so in one line and offer this skill (*Say
+when the code runs ahead of the spec*).
 
 ## Only when the project keeps an OpenSpec narrative
 

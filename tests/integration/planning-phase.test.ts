@@ -6,8 +6,7 @@ import { describe, expect, test } from "vitest";
 import { boundRequirements, normalizeProse } from "../../src/spec/narrative.js";
 import {
   GAME, HOLD, LIFECYCLE, PAUSE, PROMPT, QUIT, QUIT_RULE_AFTER, TERM,
-  answerPause, json, node, planningWorkspace, run, write,
-} from "./planning-fixture.js";
+  answerPause, json, node, planningWorkspace, run, write, UNBUILT } from "./planning-fixture.js";
 
 /**
  * The planning phase: a change's model delta is measured against the accepted model (`kotta plan`),
@@ -248,7 +247,7 @@ describe("kotta archive", () => {
 
     const approved = approvedWorkspace("archive-stale");
     write(approved, `${CHANGE}/model/examples/timer-holds-${HOLD.slice(-8)}.md`, node(
-      { id: HOLD, form: "example", title: "The timer holds while paused", subjects: [PAUSE], provenance: { level: "inferred", decided_by: "agent-decided", sources: [], inferred: "the minute" } },
+      { id: HOLD, form: "example", title: "The timer holds while paused", subjects: [PAUSE], accepted: UNBUILT, provenance: { level: "inferred", decided_by: "agent-decided", sources: [], inferred: "the minute" } },
       { Given: "a paused game", When: "an hour passes", Then: "the clock has not moved" }));
     const stale = json(approved, ["archive", "add-pause"]);
     expect(stale.status).toBe(1);

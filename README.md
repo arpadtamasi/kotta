@@ -61,7 +61,9 @@ kotta narrative <name> --from <session log>  # optional: who decided what, into 
 kotta plan <name>                            # measure the delta; writes planning.md
 # the agent puts the delta to you; you say yes in the chat
 kotta approve <name> --by <you>              # the one gate, recorded as approval.yaml
-kotta archive <name>                         # merge the model, archive the change
+# build it: the approved change stays open while the code that keeps it is written
+kotta gap --change <name>                    # which of its promises nothing names yet
+kotta archive <name>                         # once built: merge the model, archive the change
 kotta ui                                     # the read-only board, after you commit
 ```
 

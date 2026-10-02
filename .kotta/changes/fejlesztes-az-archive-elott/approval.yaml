@@ -1,0 +1,26 @@
+change: fejlesztes-az-archive-elott
+approved_by: rp
+approved_at: 2026-10-02T07:12:37.818Z
+approval_basis: sha256:0a8e87f329fff28098e6a7d1914c690739339cb42f913a800db3cee28b258b17
+approved:
+  added:
+    - id: BR-01m3w9ajdxbf04ph4y97dmry35
+      title: A change is built before it is archived
+    - id: EX-01m3w9ajm1gfn90q2a0m2pgw8m
+      title: After the yes the agent offers the work, not the archive
+    - id: EX-01m3wa6fbrg18wtsvfrdab0wn9
+      title: Archive refuses a change with an unaccounted promise
+    - id: EX-01m3wa6fk1b8anb3dxn48rz5e0
+      title: Building an approved change needs no signal
+    - id: EX-01m3w9ajt2zqpc5gc0katqef96
+      title: The gap report measures an approved open change
+  changed:
+    - id: BR-01m0qtshfqhcrrqtz051zm9svr
+      title: Every accepted promise is kept or admitted
+    - id: BR-01m3kdq88m3bgye3xnn9q6hsr2
+      title: Say when the code runs ahead of the spec
+    - id: BR-01m0fp2hdkfn519h1w84jsrqbe
+      title: The spec is the agreement
+    - id: UC-01m0fpqfxjvet99wbz0v1ag64q
+      title: Analyze the implementation gap
+  removed: []

@@ -145,12 +145,48 @@ export function readChangeModel(root: string, name: string, forms: SpecForm[]): 
  * receipt records it, and `archive` refuses a delta that no longer hashes to what was approved.
  */
 export function deltaHash(model: Pick<ChangeModel, "modelDirectory" | "files">): string {
+  return hashDelta(model.files, (file) => readFileSync(join(model.modelDirectory, file)));
+}
+
+/** The same fingerprint over any reader of `model/`: the disk for the gate, a commit for `kotta gap`. */
+export function hashDelta(files: string[], read: (file: string) => Buffer, raw = false): string {
   const hash = createHash("sha256");
-  for (const file of model.files) {
+  for (const file of [...files].sort()) {
     hash.update(file);
     hash.update("\0");
-    hash.update(readFileSync(join(model.modelDirectory, file)));
+    hash.update(raw ? read(file) : withoutAdmission(read(file)));
     hash.update("\0");
   }
   return `sha256:${hash.digest("hex")}`;
+}
+
+/**
+ * Does a receipt's basis name this delta? Either by the fingerprint above, or by the one earlier
+ * releases wrote, over every byte: a yes recorded before admissions stopped counting still holds
+ * for a delta nobody touched since.
+ */
+export function approvesDelta(basis: unknown, files: string[], read: (file: string) => Buffer): boolean {
+  return basis === hashDelta(files, read) || basis === hashDelta(files, read, true);
+}
+
+/**
+ * A node's bytes without its `accepted:` entry. An admission says whether a promise is kept yet,
+ * never what it promises, so writing one after the yes - the way an unbuilt node passes `archive`
+ * (BR-01m3w9ajdxbf04ph4y97dmry35, EX-01m3wa6fbrg18wtsvfrdab0wn9) - leaves the approval standing. A
+ * file that carries no admission is returned byte for byte.
+ */
+function withoutAdmission(content: Buffer): Buffer {
+  const text = content.toString("utf8");
+  const opening = /^---\r?\n/.exec(text);
+  if (!opening) return content;
+  const closing = text.slice(opening[0].length).search(/^---\s*$/m);
+  if (closing < 0) return content;
+  const end = opening[0].length + closing;
+  const lines = text.slice(opening[0].length, end).split(/(?<=\n)/);
+  const start = lines.findIndex((line) => /^accepted\s*:/.test(line));
+  if (start < 0) return content;
+  let stop = start + 1;
+  // The entry runs to the next top-level key: its list items and folded lines are indented or dashed.
+  while (stop < lines.length && /^(?:\s|-|$)/.test(lines[stop])) stop += 1;
+  return Buffer.from(text.slice(0, opening[0].length) + [...lines.slice(0, start), ...lines.slice(stop)].join("") + text.slice(end), "utf8");
 }

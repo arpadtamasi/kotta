@@ -48,7 +48,7 @@ by what you use them for.
 | --- | --- |
 | `kotta validate [options]` | Validate the specification: every node against its form, every edge against the node it names |
 | `kotta questions [options] [id]` | Report the open questions a specification draft asks, or every draft's at once |
-| `kotta gap [options]` | Report accepted spec promises without repository evidence and enforcement without a spec trace |
+| `kotta gap [options]` | Report accepted spec promises without repository evidence, what is left to build of each approved open change, and enforcement without a spec trace |
 | `kotta modules [options] [command]` | List the modules the manifests declare; check their boundaries; publish a module's promises |
 | `kotta modules check [options]` | Check module boundaries and cross-repository references: missing interfaces, straddling nodes, references across a boundary, stale pins, drifted copies |
 | `kotta modules publish-spec [options] <module>` | Copy a module's interface nodes and the rules and examples bound to them into `<module>/kotta-spec/`, to ship with the package |
@@ -60,7 +60,11 @@ by what you use them for.
   is set, and `CHANGE_STRANDED` for each change directory left under `openspec/changes/`.
 - `questions [id]`: one node's questions, or every node's, each addressed as `<id>/Q<n>`.
 - `gap --module <name>`: Report only the promises of one module: those evidenced in it, and the
-  interfaces naming it. `gap` exits 1 while a promise has neither evidence nor an admission.
+  interfaces naming it. `gap` exits 1 while an accepted promise has neither evidence nor an admission.
+- `gap --change <name>`: Report only one approved, still open change: which of its promises the
+  checked-out commit does not keep yet. Without it, every approved open change has a section of its
+  own after the accepted model. An open change's unbuilt promises never make `gap` exit 1; a change
+  that was never approved, or whose delta changed after the approval, is named and not measured.
 - `modules check` exits 1 only on an error (`MODULE_UNKNOWN`, `MODULE_REFERENCE_INVALID`); the
   rest are warnings.
 - `modules publish-spec <module>`: A module name the manifests declare.

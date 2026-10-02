@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { boundRequirements, narrativeShapeWarnings } from "../../src/spec/narrative.js";
-import { GAME, GOAL, PAUSE as PAUSE_RULE, QUIT, answerPause, id, json, node, planningWorkspace, run, setNarrative, write } from "./planning-fixture.js";
+import { GAME, GOAL, PAUSE as PAUSE_RULE, QUIT, answerPause, id, json, node, planningWorkspace, run, setNarrative, write, admitUnbuilt } from "./planning-fixture.js";
 
 /**
  * The obligation's keyword lives in the model, and the narrative is generated from the model or
@@ -78,6 +78,7 @@ function approved(label: string, extra?: (root: string) => void): string {
   const root = planningWorkspace(label);
   answerPause(root);
   extra?.(root);
+  admitUnbuilt(root);
   const planned = run(root, ["plan", "add-pause"]);
   expect(planned.status, planned.stdout + planned.stderr).toBe(0);
   expect(run(root, ["approve", "add-pause", "--by", "Ada"]).status).toBe(0);
