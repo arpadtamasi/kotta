@@ -1,0 +1,68 @@
+# Removed
+
+Nodes that promise only behaviour of the 0.x process engine, which the 1.0.0-alpha.1 release removed.
+Each leaves with the reason.
+
+- A-01m0f0wn89wpjph2q6xv5xrv38 — Executing agent (actors): the removed process engine launched it into a claimed task; nothing launches an agent any more.
+- IF-01m0f0wn89efd2ss83c4csk7qx — The agent launch task (interfaces): the removed process engine launched it into a claimed task; nothing launches an agent any more.
+- BR-01m0fp2hdkqz08arp5ebt122r9 — A task executes accepted spec, and nothing else (business-rules): tasks and their lifecycle (`kotta task`) are removed.
+- BR-01m0fp2hdk2czsca5jrk73wh2a — A task is revisable until execution (business-rules): tasks and their lifecycle (`kotta task`) are removed.
+- GT-01m0f0wn89w5k8sk1rgegc9rxm — Task (glossary-terms): tasks and their lifecycle (`kotta task`) are removed.
+- E-01m0f0wn898ayyrvy613zjx3ye — Task (entities): tasks and their lifecycle (`kotta task`) are removed.
+- EX-01m0fp2hdkczd788pgpstv0cq7 — A typo is fixed in place (examples): tasks and their lifecycle (`kotta task`) are removed.
+- EX-01m0f0wn8a53e1ze1p4tgpv71h — Validation names what is missing (examples): tasks and their lifecycle (`kotta task`) are removed.
+- EX-01m0fp2hdk8wcpthyhhevvhsa3 — A quickstart page crosses one gate (examples): tasks and their lifecycle (`kotta task`) are removed.
+- UC-01m0f0wn89tta6w4w3a7zw45xr — Define a task (use-cases): tasks and their lifecycle (`kotta task`) are removed.
+- UC-01m0f0wn89vwta48p95exahgmv — Close a finished task (use-cases): tasks and their lifecycle (`kotta task`) are removed.
+- EX-01m0f0wn8a519hbe2qcxtqg5d2 — Close follows integration (examples): tasks and their lifecycle (`kotta task`) are removed.
+- UC-01m0f0wn8909cgbsm6d3dkzjcw — Cancel objectless work (use-cases): tasks and their lifecycle (`kotta task`) are removed.
+- EX-01m0f0wn8a30fbzh8vwm95wawr — Cancel names what killed the work (examples): tasks and their lifecycle (`kotta task`) are removed.
+- GT-01m0fp2hdkehmnew23k3xek5cm — Coverage (glossary-terms): tasks and their lifecycle (`kotta task`) are removed.
+- GT-01m0f1djtcv1a2cqqh4qpwxr15 — Profile (glossary-terms): tasks and their lifecycle (`kotta task`) are removed.
+- BR-01m0f0wn890q5b15j7jg520yvj — One task, one claim, one branch, one worktree (business-rules): claims, execution branches and worktrees (`kotta claim`, `kotta execute`) are removed.
+- GT-01m0f0wn89sr1r9j5getreayk5 — Claim (glossary-terms): claims, execution branches and worktrees (`kotta claim`, `kotta execute`) are removed.
+- E-01m0f0wn89m9p7h9fv4smevpvf — Claim (entities): claims, execution branches and worktrees (`kotta claim`, `kotta execute`) are removed.
+- BR-01m0jksma40xmkhyt0z6ajbdhn — Execution branches follow the configured pattern (business-rules): claims, execution branches and worktrees (`kotta claim`, `kotta execute`) are removed.
+- EX-01m0jksmpre6y0mnwdz4t7cq18 — A bad pattern is refused at start (examples): claims, execution branches and worktrees (`kotta claim`, `kotta execute`) are removed.
+- BR-01m0f0wn89ad55txsfkm67ks9r — Execution never touches a protected branch (business-rules): claims, execution branches and worktrees (`kotta claim`, `kotta execute`) are removed.
+- EX-01m0f0wn8avqcdz36004payzvz — Work never lands on main (examples): claims, execution branches and worktrees (`kotta claim`, `kotta execute`) are removed.
+- BR-01m0f0wn893tdvr3b8v37qr5ck — The environment's checkout is respected (business-rules): claims, execution branches and worktrees (`kotta claim`, `kotta execute`) are removed.
+- EX-01m0f0wn8a97ee5529c1njgfqe — A hosted branch is adopted, not duplicated (examples): claims, execution branches and worktrees (`kotta claim`, `kotta execute`) are removed.
+- EX-01m0f0wn8aak6ee8j0brstqsfh — Fresh execution is isolated (examples): claims, execution branches and worktrees (`kotta claim`, `kotta execute`) are removed.
+- UC-01m0f0wn89b2ymcw1c3qd4vcxb — Execute a task in a fresh context (use-cases): claims, execution branches and worktrees (`kotta claim`, `kotta execute`) are removed.
+- E-01m0f0wn89r885ytmkqh2m4hw8 — Execution record (entities): claims, execution branches and worktrees (`kotta claim`, `kotta execute`) are removed.
+- BR-01m0f0wn89v0rpw3p4nk0a9tx2 — The record derives from the run, not the agent (business-rules): claims, execution branches and worktrees (`kotta claim`, `kotta execute`) are removed.
+- EX-01m0f0wn8apdd1z34g1yna6hh7 — A talkative idle run records no-change (examples): claims, execution branches and worktrees (`kotta claim`, `kotta execute`) are removed.
+- GT-01m0f0wn89fz7kz0eceeym6qc2 — Brief (glossary-terms): briefs were the input of the removed execution.
+- QA-01m0f0wn8981atnptrbdqa19y2 — Bounded brief size (quality-attributes): briefs were the input of the removed execution.
+- EX-01m0f0wn8ah2ghnvh7m1s0cgm1 — An overweight brief warns (examples): briefs were the input of the removed execution.
+- G-01m0f0wn89hek1751b5xje6pfa — Small fresh contexts by default (goals): briefs were the input of the removed execution.
+- BR-01m0r52vex4j22266nepm5yq8s — The brief carries the way to reach Kotta (business-rules): briefs were the input of the removed execution.
+- EX-01m0r52vexxy9azs452pb05pmr — An agent in a worktree can reach Kotta (examples): briefs were the input of the removed execution.
+- BR-01m0f0wn898xd4tr7j7t9bsjy7 — An observation is not a task (business-rules): observations and their triage (`kotta observation`) are removed.
+- GT-01m0f0wn89sek1m89cn47qey9p — Observation (glossary-terms): observations and their triage (`kotta observation`) are removed.
+- E-01m0f0wn89cry06jvtwtmpk4fr — Observation (entities): observations and their triage (`kotta observation`) are removed.
+- EX-01m0f0wn8amvb6y7k518xj5xrr — A discovery becomes an observation, not a fix (examples): observations and their triage (`kotta observation`) are removed.
+- EX-01m0f0wn8a2a1vjm0jvwkx38rh — A disposition carries its justification (examples): observations and their triage (`kotta observation`) are removed.
+- EX-01m0fp2hdkw7ka6wh3byyc9sd2 — A noticing amends the spec (examples): observations and their triage (`kotta observation`) are removed.
+- EX-01m0fp2hdkmvzw56gzf5xp540x — An uncovered need becomes an observation (examples): observations and their triage (`kotta observation`) are removed.
+- UC-01m0f0wn89jqb5mpcjjt1j5j8p — Capture an observation (use-cases): observations and their triage (`kotta observation`) are removed.
+- UC-01m0f0wn89fpwvdh3gz31cdtn9 — Resolve an observation (use-cases): observations and their triage (`kotta observation`) are removed.
+- BR-01m0f0wn89tk18yzbe9x0w64tm — Batch nesting is grouping only (business-rules): batches (`kotta batch`) are removed.
+- GT-01m0f0wn892g1ppben2jrbcfys — Batch (glossary-terms): batches (`kotta batch`) are removed.
+- E-01m0f0wn89mpzqng8411pkartq — Batch (entities): batches (`kotta batch`) are removed.
+- EX-01m0f0wn8ay5vp7841rbvg0dvb — A parent batch reads as one list (examples): batches (`kotta batch`) are removed.
+- SM-01m0f0wn89m2xwd4z4mk9p71d5 — Batch lifecycle (state-machines): batches (`kotta batch`) are removed.
+- UC-01m0f0wn89jebbfp6rjr0fxqh1 — Run a batch (use-cases): batches (`kotta batch`) are removed.
+- EX-01m0f0wn8ad1cm1rfgb08c81ne — Waves release from the coordinator (examples): batches (`kotta batch`) are removed.
+- GT-01m0jksma4w2aqeeasvp8d8393 — Roadmap (glossary-terms): batches (`kotta batch`) are removed.
+- E-01m0f0wn891kye4debkab1g2f7 — Decision (entities): decision records (`kotta decision`) are removed; an answer is now written into the node that asked.
+- EX-01m0f0wn8a7jvak9k4pkxxyg0m — An open question becomes a decision (examples): decision records (`kotta decision`) are removed; an answer is now written into the node that asked.
+- BR-01m0fp2hdkj0ba2vzsyq0jtdce — Evidence answers its own check (business-rules): review submission and its evidence table are removed.
+- EX-01m0fp2hdk68mttdbh50m98s4f — Duplicated evidence is refused (examples): review submission and its evidence table are removed.
+- EX-01m0f0wn8asqbhw5bzy7was41v — Review maps acceptance to evidence (examples): review submission and its evidence table are removed.
+- UC-01m0f0wn89dy38s6whbfa0jafn — Submit for review with evidence (use-cases): review submission and its evidence table are removed.
+- BR-01m0f0wn89r5np2yce79y2pctq — Canonical state changes only through validated services (business-rules): the control plane - lifecycle state, events, the index and their lock - is removed; the specification is plain files.
+- BR-01m0jksm9x99nr9vwq9qkz25ty — Control-plane writes are serialized (business-rules): the control plane - lifecycle state, events, the index and their lock - is removed; the specification is plain files.
+- EX-01m0jksmhxw41vq2aa8e93k5r7 — Two writers, one lock (examples): the control plane - lifecycle state, events, the index and their lock - is removed; the specification is plain files.
+- GT-01m0f0wn89vnd0kvyyetttpydj — Control plane (glossary-terms): the control plane - lifecycle state, events, the index and their lock - is removed; the specification is plain files.

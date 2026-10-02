@@ -196,7 +196,9 @@ describe("the workspace rules file", () => {
     expect(written).toContain("`.kotta/spec/` is **project-owned**");
     expect(written).toContain("`.kotta/legacy/`, where there is one, is read-only");
     // Say when the code runs ahead of the spec (BR-01m3kdq88m3bgye3xnn9q6hsr2): a one-line signal,
-    // never a stop, whether or not the change has been through the gate.
+    // never a stop, whether or not the change has been through the gate
+    // (EX-01m3kdq8kg96c3151xrkb7tgy4), and no word where no promise is touched
+    // (EX-01m3kdq91dfgf22v9s587hhk1d).
     expect(written).toContain("say when the code runs ahead of the spec");
     expect(written).toContain("implement as asked, whether or not the change has been through the gate");
     expect(written).toContain("do not stop or wait for it");
@@ -206,7 +208,7 @@ describe("the workspace rules file", () => {
     expect(written).toContain("the order is plan, gate, build, archive; it is advice, not a barrier");
     expect(written).toContain("offer the work the change describes as the next step, not the archive");
     expect(written).toContain("a promise that neither the accepted model nor an approved open change states");
-    expect(written).toContain("building an approved change needs no such word");
+    expect(written).toContain("building an approved change needs no such word, and neither does work that touches no promise");
     // Between approval and archive the approved delta binds (BR-01m0fp2hdkfn519h1w84jsrqbe).
     expect(written).toContain("the approved delta is the agreement for the nodes it touches");
     // What the rules name, an agent reaches for: a tool the project may not use, or a concept Kotta
