@@ -60,6 +60,12 @@ describe("pairing a reply with the proposal before it", () => {
     for (const reply of ["igen, de előbb a teszt", "hmm, előbb nézzük meg a meglévőket", "takarítsd"]) expect(replyKind(reply)).toBe("unclear");
   });
 
+  it("reads numbered answers, one yes per line, as a yes to the points they number", () => {
+    for (const reply of ["1 ok\n2 ok\n3 ok\n4 ok\n5 ok", "2 jó\n3 jó", "1. igen\n2) rendben, mehet", "3 ok"]) expect(replyKind(reply)).toBe("approve");
+    // One line that is not a plain yes leaves the whole reply for a human to read.
+    for (const reply of ["1 ok\n2 nem", "1 egyelőre az adatbázis és törölheti a user a historyját\n2 nem", "1 ok\n2 ok, de előbb a teszt", "1 más a helyzet"]) expect(replyKind(reply)).not.toBe("approve");
+  });
+
   it("reads a pick among offered options and the option the agent recommended", () => {
     const text = "a) menüből\nb) külön gomb\n\nAz a) változatot ajánlom. Melyik legyen?";
     expect(offeredOptions(text)).toEqual(["a", "b"]);
