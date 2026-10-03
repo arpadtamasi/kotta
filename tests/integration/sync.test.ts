@@ -210,7 +210,8 @@ describe("the workspace rules file", () => {
     expect(written).toContain("building an approved change needs no new change, and neither does work that touches no promise");
     // Between approval and archive the approved delta binds (BR-01m0fp2hdkfn519h1w84jsrqbe).
     expect(written).toContain("the approved delta is the agreement for the nodes it touches");
-    // What the rules name, an agent reaches for: a tool the project may not use, or a concept Kotta
+    // The rules name nothing an agent should not reach for (BR-01m40e0avfnth9evktzafbhr7w,
+    // EX-01m40e0bkfgmn68mjppatt5yag). What the rules name, an agent reaches for: a tool the project may not use, or a concept Kotta
     // retired, is not named at all — not even to forbid it.
     for (const unnamed of ["openspec", "opsx", "observation", "batch", "process layer", "decision record", "kotta task", "--approve"]) {
       expect(written, `the rules do not name "${unnamed}"`).not.toContain(unnamed);

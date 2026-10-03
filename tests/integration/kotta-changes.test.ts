@@ -20,6 +20,7 @@ function workspace(label: string): string {
 }
 
 describe("kotta change", () => {
+  // A request for a spec opens a change, not a document (BR-01m40e0afjevd5jy04135bh7fj, EX-01m40e0b1b9rpw2jwr2864xt82).
   test("new opens the change inside the workspace with a proposal to write, and nothing under openspec/", () => {
     const root = workspace("new");
     const opened = json(root, ["change", "new", "per-turn-model", "--title", "Choose the model per turn"]);
@@ -51,6 +52,7 @@ describe("kotta change", () => {
 });
 
 describe("narrative: none, the default", () => {
+  // Without a narrative setting nothing is written under openspec (BR-01m40e0ankvnv82me5emp1hf25, EX-01m40e0bcp9ebc3tf7f0xegwk8).
   test("archive lands the model and writes nothing under openspec/", () => {
     const root = planningWorkspace("none", null);
     answerPause(root);
@@ -117,6 +119,7 @@ describe("kotta migrate takes the changes out of OpenSpec's folder", () => {
     expect(existsSync(join(root, ".kotta/changes"))).toBe(false);
   });
 
+  // A change left in OpenSpec's folder moves into the workspace (EX-01m40e0bs4dbanbw4ypr86pf0x).
   test("moves the changes, rewrites the provenance of an unapproved one, keeps the OpenSpec narrative, and is then current", () => {
     const root = earlier("apply");
     expect(run(root, ["migrate"]).status).toBe(0);

@@ -22,7 +22,8 @@ export function readWorkspaceConfig(root: string): WorkspaceConfig {
 }
 
 /**
- * Whether the project keeps an OpenSpec narrative beside the model, and who writes it. `none`, the
+ * Whether the project keeps an OpenSpec narrative beside the model, and who writes it
+ * (BR-01m40e0ankvnv82me5emp1hf25). `none`, the
  * default: the model is the only specification and nothing is written under `openspec/`. `generated`:
  * archive regenerates `openspec/specs/` from the model. `authored`: people write it, and Kotta only
  * reports where it disagrees with the model.

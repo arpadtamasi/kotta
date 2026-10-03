@@ -50,6 +50,7 @@ describe("provenance in validation", () => {
   });
 });
 
+// A workshop drafts its node into the change (EX-01m40e0b6zc70bbzdhgj9dqmf6).
 describe("kotta spec new --into", () => {
   test("drafts the node into the change's model delta, with provenance laid out, and leaves the accepted specification alone", () => {
     const root = planningWorkspace("into");

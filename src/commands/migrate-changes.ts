@@ -6,7 +6,8 @@ import { APPROVAL_FILE, ARCHIVE_DIRECTORY, CHANGES_DIRECTORY, MODEL_DIRECTORY, O
 import { markdownFiles } from "../spec/narrative.js";
 
 /**
- * The part of `kotta migrate` that takes changes out of OpenSpec's folder. Up to 1.0.0-alpha.2 a
+ * The part of `kotta migrate` that takes changes out of OpenSpec's folder (UC-01m0f0wn89x00jkpqpqc2esx9h,
+ * EX-01m40e0bs4dbanbw4ypr86pf0x). Up to 1.0.0-alpha.2 a
  * Kotta change lived at `openspec/changes/<name>/`; from alpha.3 it lives at
  * `.kotta/changes/<name>/`, whether or not the project uses OpenSpec, and OpenSpec is only an
  * optional narrative beside the model.

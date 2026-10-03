@@ -4,7 +4,7 @@ import { findRepositoryRoot } from "../filesystem/workspace.js";
 import { MODEL_DIRECTORY, PROPOSAL_FILE, assertChangeName, changesFolder, changesPath, listChanges, strandedChanges } from "../spec/change.js";
 
 /**
- * `kotta change new <name>` — where every proposal starts. A request to specify, propose or plan
+ * `kotta change new <name>` — where every proposal starts (BR-01m40e0afjevd5jy04135bh7fj). A request to specify, propose or plan
  * something opens a change here, inside the workspace, whether or not the project uses OpenSpec: a
  * `proposal.md` in prose and an empty `model/` beside it for the planning phase to fill. Nothing
  * else is created, and nothing under `openspec/` is ever written.
