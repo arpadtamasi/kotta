@@ -1,8 +1,4 @@
-<<<<<<<< HEAD:ui-dist/assets/flowDiagram-KWPJA3E3-DVUnMuR0.js
-import{U as Ht,C as qt,_ as C,s as Xt,l as te,g as ke,a as Qt,r as Jt,u as rt,b as Zt,c as $t,d as e1,e as t1,f as s1,h as i1,i as r1,j as a1,J as n1,k as u1,m as st,p as o1,n as l1,o as c1,q as h1,t as d1,v as p1,w as f1,x as g1}from"./mermaid.core-C4PlYoUy.js";import{g as b1,s as k1,c as A1}from"./chunk-GWA4HPMP-CWlxekt-.js";import{s as it}from"./transform-CW97fgpX.js";import"./index-BLockV0j.js";const m1=(s,i)=>Ht.lang.round(qt.parse(s)[i]);var C1=C(()=>`
-========
-import{U as Ht,C as qt,_ as C,s as Xt,l as te,g as ke,a as Qt,r as Jt,u as rt,b as Zt,c as $t,d as e1,e as t1,f as s1,h as i1,i as r1,j as a1,J as n1,k as u1,m as st,n as it,p as o1,o as l1,q as c1,t as h1,v as d1,w as p1,x as f1,y as g1}from"./mermaid.core-BM9eK9gA.js";import{g as b1,s as k1,c as A1}from"./chunk-GWA4HPMP-B6DrJxiE.js";import"./index-Z9mqg5wd.js";const m1=(s,i)=>Ht.lang.round(qt.parse(s)[i]);var C1=C(()=>`
->>>>>>>> d2665ba8 (feat: the pre-1.0 heritage goes — one workspace name, no pre-1.0 migration):ui-dist/assets/flowDiagram-KWPJA3E3-BJxcWnPc.js
+import{U as Ht,C as qt,_ as C,s as Xt,l as te,g as ke,a as Qt,r as Jt,u as rt,b as Zt,c as $t,d as e1,e as t1,f as s1,h as i1,i as r1,j as a1,J as n1,k as u1,m as st,p as o1,n as l1,o as c1,q as h1,t as d1,v as p1,w as f1,x as g1}from"./mermaid.core-DnbBCxdj.js";import{g as b1,s as k1,c as A1}from"./chunk-GWA4HPMP-BT4GZbov.js";import{s as it}from"./transform-CW97fgpX.js";import"./index-RkIlG6Sy.js";const m1=(s,i)=>Ht.lang.round(qt.parse(s)[i]);var C1=C(()=>`
   /* Font Awesome icon styling - consolidated */
   .label-icon {
     display: inline-block;
