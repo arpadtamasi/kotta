@@ -4,6 +4,39 @@ All notable changes to Kotta (called A-Team before 0.3.0) will be documented in 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.4] — 2026-10-03
+
+### Changed
+
+- **The code never runs ahead of the spec.** The rules file, the `plan-change` skill and the docs no
+  longer let an agent implement first and signal afterwards: before code keeps, changes or drops a
+  promise that neither the accepted model nor an approved open change states, the agent opens a
+  change, takes it to the gate, and writes the code after the human's yes. Building an approved
+  change, or work that touches no promise, needs no new change.
+- **A change is built before it is archived.** The approved change stays open while the code that
+  keeps it is written, and `kotta archive` closes it: the order is plan, gate, build, archive.
+  `kotta gap` reports, after the accepted model, a section per approved open change (`--change
+  <name>` narrows it to one); an open change's unbuilt promises are the work that remains, and a
+  change that is unapproved, edited after its approval or not committed is named and not measured.
+  `kotta archive` refuses a delta node that is neither kept nor admitted (`UNACCOUNTED_PROMISE`). The
+  delta fingerprint leaves a node's `accepted:` entry out, so an admission written after the yes
+  keeps the approval.
+
+### Added
+
+- **The board shows open changes.** Beside the accepted specification the rail lists every open
+  change; opened, every view shows the model as it would be after the change, with what it adds,
+  changes and removes marked (a changed node also shows its accepted text), and above it the
+  proposal, the open decisions and whether the change is planned and approved. An open change is
+  read from the working tree and marked where it is not committed; the accepted view still reads the
+  base ref.
+
+### Fixed
+
+- **`kotta narrative` pairs numbered answers.** "1 ok / 2 ok / 3 ok", one yes per line, is paired
+  with the proposal it answers instead of being filed as unpaired. (An option answer such as
+  "1a / 2a" is still left unpaired: #53.)
+
 ## [1.0.0-alpha.3] — 2026-09-29
 
 ### Changed
