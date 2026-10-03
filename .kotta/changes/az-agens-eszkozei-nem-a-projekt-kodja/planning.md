@@ -1,8 +1,8 @@
 ---
 change: az-agens-eszkozei-nem-a-projekt-kodja
-generated_at: 2026-10-03T08:30:13.181Z
-delta_hash: sha256:7d4712bde291e32ae339c8c1633f53bc0f059e79e68a7b93d74bdadfa28b0dde
-ready_for_approval: false
+generated_at: 2026-10-03T08:34:47.279Z
+delta_hash: sha256:a3274ef64635352ecceacc827b7649a4ac89cfaa57b2d44561eaba894d536fa4
+ready_for_approval: true
 ---
 
 # Planning: az-agens-eszkozei-nem-a-projekt-kodja
@@ -34,16 +34,15 @@ No accepted node shares an edge with, is named by, or contrasts with the delta.
 The machine's candidates are mechanical and narrow. Contradictions the agent found by comparing every claim of the delta with the accepted nodes it touches, each marked `judged`:
 
 <!-- kotta:judged — the agent's own findings; `kotta plan` keeps this block as written -->
-- judged: *A copy of the specification is not evidence* SHALL exclude six named sources from every search. Depending on the third open decision, the new rule leaves it as it is, makes it the behaviour while no list is set, or retires it; either of the last two changes that rule in this change.
-- judged: *The report names what it did not count* names the six excluded classes in the head of the report. With a list set, what lies outside it is neither read nor counted; whether that is said by class or only by naming the paths read follows from the third decision.
-- judged: *Analyze the implementation gap* says the analysis "looks only where a promise can be kept or checked"; reading where the project says its code is agrees with it.
+- judged: *A copy of the specification is not evidence* stays as it is: its six excluded sources stay excluded, inside the named paths too. The new rule narrows the search further only when the caller names paths; it removes no exclusion.
+- judged: *The report names what it did not count* still holds: the excluded classes are named as before, and the head additionally names the paths read when `--in` is given.
+- judged: *Analyze the implementation gap* says the analysis "looks only where a promise can be kept or checked"; reading only where the caller says the code is agrees with it. Its sentence that the analysis needs "a readable repository. Nothing else" stays true: the parameter is optional.
+- judged: *Archive refuses a change with an unaccounted promise* seeks evidence "as the gap report seeks it for an open change". With `--in`, the gap report may read less than archive; the delta says archive keeps reading the whole repository, so the two agree when no paths are given and archive is the more lenient otherwise. The accepted example is not changed.
 <!-- /kotta:judged -->
 
 ## (d) Silences
 
-- Open: Evidence is sought where the project says its code is (BR-80aa9a08) BR-80aa9a08/Q1 — Honnan tudja a Kotta, hol van a projekt kódja és tesztje? (a) A projekt sorolja fel a `.kotta/config.yaml`-ban (például `evidence: [src/, tests/]`); a `kotta init` és a `kotta migrate` a repó alapján javasol egy listát, amit az ember átír. (b) A Kotta a csomagleírókból (package.json, pyproject és társaik) vezeti le - de egy gyökérben lévő leíró az egész repót jelenti, így a bemásolt skillek is benne maradnának. (c) Az ügynök javasolja a beszélgetésben, és a lista a specifikáció része lesz, egy change kapuján átmenve. Az én javaslatom az (a): egyszerű, látható, és a projekt maga dönt. (.kotta/changes/az-agens-eszkozei-nem-a-projekt-kodja/model/business-rules/evidence-is-sought-where-the-project-says-its-code-is-80aa9a08.md:31)
-- Open: Evidence is sought where the project says its code is (BR-80aa9a08) BR-80aa9a08/Q2 — Mi legyen, amíg egy projekt nem mondta meg (minden mai projekt ilyen)? (a) A jelentés az egész repót olvassa, ahogy ma, és a feje egy sorban jelzi, hogy a lista hiányzik és hol adható meg. (b) A `kotta gap` megáll, és kéri a listát. Az én javaslatom az (a): semmi nem törik el a frissítéskor, és a zajos projekt egy sorból megtudja, mit tegyen. (.kotta/changes/az-agens-eszkozei-nem-a-projekt-kodja/model/business-rules/evidence-is-sought-where-the-project-says-its-code-is-80aa9a08.md:32)
-- Open: Evidence is sought where the project says its code is (BR-80aa9a08) BR-80aa9a08/Q3 — Ma hat rögzített kizárás van: a Kotta munkaterülete, az OpenSpec könyvtárai, a csomagok közzétett specifikáció-másolata és a `node_modules`. Ezek a te elved szerint is determinisztikus tiltások. Mi legyen velük? (a) Maradnak mindenhol, a megadott útvonalakon belül is. (b) Csak addig érvényesek, amíg a projekt nem adta meg a listát; utána csak a lista számít. (c) Megszűnnek. Az én javaslatom a (b): a megadott lista az igen, és amíg nincs, a mai viselkedés véd a specifikáció másolatai ellen. (.kotta/changes/az-agens-eszkozei-nem-a-projekt-kodja/model/business-rules/evidence-is-sought-where-the-project-says-its-code-is-80aa9a08.md:33)
+No open decision, and no question a form asks is left unanswered.
 
 ## (e) Narrative drift
 
@@ -58,4 +57,4 @@ What the machine decided alone:
 
 - A vendored skill is neither evidence nor unspecified enforcement (EX-6d1cr41k) — The scene is the health-ai repository, reduced to one file; the wording is the agent's.
 
-Conversation: .kotta/changes/az-agens-eszkozei-nem-a-projekt-kodja/conversation.md, cited 2 times. Read it for the why before calling anything inferred.
+Conversation: .kotta/changes/az-agens-eszkozei-nem-a-projekt-kodja/conversation.md, cited 6 times. Read it for the why before calling anything inferred.

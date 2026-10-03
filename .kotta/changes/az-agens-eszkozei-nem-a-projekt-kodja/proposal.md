@@ -14,15 +14,17 @@ tart; a projekt viszont tudja, hol van a saját kódja.
 
 ## What changes
 
-- **Új szabály: *Evidence is sought where the project says its code is*.** A bizonyítékot és a
-  specifikáció nélküli kényszert a `kotta gap` és a `kotta modules` ott keresi, ahol a projekt
-  megmondja, hogy a kódja és a tesztjei vannak; ami azon kívül esik, nem számít. A jelentés feje
-  megnevezi, hol olvasott.
+- **Új szabály: *Evidence is sought where the project says its code is*.** A `kotta gap` (és az MCP
+  `gap_report` eszköze) paraméterben kapja meg, hol van a projekt kódja és tesztje: `--in src --in
+  tests`. A hívó ügynök adja meg. Megadva csak ott keres bizonyítékot és specifikáció nélküli
+  kényszert; paraméter nélkül az egész repót olvassa, mint eddig (az operátor: „1a"). A jelentés feje
+  megmondja, hol olvasott. A hat mai kizárt forrás a megadott útvonalakon belül is kizárt marad.
+- **Az archive nem kapja meg** (az operátor: „2b"): a change bizonyítékát továbbra is az egész
+  repóban keresi.
 - **Új példa**: *A vendored skill is neither evidence nor unspecified enforcement*.
 
-Ami marad: a bizonyíték továbbra is hivatkozás (az elem azonosítója a kódban).
+Ami marad: a bizonyíték továbbra is hivatkozás; a `kotta modules` nem változik.
 
 ## Open decisions
 
-- Ki mondja meg, hol a kód; mi történik, amíg nincs megmondva; és mi lesz a mai hat kizárt
-  forrással. (Az új szabályban.)
+Nincs: a forrás a paraméter, paraméter nélkül a mai viselkedés, az archive nem kapja meg.

@@ -1,9 +1,9 @@
 ---
 change: az-agens-eszkozei-nem-a-projekt-kodja
 generated_by: kotta narrative
-generated_at: "2026-10-03T08:30:07.640Z"
+generated_at: "2026-10-03T08:34:18.035Z"
 since: "2026-10-02T07:30:00.000Z"
-digest: "sha256:5d89f01652e09a40ebe8de9ced715e738e5b9a18b7cf930d37268d5ac707e85f"
+digest: "sha256:d0ffef2796fc1d259e2cc9c796cf8fb5cf49cf92cbebf4e56e796613a640d242"
 ---
 # Beszélgetés: az-agens-eszkozei-nem-a-projekt-kodja
 
@@ -104,11 +104,76 @@ Ahol a válasz sem egyértelmű igen, sem nem, sem választás, vagy egy puszta 
 
 > de tiltás helyett inkább azt klne megmondani, hogy miben igen
 
+### P3 · 2026-10-03 08:32 UTC
+
+**Ágens** (08:30 UTC):
+
+> …
+>
+> Javaslatom: (a), így a frissítéskor semmi nem törik el.
+>
+> **3. Mi legyen a mai hat rögzített kizárással?** Ma a gap soha nem keres bizonyítékot a Kotta munkaterületén, az OpenSpec könyvtáraiban, a csomagok közzétett specifikáció-másolatában és a `node_modules`-ban. Ezek is determinisztikus tiltások.
+> - (a) Maradnak mindenhol, a megadott listán belül is.
+> - (b) Csak addig érvényesek, amíg a projekt nem adta meg a listát. Utána csak a lista számít.
+> - (c) Megszűnnek.
+>
+> Javaslatom: (b). A lista az igen, és amíg nincs lista, a mai viselkedés véd az ellen, hogy a specifikáció másolata bizonyítéknak számítson.
+>
+> Elég számonként egy betű, utána véglegesítem, és kérem rá a kapu igenjét.
+>
+> A másik change (a régi motor 63 elemének kivezetése) igen-vagy-nem kérdése továbbra is nyitott, arra még nem válaszoltál.
+
+**Ember** (08:32 UTC):
+
+> a gap kapja meg paraméterben és a modell majd megmondja neki
+> hogy működik a gap pontosan?
+
+### P4 · 2026-10-03 08:33 UTC
+
+**Ágens** (08:32 UTC):
+
+> …
+>
+> 1. **Mi legyen paraméter nélkül?**
+>    - (a) Az egész repó, mint ma.
+>    - (b) Hiba: meg kell adni.
+>
+>    Javaslatom: (a). Így semmi nem törik el, és egy ember kézzel futtatva is használhatja.
+>
+> 2. **Az archive ellenőrzése (5. pont, change-re) is kapja meg ugyanezt a paramétert?**
+>    - (a) Igen, ugyanúgy.
+>    - (b) Nem, az archive mindig az egész repóban keres. A bizonyítéknál a tágabb keresés csak engedékenyebb, a zaj pedig a fordított irányban van, amit az archive nem futtat.
+>
+>    Javaslatom: (b).
+>
+> A korábbi 3. kérdés (a hat rögzített kizárás) a paraméterrel egyszerűsödik. Azt javaslom, hogy a megadott útvonalakon belül is maradjanak: egy `src/` alá generált specifikáció-másolat attól még nem bizonyíték. Ha ezt is másképp látod, szólj.
+
+**Ember** (08:33 UTC):
+
+> aha tehát a gap csak azt nézi, melyik id-k jelennek meg a kódokban?
+
+### P5 · 2026-10-03 08:34 UTC
+
+**Ágens** (08:33 UTC):
+
+> …
+>
+> Ez szándékos. Az elfogadott szabály ("Every accepted promise is kept or admitted") úgy szól, hogy az ígéret hivatkozással bizonyított. A Rationale szerint azért, mert a mérésnek gyorsnak és pontosnak kell lennie. Tehát a gap nyomon követhetőséget mér (megnevezi-e valami az ígéretet), nem helyességet. Hogy a megnevező kód jó-e, azt a tesztek és a review döntik el, nem a gap.
+>
+> A paraméterre ebből az következik, hogy a fő haszna a fordított irányban van, mert onnan jön a zaj. Előre irányban a szűkítés csak azt akadályozza meg, hogy egy idegen fájl véletlen említése bizonyítéknak számítson, és ez ritka.
+>
+> A két nyitott kérdés változatlan: mi legyen paraméter nélkül (javaslatom: az egész repó, mint ma), és kapja-e meg az archive is (javaslatom: nem).
+
+**Ember** (08:34 UTC):
+
+> 1a
+> 2b
+
 ## Nyers forrás
 
-- `~/.claude/projects/-~-Dev-progos-kotta/9661eb3e-f00d-4476-9761-0438e1ae6f39.jsonl` (Claude Code): 7 üzenet feldolgozva (ember 4, ágens 3); kihagyva: eszközhívás 239, meta-üzenet 1, --since előtti 13.
+- `~/.claude/projects/-~-Dev-progos-kotta/9661eb3e-f00d-4476-9761-0438e1ae6f39.jsonl` (Claude Code): 13 üzenet feldolgozva (ember 7, ágens 6); kihagyva: eszközhívás 248, meta-üzenet 1, --since előtti 13.
 
-Időszak: 2026-10-02 08:57 UTC – 2026-10-03 08:29 UTC. Csak a 2026-10-02 07:30 UTC utáni üzenetek.
+Időszak: 2026-10-02 08:57 UTC – 2026-10-03 08:34 UTC. Csak a 2026-10-02 07:30 UTC utáni üzenetek.
 
 ### Szűrés
 
