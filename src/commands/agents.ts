@@ -9,17 +9,15 @@ import { findRepositoryRoot, workspaceDirectoryName, workspacePath } from "../fi
  * the install line — the one fact an agent without the CLI needs — rendered from the package that
  * is actually running.
  *
- * The project's own `AGENTS.md` stays the project's. Kotta links it only when asked. The one
- * exception to append-only linking is a legacy Kotta prelude: its explicit `## This repository`
- * boundary lets Kotta replace its old copied rules while preserving the project's section byte for
- * byte. Unrecognised content is never removed.
+ * The project's own `AGENTS.md` stays the project's: Kotta creates it when there is none, and never
+ * writes an existing one (BR-01m0f1djtb5dkb76tjzq4x3ffh).
  */
 
 export const WORKSPACE_AGENTS_FILE = "AGENTS.md";
 export const PROJECT_AGENTS_FILE = "AGENTS.md";
 
 export type WorkspaceAgentsState = "created" | "updated" | "unchanged" | "drifted" | "replaced";
-export type ProjectAgentsState = "created" | "linked" | "migrated" | "already-linked";
+export type ProjectAgentsState = "created" | "already-linked" | "unlinked";
 
 function packageRoot(): string {
   return fileURLToPath(new URL("../..", import.meta.url));
@@ -167,38 +165,12 @@ export interface ProjectAgentsResult {
   line: string;
 }
 
-const LEGACY_KOTTA_OPENING = "# AGENTS.md\n\nThis repository runs on **Kotta**.";
-const LEGACY_KOTTA_SECTIONS = [
-  "## The rule everything else follows from",
-  "## Orient yourself first",
-  "## The lifecycle",
-  "## Rules for agents",
-  "## Skills",
-];
-
 /**
- * Return the project-owned suffix of a copied, pre-shipped Kotta rules file. The detector is
- * deliberately structural rather than tied to one historical version: downstream copies changed
- * as Kotta evolved, but every shipped-era ancestor used the same opening, section set and explicit
- * ownership boundary. Requiring all of them prevents a casual Kotta mention from authorising a
- * deletion.
- */
-function legacyProjectSection(current: string): string | null {
-  const boundary = /^## This repository\r?$/m.exec(current);
-  if (!boundary || boundary.index === undefined) return null;
-
-  const prelude = current.slice(0, boundary.index).replaceAll("\r\n", "\n");
-  if (!prelude.startsWith(LEGACY_KOTTA_OPENING)) return null;
-  if (!LEGACY_KOTTA_SECTIONS.every((section) => prelude.includes(`\n${section}\n`))) return null;
-  if (!prelude.includes("A defect in Kotta itself is not a task here:")) return null;
-  return current.slice(boundary.index);
-}
-
-/**
- * Link the project's own `AGENTS.md` to the workspace rules, creating the file when there is none.
- * Ordinary project content is append-only. A recognised legacy Kotta prelude is replaced by the
- * pointer while its explicitly delimited project section is preserved byte-for-byte. A file that
- * already points at the workspace rules is left exactly as it is.
+ * The project's own `AGENTS.md`, as far as Kotta goes (BR-01m0f1djtb5dkb76tjzq4x3ffh): created with
+ * the reference when there is none — nothing to protect — and otherwise never written. An existing
+ * file that does not point at the rules is reported with the exact line, for an agent that has read
+ * it to place on the human's yes (EX-01m0f1djtcvdqkvr4r4dd2qamd). A pre-1.0 Kotta prelude in it is
+ * ordinary project content.
  */
 export function linkProjectAgents(repositoryRoot?: string): ProjectAgentsResult {
   const root = repositoryRoot ?? findRepositoryRoot();
@@ -211,21 +183,7 @@ export function linkProjectAgents(repositoryRoot?: string): ProjectAgentsResult 
     writeFileSync(path, `${pointerBlock(line)}\n`);
     return { path, state: "created", line };
   }
-
-  const current = readFileSync(path, "utf8");
-  const projectSection = legacyProjectSection(current);
-  if (projectSection !== null) {
-    // Some workspaces already had the pointer appended beneath their project section. In that case
-    // removing only the legacy prelude is enough; otherwise put the pointer before the untouched
-    // project-owned suffix.
-    const migrated = projectSection.includes(target) ? projectSection : `${line}\n\n${projectSection}`;
-    writeFileSync(path, migrated);
-    return { path, state: "migrated", line };
-  }
-  if (current.includes(target)) return { path, state: "already-linked", line };
-  const separator = current.endsWith("\n\n") ? "" : current.endsWith("\n") ? "\n" : "\n\n";
-  writeFileSync(path, `${current}${separator}${pointerBlock(line)}\n`);
-  return { path, state: "linked", line };
+  return { path, state: readFileSync(path, "utf8").includes(target) ? "already-linked" : "unlinked", line };
 }
 
 /**
@@ -233,7 +191,7 @@ export function linkProjectAgents(repositoryRoot?: string): ProjectAgentsResult 
  * at the rules still installs rules nobody reads, so the same policy reaches one file further
  * (BR-01m0f1djtb5dkb76tjzq4x3ffh): where there is no `CLAUDE.md`, Kotta creates it with the one
  * include line, unasked — there is nothing to protect; where there is one without the line, it is
- * reported and left alone, and only `--link-agents` appends to it.
+ * reported and left alone, for an agent to place the line on the human's yes.
  *
  * The file includes the project's `AGENTS.md`, never Kotta's rules directly: the project's own
  * instructions live there too, and a Claude Code agent should read the same thing any other does.
@@ -241,7 +199,7 @@ export function linkProjectAgents(repositoryRoot?: string): ProjectAgentsResult 
 export const PROJECT_CLAUDE_FILE = "CLAUDE.md";
 export const CLAUDE_POINTER_LINE = `@${PROJECT_AGENTS_FILE}`;
 
-export type ProjectClaudeState = "created" | "linked" | "already-linked" | "unlinked";
+export type ProjectClaudeState = "created" | "already-linked" | "unlinked";
 
 export interface ProjectClaudeResult {
   path: string;
@@ -268,7 +226,7 @@ function claudeFileReachesRules(content: string, root: string): boolean {
  * Make sure a Claude Code agent reaches the rules. Returns null when the project has no
  * `AGENTS.md` to include: a pointer at a file that does not exist reaches nothing.
  */
-export function syncProjectClaude(repositoryRoot?: string, options: { link?: boolean } = {}): ProjectClaudeResult | null {
+export function syncProjectClaude(repositoryRoot?: string): ProjectClaudeResult | null {
   const root = repositoryRoot ?? findRepositoryRoot();
   if (!existsSync(join(root, PROJECT_AGENTS_FILE))) return null;
   const path = join(root, PROJECT_CLAUDE_FILE);
@@ -280,8 +238,5 @@ export function syncProjectClaude(repositoryRoot?: string, options: { link?: boo
   }
   const current = readFileSync(path, "utf8");
   if (claudeFileReachesRules(current, root)) return { path, state: "already-linked", line };
-  if (!options.link) return { path, state: "unlinked", line };
-  const separator = current.endsWith("\n\n") ? "" : current.endsWith("\n") ? "\n" : "\n\n";
-  writeFileSync(path, `${current}${separator}## Kotta\n\n${claudePointerBlock()}\n`);
-  return { path, state: "linked", line };
+  return { path, state: "unlinked", line };
 }

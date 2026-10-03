@@ -7,14 +7,14 @@ and the read-only tools over MCP.
 
 `kotta init` writes `.kotta/AGENTS.md` from Kotta's template, with the install line rendered from the
 package actually running, and points the project's own `AGENTS.md` at it with `@.kotta/AGENTS.md`
-(creating one when there is none). The project's `AGENTS.md` stays the project's: Kotta appends the
-pointer to an existing one only with `--link-agents`. `kotta sync` refreshes the rules file after an
+(creating one when there is none). The project's `AGENTS.md` stays the project's: Kotta never writes
+an existing one; it prints the line, and the agent places it where it belongs on the human's yes. `kotta sync` refreshes the rules file after an
 upgrade; a hand-edited copy is reported as drifted and left alone until `kotta sync --replace-rules`.
 
 Claude Code reads `CLAUDE.md`, not `AGENTS.md`, so on that host the rules would be installed and
 never read. `init` and `sync` therefore also create the project's `CLAUDE.md` when there is none,
 including `AGENTS.md` with the line `@AGENTS.md`. An existing `CLAUDE.md` that includes neither
-`AGENTS.md` nor `.kotta/AGENTS.md` is reported and left alone; `--link-agents` appends the line.
+`AGENTS.md` nor `.kotta/AGENTS.md` is reported and left alone, with the line to add.
 
 What it tells every agent:
 

@@ -1,4 +1,4 @@
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
@@ -315,73 +315,6 @@ describe("the workspace rules file", () => {
     expect(result.data.pointer).toBe("@.kotta/AGENTS.md");
   });
 
-  test("--link-agents appends a section that says what the reference is, and keeps every prior byte in order", () => {
-    const own = "# Our rules\n\nRun the linter before pushing.\n";
-    writeFileSync(projectAgents(), own);
-    run(["init"]);
-
-    const linked = run(["sync", "--link-agents"]) as { data: { projectAgents: { state: string; line: string } } };
-
-    expect(linked.data.projectAgents.state).toBe("linked");
-    const after = readFileSync(projectAgents(), "utf8");
-    expect(after.startsWith(own), "every prior byte survives in order").toBe(true);
-    expect(after.trimEnd().endsWith("@.kotta/AGENTS.md")).toBe(true);
-    // Never a bare pointer: a reader who meets the line alone has been told nothing
-    // (BR-01m0f1djtb5dkb76tjzq4x3ffh, D-01m13v4eqfhv5213paeqdn4tbm).
-    expect(after).toContain("## Kotta");
-    expect(after).toMatch(/rules its\n?agents follow/);
-  });
-
-  test("--link-agents migrates a legacy inline Kotta prelude and preserves the project section byte-for-byte", () => {
-    const projectInstructions = "## This repository\n\n# Product rules\n\nRun our checks.\nDo not reformat this section.";
-    const legacy = legacyInlineAgents(projectInstructions);
-    writeFileSync(projectAgents(), legacy);
-    run(["init"]);
-
-    const migrated = run(["sync", "--link-agents"]) as { data: { projectAgents: { state: string; line: string } } };
-
-    expect(migrated.data.projectAgents.state).toBe("migrated");
-    expect(readFileSync(projectAgents(), "utf8")).toBe(`@.kotta/AGENTS.md\n\n${projectInstructions}`);
-  });
-
-  test("legacy inline migration is opt-in and idempotent", () => {
-    const projectInstructions = "## This repository\n\nKeep this exact project text.\n";
-    const legacy = legacyInlineAgents(projectInstructions);
-    writeFileSync(projectAgents(), legacy);
-
-    run(["init"]);
-    run(["sync"]);
-    expect(readFileSync(projectAgents(), "utf8")).toBe(legacy);
-
-    run(["sync", "--link-agents"]);
-    const once = readFileSync(projectAgents(), "utf8");
-    const again = run(["sync", "--link-agents"]) as { data: { projectAgents: { state: string } } };
-    expect(again.data.projectAgents.state).toBe("already-linked");
-    expect(readFileSync(projectAgents(), "utf8")).toBe(once);
-  });
-
-  test("migration removes the legacy prelude when an earlier sync already appended the pointer", () => {
-    const projectInstructions = "## This repository\n\nKeep this project section.\n\n@.kotta/AGENTS.md\n";
-    writeFileSync(projectAgents(), legacyInlineAgents(projectInstructions));
-    run(["init"]);
-
-    const migrated = run(["sync", "--link-agents"]) as { data: { projectAgents: { state: string } } };
-
-    expect(migrated.data.projectAgents.state).toBe("migrated");
-    expect(readFileSync(projectAgents(), "utf8")).toBe(projectInstructions);
-  });
-
-  test("a project-owned file that merely mentions Kotta is linked without deleting any content", () => {
-    const own = "# Our rules\n\nWe use Kotta.\n\n## This repository\n\nKeep everything here.\n";
-    writeFileSync(projectAgents(), own);
-    run(["init"]);
-
-    const linked = run(["sync", "--link-agents"]) as { data: { projectAgents: { state: string } } };
-
-    expect(linked.data.projectAgents.state).toBe("linked");
-    expect(readFileSync(projectAgents(), "utf8").startsWith(own)).toBe(true);
-  });
-
   test("init creates the project file when there is none, without a flag and without asking", () => {
     expect(existsSync(projectAgents())).toBe(false);
 
@@ -418,32 +351,20 @@ describe("the workspace rules file", () => {
     expect(initialised.data.pointer).toBe("@.kotta/AGENTS.md");
   });
 
-  test("--link-agents over the file init created changes nothing", () => {
-    // init now creates an absent project file itself, so this flag meets a file that already
-    // points at the rules; the case it used to cover is asserted above.
+  // The rules ship; the project file stays yours (EX-01m0f1djtcvdqkvr4r4dd2qamd): Kotta has no flag
+  // that writes an existing project file, and a pre-1.0 Kotta prelude in it is ordinary content.
+  test("no command writes an existing project file, a pre-1.0 Kotta prelude included, and --link-agents is gone", () => {
+    const legacy = legacyInlineAgents("## This repository\n\nKeep this exact project text.\n");
+    writeFileSync(projectAgents(), legacy);
     run(["init"]);
-    const before = readFileSync(projectAgents(), "utf8");
-
-    const linked = run(["sync", "--link-agents"]) as { data: { projectAgents: { state: string } } };
-
-    expect(linked.data.projectAgents.state).toBe("already-linked");
-    expect(readFileSync(projectAgents(), "utf8")).toBe(before);
+    run(["sync"]);
+    expect(readFileSync(projectAgents(), "utf8")).toBe(legacy);
+    const flag = spawnSync("node", [cli, "sync", "--link-agents"], { cwd: repository, encoding: "utf8", env: { ...process.env, KOTTA_SKILLS_HOME: skillsHome } });
+    expect(flag.status).not.toBe(0);
+    expect(flag.stderr).toContain("unknown option '--link-agents'");
+    expect(readFileSync(projectAgents(), "utf8")).toBe(legacy);
   });
 
-  test("linking twice changes nothing, and a reworded pointer is not duplicated", () => {
-    run(["init"]);
-    run(["sync", "--link-agents"]);
-    const once = readFileSync(projectAgents(), "utf8");
-
-    const again = run(["sync", "--link-agents"]) as { data: { projectAgents: { state: string } } };
-    expect(again.data.projectAgents.state).toBe("already-linked");
-    expect(readFileSync(projectAgents(), "utf8")).toBe(once);
-
-    writeFileSync(projectAgents(), "See .kotta/AGENTS.md for the workflow rules.\n");
-    const reworded = run(["sync", "--link-agents"]) as { data: { projectAgents: { state: string } } };
-    expect(reworded.data.projectAgents.state).toBe("already-linked");
-    expect(readFileSync(projectAgents(), "utf8")).toBe("See .kotta/AGENTS.md for the workflow rules.\n");
-  });
 });
 
 describe("the project's CLAUDE.md", () => {
@@ -491,23 +412,8 @@ describe("the project's CLAUDE.md", () => {
 
     const said = human(["sync"]);
     expect(said).toContain("Kotta did not touch the project's CLAUDE.md");
-    expect(said).toContain("--link-agents; the line is: @AGENTS.md");
+    expect(said).toContain("add it on the human's yes; the line is: @AGENTS.md");
     expect(readFileSync(claude(), "utf8")).toBe(own);
-  });
-
-  test("--link-agents appends the include once and keeps every prior byte in order", () => {
-    // Kotta owns its rules file, never the project's (BR-01m0f1djtb5dkb76tjzq4x3ffh).
-    const own = "# Our Claude notes\n\nPrefer small commits.\n";
-    writeFileSync(claude(), own);
-    run(["init"]);
-
-    expect((run(["sync", "--link-agents"]) as ClaudeResult).data.claudeFile?.state).toBe("linked");
-    const after = readFileSync(claude(), "utf8");
-    expect(after.startsWith(own)).toBe(true);
-    expect(after.trimEnd().endsWith("@AGENTS.md")).toBe(true);
-
-    expect((run(["sync", "--link-agents"]) as ClaudeResult).data.claudeFile?.state).toBe("already-linked");
-    expect(readFileSync(claude(), "utf8")).toBe(after);
   });
 
   test("a CLAUDE.md that already includes the rules, either way, is left alone", () => {
@@ -517,7 +423,7 @@ describe("the project's CLAUDE.md", () => {
 
     const direct = "Notes.\n\n@.kotta/AGENTS.md\n";
     writeFileSync(claude(), direct);
-    expect((run(["sync", "--link-agents"]) as ClaudeResult).data.claudeFile?.state).toBe("already-linked");
+    expect((run(["sync"]) as ClaudeResult).data.claudeFile?.state).toBe("already-linked");
     expect(readFileSync(claude(), "utf8")).toBe(direct);
   });
 

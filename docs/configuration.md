@@ -72,6 +72,6 @@ The pre-rename `A_TEAM_` prefix of each variable is still read.
 | File | Written by |
 | --- | --- |
 | `.kotta/AGENTS.md` | `init`, `sync`: the rules file, from Kotta's template. A hand-edited copy is reported as drifted and left alone |
-| `AGENTS.md` | `init`, only when there is none; `--link-agents` appends the pointer to an existing one |
+| `AGENTS.md` | `init`, only when there is none; an existing one is never written |
 | `.codex/config.toml` | `integrate codex`: an `[mcp_servers.kotta]` block, never rewritten once present |
 | `~/.claude/skills/<skill>/` | `init`, `sync`: the shipped skills, with `.kotta-installed.json` recording which ones Kotta owns |

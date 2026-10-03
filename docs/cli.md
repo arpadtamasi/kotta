@@ -28,9 +28,9 @@ by what you use them for.
 
 - `init --project-name <name>`: the project name written to `config.yaml`; without it, the
   repository directory's name.
-- `init --link-agents`, `sync --link-agents`: Link the project's AGENTS.md to the workspace rules,
-  migrating a recognized legacy Kotta prelude after the human said yes. Without it, `init` creates an
-  `AGENTS.md` only when there is none, and `sync` prints the line to add.
+- The project's `AGENTS.md` and `CLAUDE.md`: `init` creates them when there are none; an existing
+  one is never written, and `init` and `sync` print the line to add, for an agent to place on the
+  human's yes.
 - `sync --replace-rules`: Discard local edits to the workspace rules file and take Kotta's copy;
   without this an edited file is never replaced.
 - `migrate --workspace <path>`: Repository root or workspace directory; omitted uses the repository
