@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore, type MouseEvent } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import { DEFAULT_PALETTE, type Palette } from "./model";
 
 /* ══ Mermaid, drawn in the page ════════════════════════
@@ -19,7 +19,7 @@ function loadMermaid(): Promise<MermaidApi> {
 }
 
 /** A token's value when it is a plain hex colour Mermaid can compute with, else the fallback. */
-export function token(name: string, fallback: string): string {
+function token(name: string, fallback: string): string {
   if (typeof window === "undefined" || typeof getComputedStyle !== "function") return fallback;
   const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   return /^#[0-9a-f]{3,8}$/i.test(value) ? value : fallback;
@@ -35,45 +35,8 @@ export function readPalette(): Palette {
   };
 }
 
-/* ── Spike: which renderer draws ─────────────────────────
-   `dagre` and `elk` are Mermaid's two layout engines; `flow` is the React Flow + ELK prototype,
-   drawn only where a view has one. The choice lives in the address (`?renderer=`), so two tabs can
-   sit side by side. */
-export const RENDERERS = [
-  { key: "dagre", label: "Mermaid · dagre" },
-  { key: "elk", label: "Mermaid · ELK" },
-  { key: "flow", label: "React Flow · ELK" },
-] as const;
-export type Renderer = typeof RENDERERS[number]["key"];
-const listeners = new Set<() => void>();
-function readRenderer(): Renderer {
-  if (typeof window === "undefined") return "dagre";
-  const value = new URLSearchParams(window.location.search).get("renderer");
-  return RENDERERS.some((renderer) => renderer.key === value) ? value as Renderer : "dagre";
-}
-let current: Renderer = readRenderer();
-export function setRenderer(next: Renderer) {
-  current = next;
-  const url = new URL(window.location.href);
-  url.searchParams.set("renderer", next);
-  window.history.replaceState(window.history.state, "", url);
-  listeners.forEach((listener) => listener());
-}
-export function useRenderer(): Renderer {
-  return useSyncExternalStore((listener) => { listeners.add(listener); return () => { listeners.delete(listener); }; }, () => current, () => "dagre");
-}
-export function RendererSwitch({ flow = false }: { flow?: boolean }) {
-  const renderer = useRenderer();
-  return <div className="renderer-switch" role="group" aria-label="Diagram renderer (spike)">
-    <span className="renderer-switch__label">Renderer</span>
-    {RENDERERS.filter((option) => flow || option.key !== "flow").map((option) => <button key={option.key} type="button"
-      className={`filter ${renderer === option.key ? "is-active" : ""}`} aria-pressed={renderer === option.key}
-      onClick={() => setRenderer(option.key)}>{option.label}</button>)}
-  </div>;
-}
-
 let sequence = 0;
-export async function renderMermaid(source: string, layout: "dagre" | "elk" = "dagre"): Promise<string> {
+export async function renderMermaid(source: string): Promise<string> {
   const mermaid = await loadMermaid();
   const background = token("--color-bg", "#f3f2f2");
   const surface = token("--color-surface", "#eae9e9");
@@ -82,9 +45,9 @@ export async function renderMermaid(source: string, layout: "dagre" | "elk" = "d
   mermaid.initialize({
     startOnLoad: false,
     securityLevel: "strict",
-    // dagre by default; the spike's switch asks for ELK, which Mermaid loads only when asked.
-    layout,
-    elk: { mergeEdges: false, nodePlacementStrategy: "NETWORK_SIMPLEX", cycleBreakingStrategy: "GREEDY_MODEL_ORDER" },
+    // Mermaid 12 lays flowcharts out with ELK by default; the board draws with dagre, which it
+    // bundles, and leaves ELK's 1.4 MB out (ui/vite.config.ts).
+    layout: "dagre",
     theme: "base",
     fontFamily: "Archivo, system-ui, sans-serif",
     themeVariables: {
@@ -124,17 +87,16 @@ export function DiagramFigure({ source, label, caption, nodes, onOpen }: {
   nodes?: Map<string, string>; onOpen?: (id: string) => void;
 }) {
   const scheme = useColorScheme();
-  const layout = useRenderer() === "elk" ? "elk" : "dagre";
   const [drawn, setDrawn] = useState<{ svg?: string; error?: string }>({});
   useEffect(() => {
     let live = true;
     setDrawn({});
-    renderMermaid(source, layout).then(
+    renderMermaid(source).then(
       (svg) => { if (live) setDrawn({ svg }); },
       (reason: unknown) => { if (live) setDrawn({ error: reason instanceof Error ? reason.message : String(reason) }); },
     );
     return () => { live = false; };
-  }, [source, scheme, layout]);
+  }, [source, scheme]);
 
   const onClick = (event: MouseEvent<HTMLDivElement>) => {
     if (!nodes || !onOpen) return;

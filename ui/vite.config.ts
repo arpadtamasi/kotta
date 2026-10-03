@@ -3,14 +3,13 @@ import react from "@vitejs/plugin-react";
 import { resolve } from "node:path";
 
 /**
- * The board draws two Mermaid diagram types: flowcharts and stateDiagram-v2, laid out by dagre or,
- * on the diagram-renderer spike, by ELK.
+ * The board draws two Mermaid diagram types: flowcharts and stateDiagram-v2, laid out by dagre.
  * Mermaid loads every other diagram type, layout engine and KaTeX lazily, and only when a source
  * asks for one — which no source the board builds ever does. Those modules are replaced by a stub
  * here so the published package does not carry megabytes it never loads. A source that did ask for
  * one fails to draw, and the board then shows the source and the node list, as for any failure.
  */
-const UNUSED_MERMAID = /(?:\/(?!flowDiagram-|stateDiagram-v2-)[^/]*(?:diagram|definition)[^/]*|\/(?:cose-bilkent|swimlanes)-[A-Z0-9]+)\.mjs$/i;
+const UNUSED_MERMAID = /(?:\/(?!flowDiagram-|stateDiagram-v2-)[^/]*(?:diagram|definition)[^/]*|\/(?:cose-bilkent|elk|swimlanes)-[A-Z0-9]+)\.mjs$/i;
 const STUB = "\0kotta-mermaid-unused";
 function mermaidDiagramsWeDraw(): Plugin {
   return {
@@ -22,7 +21,7 @@ function mermaidDiagramsWeDraw(): Plugin {
     },
     load(id) {
       if (id !== STUB) return null;
-      return "const unused = () => { throw new Error('A Mermaid diagram type, layout or KaTeX was asked for, and the Kotta board bundles only flowcharts and state diagrams laid out by dagre or ELK.'); };\n"
+      return "const unused = () => { throw new Error('A Mermaid diagram type, layout or KaTeX was asked for, and the Kotta board bundles only flowcharts and state diagrams laid out by dagre.'); };\n"
         + "export default { render: unused, renderToString: unused };\nexport const diagram = undefined;\nexport const render = unused;\n";
     },
   };
