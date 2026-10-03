@@ -4,6 +4,32 @@ All notable changes to Kotta (called A-Team before 0.3.0) will be documented in 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.5] — 2026-10-03
+
+### Changed
+
+- **The board draws its own diagrams.** The use case diagram, the entity map and every state machine
+  are drawn by the board itself (React Flow, laid out by ELK): each node in the board's own markup
+  with its provenance frame, opening on a click, lighting its connections on hover. Entities read
+  top-down in boxes the size of their titles; use cases read left to right, grouped by capability. A
+  switch beside every diagram redraws it with Mermaid, now also laid out by ELK, with its source one
+  click away; the choice stays in the address (`?renderer=flow` or `?renderer=elk`), so two tabs can
+  compare them. The dagre layout is gone.
+
+### Added
+
+- **Every diagram can be taken away.** Under every diagram: Copy PNG, Copy SVG, Save PNG, Save SVG.
+  The SVG is the drawing itself — shapes, paths and text in the current theme — so it pastes into a
+  drawing tool as something you can still edit; the PNG embeds the board's font and looks as the page
+  does. Nothing is written to the workspace.
+
+### Fixed
+
+- **A state machine written as one paragraph is drawn.** A Transitions section that writes its
+  `A -> B: why` transitions sentence after sentence was drawn as prose; each transition is now read,
+  and an arrow mentioned mid-sentence stays prose. Where the States section names the states, a
+  transition end it does not name is drawn as a condition (`when …`), not as a state.
+
 ## [1.0.0-alpha.4] — 2026-10-03
 
 ### Changed
