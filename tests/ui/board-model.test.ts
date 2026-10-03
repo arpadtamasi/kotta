@@ -2,8 +2,8 @@
 // how a state machine is read from its Transitions section, and when it cannot be.
 import { describe, expect, it } from "vitest";
 import {
-  byCapability, entityDiagram, entityMentions, mermaidLabel, narrativeSection, parseSource, parseStateMachine,
-  parseTransitionLine, stateDiagram, titleStem, useCaseDiagram, type SpecNode,
+  byCapability, entityDiagram, entityGraph, entityMentions, mermaidLabel, narrativeSection, parseSource, parseStateMachine,
+  parseTransitionLine, stateDiagram, stateGraph, titleStem, useCaseDiagram, useCaseGraph, type SpecNode,
 } from "../../ui/src/model";
 import { ARCHIVE, COSTS, EXPORT, GOAL, INVOICE, ORDER, PAYMENT, REVIEW, modelWorkspace } from "./model-fixture";
 
@@ -96,8 +96,52 @@ describe("a state machine", () => {
   });
 
   it("keeps a transition label inside Mermaid's grammar", () => {
-    const source = stateDiagram({ drawable: true, terminal: [], prose: [], transitions: [{ from: "a", to: "b", why: "x: y; #z \"q\"" }] });
+    const source = stateDiagram({ drawable: true, terminal: [], prose: [], conditions: [], transitions: [{ from: "a", to: "b", why: "x: y; #z \"q\"" }] });
     expect(source).toContain("S0 --> S1 : x y z q");
+  });
+});
+
+describe("a state machine written as one paragraph", () => {
+  const sections = {
+    states: "backlog - defined - active - done.",
+    transitions: "backlog -> defined: validate - the batch becomes defined. Validation refuses otherwise. "
+      + "defined -> active: start creates the branch. last member terminal -> done: automatic, whether or not it was started.",
+  };
+  it("reads each transition the paragraph holds, cut where a sentence ends and the next begins with A -> B:", () => {
+    const machine = parseStateMachine(sections);
+    expect(machine.transitions.map(({ from, to }) => `${from}>${to}`)).toEqual(["backlog>defined", "defined>active", "last member terminal>done"]);
+    expect(machine.transitions[0].why).toBe("validate - the batch becomes defined. Validation refuses otherwise.");
+    expect(machine.prose).toEqual([]);
+  });
+  it("calls an end the States section does not name a condition, not a state", () => {
+    expect(parseStateMachine(sections).conditions).toEqual(["last member terminal"]);
+    const graph = stateGraph(parseStateMachine(sections));
+    expect(graph.nodes.find((node) => node.id === "state:last member terminal")).toMatchObject({ shape: "condition", label: "when last member terminal" });
+    expect(parseStateMachine({ transitions: sections.transitions }).conditions).toEqual([]);
+  });
+});
+
+describe("the graphs the drawn renderer lays out", () => {
+  it("draws entities top-down, and two entities that name each other with one two-headed edge", () => {
+    expect(entityGraph(spec)).toMatchObject({ direction: "DOWN", groups: [], edges: [{ from: ORDER, to: PAYMENT, both: false }, { from: INVOICE, to: ORDER, both: false }] });
+    const mutual = spec.map((node) => (node.id === PAYMENT ? { ...node, sections: { ...node.sections, meaning: "Settles an order." } } : node));
+    expect(entityGraph(mutual).edges.filter((edge) => edge.both)).toHaveLength(1);
+    const grouped = spec.map((node) => (node.id === ORDER ? { ...node, capability: "commerce" } : node));
+    expect(entityGraph(grouped).groups.map((group) => group.label)).toEqual(["commerce", "no capability"]);
+  });
+  it("draws actors to use cases solid and use cases to goals dashed, each node opening itself", () => {
+    const graph = useCaseGraph(withoutCapabilities);
+    expect(graph.direction).toBe("RIGHT");
+    expect(graph.edges.find((edge) => edge.from === EXPORT && edge.to === GOAL)).toMatchObject({ dashed: true });
+    expect(graph.edges.some((edge) => edge.to === EXPORT && !edge.dashed)).toBe(true);
+    expect(graph.nodes.every((node) => node.opens === node.id)).toBe(true);
+  });
+  it("draws a machine's start, its states, its transitions labelled by their reason, and its end", () => {
+    const graph = stateGraph(parseStateMachine(spec.find((node) => node.title === "Order lifecycle")!.sections));
+    expect(graph.nodes.map((node) => node.shape)).toEqual(["start", "state", "state", "state", "state", "state", "end"]);
+    expect(graph.nodes.find((node) => node.label === "closed")).toMatchObject({ terminal: true });
+    expect(graph.edges[0]).toMatchObject({ from: "start", to: "state:draft", label: "the customer starts" });
+    expect(graph.edges.at(-1)).toMatchObject({ from: "state:closed", to: "end" });
   });
 });
 

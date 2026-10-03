@@ -1,10 +1,25 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { EntityButton, MarkdownContent, Tail, titleOf, type Board } from "./App";
-import { DiagramFigure, readPalette } from "./Diagram";
+import { DiagramFigure, RendererSwitch, readPalette, useRenderer } from "./Diagram";
+
+const FlowDiagram = lazy(() => import("./Flow"));
+
+/** One reading, drawn by the renderer the switch names: the board's own nodes, or Mermaid's. */
+function Drawing({ graph, diagram, label, onOpen }: { graph: () => FlowGraph; diagram: () => { source: string; nodes?: Map<string, string> }; label: string; onOpen?: (id: string) => void }) {
+  const renderer = useRenderer();
+  const flow = useMemo(() => (renderer === "flow" ? graph() : null), [renderer, graph]);
+  const mermaid = useMemo(() => (renderer === "elk" ? diagram() : null), [renderer, diagram]);
+  if (flow) return <figure className="diagram">
+    <Suspense fallback={<p className="diagram__drawing" role="status">Drawing {label.toLowerCase()}…</p>}>
+      <FlowDiagram graph={flow} label={label} onOpen={onOpen} />
+    </Suspense>
+  </figure>;
+  return <DiagramFigure source={mermaid!.source} nodes={mermaid!.nodes} onOpen={onOpen} label={label} />;
+}
 import {
   DECIDER_LABEL, LEVEL_LABEL, PROVENANCE_DECIDERS, PROVENANCE_LEVELS, agentDecided, entityDiagram, narrativeSection,
-  parseSource, parseStateMachine, provenanceCounts, stateDiagram, storyMap, useCaseDiagram,
-  type Provenance, type SpecNode,
+  entityGraph, parseSource, parseStateMachine, provenanceCounts, stateDiagram, stateGraph, storyMap, useCaseDiagram, useCaseGraph,
+  type FlowGraph, type Provenance, type SpecNode,
 } from "./model";
 
 /* ══ The diagram views ═════════════════════════════════
@@ -185,13 +200,15 @@ export function UseCaseView({ board, agentOnly, onOpen }: ViewProps) {
   const cases = board.spec.filter((node) => node.form === "use-case");
   const actors = board.spec.filter((node) => node.form === "actor");
   const goals = board.spec.filter((node) => node.form === "goal");
-  const diagram = useMemo(() => useCaseDiagram(board.spec, { palette: readPalette(), dim: dimmer(agentOnly) }), [board, agentOnly]);
+  const diagram = useCallback(() => useCaseDiagram(board.spec, { palette: readPalette(), dim: dimmer(agentOnly) }), [board, agentOnly]);
+  const graph = useCallback(() => useCaseGraph(board.spec, { dim: dimmer(agentOnly) }), [board, agentOnly]);
   const all = [...actors, ...cases, ...goals];
   return <div className="view">
     <ViewHead title="Use cases">Who does what, and for which goal: an actor owns a use case by its actor edge (solid arrow); a use case serves a goal by its goal edge (dashed arrow).</ViewHead>
     <Legend />
+    <RendererSwitch />
     <FilterNote agentOnly={agentOnly} shown={all.filter(agentDecided).length} total={all.length} />
-    {cases.length === 0 ? <Empty what="use cases" /> : <DiagramFigure source={diagram.source} nodes={diagram.nodes} onOpen={onOpen} label="Use case diagram" />}
+    {cases.length === 0 ? <Empty what="use cases" /> : <Drawing graph={graph} diagram={diagram} onOpen={onOpen} label="Use case diagram" />}
     <NodeList heading="use cases" nodes={cases} board={board} agentOnly={agentOnly} onOpen={onOpen} />
     <NodeList heading="actors" nodes={actors} board={board} agentOnly={agentOnly} onOpen={onOpen} />
     <NodeList heading="goals" nodes={goals} board={board} agentOnly={agentOnly} onOpen={onOpen} />
@@ -226,13 +243,15 @@ export function StoryMapView({ board, agentOnly, onOpen }: ViewProps) {
 /* ══ Entities ══════════════════════════════════════════ */
 export function EntityMapView({ board, agentOnly, onOpen }: ViewProps) {
   const entities = board.spec.filter((node) => node.form === "entity");
-  const diagram = useMemo(() => entityDiagram(board.spec, { palette: readPalette(), dim: dimmer(agentOnly) }), [board, agentOnly]);
+  const diagram = useCallback(() => entityDiagram(board.spec, { palette: readPalette(), dim: dimmer(agentOnly) }), [board, agentOnly]);
+  const graph = useCallback(() => entityGraph(board.spec, { dim: dimmer(agentOnly) }), [board, agentOnly]);
   return <div className="view">
     <ViewHead title="Entities">The domain concepts and how their descriptions refer to one another.</ViewHead>
     <p className="diagram-note" role="note"><b>These arrows are read from prose, not from typed edges.</b> An arrow from one entity to another means the first one's Meaning, Attributes or Invariants mention the other's title. It says nothing about cardinality or ownership.</p>
     <Legend />
+    <RendererSwitch />
     <FilterNote agentOnly={agentOnly} shown={entities.filter(agentDecided).length} total={entities.length} />
-    {entities.length === 0 ? <Empty what="entities" /> : <DiagramFigure source={diagram.source} nodes={diagram.nodes} onOpen={onOpen} label="Entity map" />}
+    {entities.length === 0 ? <Empty what="entities" /> : <Drawing graph={graph} diagram={diagram} onOpen={onOpen} label="Entity map" />}
     <NodeList heading="entities" nodes={entities} board={board} agentOnly={agentOnly} onOpen={onOpen} />
   </div>;
 }
@@ -244,6 +263,7 @@ export function StateMachineView({ board, agentOnly, onOpen }: ViewProps) {
   return <div className="view">
     <ViewHead title="State machines">Each governed lifecycle, drawn from the lines of its Transitions section that read as <code>A → B: why</code>. What is written as prose stays prose.</ViewHead>
     <Legend />
+    <RendererSwitch />
     <FilterNote agentOnly={agentOnly} shown={shown.length} total={machines.length} />
     {machines.length === 0 && <Empty what="state machines" />}
     {shown.map((machine) => <StateMachineSection key={machine.id} machine={machine} board={board} onOpen={onOpen} />)}
@@ -252,6 +272,8 @@ export function StateMachineView({ board, agentOnly, onOpen }: ViewProps) {
 
 function StateMachineSection({ machine, board, onOpen }: { machine: SpecNode; board: Board; onOpen: (id: string) => void }) {
   const parsed = useMemo(() => parseStateMachine(machine.sections), [machine]);
+  const diagram = useCallback(() => ({ source: stateDiagram(parsed) }), [parsed]);
+  const graph = useCallback(() => stateGraph(parsed), [parsed]);
   const governed = machine.edges?.entity ?? [];
   return <section className={`machine${machine.provenance?.level ? ` prov-card-${machine.provenance.level}` : ""}`} aria-label={machine.title}>
     <div className="machine__head">
@@ -261,7 +283,7 @@ function StateMachineSection({ machine, board, onOpen }: { machine: SpecNode; bo
     </div>
     {parsed.drawable
       ? <>
-        <DiagramFigure source={stateDiagram(parsed)} label={`State machine: ${machine.title}`} />
+        <Drawing graph={graph} diagram={diagram} label={`State machine: ${machine.title}`} />
         {parsed.prose.length > 0 && <div className="machine__prose">
           <p className="diagram-note" role="note">These lines of the Transitions section were not read as transitions and are not in the drawing:</p>
           <MarkdownContent value={parsed.prose.join("\n\n")} onEntity={onOpen} />

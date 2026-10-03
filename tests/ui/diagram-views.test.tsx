@@ -7,6 +7,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import axe from "axe-core";
 import { App, EntityDrawer, SpecView, readBoard } from "../../ui/src/App";
+import { setRenderer } from "../../ui/src/Diagram";
+import { fileName } from "../../ui/src/exportImage";
 import { EntityMapView, ProvenanceSummary, StateMachineView, StoryMapView, UseCaseView } from "../../ui/src/views";
 import {
   ACTOR, CONVERSATION, COSTS, EXPORT, GOAL, INVOICE, ORDER, ORDER_MACHINE, PAYMENT, REVIEW, modelWorkspace,
@@ -27,6 +29,8 @@ const board = () => readBoard(modelWorkspace);
 const CONVERSATION_TEXT = "# Conversation\n\n## Accounting\n\nAnna: every hour has an owner.\n\n## Something else\n\nNot this.\n";
 
 beforeEach(() => {
+  // The drawn renderer needs a real layout and a measured page; these tests read what Mermaid is asked.
+  setRenderer("elk");
   drawn.length = 0;
   vi.stubGlobal("fetch", (input: unknown) => {
     const url = String(input);
@@ -112,6 +116,25 @@ describe("the state machine view", () => {
     expect(order.textContent).toContain("Nothing else moves an order.");
     noProcess(container.textContent ?? "");
     await accessible(container);
+  });
+});
+
+describe("a drawn diagram, taken away", () => {
+  it("offers to copy or save every drawing as SVG or PNG, and copies the drawing's own SVG", async () => {
+    const written: string[] = [];
+    vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText: async (text: string) => { written.push(text); } } });
+    render(<EntityMapView board={board()} agentOnly={false} onOpen={() => {}} />);
+    const actions = await screen.findByRole("group", { name: "Entity map: copy or save" });
+    expect(within(actions).getAllByRole("button").map((button) => button.textContent)).toEqual(["Copy PNG", "Copy SVG", "Save PNG", "Save SVG"]);
+    fireEvent.click(within(actions).getByRole("button", { name: "Copy SVG" }));
+    await within(actions).findByText("Copied as SVG.");
+    expect(written).toHaveLength(1);
+    expect(written[0]).toMatch(/^<svg id="kotta-diagram-\d+"/);
+  });
+
+  it("names a saved file after the diagram, in plain letters", () => {
+    expect(fileName("State machine: Kitöltés jóváhagyással", "png")).toBe("state-machine-kitoltes-jovahagyassal.png");
+    expect(fileName("…", "svg")).toBe("diagram.svg");
   });
 });
 
