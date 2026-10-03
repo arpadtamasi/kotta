@@ -184,9 +184,9 @@ it, or admit it in the node (`accepted: ["unimplemented: <reason>"]`); an admiss
 the yes does not change what was approved. Any other change to the delta after the yes means the
 approval no longer holds, and archive says so.
 
-The order is advice, not a barrier: when code gets ahead of what was agreed — a promise neither the
-accepted model nor an approved open change states — say so in one line and offer this skill (*Say
-when the code runs ahead of the spec*).
+The code never comes before the gate (*The code never runs ahead of the spec*): asked for code that
+keeps a promise neither the accepted model nor an approved open change states, open a change for it
+with this skill first, and write the code after the human's yes.
 
 ## Only when the project keeps an OpenSpec narrative
 

@@ -47,10 +47,10 @@ And seven rules:
 5. Evidence names its node. An unbuilt node of an approved open change needs no admission; what is
    still unkept at the archive is admitted, or `kotta archive` refuses it.
 6. Never write into `legacy/`.
-7. Say when the code runs ahead of the spec: implement as asked; when the code keeps, changes or
-   drops a promise that neither the model nor an approved open change states, say so in one line
-   and offer `plan-change`, without stopping. Building an approved change, or work that touches no
-   promise, needs no word about the spec.
+7. The code never runs ahead of the spec: before code keeps, changes or drops a promise that
+   neither the model nor an approved open change states, the agent opens a change for it, takes it
+   through `plan-change` to the gate, and writes the code after the yes. Building an approved change,
+   or work that touches no promise, needs no new change.
 
 ## The skills
 

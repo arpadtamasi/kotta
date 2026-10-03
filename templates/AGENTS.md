@@ -40,8 +40,8 @@ records that yes. The approved change then stays open while the code that keeps 
 `kotta gap` lists what is left of it. `kotta archive <name>` closes it — it lands exactly the
 approved delta in `{{workspace}}/spec/` and moves the change to `{{workspace}}/changes/archive/`,
 asking nothing again, and refusing only a node that is neither kept nor admitted. The `plan-change`
-skill is the how. The order is plan, gate, build, archive; it is advice, not a barrier, and when the
-code runs ahead of what was agreed, say so (rule 7).
+skill is the how. The order is plan, gate, build, archive, and the code never comes before the gate
+(rule 7).
 
 ## The rule everything else follows from
 
@@ -123,11 +123,11 @@ question, so a draft with one is a draft, not an agreement.
    refuses a node that is neither kept nor admitted.
 6. **`{{workspace}}/legacy/`, where there is one, is read-only.** It is the archive of a workspace
    migrated from before 1.0, kept for reading; nothing in it governs anything now.
-7. **Say when the code runs ahead of the spec.** Implement as asked, whether or not the change has
-   been through the gate. When what you write keeps, changes
-   or drops a promise that neither the accepted model nor an approved open change states, say so in
-   one line, name the promise in plain words, and offer `plan-change`. Do not stop or wait for it.
-   Building an approved change needs no such word, and neither does work that touches no promise.
+7. **The code never runs ahead of the spec.** Before you write code that keeps, changes or drops a
+   promise that neither the accepted model nor an approved open change states, open a change for it
+   and take it through `plan-change` to the gate; write the code after the human's yes. Say so in one
+   line, naming the promise in plain words, instead of writing the code. Building an approved change
+   needs no new change, and neither does work that touches no promise.
 
 ## Skills
 
