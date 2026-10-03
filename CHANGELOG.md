@@ -4,6 +4,20 @@ All notable changes to Kotta (called A-Team before 0.3.0) will be documented in 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.6] — 2026-10-03
+
+### Removed
+
+- **The pre-1.0 heritage.** Kotta finds a workspace only as `.kotta/`: the pre-rename `.a-team/` is
+  no longer looked for or renamed, and the duplicate-name warning is gone. A pre-1.0 workspace is
+  refused by every command, `migrate` included, naming Kotta 1.0.0-alpha.4 as the last release
+  whose `kotta migrate` carries it over. `kotta migrate` now only moves changes out of
+  `openspec/changes/`. The rules file loses its `legacy/` rule; *The code never runs ahead of the
+  spec* is now rule 6. This repository's own `.kotta/legacy/` archive is deleted.
+- **`--link-agents`**, on `init` and `sync`, with its rewrite of a pre-1.0 Kotta prelude. An existing
+  project `AGENTS.md` or `CLAUDE.md` is never written by Kotta: `init` creates a missing one, and
+  otherwise `init` and `sync` print the line for an agent to place on the human's yes.
+
 ## [1.0.0-alpha.5] — 2026-10-03
 
 ### Changed
