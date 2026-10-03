@@ -1,9 +1,9 @@
 ---
 change: a-tabla-mutatja-a-valtozast
 generated_by: kotta narrative
-generated_at: "2026-10-03T08:30:08.286Z"
+generated_at: "2026-10-03T08:52:11.953Z"
 since: "2026-10-02T19:00:00.000Z"
-digest: "sha256:34000cba2d915fa225344da1a9591eb5c314441d8d4392ff25b5314d9b0911cf"
+digest: "sha256:21b4caf666d8907221cbbe9be52eeffc5174b3a8b1e3fdc67d10dbfbe75d482d"
 ---
 # Beszélgetés: a-tabla-mutatja-a-valtozast
 
@@ -50,13 +50,34 @@ Nincs megválaszolt kérdés.
 
 Ahol a válasz sem egyértelmű igen, sem nem, sem választás, vagy egy puszta „mehet” csak beszámolóra felelt: a döntést ember olvassa ki.
 
-Nincs.
+### P1 · 2026-10-03 08:51 UTC
+
+**Ágens** (08:31 UTC):
+
+> …
+>
+> Ennek a változásnak a teljes tartalmát én terveztem; te csak a hibát jelezted. Ezért a kapunál minden elemét megjelöltem gépi döntésként, hogy bármelyiket felülbírálhasd.
+>
+> **Kérdés: honnan olvassa a board a nyitott változást?** A board ma csak azt mutatja, ami a fő ágon commitolva van, a munkakönyvtárat soha; ez egy elfogadott ígérete. A wing-projektekben viszont még egyetlen commit sincs.
+> - **(a) A munkakönyvtárból olvassa,** jól láthatóan „nincs commitolva” jelöléssel. Ehhez az ígéretet ki kell egészíteni ezzel az egy kivétellel.
+> - **(b) Csak commitolt változást mutat.** Addig kiírja, hogy a változás létezik, de még nincs commitolva.
+>
+> Én az (a)-t javaslom: a kapunál a még nem commitolt javaslatot is látni kell.
+>
+> ---
+>
+> Válaszolj a két kérdésre. Utána mindkét változásra külön kérek egy sima igent vagy nemet, és csak igen esetén rögzítem a jóváhagyást.
+
+**Ember** (08:51 UTC):
+
+> 1a
+> 2a
 
 ## Nyers forrás
 
-- `~/.claude/projects/-~-Dev-progos-kotta/18ebca79-96db-4173-9c20-0391dc3dcc42.jsonl` (Claude Code): 11 üzenet feldolgozva (ember 2, ágens 9); kihagyva: eszközhívás 515, megszakítás 2, meta-üzenet 1, --since előtti 70.
+- `~/.claude/projects/-~-Dev-progos-kotta/18ebca79-96db-4173-9c20-0391dc3dcc42.jsonl` (Claude Code): 14 üzenet feldolgozva (ember 3, ágens 11); kihagyva: eszközhívás 538, megszakítás 2, meta-üzenet 1, --since előtti 70.
 
-Időszak: 2026-10-02 19:22 UTC – 2026-10-03 08:30 UTC. Csak a 2026-10-02 19:00 UTC utáni üzenetek.
+Időszak: 2026-10-02 19:22 UTC – 2026-10-03 08:52 UTC. Csak a 2026-10-02 19:00 UTC utáni üzenetek.
 
 ### Szűrés
 

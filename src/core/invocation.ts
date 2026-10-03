@@ -3,10 +3,9 @@ import { fileURLToPath } from "node:url";
 
 /**
  * How to reach this Kotta, proved from the running process rather than hoped of someone's PATH
- * (BR-01m0qyxvz954ay2rbm00bazrd5, BR-01m0r52vex4j22266nepm5yq8s).
+ * (BR-01m0qyxvz954ay2rbm00bazrd5).
  *
- * Two callers need the same fact and must not answer it differently: `integrate` writes it into a
- * host's configuration, and the brief states it to the agent about to work. Naming the entry script
+ * `integrate` writes it into a host's configuration, and `doctor` reports it. Naming the entry script
  * alone would not do — its `#!/usr/bin/env node` shebang defers the same hope to `env`.
  */
 export interface KottaInvocation {
