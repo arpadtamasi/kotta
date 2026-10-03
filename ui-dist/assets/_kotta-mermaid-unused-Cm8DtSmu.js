@@ -1,0 +1,1 @@
+const a=()=>{throw new Error("A Mermaid diagram type, layout or KaTeX was asked for, and the Kotta board bundles only flowcharts and state diagrams laid out by dagre.")},e={render:a,renderToString:a},r=void 0,d=a;export{e as default,r as diagram,d as render};
