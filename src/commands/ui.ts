@@ -8,7 +8,7 @@ import { parse } from "yaml";
 import { sections } from "../core/markdown.js";
 import { MINTED_BODY } from "../core/identity.js";
 import { ENV_PREFIX, readEnv } from "../core/env.js";
-import { SPEC_DIRECTORY, WORKSPACE_DIRECTORIES, WORKSPACE_SCHEMA_VERSION, WorkspaceShapeError, assertCurrentWorkspaceShape, hasWorkspace, workspaceDirectoryName } from "../filesystem/workspace.js";
+import { SPEC_DIRECTORY, WORKSPACE_DIRECTORY, WORKSPACE_SCHEMA_VERSION, WorkspaceShapeError, assertCurrentWorkspaceShape, hasWorkspace, workspaceDirectoryName } from "../filesystem/workspace.js";
 import { APPROVAL_FILE, PROPOSAL_FILE, changesFolder, changesPath, deltaHash, listChanges, readChangeModel } from "../spec/change.js";
 import { readFormRegistry } from "../spec/registry.js";
 import { parseOpenQuestions, unresolvedQuestions } from "../core/questions.js";
@@ -97,11 +97,11 @@ function sectionObject(content: string): Record<string, string> {
 /**
  * Where the board reads from: the workspace directory, the repository root above it, and the
  * repo-relative directory name Git plumbing must use. `--workspace` may name either the repository
- * root or the workspace directory itself, under any name in `WORKSPACE_DIRECTORIES`.
+ * root or the workspace directory itself, `.kotta`.
  */
 export function resolveWorkspaceLocation(workspaceOption: string): { workspace: string; projectRoot: string; directory: string } {
   const candidate = resolve(workspaceOption);
-  const named = (WORKSPACE_DIRECTORIES as readonly string[]).includes(basename(candidate));
+  const named = basename(candidate) === WORKSPACE_DIRECTORY;
   const projectRoot = named ? dirname(candidate) : candidate;
   if (named || hasWorkspace(candidate)) {
     const directory = workspaceDirectoryName(projectRoot);

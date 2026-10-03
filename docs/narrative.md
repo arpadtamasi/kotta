@@ -38,7 +38,7 @@ Filtered before writing: e-mail 1.
 ```
 
 The file has frontmatter (`change`, `generated_by: kotta narrative`, `generated_at`, `since` when
-given, and a `digest` of the body) and these sections. In 1.0.0-alpha.5 the headings and labels are
+given, and a `digest` of the body) and these sections. In 1.0.0-alpha.6 the headings and labels are
 written in Hungarian:
 
 | Section | Items | What it holds |

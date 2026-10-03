@@ -20,8 +20,6 @@ version 6.
   undecided), the distilled `conversation.md`, the model delta under `model/`, `kotta plan`'s
   `planning.md` and, after the human's yes, `approval.yaml`. `kotta archive` lands the delta in
   `spec/` and moves the change to `changes/archive/`.
-- `legacy/` exists only in a workspace migrated from a pre-1.0 Kotta. It is a read-only archive of
-  the old process state; nothing in Kotta 1.0 reads or writes it. Its own README says what it holds.
 - `AGENTS.md` is the rules file Kotta writes for the agents working in this project; `kotta sync`
   keeps it current and reports a hand-edited copy as drifted rather than replacing it.
 - `config.yaml` names the project, the base branch and the protected branches.

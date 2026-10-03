@@ -35,15 +35,14 @@ function print(result: unknown, json: boolean): void {
 }
 
 type AgentsSummary = { path: string; state: WorkspaceAgentsState; discardedLines?: number } | null;
-type ProjectAgentsSummary = { path: string; state: "created" | "linked" | "migrated" | "already-linked"; line: string } | null;
+type ProjectAgentsSummary = { path: string; state: "created" | "already-linked" | "unlinked"; line: string } | null;
 type ClaudeFileSummary = { path: string; state: ProjectClaudeState; line: string } | null;
 
 /** What happened to the project's CLAUDE.md — the file Claude Code reads instead of AGENTS.md. */
 function claudeLines(claude: ClaudeFileSummary | undefined): string[] {
   if (!claude) return [];
   if (claude.state === "created") return [`The project had no CLAUDE.md, which Claude Code reads instead of AGENTS.md; Kotta created ${claude.path} including it with ${claude.line}.`];
-  if (claude.state === "linked") return [`Added a Kotta section to ${claude.path}, including AGENTS.md with ${claude.line}.`];
-  if (claude.state === "unlinked") return [`Kotta did not touch the project's CLAUDE.md, and it does not include AGENTS.md, so Claude Code will not read the rules. To include it, ask the human, then re-run with --link-agents; the line is: ${claude.line}`];
+  if (claude.state === "unlinked") return [`Kotta did not touch the project's CLAUDE.md, and it does not include AGENTS.md, so Claude Code will not read the rules. To include it, read the file, propose where the line belongs, and add it on the human's yes; the line is: ${claude.line}`];
   return [];
 }
 
@@ -65,11 +64,10 @@ function agentsLines(agents: AgentsSummary | undefined, project: ProjectAgentsSu
   }
   if (project) {
     if (project.state === "already-linked") lines.push(`${project.path} already points at the rules.`);
-    else if (project.state === "migrated") lines.push(`Migrated Kotta's legacy inline rules in ${project.path} to ${project.line}; preserved the project section.`);
     else if (project.state === "created") lines.push(`The project had no AGENTS.md; Kotta created ${project.path} pointing at the rules with ${project.line}.`);
-    else lines.push(`Added a Kotta section to ${project.path}, pointing at the rules with ${project.line}.`);
+    else lines.push(`Kotta did not touch the project's AGENTS.md, and it does not point at the rules. To point it at them, read the file, propose where the line belongs, and add it on the human's yes; the line is: ${project.line}`);
   } else if (agents && pointer) {
-    lines.push(`Kotta did not touch the project's AGENTS.md. To point it at the rules, ask the human, then re-run with --link-agents; the line is: ${pointer}`);
+    lines.push(`Kotta did not touch the project's AGENTS.md. If it does not point at the rules yet, read it, propose where the line belongs, and add it on the human's yes; the line is: ${pointer}`);
   }
   return lines;
 }
@@ -199,11 +197,11 @@ function humanize(result: unknown): string {
 }
 
 /**
- * The old shape is refused once, here, instead of in every reader. `init` has no workspace to judge
- * and `migrate` exists precisely to read the old shape. `ui` and `mcp` take a `--workspace` of their
- * own and judge that one themselves; everything else stops with a message that names `kotta migrate`.
+ * The old shape is refused once, here, instead of in every reader, `migrate` included: no command of
+ * this Kotta reads a pre-1.0 workspace (BR-01m0q89b16xcfasfj1z8mc2hgg). `init` has no workspace to
+ * judge; `ui` and `mcp` take a `--workspace` of their own and judge that one themselves.
  */
-const SHAPE_EXEMPT = new Set(["init", "migrate", "ui", "mcp"]);
+const SHAPE_EXEMPT = new Set(["init", "ui", "mcp"]);
 
 program.hook("preAction", (_program, action) => {
   if (SHAPE_EXEMPT.has(action.name())) return;
@@ -229,12 +227,11 @@ function define(signature: string, render?: (result: unknown) => string, resultC
 define("init", renderInit)
   .description("Create a .kotta workspace: the form registry, the rules file, the skills")
   .option("--project-name <name>")
-  .option("--link-agents", "Link the project's AGENTS.md (and its CLAUDE.md) to the workspace rules, migrating a recognized legacy Kotta prelude after the human said yes")
   .option("--json")
-  .action((options: { projectName?: string; linkAgents?: boolean; json?: boolean }) => print(initCommand(options.projectName, { linkAgents: options.linkAgents }), Boolean(options.json)));
+  .action((options: { projectName?: string; json?: boolean }) => print(initCommand(options.projectName), Boolean(options.json)));
 
 define("migrate")
-  .description("Carry a pre-1.0 workspace to version 6: the process state into a read-only legacy/ archive, the specification untouched")
+  .description("Move the changes an earlier release kept in openspec/changes/ into .kotta/changes/, the specification untouched")
   .option("--workspace <path>", "Repository root or workspace directory; omitted uses the repository around the cwd")
   .option("--dry-run", "Report every change without writing anything")
   .option("--json")
@@ -337,10 +334,9 @@ define("narrative <change>", (result: unknown) => formatNarrative(result as Narr
 
 define("sync", renderSync)
   .description("Install the skills Kotta ships, add newly shipped forms, and refresh the workspace rules file")
-  .option("--link-agents", "Link the project's AGENTS.md (and its CLAUDE.md) to the workspace rules, migrating a recognized legacy Kotta prelude after the human said yes")
   .option("--replace-rules", "Discard local edits to the workspace rules file and take Kotta's copy; without this an edited file is never replaced")
   .option("--json")
-  .action((options: { linkAgents?: boolean; replaceRules?: boolean; json?: boolean }) => print(syncCommand({ linkAgents: options.linkAgents, replaceRules: options.replaceRules }), Boolean(options.json)));
+  .action((options: { replaceRules?: boolean; json?: boolean }) => print(syncCommand({ replaceRules: options.replaceRules }), Boolean(options.json)));
 
 define("doctor", renderDoctor)
   .description("Report whether Kotta is reachable from where its work happens")

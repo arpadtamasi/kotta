@@ -163,20 +163,20 @@ export function syncSkills(environment: NodeJS.ProcessEnv = process.env): SyncRe
  * together — an upgrade moves both, and an agent reading yesterday's rules is the failure this
  * command exists to prevent.
  *
- * The project's own `AGENTS.md` is a third thing and is not Kotta's. `linkAgents` appends one
- * pointer line to it after a human said yes; without the flag the pointer is only reported, so the
- * calling agent can quote the exact line when it asks. Its `CLAUDE.md`, which Claude Code reads
- * instead, is created when absent and otherwise follows the same flag (BR-01m0f1djtb5dkb76tjzq4x3ffh).
+ * The project's own `AGENTS.md` is a third thing and is not Kotta's: `sync` never writes it, and the
+ * pointer is reported so the calling agent can quote the exact line when it asks. Its `CLAUDE.md`,
+ * which Claude Code reads instead, is created when absent and otherwise only reported
+ * (BR-01m0f1djtb5dkb76tjzq4x3ffh).
  */
-export function syncCommand(options: { linkAgents?: boolean; replaceRules?: boolean } = {}, environment: NodeJS.ProcessEnv = process.env) {
+export function syncCommand(options: { replaceRules?: boolean } = {}, environment: NodeJS.ProcessEnv = process.env) {
   const skills = syncSkills(environment);
   // `sync` installs the skills from anywhere; only the rules file needs a workspace to live in.
   const located = (() => { try { return findRepositoryRoot(); } catch { return null; } })();
   const root = located && hasWorkspace(located) ? located : null;
   if (root) syncWorkspaceForms(root);
   const agents = root ? syncWorkspaceAgents(root, { replace: options.replaceRules }) : null;
-  const projectAgents = root && options.linkAgents ? linkProjectAgents(root) : null;
-  const claudeFile = root ? syncProjectClaude(root, { link: options.linkAgents }) : null;
+  const projectAgents = null;
+  const claudeFile = root ? syncProjectClaude(root) : null;
   return { ok: true as const, command: "sync" as const, data: { ...skills.data, agents, projectAgents, claudeFile, pointer: root ? pointerLine(root) : null } };
 }
 

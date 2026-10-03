@@ -18,7 +18,7 @@ The 1.0.0-alpha.1 release removed the process engine of the 0.x releases - tasks
 
 **Scope**
 
-The accepted nodes under `.kotta/spec/`, and the changes that remove or reword them. Not `.kotta/legacy/`, which is a read-only archive of how the project worked and governs nothing. Not a promise whose work has merely not begun: that one stays and is admitted as unimplemented.
+The accepted nodes under `.kotta/spec/`, and the changes that remove or reword them. Not a promise whose work has merely not begun: that one stays and is admitted as unimplemented.
 
 #### Scenario: A promise of a removed command leaves the model with it
 <!-- kotta: EX-01m3f47dqm80hbznzm87pfzmgx -->

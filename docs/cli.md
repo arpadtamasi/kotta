@@ -1,6 +1,6 @@
 # CLI reference
 
-Every `kotta` command and option, as `kotta <command> --help` prints them in 1.0.0-alpha.5, grouped
+Every `kotta` command and option, as `kotta <command> --help` prints them in 1.0.0-alpha.6, grouped
 by what you use them for.
 
 ## Conventions
@@ -12,8 +12,9 @@ by what you use them for.
   an unknown module, a pre-1.0 workspace); otherwise 0. `gap` and `plan` still print their whole
   report when they exit 1: the report is why you ran them.
 - **Nothing commits.** No command runs `git commit`.
-- **A pre-1.0 workspace** is refused by every command except `init` and `migrate`, with a message
-  naming `kotta migrate`.
+- **A pre-1.0 workspace** is refused by every command, `migrate` included, with a message naming the
+  last release that migrates it: `npx -y -p @arpadtamasi/kotta@1.0.0-alpha.4 kotta migrate`. See
+  [Migrating](migration.md#a-pre-10-workspace).
 
 ## Set up and upkeep
 
@@ -21,23 +22,23 @@ by what you use them for.
 | --- | --- |
 | `kotta init [options]` | Create a .kotta workspace: the form registry, the rules file, the skills |
 | `kotta sync [options]` | Install the skills Kotta ships, add newly shipped forms, and refresh the workspace rules file |
-| `kotta migrate [options]` | Carry a pre-1.0 workspace to version 6: the process state into a read-only legacy/ archive, the specification untouched |
+| `kotta migrate [options]` | Move the changes an earlier release kept in openspec/changes/ into .kotta/changes/, the specification untouched |
 | `kotta integrate [options] <host>` | Connect Kotta's specification tools to a calling agent host |
 | `kotta doctor [options]` | Report whether Kotta is reachable from where its work happens |
 
 - `init --project-name <name>`: the project name written to `config.yaml`; without it, the
   repository directory's name.
-- `init --link-agents`, `sync --link-agents`: Link the project's AGENTS.md to the workspace rules,
-  migrating a recognized legacy Kotta prelude after the human said yes. Without it, `init` creates an
-  `AGENTS.md` only when there is none, and `sync` prints the line to add.
+- The project's `AGENTS.md` and `CLAUDE.md`: `init` creates them when there are none; an existing
+  one is never written, and `init` and `sync` print the line to add, for an agent to place on the
+  human's yes.
 - `sync --replace-rules`: Discard local edits to the workspace rules file and take Kotta's copy;
   without this an edited file is never replaced.
 - `migrate --workspace <path>`: Repository root or workspace directory; omitted uses the repository
   around the cwd.
 - `migrate --dry-run`: Report every change without writing anything.
-- `migrate` on a current (version 6) workspace still moves every change an earlier release left
-  under `openspec/changes/` into `.kotta/changes/`, and writes `narrative: generated` when
-  `openspec/specs/` holds specs and nothing sets the key. See [Kotta and OpenSpec](openspec.md#moving-changes-out-of-openspecchanges).
+- `migrate` moves every change an earlier release left under `openspec/changes/` into
+  `.kotta/changes/`, and writes `narrative: generated` when `openspec/specs/` holds specs and nothing
+  sets the key; a second run says there is nothing to migrate. See [Migrating](migration.md#migrate).
 - `integrate <host>`: Supported host: codex. Any other host is an error.
 - `doctor` exits 1 when the bare name `kotta` resolves to nothing on this `PATH`
   (`BARE_NAME_UNRESOLVED`), and names the full invocation to use instead.

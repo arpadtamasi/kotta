@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { basename, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse, stringify } from "yaml";
@@ -11,23 +11,18 @@ import { parse, stringify } from "yaml";
  */
 export const WORKSPACE_SCHEMA_VERSION = 6;
 export const SPEC_DIRECTORY = "spec";
-/** Where a migrated workspace keeps its pre-1.0 process state, read-only. */
-export const LEGACY_DIRECTORY = "legacy";
-/** The pre-1.0 namespace. Only `kotta migrate` knows it; everywhere else its presence is a refusal. */
+/** The pre-1.0 namespace. Its presence is a refusal, naming the release that migrates it. */
 export const PROCESS_DIRECTORY = "process";
 
-/** The primary workspace directory name: what `init` creates and what discovery looks for first. */
+/**
+ * The one workspace directory name (BR-01m413z0y4dtjs9rs718bdnm4j): what `init` creates and the
+ * only name discovery looks for. The pre-rename name is not looked for.
+ */
 export const WORKSPACE_DIRECTORY = ".kotta";
-
-/** The pre-rename name. Still read, never created; `kotta migrate` moves a real one onto the new name. */
-export const LEGACY_WORKSPACE_DIRECTORY = ".a-team";
-
-/** Discovery order: the new name wins, the legacy name keeps an unmigrated workspace findable. */
-export const WORKSPACE_DIRECTORIES = [WORKSPACE_DIRECTORY, LEGACY_WORKSPACE_DIRECTORY] as const;
 
 /**
  * Every pre-1.0 directory a workspace could carry, in any shape from v1 to v5. Their presence is
- * what makes a workspace pre-1.0 whatever its config says; migration is the only reader.
+ * what makes a workspace pre-1.0 whatever its config says, and refused.
  */
 export const PRE_V6_ENTRIES = [
   PROCESS_DIRECTORY,
@@ -44,47 +39,9 @@ function isWorkspaceDirectory(path: string): boolean {
   }
 }
 
-function isSymbolicLink(path: string): boolean {
-  try {
-    return lstatSync(path).isSymbolicLink();
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Both names as real directories is an ambiguity only the operator can resolve. `.kotta/` wins, and
- * the caller says so out loud. A symlink between the names is the supported bridge, never ambiguous.
- */
-export function duplicateWorkspaceWarning(root: string): string | undefined {
-  const real = WORKSPACE_DIRECTORIES.filter((name) => {
-    const path = join(root, name);
-    return isWorkspaceDirectory(path) && !isSymbolicLink(path);
-  });
-  if (real.length < 2) return undefined;
-  return `Warning: ${root} contains both ${WORKSPACE_DIRECTORY}/ and ${LEGACY_WORKSPACE_DIRECTORY}/ as real directories. Kotta uses ${WORKSPACE_DIRECTORY}/ and ignores ${LEGACY_WORKSPACE_DIRECTORY}/. Merge them, then replace the leftover with a symlink: ln -s ${WORKSPACE_DIRECTORY} ${LEGACY_WORKSPACE_DIRECTORY}`;
-}
-
-const warnedRoots = new Set<string>();
-
-function warnOnDuplicateWorkspace(root: string): void {
-  if (warnedRoots.has(root)) return;
-  const warning = duplicateWorkspaceWarning(root);
-  if (!warning) return;
-  warnedRoots.add(root);
-  process.stderr.write(`${warning}\n`);
-}
-
-/**
- * The workspace directory name inside `root`: `.kotta` when it is there, `.a-team` otherwise. With
- * no workspace at all the answer is the primary name — that is what would be created next. A
- * symlinked candidate loses to a real sibling, because Git plumbing sees a symlink as a link entry.
- */
-export function workspaceDirectoryName(root: string): string {
-  const present = WORKSPACE_DIRECTORIES.filter((name) => isWorkspaceDirectory(join(root, name)));
-  if (present.length === 0) return WORKSPACE_DIRECTORY;
-  warnOnDuplicateWorkspace(root);
-  return present.find((name) => !isSymbolicLink(join(root, name))) ?? present[0];
+/** The workspace directory name inside `root`. One name, so the answer is always the same. */
+export function workspaceDirectoryName(_root: string): string {
+  return WORKSPACE_DIRECTORY;
 }
 
 /** Absolute path inside the discovered workspace directory of `root`. */
@@ -97,20 +54,15 @@ export function specPath(root: string, ...segments: string[]): string {
   return workspacePath(root, SPEC_DIRECTORY, ...segments);
 }
 
-/** The read-only archive of the pre-1.0 process state. Nothing in Kotta 1.0 writes here. */
-export function legacyPath(root: string, ...segments: string[]): string {
-  return workspacePath(root, LEGACY_DIRECTORY, ...segments);
-}
-
-/** True when `root` holds a workspace under either name. */
+/** True when `root` holds a workspace. */
 export function hasWorkspace(root: string): boolean {
-  return WORKSPACE_DIRECTORIES.some((name) => isWorkspaceDirectory(join(root, name)));
+  return isWorkspaceDirectory(join(root, WORKSPACE_DIRECTORY));
 }
 
-/** Both names, for the "no workspace here" messages. */
-export const WORKSPACE_DIRECTORY_LABEL = WORKSPACE_DIRECTORIES.join(" or ");
+/** The name, for the "no workspace here" messages. */
+export const WORKSPACE_DIRECTORY_LABEL = WORKSPACE_DIRECTORY;
 
-/** The pre-1.0 entries still present at the top of the workspace. Empty means nothing to archive. */
+/** The pre-1.0 entries still present at the top of the workspace. Empty means none. */
 export function preV6Entries(root: string): string[] {
   if (!hasWorkspace(root)) return [];
   const workspace = workspacePath(root);
@@ -154,10 +106,8 @@ export function workspaceShapeStanding(root: string): ShapeStanding {
 }
 
 /**
- * The refusal a newer workspace gets, wherever it is met. It exists apart from
- * `assertCurrentWorkspaceShape` because `migrate` is exempt from that check — deliberately, so it
- * can read old workspaces at all — and the exemption must not extend to this direction: migration
- * only ever carries a workspace forward. A version boundary refuses in both directions
+ * The refusal a newer workspace gets, wherever it is met, including the commands the CLI exempts from
+ * the shape check because they judge their own workspace (`ui`, `mcp`). A version boundary refuses in both directions
  * (BR-01m0q89b16xcfasfj1z8mc2hgg); a newer workspace is refused, not downgraded
  * (EX-01m0q89b1693yvwzx0j8tr5zjp).
  */
@@ -179,9 +129,9 @@ export function assertNotNewerWorkspace(root: string): void {
 }
 
 /**
- * The refusal every ordinary command makes on a pre-1.0 workspace. There is no compatibility layer
- * behind it on purpose: the old release stays installable under its own version, and 1.0 offers the
- * migration and does nothing else on a workspace that has not had it.
+ * The refusal every command makes on a pre-1.0 workspace (BR-01m0q89b16xcfasfj1z8mc2hgg,
+ * EX-01m415fx4jbbqpyqqa52ftgqs0): there is no compatibility layer and no migration behind it; the last release that
+ * migrates stays installable under its own version.
  */
 export function assertCurrentWorkspaceShape(root: string): void {
   if (!hasWorkspace(root)) return;
@@ -193,10 +143,9 @@ export function assertCurrentWorkspaceShape(root: string): void {
   const listed = entries.map((name) => `${directory}/${name}${name.includes(".") ? "" : "/"}`);
   if (version !== WORKSPACE_SCHEMA_VERSION) listed.push(`${directory}/config.yaml (schema version ${version === null ? "absent" : version}; expected ${WORKSPACE_SCHEMA_VERSION})`);
   throw new WorkspaceShapeError("older",
-    `${root} uses a pre-1.0 Kotta workspace shape: ${listed.join(", ")}. Kotta 1.0 owns the technical specification and keeps no process layer, `
-    + `so it reads only workspaces on shape version ${WORKSPACE_SCHEMA_VERSION}. Run 'kotta migrate --dry-run' to see exactly what would change, then 'kotta migrate': `
-    + `the process state moves untouched into ${directory}/${LEGACY_DIRECTORY}/ as a read-only archive and ${directory}/${SPEC_DIRECTORY}/ stays byte-identical. `
-    + "No other command runs on the old shape. The pre-1.0 release stays installable as @arpadtamasi/kotta@0.11.x if you need the old commands.",
+    `${root} uses a pre-1.0 Kotta workspace shape: ${listed.join(", ")}. This Kotta reads only workspaces on shape version ${WORKSPACE_SCHEMA_VERSION}, `
+    + "and no command of it, migrate included, reads or rewrites an older one. Migrate it with the last release that can: "
+    + "'npx -y -p @arpadtamasi/kotta@1.0.0-alpha.4 kotta migrate', then run this Kotta again. The pre-1.0 release stays installable as @arpadtamasi/kotta@0.11.x if you need the old commands.",
   );
 }
 
@@ -236,9 +185,8 @@ export function workspaceReadmeTemplate(): string {
 
 export function initializeWorkspace(options: InitOptions = {}): { root: string; created: string[] } {
   const root = options.root ?? findRepositoryRoot();
-  const existingName = WORKSPACE_DIRECTORIES.find((name) => existsSync(join(root, name)));
-  if (existingName) {
-    throw new Error(`${existingName} already exists; initialization preserves existing files.`);
+  if (existsSync(join(root, WORKSPACE_DIRECTORY))) {
+    throw new Error(`${WORKSPACE_DIRECTORY} already exists; initialization preserves existing files.`);
   }
   const workspace = join(root, WORKSPACE_DIRECTORY);
   const created: string[] = [];

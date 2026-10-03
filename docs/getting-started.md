@@ -10,12 +10,12 @@ You need Node.js 20 or newer, Git, and a coding-agent host that reads skills fro
 `~/.claude/skills`.
 
 ```bash
-npm install --global @arpadtamasi/kotta@next     # or the exact version: @arpadtamasi/kotta@1.0.0-alpha.5
+npm install --global @arpadtamasi/kotta@next     # or the exact version: @arpadtamasi/kotta@1.0.0-alpha.6
 kotta --version
 ```
 
 1.0 is a pre-release, published under the `next` dist-tag. A plain `npm install --global
-@arpadtamasi/kotta` still installs the last 0.x release; see [Migrating from 0.x](migration.md).
+@arpadtamasi/kotta` still installs the last 0.x release; see [Migrating](migration.md).
 
 ## Set up the repository
 

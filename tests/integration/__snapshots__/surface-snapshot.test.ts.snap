@@ -13,9 +13,9 @@ Options:
 Commands:
   init [options]                Create a .kotta workspace: the form registry,
                                 the rules file, the skills
-  migrate [options]             Carry a pre-1.0 workspace to version 6: the
-                                process state into a read-only legacy/ archive,
-                                the specification untouched
+  migrate [options]             Move the changes an earlier release kept in
+                                openspec/changes/ into .kotta/changes/, the
+                                specification untouched
   validate [options]            Validate the specification: every node against
                                 its form, every edge against the node it names
   gap [options]                 Report accepted spec promises without repository
@@ -66,17 +66,14 @@ Create a .kotta workspace: the form registry, the rules file, the skills
 
 Options:
   --project-name <name>
-  --link-agents          Link the project's AGENTS.md (and its CLAUDE.md) to the
-                         workspace rules, migrating a recognized legacy Kotta
-                         prelude after the human said yes
   --json
   -h, --help             display help for command
 
 ### kotta migrate
 Usage: kotta migrate [options]
 
-Carry a pre-1.0 workspace to version 6: the process state into a read-only
-legacy/ archive, the specification untouched
+Move the changes an earlier release kept in openspec/changes/ into
+.kotta/changes/, the specification untouched
 
 Options:
   --workspace <path>  Repository root or workspace directory; omitted uses the
@@ -306,9 +303,6 @@ Install the skills Kotta ships, add newly shipped forms, and refresh the
 workspace rules file
 
 Options:
-  --link-agents    Link the project's AGENTS.md (and its CLAUDE.md) to the
-                   workspace rules, migrating a recognized legacy Kotta prelude
-                   after the human said yes
   --replace-rules  Discard local edits to the workspace rules file and take
                    Kotta's copy; without this an edited file is never replaced
   --json

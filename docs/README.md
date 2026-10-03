@@ -2,7 +2,7 @@
 
 Kotta keeps the technical model of a product — its rules, examples, entities, state machines, use
 cases, stories and interfaces — beside the changes that propose it and the code, as the accepted truth.
-These pages describe 1.0.0-alpha.5.
+These pages describe 1.0.0-alpha.6.
 
 ## Start here
 
@@ -22,7 +22,8 @@ These pages describe 1.0.0-alpha.5.
 - [Modules and evidence](modules-and-evidence.md) — modules from manifests, boundary checks,
   cross-repository references, and `kotta gap`.
 - [The board](board.md) — `kotta ui`: the views, the provenance badges and the filter.
-- [Migrating from 0.x](migration.md) — `kotta migrate`, step by step.
+- [Migrating](migration.md) — `kotta migrate`, which moves changes out of `openspec/changes/`, and
+  what to do with a workspace from before 1.0.
 
 ## Reference
 

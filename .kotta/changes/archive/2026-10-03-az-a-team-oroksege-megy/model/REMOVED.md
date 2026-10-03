@@ -1,0 +1,4 @@
+- BR-01m3cqmtvgmsdxnf78babstw2c — Migration skips operating-system metadata and nothing else: the pre-1.0 migration it governs is removed.
+- EX-01m3cqmwbbgp3q325eee22m627 — Finder metadata does not stop the migration: proves the removed rule.
+- EX-01m3cqmwhq6b2rvc0cwhpsay21 — An unknown entry still stops the migration: proves the removed rule.
+- EX-01m0f0wn8axw5hjaed4fp0gdxx — Migration moves vocabulary, never identity: the pre-1.0 vocabulary migration is removed.

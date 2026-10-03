@@ -7,14 +7,14 @@ and the read-only tools over MCP.
 
 `kotta init` writes `.kotta/AGENTS.md` from Kotta's template, with the install line rendered from the
 package actually running, and points the project's own `AGENTS.md` at it with `@.kotta/AGENTS.md`
-(creating one when there is none). The project's `AGENTS.md` stays the project's: Kotta appends the
-pointer to an existing one only with `--link-agents`. `kotta sync` refreshes the rules file after an
+(creating one when there is none). The project's `AGENTS.md` stays the project's: Kotta never writes
+an existing one; it prints the line, and the agent places it where it belongs on the human's yes. `kotta sync` refreshes the rules file after an
 upgrade; a hand-edited copy is reported as drifted and left alone until `kotta sync --replace-rules`.
 
 Claude Code reads `CLAUDE.md`, not `AGENTS.md`, so on that host the rules would be installed and
 never read. `init` and `sync` therefore also create the project's `CLAUDE.md` when there is none,
 including `AGENTS.md` with the line `@AGENTS.md`. An existing `CLAUDE.md` that includes neither
-`AGENTS.md` nor `.kotta/AGENTS.md` is reported and left alone; `--link-agents` appends the line.
+`AGENTS.md` nor `.kotta/AGENTS.md` is reported and left alone, with the line to add.
 
 What it tells every agent:
 
@@ -26,7 +26,7 @@ What it tells every agent:
   by default), and only with an OpenSpec narrative does an obligation carry SHALL or MUST.
 - **`.kotta/spec/` is project-owned.** Nodes are shaped in conversation, with the workshop skills or
   by hand; a node becomes the agreement when it lands on the base branch on a human yes. There is no
-  process layer, and `legacy/` is never written.
+  process layer.
 - **Orient first** with `kotta validate`, `kotta gap` and `kotta questions`, and read
   `.kotta/config.yaml` rather than assuming defaults.
 - **Identifiers are minted, never typed** (`kotta spec new`), and a node is named by its title
@@ -34,7 +34,7 @@ What it tells every agent:
 - **Evidence names its node**: cite the id where the code keeps a promise and in the test that proves
   it, or admit the gap with its kind.
 
-And seven rules:
+And six rules:
 
 1. The technical model is the accepted truth; propose changes to nodes, never decide them, and mark
    your own contradiction findings `judged`. Between a change's approval and its archive, the
@@ -46,8 +46,7 @@ And seven rules:
    the agent offers the work, not the archive, and the change stays open until it is built.
 5. Evidence names its node. An unbuilt node of an approved open change needs no admission; what is
    still unkept at the archive is admitted, or `kotta archive` refuses it.
-6. Never write into `legacy/`.
-7. The code never runs ahead of the spec: before code keeps, changes or drops a promise that
+6. The code never runs ahead of the spec: before code keeps, changes or drops a promise that
    neither the model nor an approved open change states, the agent opens a change for it, takes it
    through `plan-change` to the gate, and writes the code after the yes. Building an approved change,
    or work that touches no promise, needs no new change.
@@ -61,8 +60,8 @@ skill of the same name that Kotta does not own, and remove owned skills a releas
 | Skill | Use it to |
 | --- | --- |
 | `plan-change` | open a change and carry it from its proposal to the one gate: distil, translate with provenance, `kotta plan`, ask, record the yes |
-| `setup-kotta` | initialize a workspace, or migrate a pre-1.0 one |
-| `explore-workspace` | answer questions across the specification and its legacy archive: what touches this, what is open, what has no evidence |
+| `setup-kotta` | initialize a workspace, or move an existing one's changes out of `openspec/changes/`; for a pre-1.0 workspace, name the release that migrates it |
+| `explore-workspace` | answer questions across the specification: what touches this, what is open, what has no evidence, and, from the archived changes, why a node says what it says |
 | `requirements-traceability` | read the model as a graph: dangling edges, coverage, the impact of changing a node |
 | `consolidate-model` | find one concept living under several names across code, docs, schemas and storage, and propose consolidations |
 | `report-kotta-bug` | report a defect in Kotta itself as a GitHub issue, after showing you the exact text |

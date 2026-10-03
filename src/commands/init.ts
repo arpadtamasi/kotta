@@ -11,15 +11,15 @@ import { syncSkills } from "./sync.js";
  * them.
  *
  * The skills install is global and idempotent, so running `init` in a second repository costs
- * nothing. The project's own `AGENTS.md` is touched only with `linkAgents`, or created when absent;
- * so is its `CLAUDE.md`, which Claude Code reads instead (BR-01m0f1djtb5dkb76tjzq4x3ffh).
+ * nothing. The project's own `AGENTS.md` is created when absent and otherwise only reported; so is
+ * its `CLAUDE.md`, which Claude Code reads instead (BR-01m0f1djtb5dkb76tjzq4x3ffh).
  */
-export function initCommand(projectName?: string, options: { linkAgents?: boolean } = {}) {
+export function initCommand(projectName?: string) {
   const result = initializeWorkspace({ projectName });
   const skills = syncSkills();
   const agents = syncWorkspaceAgents(result.root);
-  const projectFileMissing = !existsSync(join(result.root, PROJECT_AGENTS_FILE));
-  const projectAgents = options.linkAgents || projectFileMissing ? linkProjectAgents(result.root) : null;
-  const claudeFile = syncProjectClaude(result.root, { link: options.linkAgents });
+  // An existing project file is never written: only a missing one is created, and the line is reported.
+  const projectAgents = existsSync(join(result.root, PROJECT_AGENTS_FILE)) ? null : linkProjectAgents(result.root);
+  const claudeFile = syncProjectClaude(result.root);
   return { ok: true, command: "init", data: { root: result.root, skills: skills.data, agents, projectAgents, claudeFile, pointer: pointerLine(result.root) } };
 }

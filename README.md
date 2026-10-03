@@ -20,9 +20,10 @@ specs pass `openspec validate --specs --strict`; see [Kotta and OpenSpec](docs/o
 [Changelog](CHANGELOG.md)
 
 > **1.0 is a breaking release.** The process engine of the 0.x releases — tasks, claims,
-> worktrees, batches, review gates, observations, decision records — is gone. See
-> [Migrating from 0.x](docs/migration.md) and the [changelog](CHANGELOG.md). The last pre-1.0
-> release stays installable as `@arpadtamasi/kotta@0.11`.
+> worktrees, batches, review gates, observations, decision records — is gone. This release
+> no longer migrates a 0.x workspace: it refuses one and names Kotta 1.0.0-alpha.4,
+> the last release whose `kotta migrate` carries it over. See [Migrating](docs/migration.md) and the
+> [changelog](CHANGELOG.md). The last pre-1.0 release stays installable as `@arpadtamasi/kotta@0.11.x`.
 
 ## What Kotta is
 
@@ -43,7 +44,7 @@ disagree, the disagreement is reported rather than smoothed over. See [Concepts]
 Node.js 20 or newer, Git, and a coding-agent host that reads skills from `~/.claude/skills`.
 
 ```bash
-npm install --global @arpadtamasi/kotta@1.0.0-alpha.5   # or @arpadtamasi/kotta@next
+npm install --global @arpadtamasi/kotta@1.0.0-alpha.6   # or @arpadtamasi/kotta@next
 kotta --version
 ```
 
@@ -86,7 +87,7 @@ longer than prose; that is the price. See [Kotta and OpenSpec](docs/openspec.md)
 - [The distilled conversation](docs/narrative.md) — `kotta narrative`
 - [Modules and evidence](docs/modules-and-evidence.md) — `kotta modules`, `kotta gap`
 - [The board](docs/board.md) — `kotta ui`
-- [Migrating from 0.x](docs/migration.md) — `kotta migrate`
+- [Migrating](docs/migration.md) — `kotta migrate`, and a workspace from before 1.0
 - [CLI reference](docs/cli.md) · [Forms](docs/forms.md) · [Configuration](docs/configuration.md) ·
   [Agents and skills](docs/agents.md)
 
