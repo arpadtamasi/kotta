@@ -1,4 +1,4 @@
-import{U as Ht,C as qt,_ as C,s as Xt,l as te,g as ke,a as Qt,r as Jt,u as rt,b as Zt,c as $t,d as e1,e as t1,f as s1,h as i1,i as r1,j as a1,J as n1,k as u1,m as st,n as it,p as o1,o as l1,q as c1,t as h1,v as d1,w as p1,x as f1,y as g1}from"./mermaid.core-I2AZFPGd.js";import{g as b1,s as k1,c as A1}from"./chunk-GWA4HPMP-CpLpntOr.js";import"./index-CRBhvcpf.js";const m1=(s,i)=>Ht.lang.round(qt.parse(s)[i]);var C1=C(()=>`
+import{U as Ht,C as qt,_ as C,s as Xt,l as te,g as ke,a as Qt,r as Jt,u as rt,b as Zt,c as $t,d as e1,e as t1,f as s1,h as i1,i as r1,j as a1,J as n1,k as u1,m as st,p as o1,n as l1,o as c1,q as h1,t as d1,v as p1,w as f1,x as g1}from"./mermaid.core-C4PlYoUy.js";import{g as b1,s as k1,c as A1}from"./chunk-GWA4HPMP-CWlxekt-.js";import{s as it}from"./transform-CW97fgpX.js";import"./index-BLockV0j.js";const m1=(s,i)=>Ht.lang.round(qt.parse(s)[i]);var C1=C(()=>`
   /* Font Awesome icon styling - consolidated */
   .label-icon {
     display: inline-block;
@@ -224,4 +224,4 @@ ${l?`
     text-align: center;
   }
   ${C1()}
-`,"getStyles"),v1=B1,L1=C(({styles:s=v1}={})=>({parser:x1,get db(){return new T1},renderer:y1,styles:s,init:C(i=>{i.flowchart||(i.flowchart={}),i.flowchart.arrowMarkerAbsolute=i.arrowMarkerAbsolute,Xt({flowchart:{arrowMarkerAbsolute:i.arrowMarkerAbsolute}})},"init")}),"createFlowDiagram"),R1=L1();export{L1 as createFlowDiagram,R1 as diagram};
+`,"getStyles"),v1=B1,L1=C(({styles:s=v1}={})=>({parser:x1,get db(){return new T1},renderer:y1,styles:s,init:C(i=>{i.flowchart||(i.flowchart={}),i.flowchart.arrowMarkerAbsolute=i.arrowMarkerAbsolute,Xt({flowchart:{arrowMarkerAbsolute:i.arrowMarkerAbsolute}})},"init")}),"createFlowDiagram"),N1=L1();export{L1 as createFlowDiagram,N1 as diagram};

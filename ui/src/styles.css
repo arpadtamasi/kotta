@@ -566,3 +566,47 @@ code { font-family: var(--font-mono); }
 .banner--change details { margin-top: var(--space-1); }
 .banner--change summary { cursor: pointer; }
 .drawer__change { margin: 0 0 var(--space-2); }
+
+/* ── The drawn renderer (React Flow, laid out by ELK) ── */
+.diagram-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-4); }
+.diagram-actions__note { font-size: 11.5px; color: var(--text-muted); }
+.renderer-switch { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-4); }
+.renderer-switch__label { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); }
+.flow { width: 100%; background: var(--color-bg); }
+.flow .react-flow__controls { box-shadow: none; }
+/* React Flow names its panel corners `top`/`right`; the board's header owns `.top`. */
+.flow .react-flow__panel.top { min-height: 0; border-bottom: 0; background: none; flex-wrap: nowrap; }
+.flow .react-flow__controls-button { background: var(--color-surface); color: var(--color-text); border: 1px solid var(--line-soft); }
+.flow .react-flow__controls-button svg { fill: currentColor; }
+.flow .react-flow__handle { opacity: 0; pointer-events: none; }
+.flow-node {
+  box-sizing: border-box; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1px;
+  padding: 4px 12px; background: var(--color-surface); color: var(--color-text); text-align: center;
+  border: 1.5px solid var(--color-neutral-400); border-radius: 6px;
+  transition: opacity .12s, border-color .12s, box-shadow .12s;
+}
+.flow-node.is-open { cursor: pointer; }
+.flow-node.is-open:hover, .flow-node.is-lit { border-color: var(--color-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.flow-node.is-faded { opacity: .35; }
+.flow-node.is-dimmed { opacity: .3; }
+.flow-node--actor { background: var(--color-bg); border-width: 1.5px 1.5px 1.5px 5px; border-left-color: var(--color-text); border-radius: 3px; }
+.flow-node--use-case { border-radius: 999px; padding: 6px 20px; }
+.flow-node--goal { background: transparent; border-radius: 0; border-style: solid; border-color: var(--color-neutral-500); border-width: 1.5px 1.5px 4px; }
+.flow-node--state { border-radius: 12px; }
+.flow-node--condition { background: transparent; border: 0; color: var(--text-muted); }
+.flow-node--condition .flow-node__label { font-weight: 500; font-style: italic; }
+.flow-node--state.is-terminal { border: 4px double var(--color-text); }
+.flow-node--start { padding: 0; border-radius: 50%; background: var(--color-text); border-color: var(--color-text); }
+.flow-node--end { padding: 0; border-radius: 50%; background: var(--color-text); border: 4px double var(--color-bg); outline: 1.5px solid var(--color-text); }
+.flow-node.prov-card-stated { border-color: var(--color-text); border-style: solid; }
+.flow-node.prov-card-partly-inferred { border-color: var(--prov-partly); border-style: dashed; }
+.flow-node.prov-card-inferred { border-color: var(--prov-inferred); border-style: dashed; }
+.flow-node__label { font-size: 13.5px; font-weight: 600; line-height: 18px; }
+.flow-node__caption { font-size: 10.5px; line-height: 13px; letter-spacing: .04em; color: var(--text-muted); }
+.flow-label {
+  position: absolute; box-sizing: border-box; padding: 1px 5px; font-size: 11.5px; line-height: 16px; white-space: nowrap; overflow: hidden;
+  color: var(--text-muted); background: var(--color-bg); pointer-events: all; transition: opacity .12s;
+}
+.flow-label.is-faded { opacity: .25; }
+.flow-group { box-sizing: border-box; width: 100%; height: 100%; border: 1px dashed var(--line-soft); border-radius: 10px; background: color-mix(in srgb, var(--color-surface) 45%, transparent); }
+.flow-group__label { display: block; padding: 8px 12px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); }

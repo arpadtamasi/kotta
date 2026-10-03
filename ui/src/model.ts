@@ -259,6 +259,11 @@ export type StateMachine = {
   terminal: string[];
   /** Lines of the Transitions section that were not read as a transition, kept as written. */
   prose: string[];
+  /**
+   * Transition ends the States section does not name, when it names the others: a condition the
+   * prose wrote where a state would stand (`last member done → done`), drawn as such.
+   */
+  conditions: string[];
 };
 
 const ARROW = /\s*(?:→|->|⟶)\s*/;
@@ -286,10 +291,17 @@ export function parseTransitionLine(raw: string): Transition[] | null {
   return sources.flatMap((from) => targets.map((to) => ({ from: START.test(from) ? null : from, to, why })));
 }
 
+/**
+ * Where a paragraph holds several transitions one after another, the boundary before each: the end
+ * of a sentence, followed by `A → B:`. A paragraph that only mentions an arrow mid-sentence is not
+ * cut, and stays prose. Keeps BR-01m414skt0pcqb668azj7czkeq.
+ */
+const INLINE_TRANSITION = /(?<=[.!?;])\s+(?=[^.!?:;\n]{1,48}?\s*(?:→|->|⟶)\s*[^.!?:;\n]{1,48}?:\s)/;
+
 export function parseStateMachine(sections: Record<string, string>): StateMachine {
   const transitions: Transition[] = [];
   const prose: string[] = [];
-  for (const line of (sections.transitions ?? "").split(/\r?\n/)) {
+  for (const line of (sections.transitions ?? "").split(/\r?\n/).flatMap((line) => line.split(INLINE_TRANSITION))) {
     if (!line.trim()) continue;
     const read = parseTransitionLine(line);
     if (read) transitions.push(...read); else prose.push(line.trim());
@@ -302,7 +314,10 @@ export function parseStateMachine(sections: Record<string, string>): StateMachin
     const pattern = new RegExp(`(?:^|[^\\p{L}\\p{N}])${escaped}(?:$|[^\\p{L}\\p{N}])`, "iu");
     return sentences.some((sentence) => pattern.test(sentence));
   });
-  return { drawable: transitions.length > 0, transitions, terminal, prose };
+  const named = (name: string) => new RegExp(`(?:^|[^\\p{L}\\p{N}])${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:$|[^\\p{L}\\p{N}])`, "iu").test(sections.states ?? "");
+  const listed = names.filter(named);
+  const conditions = listed.length >= 2 ? names.filter((name) => !listed.includes(name)) : [];
+  return { drawable: transitions.length > 0, transitions, terminal, prose, conditions };
 }
 
 /** A transition label Mermaid's state grammar keeps as text: no separators, bounded length. */
@@ -322,4 +337,105 @@ export function stateDiagram(machine: StateMachine): string {
   }
   for (const name of machine.terminal) lines.push(`  ${short.get(name)} --> [*]`);
   return lines.join("\n");
+}
+
+/* ══ Graphs for the drawn renderer ══════════════════════
+   The same three readings as the Mermaid sources above, as plain nodes and edges: the React Flow
+   renderer lays them out with ELK and draws every node as the board's own markup. */
+export type FlowShape = "card" | "actor" | "use-case" | "goal" | "state" | "condition" | "start" | "end";
+export type FlowNode = {
+  id: string; label: string; shape: FlowShape;
+  /** A small second line under the label: the kind, the provenance level, or both. */
+  caption?: string;
+  level?: ProvenanceLevel; dimmed?: boolean; terminal?: boolean;
+  /** The capability group the node sits in, by group id. */
+  group?: string;
+  /** The specification node a click opens. */
+  opens?: string;
+};
+export type FlowEdge = { from: string; to: string; dashed?: boolean; both?: boolean; label?: string; title?: string };
+export type FlowGraph = { direction: "DOWN" | "RIGHT"; nodes: FlowNode[]; edges: FlowEdge[]; groups: Array<{ id: string; label: string }> };
+
+function caption(...parts: Array<string | undefined>): string | undefined {
+  const kept = parts.filter(Boolean);
+  return kept.length ? kept.join(" · ") : undefined;
+}
+function flowNode(node: SpecNode, shape: FlowShape, dim: (node: SpecNode) => boolean, kind?: string): FlowNode {
+  const level = node.provenance?.level;
+  return { id: node.id, label: node.title, shape, caption: caption(kind, level && LEVEL_LABEL[level]), level, dimmed: dim(node), opens: node.id };
+}
+/** Capability groups as flow groups; none when no node carries a capability. */
+function flowGroups(nodes: SpecNode[], prefix: string): { groups: FlowGraph["groups"]; groupOf: Map<string, string> } {
+  const split = byCapability(nodes);
+  const groupOf = new Map<string, string>();
+  if (split.length === 1 && split[0].capability === null) return { groups: [], groupOf };
+  const groups = split.map((group, index) => {
+    const id = `${prefix}:${index}`;
+    for (const node of group.nodes) groupOf.set(node.id, id);
+    return { id, label: group.capability ?? NO_CAPABILITY };
+  });
+  return { groups, groupOf };
+}
+
+/** Entities top-down; two entities that mention each other share one two-headed edge. */
+export function entityGraph(spec: SpecNode[], options: DiagramOptions = {}): FlowGraph {
+  const dim = options.dim ?? (() => false);
+  const entities = spec.filter((node) => node.form === "entity");
+  const { groups, groupOf } = flowGroups(entities, "cap");
+  const mentions = entityMentions(spec);
+  const pairs = new Set(mentions.map(({ from, to }) => `${from}\u0000${to}`));
+  const edges: FlowEdge[] = [];
+  for (const { from, to } of mentions) {
+    const both = pairs.has(`${to}\u0000${from}`);
+    if (both && from > to) continue;
+    edges.push({ from, to, both });
+  }
+  return { direction: "DOWN", groups, edges, nodes: entities.map((node) => ({ ...flowNode(node, "card", dim), group: groupOf.get(node.id) })) };
+}
+
+/** Actors, then use cases, then goals, left to right: owned by the actor edge, serving by the goal edge (dashed). */
+export function useCaseGraph(spec: SpecNode[], options: DiagramOptions = {}): FlowGraph {
+  const dim = options.dim ?? (() => false);
+  const actors = spec.filter((node) => node.form === "actor");
+  const cases = spec.filter((node) => node.form === "use-case");
+  const goals = spec.filter((node) => node.form === "goal");
+  const { groups, groupOf } = flowGroups(cases, "cap");
+  const actorIds = new Set(actors.map((node) => node.id));
+  const goalIds = new Set(goals.map((node) => node.id));
+  const edges: FlowEdge[] = [];
+  for (const node of cases) {
+    for (const actor of node.edges?.actor ?? []) if (actorIds.has(actor)) edges.push({ from: actor, to: node.id });
+    for (const goal of node.edges?.goal ?? []) if (goalIds.has(goal)) edges.push({ from: node.id, to: goal, dashed: true });
+  }
+  return {
+    direction: "RIGHT", groups, edges,
+    nodes: [
+      ...actors.map((node) => flowNode(node, "actor", dim, "actor")),
+      ...cases.map((node) => ({ ...flowNode(node, "use-case", dim), group: groupOf.get(node.id) })),
+      ...goals.map((node) => flowNode(node, "goal", dim, "goal")),
+    ],
+  };
+}
+
+const FLOW_LABEL = 40;
+/** One machine's states top-down, each transition labelled with the start of its reason. */
+export function stateGraph(machine: StateMachine): FlowGraph {
+  const names = [...new Set(machine.transitions.flatMap(({ from, to }) => (from ? [from, to] : [to])))];
+  const id = (name: string) => `state:${name}`;
+  const terminal = new Set(machine.terminal);
+  const conditions = new Set(machine.conditions);
+  const nodes: FlowNode[] = names.map((name) => conditions.has(name)
+    ? { id: id(name), label: `when ${name}`, shape: "condition" }
+    : { id: id(name), label: name, shape: "state", terminal: terminal.has(name) });
+  const edges: FlowEdge[] = machine.transitions.map(({ from, to, why }) => {
+    const flat = why.replace(/\s+/g, " ").trim();
+    const label = flat.length > FLOW_LABEL ? `${flat.slice(0, FLOW_LABEL - 1).trimEnd()}…` : flat;
+    return { from: from ? id(from) : "start", to: id(to), label: label || undefined, title: flat || undefined };
+  });
+  if (machine.transitions.some(({ from }) => from === null)) nodes.unshift({ id: "start", label: "start", shape: "start" });
+  if (terminal.size) {
+    nodes.push({ id: "end", label: "end", shape: "end" });
+    for (const name of machine.terminal) edges.push({ from: id(name), to: "end" });
+  }
+  return { direction: "DOWN", groups: [], nodes, edges };
 }
