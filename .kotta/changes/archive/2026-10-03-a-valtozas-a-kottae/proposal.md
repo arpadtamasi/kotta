@@ -24,9 +24,11 @@ elő azt, amit tilt.
   az MCP-utasítás nem nevez meg olyat, amihez az ügynöknek nem kell nyúlnia, tiltásként sem.
 - **Módosul — Migrate a workspace:** a migráció a v6-os munkaterületről is kiviszi a változásokat
   az OpenSpec mappájából.
-- **Módosul — Say when the code runs ahead of the spec** és példája, **Code ahead of the model is
-  named in one line:** kikerül belőlük az OpenSpec-skill. Hogy a szabály jelzés marad-e vagy tiltás
-  lesz, az nyitott döntés.
+- **Módosul — Say when the code runs ahead of the spec → The code never runs ahead of the spec:**
+  jelzésből tiltás lesz: az ügynök ígéretet érintő kódot csak jóváhagyott változás után ír, előbb
+  megnyitja a változást. Vele módosul két példa (*Code ahead of the model is named in one line →
+  A promise the model does not state opens a change first*, *Building an approved change needs no
+  signal*), és kikerül belőlük az OpenSpec-skill.
 - Öt új példa a fenti szabályokhoz.
 
 Nem része: a board és a nyitott változások (külön változás), a modell egyéb elavult részei (a
@@ -35,4 +37,4 @@ még a process-névteret).
 
 ## Open decisions
 
-- Szabad-e a kódnak megelőznie a specet — a „Say when the code runs ahead of the spec" szabálynál.
+Nincs: a kód soha nem előzi meg a specet (válasz: 1a, 2026-10-03).

@@ -21,5 +21,5 @@ Kód ebben a változásban nincs: a megvalósítás a jóváhagyás és az archi
 
 ## Open decisions
 
-- Honnan olvassa a board a nyitott változást: a munkakönyvtárból, vagy csak commitolt állapotból —
-  a szabálynál.
+Nincs: a nyitott változás a munkakönyvtárból olvasódik, „nincs commitolva” jelöléssel (válasz: 2a,
+2026-10-03).

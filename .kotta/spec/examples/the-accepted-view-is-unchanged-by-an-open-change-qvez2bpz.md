@@ -5,7 +5,6 @@ title: The accepted view is unchanged by an open change
 capability: planning-phase
 subjects:
   - BR-01m40e522gtq49knhy51hr9e3d
-  - IF-01m0f0wn898ggsdxa0kh6t6tnw
 provenance:
   level: partly-inferred
   decided_by: agent-decided

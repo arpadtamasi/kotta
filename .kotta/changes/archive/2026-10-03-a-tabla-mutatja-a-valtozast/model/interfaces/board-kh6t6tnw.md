@@ -7,8 +7,9 @@ provenance:
   decided_by: agent-decided
   sources:
     - ".kotta/changes/a-tabla-mutatja-a-valtozast/conversation.md · SZ1"
+    - ".kotta/changes/a-tabla-mutatja-a-valtozast/conversation.md · P1"
   quote: "rp, 2026-10-02: „change-et nem mutat a ui, pedig...”"
-  inferred: "Only the added postcondition sentence is new; it is the agent's design and waits for the gate. The rest of the node is the accepted text, unchanged."
+  inferred: "The added postcondition sentence and the exception in the invariants are new: the operator chose the working tree for an open change (option a); the wording is the agent's. The rest of the node is the accepted text, unchanged."
 accepted:
   - >-
     structural: Assigned on 2026-08-24 from the form of this node, not from examining the node itself. Many code sites realise a promise of this form and no single one would ever name it, so the absence of its id in the repository measures the instrument rather than the system. Reclassify it if that turns out to be wrong here.
@@ -28,7 +29,7 @@ GET serves state and the event timeline; the selected URL is printed and opened.
 
 ## Invariants
 
-Deliberately read-only: every mutation endpoint answers 405; actions and approvals stay in the calling chat. What it serves is what its source says: the built page is carried in the repository so a checkout can run the board without a build step, and a copy that no longer matches the source it was built from is drift the suite reports by name. A correction that reaches the source and not the served page has not reached the reader. State derives from named refs through Git plumbing, never from the working-tree HEAD; in-flight worktrees appear as overlay with provenance and disagreement surfaces as drift.
+Deliberately read-only: every mutation endpoint answers 405; actions and approvals stay in the calling chat. What it serves is what its source says: the built page is carried in the repository so a checkout can run the board without a build step, and a copy that no longer matches the source it was built from is drift the suite reports by name. A correction that reaches the source and not the served page has not reached the reader. State derives from named refs through Git plumbing, never from the working-tree HEAD — with one exception: an open change is read from the working tree and marked where it is not committed (BR-01m40e522gtq49knhy51hr9e3d); in-flight worktrees appear as overlay with provenance and disagreement surfaces as drift.
 
 ## Failures
 

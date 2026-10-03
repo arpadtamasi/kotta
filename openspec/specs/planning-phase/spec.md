@@ -32,32 +32,128 @@ Every change in a Kotta workspace; the shipped rules file and the `plan-change` 
 - **WHEN** `kotta archive` runs on that change.
 - **THEN** It refuses, names the third node by title and says where evidence was sought. Nothing is merged, nothing is moved and nothing is written. Once the third node is either named by the code that keeps it or admitted with a reason, the same command lands the change, asking nobody anything.
 
-### Requirement: Say when the code runs ahead of the spec
-<!-- kotta: BR-01m3kdq88m3bgye3xnn9q6hsr2 -->
-An agent MAY implement a change — through the OpenSpec `opsx:apply` skill or by hand — whether or not its model delta has been through the gate. When the code it writes keeps, changes or drops a promise the accepted model does not state, the agent SHALL say so to the human in one line, naming the promise in plain words, and SHALL offer the planning phase (`plan-change`) to bring the model up to the code. It SHALL NOT stop, refuse or delay the work for this. A promise that an approved change, still open, already states is not ahead of the spec: code that builds such a change needs no signal, for that promise has been through the gate and waits only for its archive. When the work touches no promise — documentation, a pure refactor — it says nothing about the spec.
+### Requirement: A proposal opens as a change in the workspace
+<!-- kotta: BR-01m40e0afjevd5jy04135bh7fj -->
+Every request to specify, propose or plan something SHALL open as a change of Kotta's own, at `.kotta/changes/<name>/`, created with `kotta change new <name>`, whether or not the project uses OpenSpec. The change SHALL hold the proposal in prose (`proposal.md`: why, what changes, what is still undecided), the distilled conversation when there is one, and the model delta under `model/`; `kotta plan`, `kotta approve` and `kotta archive` SHALL read the change there, and archive SHALL move it to `.kotta/changes/archive/`. Kotta SHALL NOT write a change under `openspec/`. The workshop skills SHALL draft their nodes into a change (`kotta spec new … --into <change>`), never straight into the accepted specification.
 
 **Rationale**
 
-The operator's concern was that an agent working from an OpenSpec change leaves Kotta aside and the technical model silently falls behind the code. The operator also said the rule must not be forceful. A one-line signal at the moment of drift keeps the human informed and the choice theirs: plan now, or later, or not at all. A prohibition would turn Kotta into a process engine again, which 1.0 removed on purpose.
+The change used to live in OpenSpec's folder, so the same request had two outcomes: in one project an agent created an OpenSpec tree to put the proposal in, in another it wrote a free-standing document that never became a change, and no node reached the model. The operator wants OpenSpec kept only as a possible basis. One home for every change makes the request mean the same thing everywhere, and drafting into a change keeps every node behind the one gate.
 
 **Scope**
 
-Every agent working in a Kotta repository, on any host, on any change. The signal is the agent's, carried by the shipped rules file; the CLI does not see code being written and enforces nothing. `kotta gap` remains the after-the-fact measure of the same drift.
+Every Kotta workspace, every agent and every command that opens, plans, approves or archives a change. An existing OpenSpec project still comes in through `kotta import openspec`, which opens a change here like any other.
+
+#### Scenario: A change left in OpenSpec's folder moves into the workspace
+<!-- kotta: EX-01m40e0bs4dbanbw4ypr86pf0x -->
+- **GIVEN** A version-6 workspace with an open change under `openspec/changes/add-pause/` whose nodes cite `openspec/changes/add-pause/proposal.md`, an approved change beside it, and OpenSpec specs under `openspec/specs/` with no `narrative:` setting.
+- **WHEN** `kotta migrate` runs.
+- **THEN** Both changes move to `.kotta/changes/` with `git mv`; the open change's sources now cite `.kotta/changes/add-pause/proposal.md`, the approved one is moved byte-identical and the report says why; the config gains `narrative: generated`; `.kotta/spec/` is byte-identical, and a second run has nothing to do.
+
+#### Scenario: A request for a spec opens a change, not a document
+<!-- kotta: EX-01m40e0b1b9rpw2jwr2864xt82 -->
+- **GIVEN** A Kotta workspace with no `openspec/` folder, and a human asking the agent for a spec of a demo application.
+- **WHEN** The agent starts on the request.
+- **THEN** It runs `kotta change new`, writes the proposal into `.kotta/changes/<name>/proposal.md` and drafts the nodes into that change's `model/`. No `SPEC.md` and no `openspec/` folder is created, and `kotta change list` names the change.
+
+#### Scenario: A workshop drafts its node into the change
+<!-- kotta: EX-01m40e0b6zc70bbzdhgj9dqmf6 -->
+- **GIVEN** An open change, and the use-case workshop drafting a use case with the human.
+- **WHEN** The workshop asks Kotta for the node.
+- **THEN** The node is minted with `kotta spec new use-case --title … --into <change>` under the change's `model/`; `.kotta/spec/` is untouched until the change is approved and archived.
+
+### Requirement: OpenSpec is an optional narrative
+<!-- kotta: BR-01m40e0ankvnv82me5emp1hf25 -->
+Whether a project keeps an OpenSpec narrative beside the model SHALL be its setting, `narrative:` in the workspace config: `none`, `generated` or `authored`, and `none` when nothing sets it. With `none`, archive SHALL write and check nothing under `openspec/`, and `plan` SHALL report no narrative drift. With `generated`, archive SHALL regenerate the touched capabilities of `openspec/specs/` from the model; with `authored`, it SHALL only report where a bound requirement disagrees with its node. The obligation keyword (SHALL or MUST) SHALL be required of a node only while an OpenSpec narrative is kept; with `none`, an obligation is written plainly, in the project's language.
+
+**Rationale**
+
+The keyword, the drift check and the generated specs exist for OpenSpec. A project that does not use OpenSpec should not pay for them, nor be pushed towards OpenSpec by a default that writes its files. A project that does use it keeps what it had, by saying so.
+
+**Scope**
+
+Every workspace, from 1.0.0-alpha.3. A workspace that had OpenSpec specs and no setting before then gets `narrative: generated` from `kotta migrate`, so its archive keeps doing what it did; `kotta validate` names the case when the setting is still missing.
+
+#### Scenario: Without a narrative setting nothing is written under openspec
+<!-- kotta: EX-01m40e0bcp9ebc3tf7f0xegwk8 -->
+- **GIVEN** A workspace whose config sets no `narrative:`, and an approved change with a business rule written in Hungarian without SHALL or MUST.
+- **WHEN** `kotta plan`, then `kotta archive` run on the change.
+- **THEN** Plan accepts the rule as written and reports no narrative drift; archive lands the rule in `.kotta/spec/`, moves the change to `.kotta/changes/archive/`, and no `openspec/` folder exists afterwards.
+
+### Requirement: The board shows what waits at the gate
+<!-- kotta: BR-01m40e522gtq49knhy51hr9e3d -->
+The board SHALL list every open change beside the accepted specification, and SHALL let the reader open one. An opened change SHALL show the model as it would be after the change — the accepted nodes with the delta applied — with every node the change adds, changes or removes marked as such, the diagrams drawn from that merged model, and beside it the change's proposal, its open decisions, and whether it has been planned and approved. An open change SHALL be read from the working tree, so a change not yet committed is shown, and every part of it not committed SHALL be marked as such. The accepted view SHALL stay what it is, read from the base ref as before: the agreed specification, unaffected by any open change. The board SHALL remain read-only: nothing is planned, approved or archived from it.
+
+**Rationale**
+
+Since every proposal opens as a change and reaches the accepted specification only through the gate, the work that waits for the human's decision lives entirely in changes. A board that shows only the accepted specification is empty exactly when the human has to decide: in two projects the whole first slice sat in a change and the board showed nothing.
+
+**Scope**
+
+`kotta ui`, for every workspace with an open change under `.kotta/changes/`. Archived changes are history and are not listed.
+
+#### Scenario: A changed node is marked against the accepted one
+<!-- kotta: EX-01m40e52dx6qscs9cevrp7zcfh -->
+- **GIVEN** An accepted rule *Quitting asks for confirmation*, and an open change whose model carries the same rule with a new text and removes the example that proved the old one.
+- **WHEN** The human opens the change on the board.
+- **THEN** The rule is shown with its new text, marked changed, and the old text is available beside it; the example is shown marked removed; every other accepted node is shown unmarked.
+
+#### Scenario: An uncommitted change appears on the board
+<!-- kotta: EX-01m40e5289ztd19t2he1g3vw2b -->
+- **GIVEN** A workspace with no accepted node and an open change `elso-szelet` whose model holds a goal, a use case and three rules, none of it committed.
+- **WHEN** The human runs `kotta ui` and opens the change.
+- **THEN** The board lists `elso-szelet` as an open change, marked as not committed; opened, it shows the five nodes as added, the proposal's text and its open decisions, and says the change is neither planned nor approved.
+
+#### Scenario: The accepted view is unchanged by an open change
+<!-- kotta: EX-01m40e52kbj64sykakqvez2bpz -->
+- **GIVEN** The same workspace, with the open change from the previous example.
+- **WHEN** The human looks at the accepted specification on the board.
+- **THEN** It shows the rule with its accepted text and the example as it stands; nothing of the open change appears there.
+
+### Requirement: The code never runs ahead of the spec
+<!-- kotta: BR-01m3kdq88m3bgye3xnn9q6hsr2 -->
+An agent SHALL NOT write code that keeps, changes or drops a promise the accepted model does not state, unless an approved change states that promise. When asked for such work, the agent SHALL first open a change (`kotta change new`), bring it through planning to the one gate, and SHALL write the code only after the human's yes; it SHALL say so to the human in one line, naming the promise in plain words, instead of writing the code. Code that builds an approved change, still open, is not ahead of the spec: that promise has been through the gate. Work that touches no promise — documentation, a pure refactor — needs no change and no word about the spec.
+
+**Rationale**
+
+A one-line signal was the rule until 2026-10-03, so that Kotta would not turn into a process engine. In practice the signal was not enough: twice in a week the code shipped first — a release, then a board feature proposed code-first — and the accepted model fell behind and had to be caught up afterwards. The operator decided that the code never runs ahead of the spec. The gate stays the one gate; what changes is that an agent reaches it before it writes the code, not after.
+
+**Scope**
+
+Every agent working in a Kotta repository, on any host, on any change. The rule is the agent's, carried by the shipped rules file and the `plan-change` skill; the CLI does not see code being written and enforces nothing. `kotta gap` remains the after-the-fact measure of drift.
+
+#### Scenario: A promise the model does not state opens a change first
+<!-- kotta: EX-01m3kdq8kg96c3151xrkb7tgy4 -->
+- **GIVEN** A change whose model delta has not been through the gate, adding a behaviour no accepted node states — say, an upload limit the model does not mention.
+- **WHEN** The human asks the agent to implement it.
+- **THEN** The agent does not write the code. In one line it says that the work adds a promise the model does not state — an upload limit — and opens a change for it; the code is written after the human approves that change.
 
 #### Scenario: Building an approved change needs no signal
 <!-- kotta: EX-01m3wa6fk1b8anb3dxn48rz5e0 -->
 - **GIVEN** An approved change, still open, one of whose user stories promises that water can be logged. The accepted model says nothing about water.
 - **WHEN** The agent writes the code that logs water, naming the story's id where the code keeps it.
-- **THEN** It says nothing about the spec and offers no planning: the promise is stated by the approved change. Had no approved change stated it, the same code would have earned the one-line signal.
-
-#### Scenario: Code ahead of the model is named in one line
-<!-- kotta: EX-01m3kdq8kg96c3151xrkb7tgy4 -->
-- **GIVEN** An OpenSpec change whose model delta has not been through the gate, adding a behaviour no accepted node states — say, an upload limit the model does not mention.
-- **WHEN** The human asks the agent to apply it, with `opsx:apply` or "implement this".
-- **THEN** The agent implements the change. In one line it says that the code now keeps a promise the model does not state, names it in plain words, and offers to run the planning phase. It does not stop or wait for an answer.
+- **THEN** The agent writes the code and opens no change: the promise is stated by the approved change. Had no approved change stated it, the agent would have opened a change and waited for the gate before writing the code.
 
 #### Scenario: Work that touches no promise says nothing about the spec
 <!-- kotta: EX-01m3kdq91dfgf22v9s587hhk1d -->
 - **GIVEN** A change that only rewrites documentation, or refactors code without adding, changing or removing any promise.
 - **WHEN** The human asks the agent to apply it.
 - **THEN** The agent implements it and says nothing about the specification.
+
+### Requirement: The rules name nothing an agent should not reach for
+<!-- kotta: BR-01m40e0avfnth9evktzafbhr7w -->
+The rules file Kotta writes, the skills it installs and the instructions its MCP server gives SHALL NOT name a tool the project may not use, or a concept Kotta has retired, not even to forbid it: no OpenSpec in the rules file, no task, claim, batch, observation, process layer or decision record. What applies only in some workspaces SHALL be said conditionally, on something the agent can see — „where the workspace has `legacy/`”, „unless the config sets `narrative:`” — and nowhere else. They SHALL NOT point to a command or tool that does not exist.
+
+**Rationale**
+
+What the rules name, an agent reaches for. A prohibition plants the thing it prohibits in every project, including the ones that never had it; the list of retired process terms did the same with observations. The fix is to say what to do, not what not to do.
+
+**Scope**
+
+`.kotta/AGENTS.md` as `kotta sync` writes it, every skill Kotta ships, and the MCP server's instructions. A test keeps the named words out of the rules file. The documentation, written for people, may name them.
+
+#### Scenario: The rules file does not name OpenSpec, not even to forbid it
+<!-- kotta: EX-01m40e0bkfgmn68mjppatt5yag -->
+- **GIVEN** A fresh workspace created by `kotta init`.
+- **WHEN** The rules file `.kotta/AGENTS.md` is read.
+- **THEN** It says where a change lives and how it opens; it contains none of „openspec”, „opsx”, „observation”, „batch”, „process layer” or „decision record”.

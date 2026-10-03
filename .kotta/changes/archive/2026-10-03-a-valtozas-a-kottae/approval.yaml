@@ -1,0 +1,32 @@
+change: a-valtozas-a-kottae
+approved_by: rp
+approved_at: 2026-10-03T08:58:46.102Z
+approval_basis: sha256:cb8600454b56d9419901ddd960baf6a18dbc67af9f5d36da9c83f81d0ce5fcc3
+approved:
+  added:
+    - id: BR-01m40e0afjevd5jy04135bh7fj
+      title: A proposal opens as a change in the workspace
+    - id: BR-01m40e0ankvnv82me5emp1hf25
+      title: OpenSpec is an optional narrative
+    - id: BR-01m40e0avfnth9evktzafbhr7w
+      title: The rules name nothing an agent should not reach for
+    - id: EX-01m40e0bs4dbanbw4ypr86pf0x
+      title: A change left in OpenSpec's folder moves into the workspace
+    - id: EX-01m40e0b1b9rpw2jwr2864xt82
+      title: A request for a spec opens a change, not a document
+    - id: EX-01m40e0b6zc70bbzdhgj9dqmf6
+      title: A workshop drafts its node into the change
+    - id: EX-01m40e0bkfgmn68mjppatt5yag
+      title: The rules file does not name OpenSpec, not even to forbid it
+    - id: EX-01m40e0bcp9ebc3tf7f0xegwk8
+      title: Without a narrative setting nothing is written under openspec
+  changed:
+    - id: BR-01m3kdq88m3bgye3xnn9q6hsr2
+      title: The code never runs ahead of the spec
+    - id: EX-01m3wa6fk1b8anb3dxn48rz5e0
+      title: Building an approved change needs no signal
+    - id: EX-01m3kdq8kg96c3151xrkb7tgy4
+      title: A promise the model does not state opens a change first
+    - id: UC-01m0f0wn89x00jkpqpqc2esx9h
+      title: Migrate a workspace
+  removed: []

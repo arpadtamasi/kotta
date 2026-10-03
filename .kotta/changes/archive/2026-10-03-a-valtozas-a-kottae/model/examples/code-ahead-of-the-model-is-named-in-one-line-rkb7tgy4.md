@@ -1,7 +1,7 @@
 ---
 id: EX-01m3kdq8kg96c3151xrkb7tgy4
 form: example
-title: Code ahead of the model is named in one line
+title: A promise the model does not state opens a change first
 capability: planning-phase
 subjects:
   - BR-01m3kdq88m3bgye3xnn9q6hsr2
@@ -9,11 +9,12 @@ provenance:
   level: partly-inferred
   decided_by: human
   sources:
+    - ".kotta/changes/a-valtozas-a-kottae/conversation.md · P7"
     - "chat with the operator, 2026-09-28"
   quote: "rp, 2026-09-28, chat: „igen, de ne legyen erőszakos — csak jelezze, ha elúszik a spec”"
   inferred: "The upload-limit instance is the agent's illustration."
 ---
-# Code ahead of the model is named in one line
+# A promise the model does not state opens a change first
 
 ## Given
 
@@ -25,4 +26,4 @@ The human asks the agent to implement it.
 
 ## Then
 
-The agent implements the change. In one line it says that the code now keeps a promise the model does not state, names it in plain words, and offers to run the planning phase. It does not stop or wait for an answer.
+The agent does not write the code. In one line it says that the work adds a promise the model does not state — an upload limit — and opens a change for it; the code is written after the human approves that change.

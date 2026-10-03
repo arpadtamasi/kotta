@@ -10,6 +10,7 @@ provenance:
   decided_by: agent-proposed-human-approved
   sources:
     - ".kotta/changes/fejlesztes-az-archive-elott/conversation.md · P3"
+    - ".kotta/changes/a-valtozas-a-kottae/conversation.md · P7"
   quote: "rp, 2026-10-01 18:02 UTC: 4 ok"
   inferred: "The scene - water logging in an approved change - is taken from the health-ai conversation and worded by the agent."
 ---
@@ -25,4 +26,4 @@ The agent writes the code that logs water, naming the story's id where the code 
 
 ## Then
 
-It says nothing about the spec and offers no planning: the promise is stated by the approved change. Had no approved change stated it, the same code would have earned the one-line signal.
+The agent writes the code and opens no change: the promise is stated by the approved change. Had no approved change stated it, the agent would have opened a change and waited for the gate before writing the code.

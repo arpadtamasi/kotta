@@ -1,0 +1,18 @@
+change: a-tabla-mutatja-a-valtozast
+approved_by: rp
+approved_at: 2026-10-03T09:04:09.238Z
+approval_basis: sha256:e7efef0803a35679d7b2cb20cae79d23321ce7e8364caf63429e0af0b846f582
+approved:
+  added:
+    - id: BR-01m40e522gtq49knhy51hr9e3d
+      title: The board shows what waits at the gate
+    - id: EX-01m40e52dx6qscs9cevrp7zcfh
+      title: A changed node is marked against the accepted one
+    - id: EX-01m40e5289ztd19t2he1g3vw2b
+      title: An uncommitted change appears on the board
+    - id: EX-01m40e52kbj64sykakqvez2bpz
+      title: The accepted view is unchanged by an open change
+  changed:
+    - id: IF-01m0f0wn898ggsdxa0kh6t6tnw
+      title: The read-only board
+  removed: []

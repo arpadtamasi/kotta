@@ -1,8 +1,8 @@
 ---
 change: a-tabla-mutatja-a-valtozast
-generated_at: 2026-10-03T08:31:07.099Z
-delta_hash: sha256:32d4ae52547569eb9611685d03f69ccb33cd81e42ed514b4009a694fc6d7de3f
-ready_for_approval: false
+generated_at: 2026-10-03T08:58:56.867Z
+delta_hash: sha256:e7efef0803a35679d7b2cb20cae79d23321ce7e8364caf63429e0af0b846f582
+ready_for_approval: true
 ---
 
 # Planning: a-tabla-mutatja-a-valtozast
@@ -24,9 +24,7 @@ Removed: none
 
 ## (a) Structure of the delta
 
-- `SPEC_NODE_WRONG_TARGET` a-changed-node-is-marked-against-the-accepted-one-vrp7zcfh.md (example) edge 'subjects' field 'subjects' references 'IF-01m0f0wn898ggsdxa0kh6t6tnw', which is a interface; point 'subjects' at user-story or use-case or business-rule or quality-attribute. — .kotta/changes/a-tabla-mutatja-a-valtozast/model/examples/a-changed-node-is-marked-against-the-accepted-one-vrp7zcfh.md
-- `SPEC_NODE_WRONG_TARGET` an-uncommitted-change-appears-on-the-board-e1g3vw2b.md (example) edge 'subjects' field 'subjects' references 'IF-01m0f0wn898ggsdxa0kh6t6tnw', which is a interface; point 'subjects' at user-story or use-case or business-rule or quality-attribute. — .kotta/changes/a-tabla-mutatja-a-valtozast/model/examples/an-uncommitted-change-appears-on-the-board-e1g3vw2b.md
-- `SPEC_NODE_WRONG_TARGET` the-accepted-view-is-unchanged-by-an-open-change-qvez2bpz.md (example) edge 'subjects' field 'subjects' references 'IF-01m0f0wn898ggsdxa0kh6t6tnw', which is a interface; point 'subjects' at user-story or use-case or business-rule or quality-attribute. — .kotta/changes/a-tabla-mutatja-a-valtozast/model/examples/the-accepted-view-is-unchanged-by-an-open-change-qvez2bpz.md
+Every delta node satisfies its form: sections, required edges, id and provenance.
 
 ## (b) The merged view
 
@@ -57,7 +55,7 @@ The machine's candidates are mechanical and narrow. Contradictions the agent fou
 
 ## (d) Silences
 
-- Open: The board shows what waits at the gate (BR-51hr9e3d) BR-51hr9e3d/Q1 — **Honnan olvassa a board a nyitott változást?** A board ma szigorúan a Gitből olvas: csak azt mutatja, ami a fő ágon commitolva van, a munkakönyvtárat soha — ez egy elfogadott ígérete. Egy készülő változás viszont jellemzően még nincs commitolva; a két wing-projektben egyetlen commit sincs. (a) A nyitott változást a munkakönyvtárból olvassa, jól láthatóan „nincs commitolva” jelöléssel; az elfogadott nézet marad a Gitből. Ehhez a board ígéretét ki kell egészíteni ezzel az egy kivétellel. (b) Csak commitolt változást mutat (bármelyik ágon); amíg nincs commit, a board azt írja ki, hogy a változás létezik, de még nincs commitolva. Én az (a)-t javaslom: a kapunál a még nem commitolt javaslatot is látni kell, különben a board épp ott hallgat, ahol kellene. (.kotta/changes/a-tabla-mutatja-a-valtozast/model/business-rules/the-board-shows-what-waits-at-the-gate-51hr9e3d.md:31)
+No open decision, and no question a form asks is left unanswered.
 
 ## (e) Narrative drift
 
@@ -70,10 +68,10 @@ Decided by: 0 human, 0 agent-proposed-human-approved, 5 agent-decided.
 
 What the machine decided alone:
 
-- The board shows what waits at the gate (BR-51hr9e3d) — The operator reported that the board shows no change. What it should show — a selector, the merged model with marks, the proposal and its state — is the agent's design, not yet approved.
+- The board shows what waits at the gate (BR-51hr9e3d) — The operator reported that the board shows no change, and chose that an open change is read from the working tree, marked as not committed (option a). What the board shows of a change - the merged model, the marks, the proposal and its state - is the agent's design.
 - A changed node is marked against the accepted one (EX-vrp7zcfh) — The case is the agent's illustration of the rule it proposes.
 - An uncommitted change appears on the board (EX-e1g3vw2b) — The case is the agent's illustration of the rule it proposes.
 - The accepted view is unchanged by an open change (EX-qvez2bpz) — The case is the agent's illustration of the rule it proposes.
-- The read-only board (IF-kh6t6tnw) — Only the added postcondition sentence is new; it is the agent's design and waits for the gate. The rest of the node is the accepted text, unchanged.
+- The read-only board (IF-kh6t6tnw) — The added postcondition sentence and the exception in the invariants are new: the operator chose the working tree for an open change (option a); the wording is the agent's. The rest of the node is the accepted text, unchanged.
 
-Conversation: .kotta/changes/a-tabla-mutatja-a-valtozast/conversation.md, cited 5 times. Read it for the why before calling anything inferred.
+Conversation: .kotta/changes/a-tabla-mutatja-a-valtozast/conversation.md, cited 7 times. Read it for the why before calling anything inferred.
