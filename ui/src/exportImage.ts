@@ -1,7 +1,8 @@
 /* ══ A drawn diagram, taken away ════════════════════════
    Every diagram can be copied or saved as SVG or PNG. The SVG is the drawing's own vector source;
    the PNG is that same SVG rasterised at twice its size, with the board's font embedded so the
-   picture reads as the page does (without a network it falls back to the system font). */
+   picture reads as the page does (without a network it falls back to the system font).
+   Keeps BR-01m414skms7ph39bgaeap927vb: nothing here writes to the workspace. */
 
 const FONT_CSS = "https://fonts.googleapis.com/css2?family=Archivo:wght@400;600&display=swap";
 let fontFaces: Promise<string> | null = null;

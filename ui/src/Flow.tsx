@@ -11,7 +11,8 @@ import type { FlowEdge, FlowGraph, FlowNode } from "./model";
 /* ══ The drawn renderer: React Flow, laid out by ELK ═══
    Every node is the board's own markup, so it carries the board's tokens and provenance frames; ELK
    places the nodes and routes every edge orthogonally, and each edge is drawn along ELK's own bend
-   points rather than re-routed by React Flow. Loaded only when a view draws with it. */
+   points rather than re-routed by React Flow. Loaded only when a view draws with it.
+   Keeps BR-01m414skfbftb3zv6z2f1tzzsq (the board draws its own diagrams). */
 
 const MAX_WIDTH: Partial<Record<FlowNode["shape"], number>> = { "use-case": 280, actor: 200, goal: 220 };
 const DEFAULT_MAX = 200;

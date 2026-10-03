@@ -1,0 +1,20 @@
+change: a-tabla-rajzol
+approved_by: rp
+approved_at: 2026-10-03T15:26:31.431Z
+approval_basis: sha256:a0ffa4c231f8602119f4ea47e05ed302617f1b658a8e9d7e7765fa4aabd0a114
+approved:
+  added:
+    - id: BR-01m414skt0pcqb668azj7czkeq
+      title: A state machine written as one paragraph is still drawn
+    - id: BR-01m414skms7ph39bgaeap927vb
+      title: Every diagram can be taken away as SVG or PNG
+    - id: BR-01m414skfbftb3zv6z2f1tzzsq
+      title: The board draws its own diagrams, and Mermaid is one switch away
+    - id: EX-01m414sm6ttpg2fmsn7b872mpc
+      title: A diagram is copied as a picture and nothing is written
+    - id: EX-01m414smebtmh18j4jxxsbabhh
+      title: The batch lifecycle is drawn from its one paragraph
+    - id: EX-01m414skz957zjghee0wqjx5m6
+      title: The renderer switch redraws the same diagram
+  changed: []
+  removed: []

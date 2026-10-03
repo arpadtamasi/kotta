@@ -101,6 +101,7 @@ describe("a state machine", () => {
   });
 });
 
+// BR-01m414skt0pcqb668azj7czkeq, proven by EX-01m414smebtmh18j4jxxsbabhh.
 describe("a state machine written as one paragraph", () => {
   const sections = {
     states: "backlog - defined - active - done.",
@@ -121,6 +122,7 @@ describe("a state machine written as one paragraph", () => {
   });
 });
 
+// BR-01m414skfbftb3zv6z2f1tzzsq: what the board's own renderer draws.
 describe("the graphs the drawn renderer lays out", () => {
   it("draws entities top-down, and two entities that name each other with one two-headed edge", () => {
     expect(entityGraph(spec)).toMatchObject({ direction: "DOWN", groups: [], edges: [{ from: ORDER, to: PAYMENT, both: false }, { from: INVOICE, to: ORDER, both: false }] });

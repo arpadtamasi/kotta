@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import axe from "axe-core";
 import { App, EntityDrawer, SpecView, readBoard } from "../../ui/src/App";
-import { setRenderer } from "../../ui/src/Diagram";
+import { RendererSwitch, setRenderer } from "../../ui/src/Diagram";
 import { fileName } from "../../ui/src/exportImage";
 import { EntityMapView, ProvenanceSummary, StateMachineView, StoryMapView, UseCaseView } from "../../ui/src/views";
 import {
@@ -119,6 +119,7 @@ describe("the state machine view", () => {
   });
 });
 
+// BR-01m414skms7ph39bgaeap927vb, proven by EX-01m414sm6ttpg2fmsn7b872mpc.
 describe("a drawn diagram, taken away", () => {
   it("offers to copy or save every drawing as SVG or PNG, and copies the drawing's own SVG", async () => {
     const written: string[] = [];
@@ -135,6 +136,19 @@ describe("a drawn diagram, taken away", () => {
   it("names a saved file after the diagram, in plain letters", () => {
     expect(fileName("State machine: Kitöltés jóváhagyással", "png")).toBe("state-machine-kitoltes-jovahagyassal.png");
     expect(fileName("…", "svg")).toBe("diagram.svg");
+  });
+});
+
+// BR-01m414skfbftb3zv6z2f1tzzsq, proven by EX-01m414skz957zjghee0wqjx5m6.
+describe("the renderer switch", () => {
+  it("offers the board's own renderer and Mermaid, no dagre, and keeps the choice in the address", () => {
+    setRenderer("flow");
+    render(<RendererSwitch />);
+    const group = screen.getByRole("group", { name: "Diagram renderer" });
+    expect(within(group).getAllByRole("button").map((button) => button.textContent)).toEqual(["React Flow · ELK", "Mermaid · ELK"]);
+    fireEvent.click(within(group).getByRole("button", { name: "Mermaid · ELK" }));
+    expect(new URL(window.location.href).searchParams.get("renderer")).toBe("elk");
+    expect(within(group).getByRole("button", { name: "Mermaid · ELK" }).getAttribute("aria-pressed")).toBe("true");
   });
 });
 

@@ -1,6 +1,6 @@
 ---
 change: a-tabla-rajzol
-generated_at: 2026-10-03T15:06:45.611Z
+generated_at: 2026-10-03T15:26:31.185Z
 delta_hash: sha256:a0ffa4c231f8602119f4ea47e05ed302617f1b658a8e9d7e7765fa4aabd0a114
 ready_for_approval: true
 ---
@@ -38,7 +38,7 @@ No accepted node shares an edge with, is named by, or contrasts with the delta.
 The machine's candidates are mechanical and narrow. Contradictions the agent found by comparing every claim of the delta with the accepted nodes it touches, each marked `judged`:
 
 <!-- kotta:judged — the agent's own findings; `kotta plan` keeps this block as written -->
-- judged: *Accessible web surfaces* asks for a board that is keyboard-usable throughout and checked by axe in the suite; in the board's own renderer a node opens on a click only (the same node opens from the list under every diagram by keyboard), and the suite runs axe on the Mermaid drawing alone, because the test environment cannot lay the drawn one out.
+- judged: *Accessible web surfaces* asks for a board that is keyboard-usable throughout and checked by axe in the suite; in the board's own renderer a node opens on a click only (the same node opens from the list under every diagram by keyboard), and the suite runs axe on the Mermaid drawing alone, because the test environment cannot lay the drawn one out. rp, 2026-10-03, at the gate: „1a” — it ships as is, keyboard focus on the drawing comes in a later change.
 - judged: *The read-only board* says the built page carried in the repository must match its source; the page is rebuilt with this change, and copying or saving a diagram happens in the browser alone, so the board still writes nothing.
 <!-- /kotta:judged -->
 

@@ -39,7 +39,7 @@ export function readPalette(): Palette {
 /* ── Which renderer draws ─────────────────────────────
    `flow` draws the board's own nodes with React Flow, laid out by ELK; `elk` asks Mermaid for the
    same reading, also laid out by ELK, and keeps its source one click away. The choice lives in the
-   address (`?renderer=`), so two tabs can sit side by side. */
+   address (`?renderer=`), so two tabs can sit side by side. Keeps BR-01m414skfbftb3zv6z2f1tzzsq. */
 export const RENDERERS = [
   { key: "flow", label: "React Flow · ELK" },
   { key: "elk", label: "Mermaid · ELK" },
@@ -105,7 +105,7 @@ export async function renderMermaid(source: string): Promise<string> {
   return svg.replace(/&amp;(#\d+|lt|gt|quot|amp);/g, "&$1;");
 }
 
-/** Copy or save the drawing as SVG or PNG; a short note under the buttons says how it went. */
+/** Copy or save the drawing as SVG or PNG; a short note under the buttons says how it went (BR-01m414skms7ph39bgaeap927vb). */
 export function DiagramActions({ label, svg }: { label: string; svg: () => string | null }) {
   const [note, setNote] = useState<string | null>(null);
   useEffect(() => {

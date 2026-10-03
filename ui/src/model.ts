@@ -294,7 +294,7 @@ export function parseTransitionLine(raw: string): Transition[] | null {
 /**
  * Where a paragraph holds several transitions one after another, the boundary before each: the end
  * of a sentence, followed by `A → B:`. A paragraph that only mentions an arrow mid-sentence is not
- * cut, and stays prose.
+ * cut, and stays prose. Keeps BR-01m414skt0pcqb668azj7czkeq.
  */
 const INLINE_TRANSITION = /(?<=[.!?;])\s+(?=[^.!?:;\n]{1,48}?\s*(?:→|->|⟶)\s*[^.!?:;\n]{1,48}?:\s)/;
 
