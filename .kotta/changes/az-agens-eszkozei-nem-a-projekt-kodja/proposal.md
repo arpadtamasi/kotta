@@ -5,24 +5,24 @@
 A health-ai projektben a `kotta gap` 145 „specifikáció nélküli kényszer" találatából 141 a
 `.claude/skills/gstack/` alól jön: egy bemásolt, idegen skill-készlet kódjából. A jelentés azt
 kérdezi, mit kényszerít ki a projekt kódja specifikáció nélkül, és erre a válasz négy sor lenne;
-a többi zaj, amely miatt a jelentést nem olvassa senki. Ugyanez a könyvtár bizonyítéknak is
-számítana, ha egy fájlja véletlenül megnevezne egy elemet. Az operátor a felsorolt hibákra,
-köztük erre, 2026-10-02: „csináld".
+a többi zaj. Ugyanez a könyvtár bizonyítéknak is számítana, ha egy fájlja megnevezne egy elemet.
+
+Az első javaslat egy újabb kizárt forrás volt (`.claude/`, `.codex/`). Az operátor, 2026-10-03:
+„de tiltás helyett inkább azt kéne megmondani, hogy miben igen", és: „a determinisztikus tiltás
+mindig rossz lesz". Egy rögzített tiltólista mindig lemarad valamiről, amit egy projekt a repóban
+tart; a projekt viszont tudja, hol van a saját kódja.
 
 ## What changes
 
-- **Az ügynök-host könyvtárai kizárt források.** A repó gyökerében lévő, az ügynök-host által
-  olvasott könyvtár - skillek, beállítások, hookok - nem a projekt kódja: sem bizonyítékot nem
-  keres benne a `kotta gap` és a `kotta modules`, sem specifikáció nélküli kényszert. Módosul az *A
-  copy of the specification is not evidence* szabály.
-- **A jelentés megnevezi az új osztályt** (`agent-tooling`), ahogy a többi kizárt forrást: módosul
-  a *The report names what it did not count* szabály (hat osztály helyett hét).
+- **Új szabály: *Evidence is sought where the project says its code is*.** A bizonyítékot és a
+  specifikáció nélküli kényszert a `kotta gap` és a `kotta modules` ott keresi, ahol a projekt
+  megmondja, hogy a kódja és a tesztjei vannak; ami azon kívül esik, nem számít. A jelentés feje
+  megnevezi, hol olvasott.
 - **Új példa**: *A vendored skill is neither evidence nor unspecified enforcement*.
 
-Ami marad: a kizárás továbbra is ismert helyeket nevez meg, nem könyvtárnév-mintát; a projekt saját
-`skills/` könyvtára (ahogy ebben a repóban is) kód marad.
+Ami marad: a bizonyíték továbbra is hivatkozás (az elem azonosítója a kódban).
 
 ## Open decisions
 
-- Mely könyvtárak számítanak az ügynök eszközeinek: a gyökérben lévő `.claude/` és `.codex/`
-  egészében (az operátor válasza 2026-10-03-án: „a").
+- Ki mondja meg, hol a kód; mi történik, amíg nincs megmondva; és mi lesz a mai hat kizárt
+  forrással. (Az új szabályban.)

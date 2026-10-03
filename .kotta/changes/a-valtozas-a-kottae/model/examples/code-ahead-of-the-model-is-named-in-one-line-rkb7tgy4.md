@@ -17,11 +17,11 @@ provenance:
 
 ## Given
 
-An OpenSpec change whose model delta has not been through the gate, adding a behaviour no accepted node states — say, an upload limit the model does not mention.
+A change whose model delta has not been through the gate, adding a behaviour no accepted node states — say, an upload limit the model does not mention.
 
 ## When
 
-The human asks the agent to apply it, with `opsx:apply` or "implement this".
+The human asks the agent to implement it.
 
 ## Then
 

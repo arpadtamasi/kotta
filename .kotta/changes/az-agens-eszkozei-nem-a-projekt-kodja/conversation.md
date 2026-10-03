@@ -1,9 +1,9 @@
 ---
 change: az-agens-eszkozei-nem-a-projekt-kodja
 generated_by: kotta narrative
-generated_at: "2026-10-03T08:28:33.433Z"
+generated_at: "2026-10-03T08:30:07.640Z"
 since: "2026-10-02T07:30:00.000Z"
-digest: "sha256:d3b160ba8a9ebf2cead5aa5e106e293674fa9cb43f0f69b1d9befec426e446d9"
+digest: "sha256:5d89f01652e09a40ebe8de9ced715e738e5b9a18b7cf930d37268d5ac707e85f"
 ---
 # Beszélgetés: az-agens-eszkozei-nem-a-projekt-kodja
 
@@ -81,11 +81,34 @@ Ahol a válasz sem egyértelmű igen, sem nem, sem választás, vagy egy puszta 
 
 > csináld
 
+### P2 · 2026-10-03 08:29 UTC
+
+**Ágens** (08:29 UTC):
+
+> …
+>
+> ## 2. kapu: a régi motor maradék ígéretei
+>
+> Ez változatlanul áll, ahogy előbb leírtam:
+>
+> - **Kikerül 63 elem**, amely csak a levett motort ígéri (taskok, claimek, briefek, observationök, batchek, decision recordok, review-beadás, "control plane").
+> - **Három elem átfogalmazódik** az én szövegemmel. Egy change egy emberi kapun megy át, a tervezés végén. Egy ígéret attól betartott, hogy a kód megnevezi.
+> - **Négy példa új szabályt is bizonyít**, hogy a megmaradó szabályoknak maradjon példájuk.
+> - **A motor szavaival beszélő nagyjából húsz megmaradó elem** átfogalmazása a javaslatom szerint egy következő change-be kerül.
+>
+> **Jóváhagyod, igen vagy nem?**
+>
+> Mindkét change a `fix/gap-narrative-followups` ágon van commitolva és feltolva. Az igenek után megépítem őket (a kizárás kódja és tesztje, a kivezetés utáni takarítás), és az új sorrend szerint csak azután archive-olok.
+
+**Ember** (08:29 UTC):
+
+> de tiltás helyett inkább azt klne megmondani, hogy miben igen
+
 ## Nyers forrás
 
-- `~/.claude/projects/-~-Dev-progos-kotta/9661eb3e-f00d-4476-9761-0438e1ae6f39.jsonl` (Claude Code): 5 üzenet feldolgozva (ember 3, ágens 2); kihagyva: eszközhívás 227, meta-üzenet 1, --since előtti 13.
+- `~/.claude/projects/-~-Dev-progos-kotta/9661eb3e-f00d-4476-9761-0438e1ae6f39.jsonl` (Claude Code): 7 üzenet feldolgozva (ember 4, ágens 3); kihagyva: eszközhívás 239, meta-üzenet 1, --since előtti 13.
 
-Időszak: 2026-10-02 08:57 UTC – 2026-10-03 08:28 UTC. Csak a 2026-10-02 07:30 UTC utáni üzenetek.
+Időszak: 2026-10-02 08:57 UTC – 2026-10-03 08:29 UTC. Csak a 2026-10-02 07:30 UTC utáni üzenetek.
 
 ### Szűrés
 
