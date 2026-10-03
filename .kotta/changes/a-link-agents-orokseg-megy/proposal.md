@@ -1,4 +1,4 @@
-# A régi Kotta-bevezető átalakítása is megy
+# A --link-agents megy
 
 ## Why
 
@@ -8,12 +8,15 @@ is mehet. A kotta repó `.kotta/legacy/` archívuma már törölve; egy elfogado
 
 ## What changes
 
-- **Módosul — Kotta owns its rules file, never the project's:** a hatókörből kikerül a `migrate`
-  (már nem frissíti a szabályfájlt), és kimondja, hogy egy 0.x-es bevezető közönséges projekt-tartalom.
+- **Módosul — Kotta owns its rules file, never the project's:** kikerül az ügynök nélküli
+  „determinisztikus út” (`--link-agents`): ilyenkor a Kotta a meglévő fájlt érintetlenül hagyja és
+  kiírja a beírandó sort; egy 0.x-es bevezető közönséges projekt-tartalom; a hatókörből kikerül a
+  `migrate`.
+- **Módosul — The rules ship; the project file stays yours:** a hivatkozást az ügynök teszi be, a
+  sodródást a `kotta sync` jelzi (a `status` parancs már nincs).
 - **Módosul — The accepted model promises only what a shipped command does:** kikerül a `.kotta/legacy/`
   említése.
 
 ## Open decisions
 
-- A `--link-agents` egésze megy, vagy csak a régi bevezető átalakítása — a „Kotta owns its rules file”
-  szabálynál.
+Nincs: az egész `--link-agents` megy (válasz: b, 2026-10-03).

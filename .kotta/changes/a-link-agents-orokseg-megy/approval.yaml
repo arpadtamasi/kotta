@@ -1,0 +1,14 @@
+change: a-link-agents-orokseg-megy
+approved_by: rp
+approved_at: 2026-10-03T16:52:24.207Z
+approval_basis: sha256:6a48e44d9919670984762c384a36a22c4c8ec76627e1e2de18829eaa67582976
+approved:
+  added: []
+  changed:
+    - id: BR-01m0f1djtb5dkb76tjzq4x3ffh
+      title: Kotta owns its rules file, never the project's
+    - id: BR-01m3f47dgh74a0dm9bwv0pwgc3
+      title: The accepted model promises only what a shipped command does
+    - id: EX-01m0f1djtcvdqkvr4r4dd2qamd
+      title: The rules ship; the project file stays yours
+  removed: []

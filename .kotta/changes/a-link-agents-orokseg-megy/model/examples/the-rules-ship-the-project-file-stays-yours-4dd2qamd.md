@@ -1,0 +1,29 @@
+---
+id: EX-01m0f1djtcvdqkvr4r4dd2qamd
+form: example
+title: "The rules ship; the project file stays yours"
+provenance:
+  level: partly-inferred
+  decided_by: human
+  sources:
+    - "chat · rp, 2026-10-03 ~18:00 UTC: asked whether the deterministic --link-agents path is still needed („kell még?”), then chose (b), the whole flag goes"
+  quote: "rp, 2026-10-03: „b”"
+  inferred: "The When and Then are reworded by the agent for the flag that goes and the status command that is gone."
+subjects:
+  - BR-01m0f1djtb5dkb76tjzq4x3ffh
+accepted:
+  - >-
+    unexamined: Inherited on 2026-08-23 and kinded on 2026-08-24. Nobody has yet checked whether this promise is kept. This is a form that can name itself where it is enforced or proven, so the absence of its id is a real question that has simply not been asked. Answer it by naming the node where the code enforces it or a test proves it, or by reclassifying it as unimplemented.
+---
+
+## Given
+
+A project with its own AGENTS.md carrying repository-specific conventions, and Kotta newly initialized in it.
+
+## When
+
+Init writes the workspace rules; an agent that has read the project file proposes where the reference belongs, and on the human's yes adds it; later someone hand-edits the workspace rules file.
+
+## Then
+
+The .kotta/AGENTS.md rules exist with the real package name and version in the install line; the project file gained exactly one referencing line and nothing else in it changed; a later `kotta sync` leaves the project file byte-identical; and the edited rules copy is reported as drifted by `kotta sync`, never silently replaced.
