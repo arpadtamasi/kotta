@@ -5,12 +5,13 @@ title: The accepted model promises only what a shipped command does
 capability: technical-model
 provenance:
   level: partly-inferred
-  decided_by: agent-decided
+  decided_by: human
   sources:
-    - "openspec/changes/a-folyamatmotor-igeretei-kikerulnek/proposal.md · Why"
-    - "CHANGELOG.md · 1.0.0-alpha.1 · Removed — BREAKING"
-  quote: "The process layer. The commands task, batch, observation, decision, claim, status and sweep; every --approve gate and the approval receipts; the execution engine"
-  inferred: "That a removed behaviour's promises leave the model through a change rather than staying as admitted gaps was chosen by the agent from the evidence rule; the release itself only removed the code."
+    - ".kotta/changes/a-link-agents-orokseg-megy/conversation.md · P1"
+    - "chat · rp, 2026-10-03 ~15:52 UTC, sent while the agent was working (not in the distillate): „sync --link-agents is mehet”"
+    - ".kotta/changes/archive/2026-10-03-az-a-team-oroksege-megy/conversation.md · P6"
+  quote: "rp, 2026-10-03: „minden a-team örökség mehet” — „töröld a legacyt” — „sync --link-agents is mehet”"
+  inferred: "Only the sentences naming the pre-1.0 heritage change; the rest is the accepted text. The archive it named is deleted."
 ---
 
 ## Rule
@@ -23,4 +24,4 @@ The 1.0.0-alpha.1 release removed the process engine of the 0.x releases - tasks
 
 ## Scope
 
-The accepted nodes under `.kotta/spec/`, and the changes that remove or reword them. Not `.kotta/legacy/`, which is a read-only archive of how the project worked and governs nothing. Not a promise whose work has merely not begun: that one stays and is admitted as unimplemented.
+The accepted nodes under `.kotta/spec/`, and the changes that remove or reword them. Not a promise whose work has merely not begun: that one stays and is admitted as unimplemented.
