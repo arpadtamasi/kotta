@@ -8,29 +8,23 @@
 
 ## Requirements
 
-### Requirement: Migration skips operating-system metadata and nothing else
-<!-- kotta: BR-01m3cqmtvgmsdxnf78babstw2c -->
-`kotta migrate` SHALL ignore the operating system's metadata files when it reads the directories of an older workspace shape. The list is fixed and not configurable: `.DS_Store`, `._*`, `.Spotlight-V100`, `.Trashes`, `.fseventsd`, `Thumbs.db`, `ehthumbs.db`, `desktop.ini`. Such a file SHALL NOT be carried into the archive; it is deleted with the old directory it sits in, and the plan SHALL name each file it left out. This is the only thing a migration deletes without carrying it over. On any other entry it does not know it SHALL still stop, name the entry, and write nothing.
+### Requirement: Kotta knows one workspace name
+<!-- kotta: BR-01m413z0y4dtjs9rs718bdnm4j -->
+Kotta SHALL find a workspace only under its own name, `.kotta/` at the root of the repository it specifies, and SHALL NOT look for the pre-rename name `.a-team/`. `kotta migrate` SHALL NOT rename an `.a-team/` directory.
 
 **Rationale**
 
-On 2026-09-25 a migration stopped on a `.DS_Store` in a v2 workspace directory ("unexpected entry") and wrote nothing. Operating-system metadata is not part of the workspace; the migration cannot fail on it. The stop on an unknown entry stays, because it is what keeps a migration from losing something it did not understand.
+`.a-team/` is the name Kotta had before 0.3.0. No workspace under it is left on the operator's machines, and the operator let the whole pre-1.0 heritage go.
 
 **Scope**
 
-The flattening of older-shape directories in `kotta migrate`, in the dry run and in the applied run.
+Workspace discovery and `kotta migrate`. A project still on the old name renames the directory by hand, or migrates with 1.0.0-alpha.4 or earlier.
 
-#### Scenario: An unknown entry still stops the migration
-<!-- kotta: EX-01m3cqmwhq6b2rvc0cwhpsay21 -->
-- **GIVEN** A directory of an older workspace shape holds an entry the migration does not know and that is not operating-system metadata.
-- **WHEN** `kotta migrate` runs.
-- **THEN** The migration stops, names the entry, and writes nothing.
-
-#### Scenario: Finder metadata does not stop the migration
-<!-- kotta: EX-01m3cqmwbbgp3q325eee22m627 -->
-- **GIVEN** A v2 workspace whose `batches/` directory holds a `.DS_Store` file.
-- **WHEN** `kotta migrate` runs.
-- **THEN** The migration completes, the `.DS_Store` is not carried into the archive but deleted with the old `batches/` directory, and the plan names it as left out.
+#### Scenario: A pre-rename workspace is not found
+<!-- kotta: EX-01m413z1x8vsfp6jncykrshbtc -->
+- **GIVEN** A repository whose only workspace is a directory named `.a-team/`.
+- **WHEN** `kotta validate`, then `kotta migrate` is run in it.
+- **THEN** Both say no workspace exists here; `migrate` renames nothing.
 
 ### Requirement: The import drafts nothing from a comment
 <!-- kotta: BR-01m3cqmtnnwxz7fkyr6d5ch9e6 -->
@@ -68,12 +62,12 @@ The generator writes a comment into the Purpose of a capability no goal node nam
 <!-- kotta: UC-01m0f0wn89x00jkpqpqc2esx9h -->
 **Intent**
 
-Carry a workspace from any older shape - directory name, vocabulary, layout - to the current one without changing any identity.
+Carry a current workspace's changes out of OpenSpec's folder into its own, without changing any identity.
 
 **Main success scenario**
 
-A dry run lists every change without writing. The migration renames directories, statuses, and frontmatter fields; the id set before and after is compared and must be identical. The result is committed so derived readers see it. A second run reports the workspace already current. A workspace arrives whole: the generated rules file is brought to the running package alongside the records, because it is the one document every agent in the project reads and a migration that leaves it behind keeps instructing them from the version it came from. And the migration says whether what it produced satisfies the rules of the shape it moved to — a report of success over a workspace its own validator would refuse claims more than the result carries.
+A dry run lists every move without writing. The migration moves every open change, and every archived one that carries a model or a receipt, into `.kotta/changes/` with `git mv`, rewrites the sources of a change not yet approved to the new folder, moves an approved one byte-identical and says so, and writes `narrative: generated` where OpenSpec specs exist and nothing sets the narrative. The specification is left byte-identical, and a second run has nothing to do.
 
 **Alternatives**
 
-An older-shape directory holds an entry the migration does not know: it stops, names the entry, and writes nothing. Operating-system metadata - a fixed list, `.DS_Store`, `._*`, `.Spotlight-V100`, `.Trashes`, `.fseventsd`, `Thumbs.db`, `ehthumbs.db`, `desktop.ini` - is not such an entry: it is not part of the workspace, so the migration leaves it out of the archive, deletes it with the old directory, and names it in its plan. Nothing else is deleted without being carried over. The migration is interrupted: every step derives from disk, so running it again finishes the job. Every other command refuses a pre-migration workspace by naming the migrate command - there is deliberately no compatibility layer behind that refusal. A workspace newer than this Kotta is not this use case at all: migrate refuses it like every other command rather than planning a downgrade. A workspace already on the current shape that still keeps changes in OpenSpec's folder (`openspec/changes/`) is not current: the migration moves every open change, and every archived one that carries a model or a receipt, into `.kotta/changes/`, rewrites the sources of a change not yet approved to the new folder, moves an approved one byte-identical and says so, and writes `narrative: generated` where OpenSpec specs exist and nothing sets the narrative.
+A destination already exists: the migration names it and writes nothing. A workspace on an older shape, or one still under `.a-team/`, is not migrated: the refusal names the last release that migrates it.

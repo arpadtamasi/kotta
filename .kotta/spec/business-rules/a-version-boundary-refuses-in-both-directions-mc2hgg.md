@@ -2,11 +2,19 @@
 id: BR-01m0q89b16xcfasfj1z8mc2hgg
 form: business-rule
 title: "A version boundary refuses in both directions"
+provenance:
+  level: partly-inferred
+  decided_by: human
+  sources:
+    - ".kotta/changes/az-a-team-oroksege-megy/conversation.md · P6"
+    - ".kotta/changes/az-a-team-oroksege-megy/conversation.md · J1"
+  quote: "rp, 2026-10-03: „minden a-team örökség mehet, migrálni sem kell” — „és engedjük el, akkor lehessen a kotta csak a repóban” — „1”"
+  inferred: "That an older workspace is answered by naming the last release that migrates it, 1.0.0-alpha.4, is the agent's wording of the operator's decision that migrating is no longer needed."
 ---
 
 ## Rule
 
-A workspace records the shape version it was written for, and a Kotta that meets a version it does not implement refuses rather than guesses. The refusal has two directions and they are never worded alike. A workspace older than this Kotta is named as older, and `migrate` is the remedy. A workspace newer than this Kotta is named as newer, both versions are stated, and upgrading Kotta is the remedy — and `migrate` is not exempt from this direction, because a migration that rewrites a newer workspace into an older shape destroys what the newer Kotta wrote. A version that cannot be read is neither, and is refused on its own terms.
+A workspace records the shape version it was written for, and a Kotta that meets a version it does not implement refuses rather than guesses. The refusal has two directions and they are never worded alike. A workspace older than this Kotta SHALL be named as older, and the remedy SHALL be the last release that migrates it: `npx -y -p @arpadtamasi/kotta@1.0.0-alpha.4 kotta migrate`, then this Kotta. No command of this Kotta, `migrate` included, SHALL read or rewrite a pre-1.0 workspace. A workspace newer than this Kotta is named as newer, both versions are stated, and upgrading Kotta is the remedy — and no command is exempt from this direction, because a migration that rewrites a newer workspace into an older shape destroys what the newer Kotta wrote. A version that cannot be read is neither, and is refused on its own terms.
 
 ## Rationale
 

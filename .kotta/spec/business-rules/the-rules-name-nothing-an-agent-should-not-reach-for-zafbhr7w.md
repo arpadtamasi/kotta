@@ -10,6 +10,7 @@ provenance:
     - ".kotta/changes/a-valtozas-a-kottae/conversation.md · SZ2"
     - ".kotta/changes/a-valtozas-a-kottae/conversation.md · P3"
     - ".kotta/changes/a-valtozas-a-kottae/conversation.md · P4"
+    - ".kotta/changes/az-a-team-oroksege-megy/conversation.md · P6"
   quote: "rp, 2026-09-29: „openspec/ mappát soha ne hozz létre … miről jutna eszébe csinálni?” — „van még ilyen csapda benne?”"
   inferred: "Extending the point from OpenSpec to retired process terms, the MCP instructions and the workshop skills, and the list of words a test keeps out, were the agent's reading of the operator's question about other traps."
 ---
@@ -18,7 +19,7 @@ provenance:
 
 ## Rule
 
-The rules file Kotta writes, the skills it installs and the instructions its MCP server gives SHALL NOT name a tool the project may not use, or a concept Kotta has retired, not even to forbid it: no OpenSpec in the rules file, no task, claim, batch, observation, process layer or decision record. What applies only in some workspaces SHALL be said conditionally, on something the agent can see — „where the workspace has `legacy/`”, „unless the config sets `narrative:`” — and nowhere else. They SHALL NOT point to a command or tool that does not exist.
+The rules file Kotta writes, the skills it installs and the instructions its MCP server gives SHALL NOT name a tool the project may not use, or a concept Kotta has retired, not even to forbid it: no OpenSpec in the rules file, no task, claim, batch, observation, process layer or decision record. What applies only in some workspaces SHALL be said conditionally, on something the agent can see — „unless the config sets `narrative:`”, „if the repository already has an `openspec/specs/` folder” — and nowhere else. They SHALL NOT point to a command or tool that does not exist.
 
 ## Rationale
 

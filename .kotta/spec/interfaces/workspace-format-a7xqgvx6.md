@@ -2,6 +2,15 @@
 id: IF-01m0f0wn897newtcbva7xqgvx6
 form: interface
 title: "The workspace file format"
+provenance:
+  level: partly-inferred
+  decided_by: human
+  sources:
+    - ".kotta/changes/az-a-team-oroksege-megy/conversation.md · SZ2"
+    - "chat · rp, 2026-10-03 ~14:55 UTC, sent while the agent was working (not in the distillate): „ez már egyik sem kell” — answering whether discovery and migrate should still know .a-team/"
+    - ".kotta/changes/az-a-team-oroksege-megy/conversation.md · J1"
+  quote: "rp, 2026-10-03: „minden a-team örökség mehet, migrálni sem kell” — „és engedjük el, akkor lehessen a kotta csak a repóban” — „1”"
+  inferred: "Only the discovery sentence changes, as the operator decided; the rest of the node is the accepted text."
 accepted:
   - >-
     structural: Assigned on 2026-08-24 from the form of this node, not from examining the node itself. Many code sites realise a promise of this form and no single one would ever name it, so the absence of its id in the repository measures the instrument rather than the system. Reclassify it if that turns out to be wrong here.
@@ -21,7 +30,7 @@ One entity, one stable file; lifecycle state lives in the frontmatter status fie
 
 ## Invariants
 
-Plain text, mergeable, diffable; the index carries a union merge rule. Identifiers are permanent. The spec namespace is project-owned and hand-editable; the process namespace is service-owned. Discovery prefers the current directory name and never renames a workspace behind the user's back.
+Plain text, mergeable, diffable; the index carries a union merge rule. Identifiers are permanent. The spec namespace is project-owned and hand-editable; the process namespace is service-owned. Discovery SHALL find a workspace only under its own name, `.kotta/` at the repository root (BR-01m413z0y4dtjs9rs718bdnm4j), and never renames a workspace behind the user's back.kotta-<name>/` beside it (BR-01m413z0jn52xchnz360vzg57q, BR-01m413z0y4dtjs9rs718bdnm4j), and never renames a workspace behind the user's back.
 
 ## Failures
 

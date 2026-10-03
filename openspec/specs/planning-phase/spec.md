@@ -142,7 +142,7 @@ Every agent working in a Kotta repository, on any host, on any change. The rule 
 
 ### Requirement: The rules name nothing an agent should not reach for
 <!-- kotta: BR-01m40e0avfnth9evktzafbhr7w -->
-The rules file Kotta writes, the skills it installs and the instructions its MCP server gives SHALL NOT name a tool the project may not use, or a concept Kotta has retired, not even to forbid it: no OpenSpec in the rules file, no task, claim, batch, observation, process layer or decision record. What applies only in some workspaces SHALL be said conditionally, on something the agent can see — „where the workspace has `legacy/`”, „unless the config sets `narrative:`” — and nowhere else. They SHALL NOT point to a command or tool that does not exist.
+The rules file Kotta writes, the skills it installs and the instructions its MCP server gives SHALL NOT name a tool the project may not use, or a concept Kotta has retired, not even to forbid it: no OpenSpec in the rules file, no task, claim, batch, observation, process layer or decision record. What applies only in some workspaces SHALL be said conditionally, on something the agent can see — „unless the config sets `narrative:`”, „if the repository already has an `openspec/specs/` folder” — and nowhere else. They SHALL NOT point to a command or tool that does not exist.
 
 **Rationale**
 
