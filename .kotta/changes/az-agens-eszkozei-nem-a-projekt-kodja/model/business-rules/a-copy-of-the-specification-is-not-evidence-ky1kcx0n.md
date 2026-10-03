@@ -5,11 +5,12 @@ title: A copy of the specification is not evidence
 capability: evidence
 provenance:
   level: partly-inferred
-  decided_by: agent-decided
+  decided_by: agent-proposed-human-approved
   sources:
+    - ".kotta/changes/az-agens-eszkozei-nem-a-projekt-kodja/conversation.md · J1"
     - ".kotta/changes/az-agens-eszkozei-nem-a-projekt-kodja/proposal.md · Why"
-  quote: "rp, 2026-10-02: csináld"
-  inferred: "The operator asked for the defect to be fixed; that the fix is a seventh excluded source, which directories it names, and that the same filter bounds the reverse search were proposed by the agent."
+  quote: "rp, 2026-10-03 08:28 UTC: a"
+  inferred: "The operator chose the agent's option (a): the agent hosts' whole directories at the repository root, `.claude/` and `.codex/`. That the same filter bounds the reverse search, and the wording, are the agent's."
 ---
 
 ## Rule
@@ -23,8 +24,3 @@ Since 1.0 the repository holds a second place where node ids appear by necessity
 ## Scope
 
 `isEvidencePath` and everything that reads through it: `kotta gap` — its hint about uncommitted paths included —, `kotta modules` and the module derivation. Not the narrative binding itself, which `kotta plan` still reads to report drift; not the `bound` level's test-run status, which this change leaves out.
-
-
-## Open decisions
-
-- A `kotta gap` jelentés a projekt kódjában keres bizonyítékot az ígéretekre, és megnevezi, amit a kód specifikáció nélkül kényszerít ki. Ma a repóba bemásolt ügynök-skilleket (például a `.claude/skills/` alatti idegen készletet) is a projekt kódjának nézi: a health-ai-ban 145 találatból 141 onnan jön. A kérdés: mely könyvtárakat hagyja ki? (a) A gyökérben lévő `.claude/` és `.codex/` könyvtárat egészében - ezekbe ír a Kotta maga is (skillek, MCP-beállítás), és ügynök-eszközön kívül más nem szokott bennük lenni. (b) Csak a `.claude/skills/` könyvtárat - szűkebb, de a hookok és más host-fájlok továbbra is a projekt kódjának számítanak. (c) A projekt maga sorolja fel a `config.yaml`-ban - rugalmas, de minden projektnek be kell állítania, különben marad a zaj. Az én javaslatom az (a).

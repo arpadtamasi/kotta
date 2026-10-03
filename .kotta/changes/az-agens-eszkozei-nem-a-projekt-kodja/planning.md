@@ -1,8 +1,8 @@
 ---
 change: az-agens-eszkozei-nem-a-projekt-kodja
-generated_at: 2026-10-02T09:08:52.964Z
-delta_hash: sha256:1329d944fe6ea7217a9a8518590014a5d6b0494b6398d91efe114ba080c8410c
-ready_for_approval: false
+generated_at: 2026-10-03T08:28:47.164Z
+delta_hash: sha256:a319cdef4b3d6c1008be7936f35934b21e7f3c5dedbf644ab843826213c783d4
+ready_for_approval: true
 ---
 
 # Planning: az-agens-eszkozei-nem-a-projekt-kodja
@@ -41,11 +41,15 @@ The accepted model with this delta applied validates as a whole.
 The machine's candidates are mechanical and narrow. Contradictions the agent found by comparing every claim of the delta with the accepted nodes it touches, each marked `judged`:
 
 <!-- kotta:judged — the agent's own findings; `kotta plan` keeps this block as written -->
+- judged: *A copy of the specification is not evidence* says "The exclusion MUST name the specification sources Kotta itself knows, never a directory name pattern". `.claude/` and `.codex/` at the repository root are named places Kotta itself writes to (skills, the Codex MCP configuration), not a pattern matched anywhere in the tree; a `.claude/` below the root is not excluded, as a package's own `openspec/` is not. The rule's title speaks of copies of the specification while it already excludes somebody else's code (`node_modules/`); the new source sits beside that one.
+- judged: *A project's own specs directory still holds tests* and *A package's own openspec tree is not excluded* still hold: neither path is under the root `.claude/` or `.codex/`.
+- judged: *What the tool enforces, the spec states* asks every enforced rule to be written in the specification; leaving vendored agent tooling out of the reverse search narrows what counts as "the tool" to the project's own code, which is what the rule meant by it.
+- judged: *Analyze the implementation gap* says the analysis "looks only where a promise can be kept or checked"; the agent's tooling keeps no promise of the product, so the new exclusion agrees with it.
 <!-- /kotta:judged -->
 
 ## (d) Silences
 
-- Open: A copy of the specification is not evidence (BR-ky1kcx0n) BR-ky1kcx0n/Q1 — A `kotta gap` jelentés a projekt kódjában keres bizonyítékot az ígéretekre, és megnevezi, amit a kód specifikáció nélkül kényszerít ki. Ma a repóba bemásolt ügynök-skilleket (például a `.claude/skills/` alatti idegen készletet) is a projekt kódjának nézi: a health-ai-ban 145 találatból 141 onnan jön. A kérdés: mely könyvtárakat hagyja ki? (a) A gyökérben lévő `.claude/` és `.codex/` könyvtárat egészében - ezekbe ír a Kotta maga is (skillek, MCP-beállítás), és ügynök-eszközön kívül más nem szokott bennük lenni. (b) Csak a `.claude/skills/` könyvtárat - szűkebb, de a hookok és más host-fájlok továbbra is a projekt kódjának számítanak. (c) A projekt maga sorolja fel a `config.yaml`-ban - rugalmas, de minden projektnek be kell állítania, különben marad a zaj. Az én javaslatom az (a). (.kotta/changes/az-agens-eszkozei-nem-a-projekt-kodja/model/business-rules/a-copy-of-the-specification-is-not-evidence-ky1kcx0n.md:30)
+No open decision, and no question a form asks is left unanswered.
 
 ## (e) Narrative drift
 
@@ -54,12 +58,10 @@ No narrative requirement bound to a node says something else than the node.
 ## (f) Provenance
 
 3 delta nodes: 0 stated, 3 partly-inferred, 0 inferred.
-Decided by: 0 human, 0 agent-proposed-human-approved, 3 agent-decided.
+Decided by: 0 human, 2 agent-proposed-human-approved, 1 agent-decided.
 
 What the machine decided alone:
 
-- A copy of the specification is not evidence (BR-ky1kcx0n) — The operator asked for the defect to be fixed; that the fix is a seventh excluded source, which directories it names, and that the same filter bounds the reverse search were proposed by the agent.
-- The report names what it did not count (BR-y0565652) — The seventh class and its name follow from the changed exclusion rule; both were chosen by the agent.
 - A vendored skill is neither evidence nor unspecified enforcement (EX-6d1cr41k) — The scene is the health-ai repository, reduced to one file; the wording is the agent's.
 
-Conversation: .kotta/changes/az-agens-eszkozei-nem-a-projekt-kodja/conversation.md, cited 0 times. Read it for the why before calling anything inferred.
+Conversation: .kotta/changes/az-agens-eszkozei-nem-a-projekt-kodja/conversation.md, cited 2 times. Read it for the why before calling anything inferred.

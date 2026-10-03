@@ -5,11 +5,12 @@ title: The report names what it did not count
 capability: evidence
 provenance:
   level: partly-inferred
-  decided_by: agent-decided
+  decided_by: agent-proposed-human-approved
   sources:
+    - ".kotta/changes/az-agens-eszkozei-nem-a-projekt-kodja/conversation.md · J1"
     - ".kotta/changes/az-agens-eszkozei-nem-a-projekt-kodja/proposal.md · Why"
-  quote: "rp, 2026-10-02: csináld"
-  inferred: "The seventh class and its name follow from the changed exclusion rule; both were chosen by the agent."
+  quote: "rp, 2026-10-03 08:28 UTC: a"
+  inferred: "The seventh class follows from the operator's choice (a); its name `agent-tooling` was chosen by the agent."
 ---
 
 ## Rule
@@ -23,7 +24,3 @@ Excluding the specification's copies drops every node they alone mention to `non
 ## Scope
 
 The `--json` and the human-readable output of `kotta gap` and `kotta modules`. The exclusion itself is stated in *A copy of the specification is not evidence*.
-
-## Open decisions
-
-None

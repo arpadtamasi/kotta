@@ -24,5 +24,5 @@ Ami marad: a kizárás továbbra is ismert helyeket nevez meg, nem könyvtárné
 
 ## Open decisions
 
-- Pontosan mely könyvtárak számítanak az ügynök eszközeinek. (Az *A copy of the specification is
-  not evidence* szabályban.)
+- Mely könyvtárak számítanak az ügynök eszközeinek: a gyökérben lévő `.claude/` és `.codex/`
+  egészében (az operátor válasza 2026-10-03-án: „a").
