@@ -195,12 +195,23 @@ describe("the workspace rules file", () => {
     expect(written).toContain("one such gate per change, at the end of planning");
     expect(written).toContain("`.kotta/spec/` is **project-owned**");
     expect(written).toContain("`.kotta/legacy/`, where there is one, is read-only");
-    // Say when the code runs ahead of the spec (BR-01m3kdq88m3bgye3xnn9q6hsr2): a one-line signal,
-    // never a stop, whether or not the change has been through the gate.
-    expect(written).toContain("say when the code runs ahead of the spec");
-    expect(written).toContain("implement as asked, whether or not the change has been through the gate");
-    expect(written).toContain("do not stop or wait for it");
-    // What the rules name, an agent reaches for: a tool the project may not use, or a concept Kotta
+    // The code never runs ahead of the spec (BR-01m3kdq88m3bgye3xnn9q6hsr2): a promise the model does
+    // not state opens a change first (EX-01m3kdq8kg96c3151xrkb7tgy4), and work that touches no
+    // promise needs none (EX-01m3kdq91dfgf22v9s587hhk1d).
+    expect(written).toContain("the code never runs ahead of the spec");
+    expect(written).toContain("open a change for it and take it through `plan-change` to the gate; write the code after the human's yes");
+    expect(written).toContain("neither does work that touches no promise");
+    // A change is built before it is archived (BR-01m3w9ajdxbf04ph4y97dmry35): after the yes the
+    // agent offers the work, not the archive (EX-01m3w9ajm1gfn90q2a0m2pgw8m), and building what an
+    // approved open change states earns no signal (EX-01m3wa6fk1b8anb3dxn48rz5e0).
+    expect(written).toContain("the order is plan, gate, build, archive, and the code never comes before the gate");
+    expect(written).toContain("offer the work the change describes as the next step, not the archive");
+    expect(written).toContain("a promise that neither the accepted model nor an approved open change states");
+    expect(written).toContain("building an approved change needs no new change, and neither does work that touches no promise");
+    // Between approval and archive the approved delta binds (BR-01m0fp2hdkfn519h1w84jsrqbe).
+    expect(written).toContain("the approved delta is the agreement for the nodes it touches");
+    // The rules name nothing an agent should not reach for (BR-01m40e0avfnth9evktzafbhr7w,
+    // EX-01m40e0bkfgmn68mjppatt5yag). What the rules name, an agent reaches for: a tool the project may not use, or a concept Kotta
     // retired, is not named at all — not even to forbid it.
     for (const unnamed of ["openspec", "opsx", "observation", "batch", "process layer", "decision record", "kotta task", "--approve"]) {
       expect(written, `the rules do not name "${unnamed}"`).not.toContain(unnamed);

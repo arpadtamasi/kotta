@@ -9,7 +9,10 @@ import { sections } from "../core/markdown.js";
 import { MINTED_BODY } from "../core/identity.js";
 import { ENV_PREFIX, readEnv } from "../core/env.js";
 import { SPEC_DIRECTORY, WORKSPACE_DIRECTORIES, WORKSPACE_SCHEMA_VERSION, WorkspaceShapeError, assertCurrentWorkspaceShape, hasWorkspace, workspaceDirectoryName } from "../filesystem/workspace.js";
-import { changesFolder } from "../spec/change.js";
+import { APPROVAL_FILE, PROPOSAL_FILE, changesFolder, changesPath, deltaHash, listChanges, readChangeModel } from "../spec/change.js";
+import { readFormRegistry } from "../spec/registry.js";
+import { parseOpenQuestions, unresolvedQuestions } from "../core/questions.js";
+import { readPlanning } from "./plan.js";
 
 function git(root: string, args: string[]): { ok: boolean; out: string } {
   const result = spawnSync("git", args, { cwd: root, encoding: "utf8", maxBuffer: 256 * 1024 * 1024 });
@@ -155,10 +158,35 @@ export function readProvenance(value: unknown): BoardProvenance | undefined {
   return provenance.level || provenance.decided_by || sources.length || quote || inferred ? provenance : undefined;
 }
 
+/**
+ * An open change as the board shows it (BR-01m40e522gtq49knhy51hr9e3d): its delta, read from the
+ * working tree so a change not yet committed is shown, with what is not committed marked.
+ */
+export interface BoardChange {
+  name: string;
+  /** The proposal's own heading, or the name when it has none. */
+  title: string;
+  /** The proposal's text below its heading, as written. */
+  proposal: string;
+  /** Delta nodes: a node whose id the accepted specification holds is `changed`, any other `added`. */
+  nodes: Array<BoardSpecNode & { mark: "added" | "changed" }>;
+  /** Accepted ids the change removes. */
+  removed: string[];
+  /** Every still-open question the delta's nodes ask, by the node that asks it. */
+  openDecisions: Array<{ node: string; text: string }>;
+  /** `kotta plan` has measured the delta as it is now. */
+  planned: boolean;
+  /** `kotta approve` recorded a yes to the delta as it is now. */
+  approved: boolean;
+  /** Repository paths under the change that Git does not hold as they are on disk. */
+  uncommitted: string[];
+}
+
 export interface BoardWorkspace {
   workspace: string;
   project: string;
   spec: BoardSpecNode[];
+  changes: BoardChange[];
   specForms: Array<{ id: string; directory: string; title: string }>;
   notices: string[];
   generatedAt: string;
@@ -226,32 +254,87 @@ export function readWorkspace(workspaceOption: string): BoardWorkspace {
     })
     .sort((left, right) => left.id.localeCompare(right.id));
 
-  const spec: BoardSpecNode[] = specForms.flatMap((form) => gather(`${SPEC_DIRECTORY}/${form.directory}`).map((entry) => {
-    const parsed = matter(readRepoFile(entry.repoPath, entry.fromRef));
-    const id = String(parsed.data.id ?? "").trim();
-    const provenance = readProvenance(parsed.data.provenance);
-    const capability = typeof parsed.data.capability === "string" && parsed.data.capability.trim() ? parsed.data.capability.trim() : undefined;
-    return {
-      ...(provenance ? { provenance } : {}),
-      ...(capability ? { capability } : {}),
-      id,
-      form: String(parsed.data.form ?? form.id).trim(),
-      title: String(parsed.data.title ?? id).trim(),
-      path: entry.repoPath,
-      // The admission, kept as written: which kind of gap it records and why, or nothing at all.
-      accepted: Array.isArray(parsed.data.accepted) ? parsed.data.accepted.map(String) : [],
-      // Every frontmatter field that names other nodes, under the name its form gave it.
-      edges: Object.fromEntries(Object.entries(parsed.data as Record<string, unknown>)
-        .filter(([field]) => !["id", "form", "title", "accepted", "provenance", "capability"].includes(field))
-        .map(([field, value]) => [field, (Array.isArray(value) ? value : [value])
-          .filter((candidate): candidate is string => typeof candidate === "string" && MINTED_REFERENCE.test(candidate))])
-        .filter(([, ids]) => (ids as string[]).length)) as Record<string, string[]>,
-      sections: sectionObject(parsed.content),
-    };
-  })).filter((node) => node.id).sort((left, right) => left.title.localeCompare(right.title) || left.id.localeCompare(right.id));
+  const spec: BoardSpecNode[] = specForms.flatMap((form) => gather(`${SPEC_DIRECTORY}/${form.directory}`)
+    .map((entry) => boardNode(readRepoFile(entry.repoPath, entry.fromRef), entry.repoPath, form.id)))
+    .filter((node) => node.id).sort(byTitle);
 
   const notices = readNotices(workspace, useBase, base, spec.length);
-  return { workspace, project: config.project?.name ?? "Kotta workspace", spec, specForms, notices, generatedAt: new Date().toISOString() };
+  const changes = readChanges(projectRoot, new Set(spec.map((node) => node.id)));
+  return { workspace, project: config.project?.name ?? "Kotta workspace", spec, changes, specForms, notices, generatedAt: new Date().toISOString() };
+}
+
+const byTitle = (left: BoardSpecNode, right: BoardSpecNode) => left.title.localeCompare(right.title) || left.id.localeCompare(right.id);
+
+/** One node file as the board shows it, wherever it was read from. */
+function boardNode(content: string, repoPath: string, formId: string): BoardSpecNode {
+  const parsed = matter(content);
+  const id = String(parsed.data.id ?? "").trim();
+  const provenance = readProvenance(parsed.data.provenance);
+  const capability = typeof parsed.data.capability === "string" && parsed.data.capability.trim() ? parsed.data.capability.trim() : undefined;
+  return {
+    ...(provenance ? { provenance } : {}),
+    ...(capability ? { capability } : {}),
+    id,
+    form: String(parsed.data.form ?? formId).trim(),
+    title: String(parsed.data.title ?? id).trim(),
+    path: repoPath,
+    // The admission, kept as written: which kind of gap it records and why, or nothing at all.
+    accepted: Array.isArray(parsed.data.accepted) ? parsed.data.accepted.map(String) : [],
+    // Every frontmatter field that names other nodes, under the name its form gave it.
+    edges: Object.fromEntries(Object.entries(parsed.data as Record<string, unknown>)
+      .filter(([field]) => !["id", "form", "title", "accepted", "provenance", "capability"].includes(field))
+      .map(([field, value]) => [field, (Array.isArray(value) ? value : [value])
+        .filter((candidate): candidate is string => typeof candidate === "string" && MINTED_REFERENCE.test(candidate))])
+      .filter(([, ids]) => (ids as string[]).length)) as Record<string, string[]>,
+    sections: sectionObject(parsed.content),
+  };
+}
+
+/** Repository paths under `directory` that Git does not hold as they are on disk; empty outside a repository. */
+function uncommittedUnder(projectRoot: string, directory: string): string[] {
+  const result = spawnSync("git", ["status", "--porcelain", "--untracked-files=all", "--", directory], { cwd: projectRoot, encoding: "utf8" });
+  if (result.status !== 0) return [];
+  return result.stdout.split("\n").filter(Boolean).map((line) => line.slice(3).trim());
+}
+
+/**
+ * Every open change, read from the working tree — the one exception to reading named refs, so the
+ * delta waiting at the gate is visible before it is committed (BR-01m40e522gtq49knhy51hr9e3d). A
+ * change that cannot be read is left out rather than guessed at.
+ */
+export function readChanges(projectRoot: string, acceptedIds: Set<string>): BoardChange[] {
+  const { forms } = readFormRegistry(projectRoot);
+  return listChanges(projectRoot).flatMap((name) => {
+    try {
+      const model = readChangeModel(projectRoot, name, forms);
+      const repoPath = (path: string) => relative(projectRoot, path).split(sep).join("/");
+      const proposalPath = join(model.directory, PROPOSAL_FILE);
+      const proposalText = existsSync(proposalPath) ? readFileSync(proposalPath, "utf8") : "";
+      const heading = /^#\s+(.+)$/m.exec(proposalText);
+      const hash = deltaHash(model);
+      const approvalPath = join(model.directory, APPROVAL_FILE);
+      const receipt = existsSync(approvalPath) ? (parse(readFileSync(approvalPath, "utf8")) ?? {}) as { approval_basis?: unknown } : null;
+      const nodes = model.nodes.map((node) => {
+        const content = readFileSync(node.path, "utf8");
+        return { ...boardNode(content, repoPath(node.path), node.form), mark: acceptedIds.has(node.id) ? "changed" as const : "added" as const };
+      }).filter((node) => node.id).sort(byTitle);
+      const openDecisions = model.nodes.flatMap((node) => unresolvedQuestions(parseOpenQuestions(node.id, readFileSync(node.path, "utf8")))
+        .map((question) => ({ node: node.id, text: question.text })));
+      return [{
+        name,
+        title: heading ? heading[1].trim() : name,
+        proposal: heading ? proposalText.slice(proposalText.indexOf(heading[0]) + heading[0].length).trim() : proposalText.trim(),
+        nodes,
+        removed: model.removed,
+        openDecisions,
+        planned: readPlanning(model.directory)?.deltaHash === hash,
+        approved: receipt?.approval_basis === hash,
+        uncommitted: uncommittedUnder(projectRoot, repoPath(changesPath(projectRoot, name))),
+      }];
+    } catch {
+      return [];
+    }
+  });
 }
 
 /** Specification files sitting in the working tree — the counterweight to the ref read. */

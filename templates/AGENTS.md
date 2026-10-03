@@ -36,9 +36,11 @@ conversation that shaped it, distilled into `conversation.md` by `kotta narrativ
 delta** under `model/`, every node marked with its `provenance` (stated, partly inferred or inferred,
 and who decided it). `kotta plan <name>` measures the delta against the accepted model and writes
 `planning.md`; the human decides it — **the one gate** — and `kotta approve <name> --by <who>`
-records that yes; `kotta archive <name>` then lands exactly the approved delta in
-`{{workspace}}/spec/` and moves the change to `{{workspace}}/changes/archive/`, asking nothing again.
-The `plan-change` skill is the how. Code usually comes last; when it runs ahead of the model, say so
+records that yes. The approved change then stays open while the code that keeps it is written:
+`kotta gap` lists what is left of it. `kotta archive <name>` closes it — it lands exactly the
+approved delta in `{{workspace}}/spec/` and moves the change to `{{workspace}}/changes/archive/`,
+asking nothing again, and refusing only a node that is neither kept nor admitted. The `plan-change`
+skill is the how. The order is plan, gate, build, archive, and the code never comes before the gate
 (rule 7).
 
 ## The rule everything else follows from
@@ -58,7 +60,7 @@ files. The board is read-only.
 
 ```bash
 kotta validate     # does every node satisfy its form, and every edge name a node
-kotta gap          # which accepted promises have no evidence in the code, and which enforcement has no spec behind it
+kotta gap          # which accepted promises have no evidence in the code, what is left to build of each approved open change, and which enforcement has no spec behind it
 kotta questions    # which drafts still carry an open question
 kotta change list  # which changes are open
 ```
@@ -96,7 +98,8 @@ question, so a draft with one is a draft, not an agreement.
    nodes disagree, the nodes win and you say where they disagree. You may propose a change to a
    node; you do not decide one. The change lands when the human says yes. `kotta plan`'s conflict
    candidates help; they do not replace comparing every claim of a delta with the accepted nodes it
-   touches, and what you find goes into the report marked `judged`.
+   touches, and what you find goes into the report marked `judged`. Between a change's approval and
+   its archive, the approved delta is the agreement for the nodes it touches.
 2. **Never invent product intent.** Where a form asks for something — a goal, an actor, a rationale —
    that neither the conversation nor the proposal says, write the question, not an answer. A
    filled-in guess is worse than a listed gap.
@@ -106,21 +109,25 @@ question, so a draft with one is a draft, not an agreement.
    human in their language: what will change, named by title, one line, then a plain yes or no.
    Anything less than an explicit yes is a no: silence, a yes to a different question, an earlier
    unrelated yes, or your own judgement that they would obviously agree. If you cannot ask, you do
-   not decide. There is one such gate per change, at the end of planning, and none after it.
+   not decide. There is one such gate per change, at the end of planning, and none after it. Once
+   the yes is recorded, offer the work the change describes as the next step, not the archive: the
+   change stays open until it is built.
    Write every question for someone who has not read the code or the specification: say in plain
    words what the thing is, what it says today and why the answer matters, give the options and
    what each would mean, and mark your own suggestion as yours. No file names, no ids, no knowledge
    of the repository assumed.
 5. **Evidence names its node.** When you implement a promise, cite the node's id where the code
-   keeps it and in the test that proves it; when you cannot yet, admit the gap in the node's
-   frontmatter with its kind and reason rather than leaving `kotta gap` to find it.
+   keeps it and in the test that proves it. A node of an approved change that is still open needs
+   no admission while it is unbuilt — it is the work that remains. What is still unkept when the
+   change is archived, you admit in the node's frontmatter with its kind and reason; `kotta archive`
+   refuses a node that is neither kept nor admitted.
 6. **`{{workspace}}/legacy/`, where there is one, is read-only.** It is the archive of a workspace
    migrated from before 1.0, kept for reading; nothing in it governs anything now.
-7. **Say when the code runs ahead of the spec.** Implement as asked, whether or not the change has
-   been through the gate. When what you write keeps, changes
-   or drops a promise the accepted model does not state, say so in one line, name the promise in
-   plain words, and offer `plan-change`. Do not stop or wait for it. Work that touches no promise
-   needs no word about the spec.
+7. **The code never runs ahead of the spec.** Before you write code that keeps, changes or drops a
+   promise that neither the accepted model nor an approved open change states, open a change for it
+   and take it through `plan-change` to the gate; write the code after the human's yes. Say so in one
+   line, naming the promise in plain words, instead of writing the code. Building an approved change
+   needs no new change, and neither does work that touches no promise.
 
 ## Skills
 

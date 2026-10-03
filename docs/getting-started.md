@@ -154,16 +154,25 @@ approved:
     …
 ```
 
-The basis is a hash of every file under `model/`. Change one byte after the yes and `archive`
-refuses.
+The basis is a hash of every file under `model/`. Change what a node promises after the yes and
+`archive` refuses; an admission (`accepted:`) is the one thing you may still add.
 
-### 6. Land it
+### 6. Build it, then land it
 
-Implement, naming the node ids where the code keeps them. Then:
+The approved change stays open while you implement it, naming the node ids where the code keeps
+them. `kotta gap` shows what is left:
+
+```bash
+kotta gap --change <name>    # which of the change's promises nothing names yet
+```
+
+When it is built — or what is not is admitted in its node — close the change:
 
 ```bash
 kotta archive <name>
 ```
+
+`archive` refuses a node that is neither kept nor admitted, and names it.
 
 `archive` merges the approved delta into `.kotta/spec/` and moves the change to
 `.kotta/changes/archive/<date>-<name>/`. That is all it does with `narrative: none`, the default.

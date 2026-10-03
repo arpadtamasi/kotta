@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { agentDecided, type SpecNode } from "./model";
+import { agentDecided, type ChangeMark, type SpecNode } from "./model";
 import { EntityMapView, ProvenanceBadges, ProvenancePanel, ProvenanceSummary, StateMachineView, StoryMapView, UseCaseView, VIEWS, type ViewKey } from "./views";
 
 /* ══ Kotta board ═══════════════════════════════════════
@@ -13,9 +13,19 @@ import { EntityMapView, ProvenanceBadges, ProvenancePanel, ProvenanceSummary, St
 /* ── Types ───────────────────────────────────────────── */
 export type { Provenance, SpecNode } from "./model";
 export type SpecForm = { id: string; directory: string; title: string };
+/** An open change, read from the working tree (BR-01m40e522gtq49knhy51hr9e3d). */
+export type OpenChange = {
+  name: string; title: string; proposal: string;
+  nodes: Array<SpecNode & { mark: "added" | "changed" }>;
+  removed: string[];
+  openDecisions: Array<{ node: string; text: string }>;
+  planned: boolean; approved: boolean;
+  uncommitted: string[];
+};
 export type Workspace = {
   project: string; workspace?: string;
   spec?: SpecNode[];
+  changes?: OpenChange[];
   specForms?: SpecForm[];
   /* What the reader has to say about itself before the page is believed — see WorkspaceNotices. */
   notices?: string[];
@@ -111,6 +121,8 @@ export function admissionKind(node: { accepted: string[] }): AdmissionKind | nul
 
 export type Board = {
   spec: SpecNode[];
+  /** The open change the board shows, or null for the accepted specification. */
+  change: OpenChange | null;
   specById: Map<string, SpecNode>;
   /** Every form present, from the nodes themselves: the registry is the project's, none is named here. */
   forms: string[];
@@ -119,8 +131,26 @@ export type Board = {
   kinds: Map<string, AdmissionKind | null>;
 };
 
-export function readBoard(workspace: Workspace): Board {
-  const spec = workspace.spec ?? [];
+/**
+ * The model as it would be after the change: the accepted nodes with the delta applied, every node
+ * the change touches marked. The accepted view is the accepted specification, untouched.
+ */
+export function mergeChange(accepted: SpecNode[], change: OpenChange): SpecNode[] {
+  const uncommitted = new Set(change.uncommitted);
+  const delta = new Map(change.nodes.map((node) => [node.id, node]));
+  const removed = new Set(change.removed);
+  const merged: SpecNode[] = accepted.map((node) => {
+    const replacement = delta.get(node.id);
+    if (replacement) return { ...replacement, before: node.sections, uncommitted: uncommitted.has(replacement.path) };
+    return removed.has(node.id) ? { ...node, mark: "removed" as ChangeMark } : node;
+  });
+  for (const node of change.nodes) if (node.mark === "added") merged.push({ ...node, uncommitted: uncommitted.has(node.path) });
+  return merged.sort((left, right) => left.title.localeCompare(right.title) || left.id.localeCompare(right.id));
+}
+
+export function readBoard(workspace: Workspace, changeName: string | null = null): Board {
+  const change = workspace.changes?.find((candidate) => candidate.name === changeName) ?? null;
+  const spec = change ? mergeChange(workspace.spec ?? [], change) : workspace.spec ?? [];
   entityTitles.clear();
   for (const node of spec) entityTitles.set(node.id, node.title);
   const specById = new Map(spec.map((node) => [node.id, node]));
@@ -132,7 +162,7 @@ export function readBoard(workspace: Workspace): Board {
     }
   }
   const kinds = new Map(spec.map((node) => [node.id, admissionKind(node)]));
-  return { spec, specById, forms, incoming, kinds };
+  return { spec, change, specById, forms, incoming, kinds };
 }
 
 /* ── Small presentational bits ───────────────────────── */
@@ -168,7 +198,10 @@ export function BrandMark({ size = 22 }: { size?: number }) {
 
 /* ══ The rail ══════════════════════════════════════════
    The specification list, and the four diagrams of the same model beside it. */
-export function Rail({ board, refreshed, view = "spec", onView = () => {} }: { board: Board | null; refreshed: number; view?: ViewKey; onView?: (view: ViewKey) => void }) {
+export function Rail({ board, refreshed, view = "spec", onView = () => {}, changes = [], change = null, onChange = () => {} }: {
+  board: Board | null; refreshed: number; view?: ViewKey; onView?: (view: ViewKey) => void;
+  changes?: OpenChange[]; change?: string | null; onChange?: (name: string | null) => void;
+}) {
   return <nav className="rail" aria-label="Board sections">
     <div className="rail__brand"><BrandMark size={22} /><span>Kotta</span></div>
     <div className="rail__group">
@@ -178,6 +211,18 @@ export function Rail({ board, refreshed, view = "spec", onView = () => {} }: { b
         <span className="rail__label">{entry.label}</span>
         <span className="rail__count">{board ? (entry.forms.length ? board.spec.filter((node) => (entry.forms as readonly string[]).includes(node.form)).length : board.spec.length) : "—"}</span>
       </button>)}
+    </div>
+    <div className="rail__group">
+      <div className="rail__head">open changes</div>
+      <button type="button" className={`rail__item ${change === null ? "is-active" : ""}`} aria-pressed={change === null} onClick={() => onChange(null)}>
+        <span className="rail__label">Accepted specification</span>
+      </button>
+      {changes.map((entry) => <button key={entry.name} type="button" className={`rail__item ${change === entry.name ? "is-active" : ""}`}
+        aria-pressed={change === entry.name} title={entry.name} onClick={() => onChange(entry.name)}>
+        <span className="rail__label">{entry.title}</span>
+        <span className="rail__count">{entry.nodes.length + entry.removed.length}</span>
+      </button>)}
+      {changes.length === 0 && <div className="rail__meta">none open</div>}
     </div>
     <div className="rail__foot">
       <a className="rail__report" href={BUG_REPORT_URL} target="_blank" rel="noreferrer noopener" aria-label="Report a bug in Kotta (opens the GitHub issue form in a new tab)">Report a bug</a>
@@ -252,8 +297,10 @@ export function SpecView({ board, filter, form, query, agentOnly = false, onFilt
   return <div className="view">
     <div className="view__head">
       <div>
-        <h2>Specification</h2>
-        <p>The accepted technical model — {board.spec.length} nodes across {board.forms.length} forms. Read-only: a node changes when it lands on the base branch.</p>
+        <h2>{board.change ? board.change.title : "Specification"}</h2>
+        <p>{board.change
+          ? <>The model as it would be after this change — {board.spec.length} nodes; what the change adds, changes or removes is marked.</>
+          : <>The accepted technical model — {board.spec.length} nodes across {board.forms.length} forms. Read-only: a node changes when it lands on the base branch.</>}</p>
       </div>
     </div>
     <div className="filters">
@@ -282,6 +329,7 @@ export function SpecView({ board, filter, form, query, agentOnly = false, onFilt
           <span className="spec-row__title">{node.title}</span>
           <span className="spec-row__meta">
             <Tail id={node.id} />
+            {node.mark && <ChangeTag node={node} />}
             <ProvenanceBadges provenance={node.provenance} />
             {kind
               ? <span className={`tag admission admission-${kind}`}>{kind}</span>
@@ -381,6 +429,7 @@ export function EntityDrawer({ id, board, onClose, onOpen }: {
         ? <div className="drawer__gone"><Dangling field="reference" id={id} /></div>
         : <>
           <h2 className="drawer__title">{node.title}</h2>
+          {node.mark && <p className="drawer__change"><ChangeTag node={node} /></p>}
           <ProvenancePanel node={node} onOpen={onOpen} />
           <SpecNeighbours node={node} board={board} onOpen={onOpen} />
           <dl className="drawer__fields">
@@ -395,9 +444,44 @@ export function EntityDrawer({ id, board, onClose, onOpen }: {
               <MarkdownContent value={body} onEntity={onOpen} />
             </section>
             : null)}
+          {node.before && <section className="drawer__section">
+            <div className="drawer__section-head">Before the change</div>
+            {Object.entries(node.before).map(([name, body]) => body && body.trim() && body !== node.sections?.[name]
+              ? <div key={name}><div className="spec-edge__field">{titleCase(name)}</div><MarkdownContent value={body} onEntity={onOpen} /></div>
+              : null)}
+          </section>}
         </>}
     </div>
   </div>;
+}
+
+/* ══ An open change ════════════════════════════════════
+   What waits at the gate: the proposal, its open decisions and where it stands. Read-only — the
+   gate is in the conversation, never here (BR-01m40e522gtq49knhy51hr9e3d). */
+const MARK_LABEL: Record<ChangeMark, string> = { added: "added", changed: "changed", removed: "removed" };
+export function ChangeTag({ node }: { node: SpecNode }) {
+  if (!node.mark) return null;
+  return <>
+    <span className={`tag change-mark change-mark-${node.mark}`}>{MARK_LABEL[node.mark]}</span>
+    {node.uncommitted && <span className="tag tag-outline">not committed</span>}
+  </>;
+}
+export function ChangeHeader({ change, onOpen }: { change: OpenChange; onOpen: (id: string) => void }) {
+  const state = change.approved ? "approved" : change.planned ? "planned, not approved" : "not planned";
+  return <section className="banner banner--change" aria-label={`Open change: ${change.title}`}>
+    <p><b>Open change</b> · <code>{change.name}</code> · {state}
+      {change.uncommitted.length > 0 && <> · <span className="tag tag-outline">not committed</span> {change.uncommitted.length} file{change.uncommitted.length === 1 ? "" : "s"}</>}</p>
+    <details>
+      <summary>Proposal</summary>
+      <MarkdownContent value={change.proposal} onEntity={onOpen} />
+    </details>
+    {change.openDecisions.length > 0 && <details open>
+      <summary>Open decisions · {change.openDecisions.length}</summary>
+      <ul>{change.openDecisions.map((decision, index) => <li key={index}>
+        <MarkdownContent value={`${decision.node}: ${decision.text}`} onEntity={onOpen} />
+      </li>)}</ul>
+    </details>}
+  </section>;
 }
 
 /* ══ What the reader says about itself ═══════════
@@ -422,6 +506,7 @@ export function App() {
   const [specQuery, setSpecQuery] = useState<string>("");
   const [view, setView] = useState<ViewKey>("spec");
   const [agentOnly, setAgentOnly] = useState(false);
+  const [changeName, setChangeName] = useState<string | null>(null);
 
   /* One request, always the same one: the board never posts. A failed read keeps the last
      good data on screen and says what failed — a refresh preserves the filters and the drawer. */
@@ -439,13 +524,14 @@ export function App() {
   useEffect(() => { void refresh(); const timer = window.setInterval(() => void refresh(), 1_500); return () => window.clearInterval(timer); }, [refresh]);
   useEffect(() => { const t = window.setInterval(() => setRefreshed((r) => (r + 1) % 600), 1_000); return () => window.clearInterval(t); }, []);
 
-  const board = useMemo(() => (workspace ? readBoard(workspace) : null), [workspace]);
+  const board = useMemo(() => (workspace ? readBoard(workspace, changeName) : null), [workspace, changeName]);
 
   return <div className="app">
-    <Rail board={board} refreshed={refreshed} view={view} onView={setView} />
+    <Rail board={board} refreshed={refreshed} view={view} onView={setView} changes={workspace?.changes ?? []} change={board?.change?.name ?? null} onChange={setChangeName} />
     <div className="content">
       <TopBar workspace={workspace} board={board} onRefresh={() => void refresh()} refreshed={refreshed} />
       {workspace?.notices?.length ? <WorkspaceNotices notices={workspace.notices} /> : null}
+      {board?.change && <ChangeHeader change={board.change} onOpen={setDetailId} />}
       {board && <ProvenanceSummary board={board} agentOnly={agentOnly} onAgentOnly={setAgentOnly} />}
       {workspace && error && <div className="banner" role="alert">
         <b>Last read failed.</b> Tried <code>GET {WORKSPACE_ENDPOINT}</code> — {error}. Showing the last good read.

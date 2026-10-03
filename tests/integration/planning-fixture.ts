@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { stringify } from "yaml";
@@ -46,6 +46,12 @@ export const json = (cwd: string, args: string[]) => {
 
 export const QUIT_RULE_AFTER = "The game SHALL ask “Quit? Y/N” before it ends a running game; a paused game quits at once.";
 
+/**
+ * The fixture ships no game, so every node of its delta says so: `archive` lands no node that is
+ * neither kept nor admitted (BR-01m3w9ajdxbf04ph4y97dmry35).
+ */
+export const UNBUILT = ["unimplemented: the fixture has a specification and no game"];
+
 const stated = (source: string) => ({ level: "stated", decided_by: "human", sources: [source], quote: "a paused game should just quit — operator, 2026-09-25 10:02" });
 
 /**
@@ -87,16 +93,16 @@ export function planningWorkspace(label: string, narrative: string | null = "gen
   const change = ".kotta/changes/add-pause";
   write(root, `${change}/proposal.md`, "# Add pause\n\n## Why\n\nA paused game should just quit.\n");
   write(root, `${change}/model/business-rules/quit-confirmation-${QUIT.slice(-8)}.md`, node(
-    { id: QUIT, form: "business-rule", title: "Quitting asks for confirmation", capability: "game/session", provenance: stated(".kotta/changes/add-pause/proposal.md · Why") },
+    { id: QUIT, form: "business-rule", title: "Quitting asks for confirmation", capability: "game/session", accepted: UNBUILT, provenance: stated(".kotta/changes/add-pause/proposal.md · Why") },
     { Rule: QUIT_RULE_AFTER, Rationale: "An accidental quit loses the game; a paused one is already stopped.", Scope: "Every running or paused game." }));
   write(root, `${change}/model/state-machines/game-lifecycle-${LIFECYCLE.slice(-8)}.md`, node(
-    { id: LIFECYCLE, form: "state-machine", title: "Game lifecycle", entity: [GAME], provenance: { level: "partly-inferred", decided_by: "agent-decided", sources: [".kotta/changes/add-pause/proposal.md · Why"], inferred: "that a finished game can be restarted" } },
+    { id: LIFECYCLE, form: "state-machine", title: "Game lifecycle", entity: [GAME], accepted: UNBUILT, provenance: { level: "partly-inferred", decided_by: "agent-decided", sources: [".kotta/changes/add-pause/proposal.md · Why"], inferred: "that a finished game can be restarted" } },
     { "Governed lifecycle": "A game from start to end.", States: "running, paused, over", Transitions: "- running -> paused\n- paused -> over\n- over -> running" }));
   write(root, `${change}/model/business-rules/pause-freezes-${PAUSE.slice(-8)}.md`, node(
-    { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session", provenance: stated(".kotta/changes/add-pause/proposal.md · Why") },
+    { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session", accepted: UNBUILT, provenance: stated(".kotta/changes/add-pause/proposal.md · Why") },
     { Rule: "While a game is paused its clock SHALL NOT advance.", Rationale: "A pause is not play.", Scope: "Timed games.", "Open decisions": "- How long may a pause last?" }));
   write(root, `${change}/model/examples/timer-holds-${HOLD.slice(-8)}.md`, node(
-    { id: HOLD, form: "example", title: "The timer holds while paused", subjects: [PAUSE], provenance: stated(".kotta/changes/add-pause/proposal.md · Why") },
+    { id: HOLD, form: "example", title: "The timer holds while paused", subjects: [PAUSE], accepted: UNBUILT, provenance: stated(".kotta/changes/add-pause/proposal.md · Why") },
     { Given: "a game paused at 01:10", When: "a minute passes", Then: "the clock still shows 01:10" }));
   write(root, `${change}/specs/session/spec.md`, [
     "## ADDED Requirements", "", "### Requirement: Quit confirmation", `<!-- kotta: ${QUIT} -->`, "The game SHALL quit immediately.", "",
@@ -104,9 +110,21 @@ export function planningWorkspace(label: string, narrative: string | null = "gen
   return root;
 }
 
+/** Admit every node of the change that admits nothing yet: what a test adds to the delta is unbuilt too. */
+export function admitUnbuilt(root: string, change = ".kotta/changes/add-pause"): void {
+  const model = join(root, change, "model");
+  for (const directory of readdirSync(model, { withFileTypes: true }).filter((entry) => entry.isDirectory())) {
+    for (const file of readdirSync(join(model, directory.name)).filter((name) => name.endsWith(".md"))) {
+      const path = join(model, directory.name, file);
+      const content = readFileSync(path, "utf8");
+      if (!/^accepted:/m.test(content)) writeFileSync(path, content.replace(/^---\n/, `---\naccepted:\n  - "${UNBUILT[0]}"\n`));
+    }
+  }
+}
+
 /** Answer the open question the fixture leaves, the way an agent records the human's answer. */
 export function answerPause(root: string): void {
   write(root, `.kotta/changes/add-pause/model/business-rules/pause-freezes-${PAUSE.slice(-8)}.md`, node(
-    { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session", provenance: stated(".kotta/changes/add-pause/proposal.md · Why") },
+    { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session", accepted: UNBUILT, provenance: stated(".kotta/changes/add-pause/proposal.md · Why") },
     { Rule: "While a game is paused its clock SHALL NOT advance.", Rationale: "A pause is not play.", Scope: "Timed games.", "Open decisions": "None." }));
 }

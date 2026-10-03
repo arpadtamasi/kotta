@@ -1,10 +1,13 @@
+import { execFileSync } from "node:child_process";
 import { extname } from "node:path";
 import { parse as parseYaml } from "yaml";
+import { receiptErrors } from "../core/approval-receipt.js";
 import { readWorkspaceConfig } from "../core/config.js";
 import { parseMarkdown } from "../core/markdown.js";
 import { workspaceDirectoryName } from "../filesystem/workspace.js";
 import { git } from "../git/git.js";
 import { type EvidenceLevel } from "../core/evidence.js";
+import { APPROVAL_FILE, ARCHIVE_DIRECTORY, CHANGES_DIRECTORY, MODEL_DIRECTORY, REMOVED_FILE, approvesDelta, listChanges } from "../spec/change.js";
 import { ROOT_MODULE, discoverModules, excludedLine, excludedMentions, excludedSummary, isEvidencePath, listedFiles, moduleOf, placeNode, type ExcludedClass, type ExcludedSummary } from "../core/modules.js";
 
 export interface GapEvidence {
@@ -69,6 +72,42 @@ export interface ReverseGap {
   evidenceSought: string;
 }
 
+/** One node of an approved change that is still open, measured on the checked-out commit. */
+export interface ChangeGapNode {
+  id: string;
+  form: string;
+  title: string;
+  path: string;
+  /** added: the accepted model holds no node with this id; changed: the delta replaces one. */
+  delta: "added" | "changed";
+  evidence: GapEvidence[];
+  level: EvidenceLevel;
+  admission: { kind: AdmissionKind; reason: string } | null;
+}
+
+/**
+ * An approved change that is still open, as the code keeps it so far (UC-01m0fpqfxjvet99wbz0v1ag64q,
+ * EX-01m3w9ajt2zqpc5gc0katqef96). Counted apart from the accepted model, and never refused over:
+ * in an open change an unbuilt promise is the work that remains (BR-01m0qtshfqhcrrqtz051zm9svr).
+ */
+export interface ChangeGap {
+  change: string;
+  approvedBy: string;
+  approvedAt: string;
+  /** Where the change and its evidence were read: the checked-out branch and commit. */
+  branch: string;
+  commit: string;
+  nodes: ChangeGapNode[];
+  /** Neither evidenced nor admitted: what is left to build. */
+  remaining: ChangeGapNode[];
+}
+
+/** An open change the report did not measure, with why: what it promises is not, or no longer, agreed. */
+export interface UnmeasuredChange {
+  change: string;
+  reason: string;
+}
+
 export interface GapReportResult {
   ok: boolean;
   command: "gap report";
@@ -81,6 +120,11 @@ export interface GapReportResult {
     changedNodes: string[];
     /** Only the nodes of this module are reported, when the report was asked for one. */
     module: string | null;
+    /** Only this open change is reported, when the report was asked for one. */
+    change: string | null;
+    /** Every approved change that is still open, each measured on the checked-out commit. */
+    changes: ChangeGap[];
+    unmeasuredChanges: UnmeasuredChange[];
     /** Per module: promises, and how many are cited, bound, or without evidence. */
     modules: GapModuleSummary[];
     /** Nodes with no evidence, so no module: counted apart from every module. */
@@ -230,6 +274,130 @@ function lastSpecLanding(root: string, ref: string, workspace: string): { commit
   return { commit, touched: touchedPaths.length, changedPaths: new Set(moved) };
 }
 
+/** The checked-out commit and its branch; null where nothing is committed yet. */
+function checkedOut(root: string): { branch: string; commit: string } | null {
+  try {
+    const commit = git(root, ["rev-parse", "--verify", "HEAD^{commit}"]);
+    const branch = git(root, ["rev-parse", "--abbrev-ref", "HEAD"]);
+    return { commit, branch: branch === "HEAD" ? "detached HEAD" : branch };
+  } catch {
+    return null;
+  }
+}
+
+/** A committed file's bytes, untrimmed: what a delta's fingerprint is taken over. */
+function blob(root: string, ref: string, path: string): Buffer {
+  return execFileSync("git", ["show", `${ref}:${path}`], { cwd: root, stdio: ["ignore", "pipe", "pipe"], maxBuffer: 64 * 1024 * 1024 });
+}
+
+/**
+ * The open changes at the checked-out commit: the approved ones measured, the others named with the
+ * reason they were not. A change lives on a working branch with the code that keeps it until both
+ * are merged, so it is read where the work is, never from the base branch
+ * (UC-01m0fpqfxjvet99wbz0v1ag64q). Its own `model/` is inside the workspace and so is no evidence.
+ */
+function openChanges(root: string, workspace: string, head: { branch: string; commit: string }, accepted: AcceptedNode[], files: Array<{ path: string; text: string }>, modules: ReturnType<typeof discoverModules>["modules"]): { measured: ChangeGap[]; unmeasured: UnmeasuredChange[] } {
+  const prefix = `${workspace}/${CHANGES_DIRECTORY}/`;
+  const paths = treePaths(root, head.commit, `${workspace}/${CHANGES_DIRECTORY}`);
+  const names = [...new Set(paths.map((path) => path.slice(prefix.length).split("/")).filter((parts) => parts.length > 1).map((parts) => parts[0]))]
+    .filter((name) => name !== ARCHIVE_DIRECTORY).sort();
+  const acceptedIds = new Set(accepted.map((node) => node.id));
+  const measured: ChangeGap[] = [];
+  const unmeasured: UnmeasuredChange[] = [];
+  for (const name of names) {
+    const mine = paths.filter((path) => path.startsWith(`${prefix}${name}/`));
+    const approvalPath = `${prefix}${name}/${APPROVAL_FILE}`;
+    if (!mine.includes(approvalPath)) { unmeasured.push({ change: name, reason: "never approved" }); continue; }
+    let receipt: Record<string, unknown> = {};
+    try { receipt = (parseYaml(atRef(root, head.commit, approvalPath)) ?? {}) as Record<string, unknown>; }
+    catch { /* an unreadable receipt is an incomplete one */ }
+    if (!receipt.approved_by || !receipt.approval_basis || receiptErrors(receipt).length) { unmeasured.push({ change: name, reason: `its ${APPROVAL_FILE} is incomplete` }); continue; }
+    const modelPrefix = `${prefix}${name}/${MODEL_DIRECTORY}/`;
+    const modelFiles = mine.filter((path) => path.startsWith(modelPrefix)).map((path) => path.slice(modelPrefix.length));
+    if (!approvesDelta(receipt.approval_basis, modelFiles, (file) => blob(root, head.commit, `${modelPrefix}${file}`))) {
+      unmeasured.push({ change: name, reason: "its delta changed after the approval" });
+      continue;
+    }
+    const nodes = modelFiles.filter((file) => file.endsWith(".md") && file !== REMOVED_FILE).flatMap((file): ChangeGapNode[] => {
+      const path = `${modelPrefix}${file}`;
+      const entity = parseMarkdown(atRef(root, head.commit, path));
+      const id = String(entity.data.id ?? "").trim();
+      if (!id) return [];
+      const form = String(entity.data.form ?? "").trim();
+      const title = String(entity.data.title ?? id).trim();
+      const placement = placeNode({ id, form, title, path, data: { module: entity.data.module } }, files, modules);
+      const admission = acceptedAdmission(Array.isArray(entity.data.accepted) ? entity.data.accepted.map(String) : []);
+      return [{
+        id, form, title, path,
+        delta: acceptedIds.has(id) ? "changed" : "added",
+        evidence: placement.evidence.map(({ kind, path: at }) => ({ kind, path: at })),
+        level: placement.level,
+        admission: admission?.kind ? { kind: admission.kind, reason: admission.reason } : null,
+      }];
+    }).sort((left, right) => left.title.localeCompare(right.title) || left.id.localeCompare(right.id));
+    measured.push({
+      change: name,
+      approvedBy: String(receipt.approved_by),
+      approvedAt: String(receipt.approved_at),
+      branch: head.branch,
+      commit: head.commit,
+      nodes,
+      remaining: nodes.filter((node) => !node.evidence.length && !node.admission),
+    });
+  }
+  // An open change on disk that the checked-out commit does not hold yet cannot be read where the
+  // evidence is read; it is named, so its absence from the report is not mistaken for "nothing left".
+  for (const name of listChanges(root)) {
+    if (!names.includes(name)) unmeasured.push({ change: name, reason: `not committed on ${head.branch}` });
+  }
+  return { measured, unmeasured: unmeasured.sort((left, right) => left.change.localeCompare(right.change)) };
+}
+
+/**
+ * The nodes of a delta that are neither kept nor admitted, sought the way the report seeks an open
+ * change's evidence: in what the checked-out commit holds. `kotta archive` refuses over them
+ * (BR-01m3w9ajdxbf04ph4y97dmry35), so no unaccounted promise reaches the accepted model.
+ */
+export function unaccountedPromises<Node extends { id: string; data: Record<string, unknown> }>(root: string, nodes: Node[]): { where: string; nodes: Node[]; uncommitted: string[] } {
+  const workspace = workspaceDirectoryName(root);
+  const head = checkedOut(root);
+  const files = head ? readableRepositoryFiles(root, treePaths(root, head.commit), head.commit, workspace) : [];
+  const missing = nodes.filter((node) => {
+    if (files.some((file) => file.text.includes(node.id))) return false;
+    return !acceptedAdmission(Array.isArray(node.data.accepted) ? node.data.accepted.map(String) : [])?.kind;
+  });
+  return {
+    where: head ? `${head.branch}@${head.commit.slice(0, 7)}` : "this repository, where nothing is committed yet",
+    nodes: missing,
+    uncommitted: missing.length && head ? uncommittedEvidencePaths(root, workspace) : [],
+  };
+}
+
+function changeSection(entry: ChangeGap): string[] {
+  const evidenced = entry.nodes.filter((node) => node.evidence.length);
+  const admitted = entry.nodes.filter((node) => !node.evidence.length && node.admission);
+  const lines = [
+    "",
+    `## Open change: ${entry.change}`,
+    `Approved by ${entry.approvedBy} on ${entry.approvedAt.slice(0, 10)}. Read: ${entry.branch}@${entry.commit}`,
+    `Promises: ${entry.nodes.length} · evidenced ${evidenced.length} · admitted ${admitted.length} · without evidence ${entry.remaining.length}`,
+  ];
+  if (entry.remaining.length) {
+    lines.push("", "### The work that remains");
+    for (const node of entry.remaining) lines.push(`- ${node.title} · ${node.id} — ${node.delta}; nothing on ${entry.branch}@${entry.commit.slice(0, 7)} names it in code, tests, or command definitions (${node.path})`);
+  }
+  if (admitted.length) {
+    lines.push("", "### Admitted");
+    for (const node of admitted) lines.push(`- ${node.title} · ${node.id} — ${node.delta}; ${node.admission!.kind}: ${node.admission!.reason} (${node.path})`);
+  }
+  if (evidenced.length) {
+    lines.push("", "### Evidenced");
+    for (const node of evidenced) lines.push(`- ${node.title} · ${node.id} — ${node.delta}; ${node.evidence.map((item) => `${item.kind} ${item.path}`).join(", ")}`);
+  }
+  if (!entry.nodes.length) lines.push("", "The change adds and changes no node.");
+  return lines;
+}
+
 /** The legacy spellings, kept reading so an existing workspace is not broken by the kinds. */
 const UNKINDED_KEYS = ["implementation", "implementation-gap", "verification"];
 
@@ -288,6 +456,8 @@ function groupByReason(gaps: AcceptedImplementationGap[]): Map<string, AcceptedI
 }
 
 export function formatGapReport(data: GapReportResult["data"]): string {
+  // Asked for one change, the report is that change and nothing of the accepted model.
+  if (data.change) return `${["# Implementation gap report", "", `Change: ${data.change}`, ...data.changes.flatMap(changeSection)].join("\n")}\n`;
   const lines = [
     "# Implementation gap report",
     "",
@@ -300,6 +470,11 @@ export function formatGapReport(data: GapReportResult["data"]): string {
   // What was not counted, said once in the head (BR-01m3cqmtfyrpdzcppvy0565652).
   const excluded = excludedLine(data.excluded);
   if (excluded) lines.push(excluded);
+  if (data.changes.length || data.unmeasuredChanges.length) {
+    const measured = data.changes.map((entry) => `${entry.change} (${entry.remaining.length} of ${entry.nodes.length} without evidence)`);
+    const skipped = data.unmeasuredChanges.map((entry) => `${entry.change} (${entry.reason})`);
+    lines.push(`Open changes: ${measured.length ? measured.join(", ") : "none approved"}${skipped.length ? ` · not measured: ${skipped.join(", ")}` : ""}`);
+  }
   // By module only once a manifest declares one: a single-module repository has nothing to split.
   if (data.modules.some((row) => row.module !== ROOT_MODULE) || data.straddlers.length) {
     lines.push("", "## Evidence by module");
@@ -354,6 +529,7 @@ export function formatGapReport(data: GapReportResult["data"]): string {
       }
     }
   }
+  for (const entry of data.changes) lines.push(...changeSection(entry));
   if (data.reverse.length) {
     lines.push("", "## Enforced behavior with no specification trace");
     for (const gap of data.reverse) lines.push(`- ${gap.behavior} [${gap.kind}] — ${gap.path}:${gap.line}; looked for ${gap.evidenceSought}`);
@@ -378,9 +554,15 @@ function summarize(nodes: GapNode[], moduleNames: string[]): GapModuleSummary[] 
 export interface GapOptions {
   /** Report only this module's nodes: the ones evidenced in it, and the interfaces that name it. */
   module?: string;
+  /** Report only this approved, still open change. */
+  change?: string;
 }
 
-/** Read only committed bytes from the configured base branch; never refreshes an index or writes. */
+/**
+ * Read only committed bytes, and never refresh an index or write: the accepted model and its
+ * evidence from the configured base branch, an approved open change and its evidence from the
+ * checked-out commit.
+ */
 export function gapReport(repositoryRoot: string, options: GapOptions = {}): GapReportResult {
   const config = readWorkspaceConfig(repositoryRoot);
   const baseBranch = config.baseBranch;
@@ -433,8 +615,21 @@ export function gapReport(repositoryRoot: string, options: GapOptions = {}): Gap
     else if (!admission.kind) unkinded.push(node);
     else acceptedGaps.push({ id: node.id, title: node.title, path: node.path, kind: admission.kind, reason: admission.reason, changed: node.changed });
   }
+  const head = checkedOut(repositoryRoot);
+  const headFiles = !head || head.commit === commit ? files : readableRepositoryFiles(repositoryRoot, treePaths(repositoryRoot, head.commit), head.commit, workspace);
+  const open = head
+    ? openChanges(repositoryRoot, workspace, head, nodes, headFiles, head.commit === commit ? modules : discoverModules(listedFiles(repositoryRoot, headFiles)).modules)
+    : { measured: [], unmeasured: [] };
+  if (options.change !== undefined && !open.measured.some((entry) => entry.change === options.change)) {
+    const skipped = open.unmeasured.find((entry) => entry.change === options.change);
+    throw new Error(skipped
+      ? `The change '${options.change}' is not measured: ${skipped.reason}. Only an approved change, committed where its code is, has promises to measure.`
+      : `No open change named '${options.change}'${head ? ` at ${head.branch}@${head.commit.slice(0, 7)}` : ""}. Approved open changes: ${open.measured.map((entry) => entry.change).join(", ") || "none"}.`);
+  }
+  const changes = options.change === undefined ? open.measured : open.measured.filter((entry) => entry.change === options.change);
   const moduleFiles = options.module === undefined ? files : files.filter((file) => moduleOf(file.path, modules) === options.module);
-  const reverse = enforcementSites(moduleFiles, nodes.map((node) => node.id));
+  // A site that names a node of an approved open change is specified by it: not yet accepted, already agreed.
+  const reverse = enforcementSites(moduleFiles, [...nodes.map((node) => node.id), ...open.measured.flatMap((entry) => entry.nodes.map((node) => node.id))]);
   const data: GapReportResult["data"] = {
     baseBranch,
     commit,
@@ -442,6 +637,9 @@ export function gapReport(repositoryRoot: string, options: GapOptions = {}): Gap
     landingTouched: landing.touched,
     changedNodes: described.filter((node) => node.changed).map((node) => node.id),
     module: options.module ?? null,
+    change: options.change ?? null,
+    changes,
+    unmeasuredChanges: options.change === undefined ? open.unmeasured : [],
     modules: summarize(described, options.module === undefined ? moduleNames : [options.module]),
     unplaced: described.filter((node) => node.module === null && !node.straddler).length,
     excluded: excludedSummary(paths, workspace, described.filter((node) => node.level === "none")),
@@ -462,6 +660,7 @@ export function gapReport(repositoryRoot: string, options: GapOptions = {}): Gap
   // times in three days (F-01m0sm78y2b1vpg1msj98cvwxz); a refusal names its corrective action
   // (IF-01m0f0wn8994dzf9z1sdygxa04, UC-01m0fpqfxjvet99wbz0v1ag64q), and here the action is a
   // commit, not a fix.
+  if (options.change !== undefined) return { ok: true, command: "gap report", data, errors: [] };
   const uncommitted = promises.length ? uncommittedEvidencePaths(repositoryRoot, workspace) : [];
   const pending = uncommitted.length
     ? ` This report reads ${baseBranch}@${commit.slice(0, 7)}, and ${uncommitted.length} path${uncommitted.length === 1 ? " is" : "s are"} uncommitted in the working tree (${uncommitted.slice(0, 3).join(", ")}${uncommitted.length > 3 ? ", …" : ""}). If the evidence is among them, commit it and read again.`

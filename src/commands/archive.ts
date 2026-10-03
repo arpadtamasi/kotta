@@ -5,9 +5,10 @@ import { receiptErrors } from "../core/approval-receipt.js";
 import { readNarrativeSetting, type NarrativeMode } from "../core/config.js";
 import { displayId } from "../core/identity.js";
 import { findRepositoryRoot, specPath } from "../filesystem/workspace.js";
-import { APPROVAL_FILE, ARCHIVE_DIRECTORY, OPENSPEC_DIRECTORY, changesPath } from "../spec/change.js";
+import { APPROVAL_FILE, ARCHIVE_DIRECTORY, OPENSPEC_DIRECTORY, approvesDelta, changesPath } from "../spec/change.js";
 import { SCENARIO_FORM, generateCapabilitySpec, markdownFiles, narrativeDrift, narrativeShapeWarnings, type NarrativeDrift } from "../spec/narrative.js";
 import { referencesIn, type SpecNode, type ValidationIssue } from "../spec/registry.js";
+import { ADMISSION_KINDS, unaccountedPromises } from "./gap.js";
 import { analyzeChange, type NodeRef } from "./plan.js";
 
 /**
@@ -17,7 +18,8 @@ import { analyzeChange, type NodeRef } from "./plan.js";
  * into the accepted specification (a new node added, a same-id node replaced, a REMOVED node deleted
  * unless an accepted node still names it), regenerates the narrative of every capability the delta
  * touches from the merged model, checks that every bound narrative requirement agrees with its node,
- * and moves the change under `.kotta/changes/archive/<date>-<name>/`. The narrative is OpenSpec's and
+ * refuses a delta holding a node that no committed code, test or command definition names and that
+ * admits no gap, and moves the change under `.kotta/changes/archive/<date>-<name>/`. The narrative is OpenSpec's and
  * optional: with `narrative: none`, the default, nothing under `openspec/` is read or written. Every check runs before the
  * first write, so a refusal leaves the repository as it was.
  */
@@ -66,7 +68,7 @@ export function archiveChange(name: string, repositoryRoot?: string, now: Date =
     const incomplete = receiptErrors(receipt);
     if (!receipt.approved_by) incomplete.push({ code: "INCOMPLETE_APPROVAL_RECEIPT", message: "The receipt names no approver." });
     for (const problem of incomplete) errors.push({ ...problem, path: approvalPath });
-    if (!incomplete.length && receipt.approval_basis !== analysis.deltaHash) {
+    if (!incomplete.length && !approvesDelta(receipt.approval_basis, model.files, (file) => readFileSync(join(model.modelDirectory, file)))) {
       errors.push({ code: "APPROVAL_STALE", message: `${APPROVAL_FILE} approved the delta ${String(receipt.approval_basis)}, but model/ now hashes to ${analysis.deltaHash}: it changed after the yes. Plan it again and ask again.`, path: approvalPath });
     }
   }
@@ -85,6 +87,21 @@ export function archiveChange(name: string, repositoryRoot?: string, now: Date =
         errors.push({ code: "REMOVED_STILL_REFERENCED", message: `${relative(root, node.path)} names ${gone ? `${String(gone.data.title ?? reference)} (${displayId(reference)})` : reference} in '${field}', which the change removes. Change or remove that reference in the delta first.`, path: node.path });
       }
     }
+  }
+
+  // A change is built before it is archived (BR-01m3w9ajdxbf04ph4y97dmry35): a node that is neither
+  // kept nor admitted does not land, so the accepted model never holds a promise nobody accounted
+  // for (BR-01m0qtshfqhcrrqtz051zm9svr). A check, not a second gate: nobody is asked anything.
+  const unaccounted = unaccountedPromises(root, model.nodes);
+  const pending = unaccounted.uncommitted.length
+    ? ` ${unaccounted.uncommitted.length} path${unaccounted.uncommitted.length === 1 ? " is" : "s are"} uncommitted in the working tree (${unaccounted.uncommitted.slice(0, 3).join(", ")}${unaccounted.uncommitted.length > 3 ? ", …" : ""}); if the evidence is among them, commit it and archive again.`
+    : "";
+  for (const node of unaccounted.nodes) {
+    errors.push({
+      code: "UNACCOUNTED_PROMISE",
+      message: `${String(node.data.title ?? node.id)} (${node.form}) is neither kept nor admitted: nothing on ${unaccounted.where} names ${node.id} in code, tests, or command definitions, and the node admits no gap. Build it and name the id where the promise is kept, or admit the gap in the node's frontmatter: accepted: ["<kind>: <reason>"], where <kind> is one of ${ADMISSION_KINDS.join(", ")}. An admission does not change what was approved.${pending}`,
+      path: node.path,
+    });
   }
 
   const stamp = now.toISOString().slice(0, 10);

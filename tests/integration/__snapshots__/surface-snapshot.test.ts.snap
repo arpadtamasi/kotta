@@ -19,7 +19,9 @@ Commands:
   validate [options]            Validate the specification: every node against
                                 its form, every edge against the node it names
   gap [options]                 Report accepted spec promises without repository
-                                evidence and enforcement without a spec trace
+                                evidence, what is left to build of each approved
+                                open change, and enforcement without a spec
+                                trace
   modules [options]             List the modules the manifests declare; check
                                 their boundaries; publish a module's promises
   questions [options] [id]      Report the open questions a specification draft
@@ -96,12 +98,14 @@ Options:
 ### kotta gap
 Usage: kotta gap [options]
 
-Report accepted spec promises without repository evidence and enforcement
-without a spec trace
+Report accepted spec promises without repository evidence, what is left to build
+of each approved open change, and enforcement without a spec trace
 
 Options:
   --module <name>  Report only the promises of one module: those evidenced in
                    it, and the interfaces naming it
+  --change <name>  Report only one approved, still open change: which of its
+                   promises the checked-out commit does not keep yet
   --json
   -h, --help       display help for command
 

@@ -24,7 +24,15 @@ export type SpecNode = {
   provenance?: Provenance;
   /** The optional capability path the diagrams group by. */
   capability?: string;
+  /** Inside an open change: what the change does to this node. Absent in the accepted view. */
+  mark?: ChangeMark;
+  /** For a changed node, its accepted sections — what the change replaces. */
+  before?: Record<string, string>;
+  /** Inside an open change: the node's file is not committed as it is on disk. */
+  uncommitted?: boolean;
 };
+
+export type ChangeMark = "added" | "changed" | "removed";
 
 /* ── Provenance ──────────────────────────────────────── */
 export const LEVEL_LABEL: Record<ProvenanceLevel, string> = {

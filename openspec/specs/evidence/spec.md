@@ -22,7 +22,7 @@ Since 1.0 the repository holds a second place where node ids appear by necessity
 
 #### Scenario: A generated binding is neither cited nor a test
 <!-- kotta: EX-01m3cqmv7e9rjkte4g40kqm294 -->
-- **GIVEN** A generated `openspec/specs/<capability>/spec.md` carries a ` ` binding under a requirement, and nothing else in the repository names that id.
+- **GIVEN** A generated `openspec/specs/<capability>/spec.md` carries a `` binding under a requirement, and nothing else in the repository names that id.
 - **WHEN** `kotta gap` runs.
 - **THEN** The binding is neither `cited` nor `bound` evidence, the node reads `none`, and the generated file is not counted as a test file although its path contains `specs/`.
 
@@ -62,7 +62,9 @@ An accepted specification node either has evidence â€” code, a test, or a comman
 
 A promise is evidenced by citation: the site that keeps it names the node id, and the report looks for that identifier and nothing else, because the check has to be fast and exact (D-01m14bh1g2pk1fdwm9wpsmx9zg). Naming the node is therefore a term of the agreement, not a habit of this repository: a task that keeps a promise without citing it leaves the promise unaccounted for, however well the code behaves, and the refusal asks for the citation rather than for an implementation the reader may already have written.
 
-A promise whose work has not begun is not an unaccounted one. Where an agreement lands before the code that keeps it - the order this project's own shaping advises - the ratchet asks what is true of each node, not whether it is implemented yet, and a workspace that has just written its specification is not refused for having written it. What the ratchet exists to stop is a promise nobody has accounted for, and "the work has not started" is an accounting.
+A promise whose work has not begun is not an unaccounted one. Where an agreement lands before the code that keeps it - which the advised order no longer does, and nothing forbids - the ratchet asks what is true of each node, not whether it is implemented yet, and a workspace that has just written its specification is not refused for having written it. What the ratchet exists to stop is a promise nobody has accounted for, and "the work has not started" is an accounting.
+
+The promises of an approved change that is still open are measured the same way and counted apart. `kotta gap` SHALL name, unasked and in a section per change, each node of such a change's delta that no code, test or command definition names yet on the commit that is checked out: that list is the work that remains in the change. It SHALL NOT refuse over them, and they need no admission while the change is open; an admission is written only for what is still unkept when the change is archived, and `kotta archive` refuses a change that holds a node which is neither.
 
 **Rationale**
 
@@ -72,7 +74,7 @@ Driving that number to zero is not the remedy and would be the opposite of one â
 
 **Scope**
 
-`kotta gap`, and the specification nodes it reads. Not `validate`, which never reads the repository tree and would have to scan all of it to answer this. Not the task lifecycle: no gate moves, no task changes shape, and a task's coverage map means what it meant before.
+`kotta gap`, and the specification nodes it reads: the accepted ones, and those of an approved change that is still open. Not `validate`, which never reads the repository tree and would have to scan all of it to answer this. Not the task lifecycle: no gate moves, no task changes shape, and a task's coverage map means what it meant before.
 
 #### Scenario: A node named only in an excluded source says which
 <!-- kotta: EX-01m3cqmvs23cfzrxwfjpvk80dx -->
@@ -85,6 +87,12 @@ Driving that number to zero is not the remedy and would be the opposite of one â
 - **GIVEN** Three accepted specification nodes: one a test names by id, one whose frontmatter admits an implementation gap with a reason, and one that has neither.
 - **WHEN** `kotta gap` runs.
 - **THEN** It names the third node and where evidence was sought, and exits non-zero. The first is reported as evidenced and the second as an admitted gap, and neither contributes to the refusal. Adding the missing admission, with its reason, is enough to make the command pass â€” and says in the node itself that the promise is not yet kept.
+
+#### Scenario: The gap report measures an approved open change
+<!-- kotta: EX-01m3w9ajt2zqpc5gc0katqef96 -->
+- **GIVEN** A workspace whose accepted model is fully accounted for on the base branch, and a working branch, checked out, that holds one approved change still open and the code written for it so far. Its delta adds three nodes. A test names the id of one of them; nothing outside the specification names the other two, and neither carries an admission.
+- **WHEN** `kotta gap` runs, with no option.
+- **THEN** After the accepted model, the report has a section for that change: it names the two nodes by title as the change's promises without evidence, says which commit of the working branch it read, and counts them apart from the accepted model's promises. The third is counted as evidenced. The copy of the nodes in the change's own `model/` directory counts for nothing. The report writes nothing and does not refuse over the two: in an open change an unbuilt promise is the work that remains, not a promise nobody accounted for.
 
 ### Requirement: The report names what it did not count
 <!-- kotta: BR-01m3cqmtfyrpdzcppvy0565652 -->
@@ -114,9 +122,11 @@ Answer, from the repository alone, which parts of the accepted specification the
 
 **Main success scenario**
 
-The operator asks for the gap. The analysis walks the accepted spec nodes and reports, deterministically and without writing, which promises have no implementing or verifying evidence in the repository - and, in the reverse direction, which enforced behaviors no node states. Each entry names the node by title and the evidence looked for. The analysis looks only where a promise can be kept or checked: a copy of the specification - the workspace, an OpenSpec change, the archive, a generated narrative, a published package specification - is not searched as evidence, and a node that only such a copy names is reported without evidence, with the excluded sources that name it, so the report itself says why. The subject is the accepted agreement, so the analysis reads the base branch and says which commit it read: evidence that is written but not committed is invisible to it by construction. A fresh landing is checked delta-first: the diff names what changed, so its entries lead the report. What changed means what is promised: a landing that only restates a node's own admission bookkeeping - which kind of gap it is, and why - moved no agreement and is not a delta. Where a landing touched more nodes than it changed agreements in, the report says both numbers, because a delta that is the whole specification names nothing. The report is the input to defining tasks.
+The operator asks for the gap. The analysis walks the accepted spec nodes and reports, deterministically and without writing, which promises have no implementing or verifying evidence in the repository - and, in the reverse direction, which enforced behaviors no node states. Each entry names the node by title and the evidence looked for. The analysis looks only where a promise can be kept or checked: a copy of the specification - the workspace, an OpenSpec change, the archive, a generated narrative, a published package specification - is not searched as evidence, and a node that only such a copy names is reported without evidence, with the excluded sources that name it, so the report itself says why. For the accepted agreement the analysis reads the base branch and says which commit it read: evidence that is written but not committed is invisible to it by construction. A fresh landing is checked delta-first: the diff names what changed, so its entries lead the report. What changed means what is promised: a landing that only restates a node's own admission bookkeeping - which kind of gap it is, and why - moved no agreement and is not a delta. Where a landing touched more nodes than it changed agreements in, the report says both numbers, because a delta that is the whole specification names nothing. The report is the input to defining tasks.
 
 **Alternatives**
+
+Where approved changes are still open, the analysis measures them without being asked: after the accepted model it gives each such change a section of its own, and `--change <name>` narrows the report to one of them. For an open change it walks the nodes of the delta instead of waiting for them to land, and it reads the commit that is checked out - the change and the code that keeps it live on a working branch until they are merged -, while the accepted model is still read from the base branch; the report names both commits. It reports which of them no code, test or command definition names yet, by title, apart from the accepted model's promises, and does not refuse over them - they are the work that remains in the change. A change that was never approved is not measured: what it promises is not yet agreed.
 
 A node deliberately unimplemented is listed with its recorded reason as an accepted gap, not as a defect. A node that is neither evidenced nor admitted is the one case the analysis refuses over: it names each, and exits non-zero, so a promise cannot stay unaccounted for by nobody having looked. Where uncommitted paths could carry the missing evidence, the refusal says so and names them - only paths the evidence filter admits, never an uncommitted copy of the specification -, so the reader is not sent looking for a defect that a commit would settle - without claiming those files are the evidence, which the analysis has not read, and without letting the promise through. No gap: the report says exactly that. The analysis never creates tasks or observations by itself - what it finds waits for the human line.
 

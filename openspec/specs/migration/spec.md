@@ -46,7 +46,7 @@ The generator writes a comment into the Purpose of a capability no goal node nam
 
 #### Scenario: A comment-only Purpose drafts no goal
 <!-- kotta: EX-01m3cqmvz6thtctkdd760f1n2b -->
-- **GIVEN** An `openspec/specs/<capability>/spec.md` whose `## Purpose` holds only the generator's ` ` comment.
+- **GIVEN** An `openspec/specs/<capability>/spec.md` whose `## Purpose` holds only the generator's `` comment.
 - **WHEN** `kotta import openspec` runs.
 - **THEN** No goal is drafted for that capability, and among its warnings the import names the capability as one whose purpose is not stated.
 
@@ -76,4 +76,4 @@ A dry run lists every change without writing. The migration renames directories,
 
 **Alternatives**
 
-An older-shape directory holds an entry the migration does not know: it stops, names the entry, and writes nothing. Operating-system metadata - a fixed list, `.DS_Store`, `._*`, `.Spotlight-V100`, `.Trashes`, `.fseventsd`, `Thumbs.db`, `ehthumbs.db`, `desktop.ini` - is not such an entry: it is not part of the workspace, so the migration leaves it out of the archive, deletes it with the old directory, and names it in its plan. Nothing else is deleted without being carried over. The migration is interrupted: every step derives from disk, so running it again finishes the job. Every other command refuses a pre-migration workspace by naming the migrate command - there is deliberately no compatibility layer behind that refusal. A workspace newer than this Kotta is not this use case at all: migrate refuses it like every other command rather than planning a downgrade.
+An older-shape directory holds an entry the migration does not know: it stops, names the entry, and writes nothing. Operating-system metadata - a fixed list, `.DS_Store`, `._*`, `.Spotlight-V100`, `.Trashes`, `.fseventsd`, `Thumbs.db`, `ehthumbs.db`, `desktop.ini` - is not such an entry: it is not part of the workspace, so the migration leaves it out of the archive, deletes it with the old directory, and names it in its plan. Nothing else is deleted without being carried over. The migration is interrupted: every step derives from disk, so running it again finishes the job. Every other command refuses a pre-migration workspace by naming the migrate command - there is deliberately no compatibility layer behind that refusal. A workspace newer than this Kotta is not this use case at all: migrate refuses it like every other command rather than planning a downgrade. A workspace already on the current shape that still keeps changes in OpenSpec's folder (`openspec/changes/`) is not current: the migration moves every open change, and every archived one that carries a model or a receipt, into `.kotta/changes/`, rewrites the sources of a change not yet approved to the new folder, moves an approved one byte-identical and says so, and writes `narrative: generated` where OpenSpec specs exist and nothing sets the narrative.

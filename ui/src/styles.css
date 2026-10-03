@@ -554,3 +554,15 @@ code { font-family: var(--font-mono); }
 .machine__governs { display: inline-flex; align-items: center; gap: var(--space-1); font-size: 11px; color: var(--text-muted); }
 .machine__prose { padding: 0 0 var(--space-3); }
 .machine__prose > .prose { padding: var(--space-2) var(--space-4) 0; }
+
+/* An open change (BR-01m40e522gtq49knhy51hr9e3d): what it adds, changes and removes, in the
+   admission tags' own weights, so the accepted view reads exactly as before. */
+.tag.change-mark { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+.change-mark-added { color: var(--color-bg); background: var(--color-text); }
+.change-mark-changed { color: var(--color-text); border: 1px solid var(--color-text); }
+.change-mark-removed { color: var(--text-muted); border: 1px solid var(--line-soft); text-decoration: line-through; }
+.banner--change { display: block; }
+.banner--change p { margin: 0; }
+.banner--change details { margin-top: var(--space-1); }
+.banner--change summary { cursor: pointer; }
+.drawer__change { margin: 0 0 var(--space-2); }

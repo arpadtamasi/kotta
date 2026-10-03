@@ -250,10 +250,11 @@ define("validate", renderValidate)
   .action((options: { json?: boolean }) => print(validateWorkspace(), Boolean(options.json)));
 
 define("gap", renderGapReport, "gap report")
-  .description("Report accepted spec promises without repository evidence and enforcement without a spec trace")
+  .description("Report accepted spec promises without repository evidence, what is left to build of each approved open change, and enforcement without a spec trace")
   .option("--module <name>", "Report only the promises of one module: those evidenced in it, and the interfaces naming it")
+  .option("--change <name>", "Report only one approved, still open change: which of its promises the checked-out commit does not keep yet")
   .option("--json")
-  .action((options: { module?: string; json?: boolean }) => print(gapReport(findRepositoryRoot(), { module: options.module }), Boolean(options.json)));
+  .action((options: { module?: string; change?: string; json?: boolean }) => print(gapReport(findRepositoryRoot(), { module: options.module, change: options.change }), Boolean(options.json)));
 
 const modules = define("modules", renderModules)
   .description("List the modules the manifests declare; check their boundaries; publish a module's promises")

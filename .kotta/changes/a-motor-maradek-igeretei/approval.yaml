@@ -1,0 +1,148 @@
+change: a-motor-maradek-igeretei
+approved_by: rp
+approved_at: 2026-10-03T08:52:20.382Z
+approval_basis: sha256:5bcdb52aa44378d4559ff34a4bee7012b9fcbfea802af83a7dd93c7758d3da4d
+approved:
+  added: []
+  changed:
+    - id: EX-01m0f0wn8am4hb2vy03wmn4brs
+      title: An approval leaves a receipt
+    - id: EX-01m0z873t1cmhybhakq6vwzxb6
+      title: An unanswered question refuses the approval by name
+    - id: EX-01m3wa6fk1b8anb3dxn48rz5e0
+      title: Building an approved change needs no signal
+    - id: EX-01m0f0wn8a9ymf0hhey9htdeh1
+      title: The board refuses to write
+    - id: G-01m0f0wn89bbzdenysa019v5x2
+      title: Completion is evidence, not report
+    - id: G-01m0fp2hdjsaegywtfk5psy35m
+      title: The ceremony fits the stakes
+    - id: QA-01m0fp2hdkq55yrx9qr5t8pweh
+      title: Proportionate ceremony
+  removed:
+    - id: A-01m0f0wn89wpjph2q6xv5xrv38
+      title: Executing agent
+    - id: IF-01m0f0wn89efd2ss83c4csk7qx
+      title: The agent launch task
+    - id: BR-01m0fp2hdkqz08arp5ebt122r9
+      title: A task executes accepted spec, and nothing else
+    - id: BR-01m0fp2hdk2czsca5jrk73wh2a
+      title: A task is revisable until execution
+    - id: GT-01m0f0wn89w5k8sk1rgegc9rxm
+      title: Task
+    - id: E-01m0f0wn898ayyrvy613zjx3ye
+      title: Task
+    - id: EX-01m0fp2hdkczd788pgpstv0cq7
+      title: A typo is fixed in place
+    - id: EX-01m0f0wn8a53e1ze1p4tgpv71h
+      title: Validation names what is missing
+    - id: EX-01m0fp2hdk8wcpthyhhevvhsa3
+      title: A quickstart page crosses one gate
+    - id: UC-01m0f0wn89tta6w4w3a7zw45xr
+      title: Define a task
+    - id: UC-01m0f0wn89vwta48p95exahgmv
+      title: Close a finished task
+    - id: EX-01m0f0wn8a519hbe2qcxtqg5d2
+      title: Close follows integration
+    - id: UC-01m0f0wn8909cgbsm6d3dkzjcw
+      title: Cancel objectless work
+    - id: EX-01m0f0wn8a30fbzh8vwm95wawr
+      title: Cancel names what killed the work
+    - id: GT-01m0fp2hdkehmnew23k3xek5cm
+      title: Coverage
+    - id: GT-01m0f1djtcv1a2cqqh4qpwxr15
+      title: Profile
+    - id: BR-01m0f0wn890q5b15j7jg520yvj
+      title: One task, one claim, one branch, one worktree
+    - id: GT-01m0f0wn89sr1r9j5getreayk5
+      title: Claim
+    - id: E-01m0f0wn89m9p7h9fv4smevpvf
+      title: Claim
+    - id: BR-01m0jksma40xmkhyt0z6ajbdhn
+      title: Execution branches follow the configured pattern
+    - id: EX-01m0jksmpre6y0mnwdz4t7cq18
+      title: A bad pattern is refused at start
+    - id: BR-01m0f0wn89ad55txsfkm67ks9r
+      title: Execution never touches a protected branch
+    - id: EX-01m0f0wn8avqcdz36004payzvz
+      title: Work never lands on main
+    - id: BR-01m0f0wn893tdvr3b8v37qr5ck
+      title: The environment's checkout is respected
+    - id: EX-01m0f0wn8a97ee5529c1njgfqe
+      title: A hosted branch is adopted, not duplicated
+    - id: EX-01m0f0wn8aak6ee8j0brstqsfh
+      title: Fresh execution is isolated
+    - id: UC-01m0f0wn89b2ymcw1c3qd4vcxb
+      title: Execute a task in a fresh context
+    - id: E-01m0f0wn89r885ytmkqh2m4hw8
+      title: Execution record
+    - id: BR-01m0f0wn89v0rpw3p4nk0a9tx2
+      title: The record derives from the run, not the agent
+    - id: EX-01m0f0wn8apdd1z34g1yna6hh7
+      title: A talkative idle run records no-change
+    - id: GT-01m0f0wn89fz7kz0eceeym6qc2
+      title: Brief
+    - id: QA-01m0f0wn8981atnptrbdqa19y2
+      title: Bounded brief size
+    - id: EX-01m0f0wn8ah2ghnvh7m1s0cgm1
+      title: An overweight brief warns
+    - id: G-01m0f0wn89hek1751b5xje6pfa
+      title: Small fresh contexts by default
+    - id: BR-01m0r52vex4j22266nepm5yq8s
+      title: The brief carries the way to reach Kotta
+    - id: EX-01m0r52vexxy9azs452pb05pmr
+      title: An agent in a worktree can reach Kotta
+    - id: BR-01m0f0wn898xd4tr7j7t9bsjy7
+      title: An observation is not a task
+    - id: GT-01m0f0wn89sek1m89cn47qey9p
+      title: Observation
+    - id: E-01m0f0wn89cry06jvtwtmpk4fr
+      title: Observation
+    - id: EX-01m0f0wn8amvb6y7k518xj5xrr
+      title: A discovery becomes an observation, not a fix
+    - id: EX-01m0f0wn8a2a1vjm0jvwkx38rh
+      title: A disposition carries its justification
+    - id: EX-01m0fp2hdkw7ka6wh3byyc9sd2
+      title: A noticing amends the spec
+    - id: EX-01m0fp2hdkmvzw56gzf5xp540x
+      title: An uncovered need becomes an observation
+    - id: UC-01m0f0wn89jqb5mpcjjt1j5j8p
+      title: Capture an observation
+    - id: UC-01m0f0wn89fpwvdh3gz31cdtn9
+      title: Resolve an observation
+    - id: BR-01m0f0wn89tk18yzbe9x0w64tm
+      title: Batch nesting is grouping only
+    - id: GT-01m0f0wn892g1ppben2jrbcfys
+      title: Batch
+    - id: E-01m0f0wn89mpzqng8411pkartq
+      title: Batch
+    - id: EX-01m0f0wn8ay5vp7841rbvg0dvb
+      title: A parent batch reads as one list
+    - id: SM-01m0f0wn89m2xwd4z4mk9p71d5
+      title: Batch lifecycle
+    - id: UC-01m0f0wn89jebbfp6rjr0fxqh1
+      title: Run a batch
+    - id: EX-01m0f0wn8ad1cm1rfgb08c81ne
+      title: Waves release from the coordinator
+    - id: GT-01m0jksma4w2aqeeasvp8d8393
+      title: Roadmap
+    - id: E-01m0f0wn891kye4debkab1g2f7
+      title: Decision
+    - id: EX-01m0f0wn8a7jvak9k4pkxxyg0m
+      title: An open question becomes a decision
+    - id: BR-01m0fp2hdkj0ba2vzsyq0jtdce
+      title: Evidence answers its own check
+    - id: EX-01m0fp2hdk68mttdbh50m98s4f
+      title: Duplicated evidence is refused
+    - id: EX-01m0f0wn8asqbhw5bzy7was41v
+      title: Review maps acceptance to evidence
+    - id: UC-01m0f0wn89dy38s6whbfa0jafn
+      title: Submit for review with evidence
+    - id: BR-01m0f0wn89r5np2yce79y2pctq
+      title: Canonical state changes only through validated services
+    - id: BR-01m0jksm9x99nr9vwq9qkz25ty
+      title: Control-plane writes are serialized
+    - id: EX-01m0jksmhxw41vq2aa8e93k5r7
+      title: Two writers, one lock
+    - id: GT-01m0f0wn89vnd0kvyyetttpydj
+      title: Control plane

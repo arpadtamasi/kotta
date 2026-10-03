@@ -98,11 +98,31 @@ export function pickedOption(reply: string, options: string[]): string | undefin
   return option && options.includes(option) ? option : undefined;
 }
 
+/** `1 ok`, `2. jó`, `3) rendben, mehet`: the number of the point answered, then a plain yes. */
+const NUMBERED = /^\s*\(?\d{1,2}[.):]?\s+(.+)$/;
+
+/**
+ * A reply that answers the agent's numbered points one line each, every line a yes: `1 ok` / `2 ok`.
+ * It approves the points it numbers and no others; the pair keeps the human's lines verbatim, so
+ * which points they were is read there.
+ */
+function numberedYes(text: string): boolean {
+  const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (!lines.length) return false;
+  return lines.every((line) => {
+    const answer = NUMBERED.exec(line)?.[1];
+    if (!answer || REJECTION.test(answer) || HEDGE.test(answer)) return false;
+    const tokens = words(answer);
+    return tokens.length > 0 && tokens.length <= 4 && tokens.every((token) => APPROVAL.test(token));
+  });
+}
+
 /** How a human reply stands to the proposal before it. */
 export function replyKind(reply: string): ReplyKind {
   const text = reply.trim();
   const tokens = words(text);
   if (!tokens.length) return "unclear";
+  if (numberedYes(text)) return "approve";
   if (REJECTION.test(text)) return "reject";
   if (HEDGE.test(text)) return "unclear";
   // A yes is a short run of yes-words, optionally with a courtesy ("igen, köszi", "ok, mehet").
