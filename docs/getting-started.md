@@ -15,7 +15,7 @@ kotta --version
 ```
 
 1.0 is a pre-release, published under the `next` dist-tag. A plain `npm install --global
-@arpadtamasi/kotta` still installs the last 0.x release; see [Migrating from 0.x](migration.md).
+@arpadtamasi/kotta` still installs the last 0.x release; see [Migrating](migration.md).
 
 ## Set up the repository
 

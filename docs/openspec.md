@@ -139,8 +139,7 @@ Not drafted: actor, use-case, entity, state-machine — the planning phase deriv
 
 ## Moving changes out of `openspec/changes/`
 
-Up to 1.0.0-alpha.2 a Kotta change lived at `openspec/changes/<name>/`. `kotta migrate` on a current
-workspace carries it into the workspace (`--dry-run` shows the plan first):
+Up to 1.0.0-alpha.2 a Kotta change lived at `openspec/changes/<name>/`. `kotta migrate` carries it into the workspace (`--dry-run` shows the plan first):
 
 - every open change under `openspec/changes/` moves to `.kotta/changes/<name>/` — in a Kotta
   project an OpenSpec proposal waiting there is a Kotta change too;
@@ -154,6 +153,6 @@ workspace carries it into the workspace (`--dry-run` shows the plan first):
   so archive keeps doing what it did.
 
 Nothing under `.kotta/spec/` is read or written. A target that already exists stops the migration
-before anything is written. To move one change by hand, `kotta change list` prints the `git mv`. The
-pre-1.0 migration takes the same step. The board still serves Markdown under `openspec/` for
+before anything is written, and a second run says there is nothing to migrate. To move one change
+by hand, `kotta change list` prints the `git mv`. The board still serves Markdown under `openspec/` for
 provenance written before the move.

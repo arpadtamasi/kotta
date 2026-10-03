@@ -41,7 +41,7 @@ records that yes. The approved change then stays open while the code that keeps 
 approved delta in `{{workspace}}/spec/` and moves the change to `{{workspace}}/changes/archive/`,
 asking nothing again, and refusing only a node that is neither kept nor admitted. The `plan-change`
 skill is the how. The order is plan, gate, build, archive, and the code never comes before the gate
-(rule 7).
+(rule 6).
 
 ## The rule everything else follows from
 
@@ -121,9 +121,7 @@ question, so a draft with one is a draft, not an agreement.
    no admission while it is unbuilt — it is the work that remains. What is still unkept when the
    change is archived, you admit in the node's frontmatter with its kind and reason; `kotta archive`
    refuses a node that is neither kept nor admitted.
-6. **`{{workspace}}/legacy/`, where there is one, is read-only.** It is the archive of a workspace
-   migrated from before 1.0, kept for reading; nothing in it governs anything now.
-7. **The code never runs ahead of the spec.** Before you write code that keeps, changes or drops a
+6. **The code never runs ahead of the spec.** Before you write code that keeps, changes or drops a
    promise that neither the accepted model nor an approved open change states, open a change for it
    and take it through `plan-change` to the gate; write the code after the human's yes. Say so in one
    line, naming the promise in plain words, instead of writing the code. Building an approved change

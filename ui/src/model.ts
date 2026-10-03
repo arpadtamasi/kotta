@@ -70,7 +70,7 @@ export function parseSource(source: string): { file: string; section: string | n
   const trimmed = anchor ? anchor[1] : file.trim();
   // Only a change folder's narrative is fetched — Kotta's own, or OpenSpec's where older provenance cites it;
   // any other file is shown as the text it is.
-  const narrative = /^(?:\.kotta|\.a-team|openspec)\/changes\/(?:[^/]+\/)+[^/]+\.md$/i.test(trimmed) && !trimmed.split("/").some((part) => part === ".." || part === ".");
+  const narrative = /^(?:\.kotta|openspec)\/changes\/(?:[^/]+\/)+[^/]+\.md$/i.test(trimmed) && !trimmed.split("/").some((part) => part === ".." || part === ".");
   return { file: trimmed, section, narrative };
 }
 

@@ -13,9 +13,9 @@ Options:
 Commands:
   init [options]                Create a .kotta workspace: the form registry,
                                 the rules file, the skills
-  migrate [options]             Carry a pre-1.0 workspace to version 6: the
-                                process state into a read-only legacy/ archive,
-                                the specification untouched
+  migrate [options]             Move the changes an earlier release kept in
+                                openspec/changes/ into .kotta/changes/, the
+                                specification untouched
   validate [options]            Validate the specification: every node against
                                 its form, every edge against the node it names
   gap [options]                 Report accepted spec promises without repository
@@ -75,8 +75,8 @@ Options:
 ### kotta migrate
 Usage: kotta migrate [options]
 
-Carry a pre-1.0 workspace to version 6: the process state into a read-only
-legacy/ archive, the specification untouched
+Move the changes an earlier release kept in openspec/changes/ into
+.kotta/changes/, the specification untouched
 
 Options:
   --workspace <path>  Repository root or workspace directory; omitted uses the

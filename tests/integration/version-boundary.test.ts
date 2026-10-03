@@ -87,19 +87,18 @@ describe("a version boundary refuses in both directions (BR-01m0q89b16xcfasfj1z8
     expect(said.toLowerCase(), "it is not called legacy either").not.toContain("legacy");
   }, 60_000);
 
-  test("an older workspace is refused as pre-1.0, named the migration, and migrates", () => {
+  // A pre-1.0 workspace is refused and names the release that migrates it (EX-01m415fx4jbbqpyqqa52ftgqs0):
+  // every command, migrate included, and nothing is written.
+  test("an older workspace is refused as pre-1.0 by every command, naming the release that migrates it (EX-01m415fx4jbbqpyqqa52ftgqs0)", () => {
     const { root, config } = fixture("older", WORKSPACE_SCHEMA_VERSION - 1);
-
-    const refusal = say(attempt(root, ["validate"]));
-    expect(refusal, "the older direction is named for what it is").toContain("pre-1.0 Kotta workspace shape");
-    expect(refusal, "and names the remedy").toContain("kotta migrate");
-
-    const planned = say(attempt(root, ["migrate", "--dry-run"]));
-    expect(planned, "migrate keeps its exemption in this direction").toContain("changes planned");
-    expect(planned).toContain(`version: ${WORKSPACE_SCHEMA_VERSION - 1} → ${WORKSPACE_SCHEMA_VERSION}`);
-
-    expect(attempt(root, ["migrate"]).status, "and carries the workspace forward").toBe(0);
-    expect(readFileSync(config, "utf8")).toContain(`version: ${WORKSPACE_SCHEMA_VERSION}`);
-    expect(attempt(root, ["validate"]).status, "after which it reads normally").toBe(0);
+    const before = readFileSync(config, "utf8");
+    for (const command of [...READERS, ["migrate"], ["migrate", "--dry-run"]]) {
+      const result = attempt(root, command);
+      const said = say(result);
+      expect(result.status, command.join(" ")).not.toBe(0);
+      expect(said, "the older direction is named for what it is").toContain("pre-1.0 Kotta workspace shape");
+      expect(said, "and names the release that migrates it").toContain("@arpadtamasi/kotta@1.0.0-alpha.4 kotta migrate");
+    }
+    expect(readFileSync(config, "utf8")).toBe(before);
   }, 60_000);
 });

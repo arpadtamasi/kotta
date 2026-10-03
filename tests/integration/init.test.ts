@@ -43,6 +43,6 @@ describe("kotta init", () => {
     execFileSync("node", [cli, "init", "--json"], { cwd: repository });
 
     expect(JSON.parse(execFileSync("node", [cli, "validate", "--json"], { cwd: repository, encoding: "utf8" }))).toMatchObject({ ok: true, data: { forms: 11, specNodes: 0 } });
-    expect(execFileSync("node", [cli, "migrate", "--dry-run"], { cwd: repository, encoding: "utf8" })).toContain("already on the current shape");
+    expect(execFileSync("node", [cli, "migrate", "--dry-run"], { cwd: repository, encoding: "utf8" })).toContain("nothing to migrate");
   });
 });

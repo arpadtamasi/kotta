@@ -194,7 +194,8 @@ describe("the workspace rules file", () => {
     expect(written).toContain("approval is a human gate");
     expect(written).toContain("one such gate per change, at the end of planning");
     expect(written).toContain("`.kotta/spec/` is **project-owned**");
-    expect(written).toContain("`.kotta/legacy/`, where there is one, is read-only");
+    // `legacy/` is no longer special (BR-01m413z0y4dtjs9rs718bdnm4j): the rules do not name it.
+    expect(written).not.toContain("legacy/");
     // The code never runs ahead of the spec (BR-01m3kdq88m3bgye3xnn9q6hsr2): a promise the model does
     // not state opens a change first (EX-01m3kdq8kg96c3151xrkb7tgy4), and work that touches no
     // promise needs none (EX-01m3kdq91dfgf22v9s587hhk1d).

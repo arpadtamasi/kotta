@@ -199,11 +199,11 @@ function humanize(result: unknown): string {
 }
 
 /**
- * The old shape is refused once, here, instead of in every reader. `init` has no workspace to judge
- * and `migrate` exists precisely to read the old shape. `ui` and `mcp` take a `--workspace` of their
- * own and judge that one themselves; everything else stops with a message that names `kotta migrate`.
+ * The old shape is refused once, here, instead of in every reader, `migrate` included: no command of
+ * this Kotta reads a pre-1.0 workspace (BR-01m0q89b16xcfasfj1z8mc2hgg). `init` has no workspace to
+ * judge; `ui` and `mcp` take a `--workspace` of their own and judge that one themselves.
  */
-const SHAPE_EXEMPT = new Set(["init", "migrate", "ui", "mcp"]);
+const SHAPE_EXEMPT = new Set(["init", "ui", "mcp"]);
 
 program.hook("preAction", (_program, action) => {
   if (SHAPE_EXEMPT.has(action.name())) return;
@@ -234,7 +234,7 @@ define("init", renderInit)
   .action((options: { projectName?: string; linkAgents?: boolean; json?: boolean }) => print(initCommand(options.projectName, { linkAgents: options.linkAgents }), Boolean(options.json)));
 
 define("migrate")
-  .description("Carry a pre-1.0 workspace to version 6: the process state into a read-only legacy/ archive, the specification untouched")
+  .description("Move the changes an earlier release kept in openspec/changes/ into .kotta/changes/, the specification untouched")
   .option("--workspace <path>", "Repository root or workspace directory; omitted uses the repository around the cwd")
   .option("--dry-run", "Report every change without writing anything")
   .option("--json")

@@ -27,11 +27,11 @@ The schema is published as `schemas/config.schema.json`. No other key is allowed
 
 | Key | Required | Type | What it does |
 | --- | --- | --- | --- |
-| `version` | yes | `6` | the workspace shape. Any other value is refused and names `kotta migrate` (older) or an upgrade (newer) |
+| `version` | yes | `6` | the workspace shape. Any other value is refused: an older one names the last release that migrates it (`@arpadtamasi/kotta@1.0.0-alpha.4`), a newer one an upgrade |
 | `project.name` | yes | string | shown on the board; `init --project-name` sets it, else the directory name |
 | `git.base_branch` | yes | string | the branch the accepted model is read from: `kotta gap` and `kotta ui` read it through Git, never the working tree. Default `main` |
-| `git.protected_branches` | yes | list of strings | kept by `init` and `migrate`; the base branch is always among them. No 1.0 command acts on it |
-| `validation.strict` | yes | boolean | kept by `init` and `migrate`; no 1.0 command reads it |
+| `git.protected_branches` | yes | list of strings | written by `init`; the base branch is always among them. No 1.0 command acts on it |
+| `validation.strict` | yes | boolean | written by `init`; no 1.0 command reads it |
 | `narrative` | no | `none`, `generated` or `authored` | whether the project keeps an OpenSpec narrative, and who writes it; below |
 
 ## `narrative: none | generated | authored`
@@ -71,7 +71,7 @@ The pre-rename `A_TEAM_` prefix of each variable is still read.
 
 | File | Written by |
 | --- | --- |
-| `.kotta/AGENTS.md` | `init`, `sync`, `migrate`: the rules file, from Kotta's template. A hand-edited copy is reported as drifted and left alone |
+| `.kotta/AGENTS.md` | `init`, `sync`: the rules file, from Kotta's template. A hand-edited copy is reported as drifted and left alone |
 | `AGENTS.md` | `init`, only when there is none; `--link-agents` appends the pointer to an existing one |
 | `.codex/config.toml` | `integrate codex`: an `[mcp_servers.kotta]` block, never rewritten once present |
 | `~/.claude/skills/<skill>/` | `init`, `sync`: the shipped skills, with `.kotta-installed.json` recording which ones Kotta owns |
