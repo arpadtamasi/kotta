@@ -1,5 +1,12 @@
 # Az ügynök eszközei nem a projekt kódja
 
+
+> **Félretéve, 2026-10-03.** Az operátor döntése („b"): a change nyitva marad, jóváhagyás nélkül.
+> A helyi munkamenetekben a `kotta gap` 82-szer futott (38-szor a Kotta saját fejlesztésében, egyszer
+> a health-ai-ban), az MCP `gap_report` eszköz egyszer sem, CI-ban nem fut. Akkor vesszük elő, ha a
+> „fejlesztés az archive előtt" sorrend után az ügynök fejlesztés közben használja a gap-et, és a zaj
+> útban van. Akkor a fordított irány (a szövegmintán alapuló „specifikáció nélküli kényszer" lista)
+> megtartása vagy kérésre futtatása az első kérdés, és csak utána ez a paraméter.
 ## Why
 
 A health-ai projektben a `kotta gap` 145 „specifikáció nélküli kényszer" találatából 141 a
