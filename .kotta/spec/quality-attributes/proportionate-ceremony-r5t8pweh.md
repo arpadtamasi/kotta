@@ -5,15 +5,22 @@ title: "Proportionate ceremony"
 accepted:
   - >-
     structural: Assigned on 2026-08-24 from the form of this node, not from examining the node itself. Many code sites realise a promise of this form and no single one would ever name it, so the absence of its id in the repository measures the instrument rather than the system. Reclassify it if that turns out to be wrong here.
+provenance:
+  level: partly-inferred
+  decided_by: agent-decided
+  sources:
+    - ".kotta/changes/a-motor-maradek-igeretei/proposal.md · What changes"
+  quote: null
+  inferred: "Reworded from the task lifecycle of the removed engine to the change of the current release: one gate, at the end of planning, with a receipt. The number - exactly one gate - is the accepted one."
 ---
 
 ## Source
 
-An operator delegating a small, spec-covered change.
+An operator who wants a change to what the product promises.
 
 ## Stimulus
 
-Carrying one spec-covered task from captured intent to done.
+Carrying one change from its proposal to the accepted specification.
 
 ## Environment
 
@@ -21,12 +28,12 @@ Any workspace with an accepted specification; gates at their defaults.
 
 ## Artifact
 
-The task lifecycle - define, execute, review, close - on every surface.
+The change - proposal, planning, approval, build, archive - on every surface.
 
 ## Response
 
-The task crosses exactly one human gate, at close; every other step is validation the tool performs and reports. The gate question names the judgement being asked, by title, never by id.
+The change SHALL cross exactly one human gate, at the end of planning; every other step is a measurement the tool performs and reports. The gate question names what is decided by title, never by id.
 
 ## Measure
 
-Human gates per spec-covered task: exactly 1. Approval receipts recorded: 100% of gated transitions. Steps from captured intent to executing agent: at most three (capture, define, execute).
+Human gates per change: exactly 1. Approval receipts recorded: 100% of approved changes.

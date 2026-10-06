@@ -5,13 +5,14 @@ title: "An approval leaves a receipt"
 subjects:
   - UC-01m0f0wn89p42025mt5vg5012n
   - BR-01m0f0wn89zb3wfb3t3y4d20a7
+  - QA-01m0fp2hdkq55yrx9qr5t8pweh
 provenance:
   level: partly-inferred
   decided_by: agent-decided
   sources:
-    - "CHANGELOG.md · 1.0.0-alpha.1 · Added · The planning phase and the one human gate"
-  quote: "kotta approve <change> --by <who> records the human's yes, given in the conversation, as approval.yaml, bound to a hash of the delta."
-  inferred: "The accepted example closed a task in review, a transition the release removed; the agent restated it for the planning gate, keeping who, when and on what basis, and the counter-cases."
+    - ".kotta/changes/a-motor-maradek-igeretei/proposal.md · What changes"
+  quote: null
+  inferred: "The example is unchanged; it now also verifies *Proportionate ceremony*, whose own example was about closing a task."
 ---
 
 ## Given
