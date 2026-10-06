@@ -4,13 +4,14 @@ form: example
 title: "An unanswered question refuses the approval by name"
 subjects:
   - BR-01m0z873stwx7szg5896gwsbry
+  - BR-01m0f0wn89fvfj4z3c1pkv7t9j
 provenance:
   level: partly-inferred
   decided_by: agent-decided
   sources:
-    - "CHANGELOG.md · 1.0.0-alpha.1 · Added · The planning phase and the one human gate"
-  quote: "It refuses without a planning report, with a report older than the model it describes, with an open question, or with a delta that does not validate."
-  inferred: "The accepted example refused defining a task, a command the release removed; the agent restated it for the gate that now reads the enumeration, keeping the three questions and which of them is named."
+    - ".kotta/changes/a-motor-maradek-igeretei/proposal.md · What changes"
+  quote: null
+  inferred: "The example is unchanged; it now also names *Agents never invent intent* as a rule it proves, because the example that proved it was about decision records, which are removed."
 ---
 
 ## Given

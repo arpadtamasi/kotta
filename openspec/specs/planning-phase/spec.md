@@ -132,7 +132,7 @@ Every agent working in a Kotta repository, on any host, on any change. The rule 
 <!-- kotta: EX-01m3wa6fk1b8anb3dxn48rz5e0 -->
 - **GIVEN** An approved change, still open, one of whose user stories promises that water can be logged. The accepted model says nothing about water.
 - **WHEN** The agent writes the code that logs water, naming the story's id where the code keeps it.
-- **THEN** The agent writes the code and opens no change: the promise is stated by the approved change. Had no approved change stated it, the agent would have opened a change and waited for the gate before writing the code.
+- **THEN** It says nothing about the spec and offers no planning: the promise is stated by the approved change. Had no approved change stated it, the same code would have earned the one-line signal.
 
 #### Scenario: Work that touches no promise says nothing about the spec
 <!-- kotta: EX-01m3kdq91dfgf22v9s587hhk1d -->
