@@ -62,6 +62,36 @@ Every Kotta workspace, every agent and every command that opens, plans, approves
 - **WHEN** The workshop asks Kotta for the node.
 - **THEN** The node is minted with `kotta spec new use-case --title … --into <change>` under the change's `model/`; `.kotta/spec/` is untouched until the change is approved and archived.
 
+### Requirement: Archive never puts back an older accepted text
+<!-- kotta: BR-01m4at3x2fffqepx85tmvf3hxw -->
+When a change's delta replaces an accepted node, `kotta approve` SHALL record, beside the delta's fingerprint, the fingerprint of that accepted node as it stood when the human said yes. `kotta archive` SHALL refuse to replace a node whose accepted text no longer matches what the approval recorded: it SHALL name the node, say that it changed after the approval, and write nothing. The change is then brought up to the new text — its copy taken again, its own edit applied to it — planned, and put to the human again. A node the change only adds or removes is not affected. An approval recorded before this rule, which carries no such fingerprint, SHALL NOT be archived over a node it replaces: the archive asks for the change to be planned and approved again.
+
+**Rationale**
+
+A change copies the accepted nodes it replaces. When another change lands on one of them in between, archiving the first one wrote its stale copy back and silently undid the second, approved change; nothing measured it, and only reading the diff caught it. The human approved an edit of the text they saw, not a revert of a text they approved later.
+
+**Scope**
+
+`kotta approve` and `kotta archive`, for every node a delta replaces.
+
+#### Scenario: A node changed after the approval stops the archive
+<!-- kotta: EX-01m4at3x8bvsh0cfn5z5wvp380 -->
+- **GIVEN** Change A replaces the rule *Building an approved change needs no signal* to add one subject, and is approved. Then change B rewrites the same rule's text, is approved and archived.
+- **WHEN** `kotta archive` runs on change A.
+- **THEN** It refuses, names *Building an approved change needs no signal*, and says it changed after A was approved; nothing is written. B's text stays accepted. Once A's copy is taken again with B's text and A's subject added, planned and approved, the archive lands it.
+
+#### Scenario: A node unchanged since the approval lands as before
+<!-- kotta: EX-01m4at3xera2pxgcey1tvxmz88 -->
+- **GIVEN** An approved change that replaces three accepted nodes, none of which any other change touched since the approval.
+- **WHEN** `kotta archive` runs on it.
+- **THEN** The three nodes are replaced with the change's copies, as before; no question is asked again.
+
+#### Scenario: An approval leaves a receipt
+<!-- kotta: EX-01m0f0wn8am4hb2vy03wmn4brs -->
+- **GIVEN** A change, "Add filtered export", whose planning report the operator has read, with no open decision and a model delta that validates.
+- **WHEN** The calling-chat agent asks: "Land 'Add filtered export' - yes or no?", the operator answers yes, and the agent records it with `kotta approve` naming the operator.
+- **THEN** The change carries `approval.yaml` naming who approved, when, and on what basis - the fingerprint of the delta that was put to the operator, and the fingerprint of every accepted node the delta replaces, as it stood at the yes - and `kotta archive` lands exactly that delta without asking again. Had the operator stayed silent, answered a different question, or said yes to something else earlier, there would be no receipt and the archive would refuse; had the delta changed after the yes, the archive would refuse it as no longer the one approved.
+
 ### Requirement: OpenSpec is an optional narrative
 <!-- kotta: BR-01m40e0ankvnv82me5emp1hf25 -->
 Whether a project keeps an OpenSpec narrative beside the model SHALL be its setting, `narrative:` in the workspace config: `none`, `generated` or `authored`, and `none` when nothing sets it. With `none`, archive SHALL write and check nothing under `openspec/`, and `plan` SHALL report no narrative drift. With `generated`, archive SHALL regenerate the touched capabilities of `openspec/specs/` from the model; with `authored`, it SHALL only report where a bound requirement disagrees with its node. The obligation keyword (SHALL or MUST) SHALL be required of a node only while an OpenSpec narrative is kept; with `none`, an obligation is written plainly, in the project's language.
@@ -132,7 +162,7 @@ Every agent working in a Kotta repository, on any host, on any change. The rule 
 <!-- kotta: EX-01m3wa6fk1b8anb3dxn48rz5e0 -->
 - **GIVEN** An approved change, still open, one of whose user stories promises that water can be logged. The accepted model says nothing about water.
 - **WHEN** The agent writes the code that logs water, naming the story's id where the code keeps it.
-- **THEN** It says nothing about the spec and offers no planning: the promise is stated by the approved change. Had no approved change stated it, the same code would have earned the one-line signal.
+- **THEN** The agent writes the code and opens no change: the promise is stated by the approved change. Had no approved change stated it, the agent would have opened a change and waited for the gate before writing the code.
 
 #### Scenario: Work that touches no promise says nothing about the spec
 <!-- kotta: EX-01m3kdq91dfgf22v9s587hhk1d -->
