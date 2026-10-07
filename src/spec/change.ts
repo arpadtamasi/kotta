@@ -141,6 +141,15 @@ export function readChangeModel(root: string, name: string, forms: SpecForm[]): 
 }
 
 /**
+ * One accepted node's fingerprint, as `kotta approve` records it for every node the delta replaces
+ * and `kotta archive` checks it, so a node changed after the yes is never overwritten with an older
+ * copy (BR-01m4at3x2fffqepx85tmvf3hxw).
+ */
+export function nodeFingerprint(path: string): string {
+  return `sha256:${createHash("sha256").update(readFileSync(path)).digest("hex")}`;
+}
+
+/**
  * The delta's fingerprint: every file under `model/`, by relative path and content. The gate's
  * receipt records it, and `archive` refuses a delta that no longer hashes to what was approved.
  */

@@ -1,6 +1,6 @@
 ---
 change: az-archive-nem-ir-vissza
-generated_at: 2026-10-07T11:52:40.476Z
+generated_at: 2026-10-07T20:14:37.591Z
 delta_hash: sha256:f3d50bae010064ffec7dda66e1e4c9adbf5ae1cb00b8950d590c6ba5be529f08
 ready_for_approval: true
 ---
