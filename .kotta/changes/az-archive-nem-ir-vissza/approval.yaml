@@ -1,0 +1,16 @@
+change: az-archive-nem-ir-vissza
+approved_by: rp
+approved_at: 2026-10-07T20:10:18.801Z
+approval_basis: sha256:f3d50bae010064ffec7dda66e1e4c9adbf5ae1cb00b8950d590c6ba5be529f08
+approved:
+  added:
+    - id: BR-01m4at3x2fffqepx85tmvf3hxw
+      title: Archive never puts back an older accepted text
+    - id: EX-01m4at3x8bvsh0cfn5z5wvp380
+      title: A node changed after the approval stops the archive
+    - id: EX-01m4at3xera2pxgcey1tvxmz88
+      title: A node unchanged since the approval lands as before
+  changed:
+    - id: EX-01m0f0wn8am4hb2vy03wmn4brs
+      title: An approval leaves a receipt
+  removed: []

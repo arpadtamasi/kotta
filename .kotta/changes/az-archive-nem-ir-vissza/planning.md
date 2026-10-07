@@ -1,8 +1,8 @@
 ---
 change: az-archive-nem-ir-vissza
-generated_at: 2026-10-07T09:12:16.891Z
-delta_hash: sha256:2bd42fec36ad0b1a0113710f90ee16c3ce22d1521af2f410141b659d7b946d6b
-ready_for_approval: false
+generated_at: 2026-10-07T11:52:40.476Z
+delta_hash: sha256:f3d50bae010064ffec7dda66e1e4c9adbf5ae1cb00b8950d590c6ba5be529f08
+ready_for_approval: true
 ---
 
 # Planning: az-archive-nem-ir-vissza
@@ -45,7 +45,7 @@ The machine's candidates are mechanical and narrow. Contradictions the agent fou
 
 ## (d) Silences
 
-- Open: Archive never puts back an older accepted text (BR-tmvf3hxw) BR-tmvf3hxw/Q1 — **Mi legyen azokkal a jóváhagyásokkal, amelyek még e szabály előtt készültek?** Egy régebbi jóváhagyás nem rögzítette, milyen szöveget cserél le a változás, így az archiválás nem tudja összevetni. (a) Az archiválás ilyenkor megáll, és új jóváhagyást kér: a változást újra kell mérni, és újra igent kell mondanod. (b) Az archiválás a Git-történetből keresi meg, mi volt az elfogadott szöveg a jóváhagyás pillanatában, és azzal veti össze. Én az (a)-t javaslom: egyszerű és biztos, és most egyetlen jóváhagyott, de nem archivált változás sincs, tehát senkit nem érint. (.kotta/changes/az-archive-nem-ir-vissza/model/business-rules/archive-never-puts-back-an-older-accepted-text-tmvf3hxw.md:33)
+No open decision, and no question a form asks is left unanswered.
 
 ## (e) Narrative drift
 

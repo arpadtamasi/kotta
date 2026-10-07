@@ -17,4 +17,4 @@ egy jóváhagyott döntést. Ez október 6-án megtörtént; csak a diff elolvas
 
 ## Open decisions
 
-- Mi legyen a szabály előtti jóváhagyásokkal — a szabálynál.
+Nincs: egy szabály előtti jóváhagyást az archiválás nem fogad el, újra kell mérni és jóváhagyni (válasz: a, 2026-10-07).
