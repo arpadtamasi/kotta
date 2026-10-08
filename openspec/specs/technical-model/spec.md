@@ -64,7 +64,7 @@ The use-case form Kotta ships; the business-rule, interface and quality-attribut
 
 ### Requirement: Dropping a use case shows what falls out with it
 <!-- kotta: BR-01m4ee23h66jzr4wzd0a3grf02 -->
-For a use case, Kotta SHALL tell which requirements fall out if it is dropped: every requirement whose refining use cases all lie in the dropped branch — the use case, the use cases it includes and the use cases that extend it, except one that a use case outside the branch also includes. A requirement refined by any use case outside the branch SHALL be reported as staying, and an overall requirement SHALL never fall out.
+For a use case, Kotta SHALL tell which requirements fall out if it is dropped: every requirement whose refining use cases all lie in the dropped branch — the use case, the use cases it includes and the use cases that extend it, except one that a use case outside the branch also includes. A requirement refined by any use case outside the branch SHALL be reported as staying, and an overall requirement SHALL never fall out. The answer SHALL be available for a change's model laid over the accepted one, as planning sees it, so that a use case still in a change can be measured before the gate.
 
 **Rationale**
 
@@ -72,13 +72,19 @@ When one product takes over pieces of another, the question is what it takes and
 
 **Scope**
 
-The board's tree view and the CLI's report of the same answer.
+The board's tree view and the CLI's report of the same answer, on the accepted model or on an open change.
 
 #### Scenario: Dropping the teacher's test chat
 <!-- kotta: EX-01m4ee25302x5t30r2h67hcxk8 -->
 - **GIVEN** The use case *The teacher tries the course chat* refines *Own test chat* and *Citation to the place*; *A student asks and gets a cited answer* also refines *Citation to the place*.
 - **WHEN** *The teacher tries the course chat* is selected as dropped.
 - **THEN** *Own test chat* is reported as falling out; *Citation to the place* is reported as staying, because the student's use case still refines it.
+
+#### Scenario: Measuring the test chat's drop while planning
+<!-- kotta: EX-01m4ej5pndmcaajrrvz6vwhc7r -->
+- **GIVEN** An open change whose model holds the use case *The teacher tries the course chat*, which the accepted specification does not have yet, refining *Own test chat*; *Citation to the place* is refined by it and by an accepted use case.
+- **WHEN** `kotta spec impact "The teacher tries the course chat" --change <that change>` runs.
+- **THEN** It reports *Own test chat* as falling out and *Citation to the place* as staying, measured on the change's model over the accepted one; without `--change` it says that no accepted use case has that name, as before.
 
 ### Requirement: Every requirement has a place in the hierarchy
 <!-- kotta: BR-01m4ee23pwf0sg22vta05bc2hz -->
