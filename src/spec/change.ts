@@ -27,6 +27,8 @@ export const MODEL_DIRECTORY = "model";
 export const REMOVED_FILE = "REMOVED.md";
 export const PLANNING_FILE = "planning.md";
 export const APPROVAL_FILE = "approval.yaml";
+/** Form definitions a change carries, landed in the registry by archive (BR-01m4ee245pe1wb8x8n7wxyvxwh). */
+export const FORMS_DIRECTORY = "forms";
 
 const NAME = /^[a-z0-9][a-z0-9._-]*$/;
 const NODE_ID = new RegExp(`\\b[A-Za-z]{1,4}-${MINTED_BODY}\\b`, "g");
@@ -130,6 +132,7 @@ export function readChangeModel(root: string, name: string, forms: SpecForm[]): 
   const known = new Set(forms.map((form) => form.directory));
   for (const file of files) {
     if (file === REMOVED_FILE) continue;
+    if (file.startsWith(`${FORMS_DIRECTORY}/`) && file.endsWith(".yaml") && !file.slice(FORMS_DIRECTORY.length + 1).includes("/")) continue;
     const inForm = [...known].some((formDirectory) => file.startsWith(`${formDirectory}/`) && !file.slice(formDirectory.length + 1).includes("/"));
     if (!inForm || !file.endsWith(".md")) {
       issues.push({ code: "CHANGE_MODEL_STRAY_FILE", message: `model/${file} is not a node in a registered form directory, nor ${REMOVED_FILE}. Move it under model/<form directory>/ or out of model/.`, path: join(modelDirectory, file) });

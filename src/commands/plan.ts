@@ -4,12 +4,12 @@ import { parseMarkdown, sections } from "../core/markdown.js";
 import { displayId } from "../core/identity.js";
 import { parseOpenQuestions, unresolvedQuestions } from "../core/questions.js";
 import { findRepositoryRoot, specPath } from "../filesystem/workspace.js";
-import { OPENSPEC_DIRECTORY, PLANNING_FILE, deltaHash, readChangeModel, type ChangeModel } from "../spec/change.js";
+import { deltaHash, FORMS_DIRECTORY, MODEL_DIRECTORY, OPENSPEC_DIRECTORY, PLANNING_FILE, readChangeModel, resolveChange, type ChangeModel } from "../spec/change.js";
 import { claimSentences, glossaryContrasts, readContent } from "../spec/contrast.js";
 import { markdownFiles, narrativeDrift, type NarrativeDrift } from "../spec/narrative.js";
 import { readNarrativeSetting, requiresNormativeKeyword } from "../core/config.js";
 import { PROVENANCE_DECIDERS, PROVENANCE_LEVELS, readProvenance } from "../spec/provenance.js";
-import { formIssues, normativeIssues, readFormRegistry, readSpecNodes, referencesIn, validateNodeSet, type SpecForm, type SpecNode, type ValidationIssue } from "../spec/registry.js";
+import { ACCEPTED_WARNING_CODES, formIssues, normativeIssues, readFormRegistry, readSpecNodes, referencesIn, validateNodeSet, type SpecForm, type SpecNode, type ValidationIssue } from "../spec/registry.js";
 
 /**
  * `kotta plan <change>` — the mechanical half of the planning phase.
@@ -259,7 +259,8 @@ function conversationCitations(root: string, model: ChangeModel): ConversationCi
 
 /** Everything the planning phase knows about a change, computed from disk; nothing is written. */
 export function analyzeChange(root: string, name: string): Analysis {
-  const { forms, issues: registryIssues } = readFormRegistry(root);
+  // The delta is measured against the registry as the change would leave it (BR-01m4ee245pe1wb8x8n7wxyvxwh).
+  const { forms, issues: registryIssues } = readFormRegistry(root, join(resolveChange(root, name), MODEL_DIRECTORY, FORMS_DIRECTORY));
   if (!forms.length) throw new Error(`No form registry is installed at ${specPath(root, "forms")}. Run 'kotta init' or 'kotta migrate' first.`);
   const { nodes: accepted, issues: acceptedIssues } = readSpecNodes(root, forms);
   const model = readChangeModel(root, name, forms);
@@ -283,7 +284,9 @@ export function analyzeChange(root: string, name: string): Analysis {
     if (before && before.form !== node.form) structure.push({ code: "CHANGE_FORM_CHANGED", message: `${relative(root, node.path)} changes ${title(before)} from a ${before.form} to a ${node.form}; a node keeps its form. Remove it and add a new node instead.`, path: node.path });
   }
 
-  const merged = [...registryIssues, ...formIssues(forms), ...acceptedIssues, ...validateNodeSet(forms, mergedNodes, { subject: (node) => !inDelta(node) })];
+  // An accepted node's missing place is a warning, never a block on someone else's change (BR-01m4ee23pwf0sg22vta05bc2hz).
+  const merged = [...registryIssues, ...formIssues(forms), ...acceptedIssues, ...validateNodeSet(forms, mergedNodes, { subject: (node) => !inDelta(node) })
+    .filter((issue) => !ACCEPTED_WARNING_CODES.has(issue.code))];
 
   const removedNodes = model.removed.map((id) => acceptedById.get(id)).filter((node): node is SpecNode => Boolean(node));
   const allConflicts = conflictCandidates(root, accepted, model.nodes, removedNodes);

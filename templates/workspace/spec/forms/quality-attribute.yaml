@@ -11,6 +11,9 @@ required_fields:
   frontmatter: [id, form, title]
   body_headings: [Source, Stimulus, Environment, Artifact, Response, Measure]
 normative_sections: [Response]  # one of these states the obligation with SHALL or MUST
+# A requirement that holds for the whole product carries `overall: true`.
+field_values:
+  overall: [true, false]
 required_edges:
   - name: verification
     direction: incoming
@@ -19,6 +22,17 @@ required_edges:
     target_forms: [quality-attribute]
     minimum: 1
     question: Who measures this quality, and where?
+  # Every requirement has a place (BR-01m4ee23pwf0sg22vta05bc2hz): a use case refines it, or it is
+  # overall (BR-01m4ee23baq19gd87ez4m9zxdw). A warning on an accepted node, an error on a change's.
+  - name: placement
+    direction: incoming
+    fields: [refines]
+    source_forms: [use-case]
+    target_forms: [quality-attribute]
+    minimum: 1
+    waived_by: overall
+    on_accepted: warning
+    question: Which use case relies on this quality attribute, or does it hold for the whole product (overall)?
 recognition_signals:
   - Performance, reliability, security, accessibility, or operability is quantified.
   - A percentile, threshold, workload, environment, or failure budget is named.

@@ -188,7 +188,7 @@ describe("kotta approve, the one human gate (BR-01m0f0wn89zb3wfb3t3y4d20a7)", ()
   test("an unanswered question refuses the approval by name; an answered one is not named (EX-01m0z873t1cmhybhakq6vwzxb6)", () => {
     const root = planningWorkspace("approve-questions");
     write(root, `${CHANGE}/model/business-rules/pause-freezes-${PAUSE.slice(-8)}.md`, node(
-      { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: [".kotta/changes/add-pause/proposal.md · Why"], quote: "a paused game should just quit" } },
+      { id: PAUSE, form: "business-rule", overall: true, title: "Pause freezes the timer", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: [".kotta/changes/add-pause/proposal.md · Why"], quote: "a paused game should just quit" } },
       { Rule: "While a game is paused its clock SHALL NOT advance.", Rationale: "A pause is not play.", Scope: "Timed games.", "Open decisions": "- How long may a pause last? Settled by D-001.\n- Does a pause survive a restart?\n- Who may pause a ranked game?" }));
     run(root, ["plan", "add-pause"]);
     const refused = json(root, ["approve", "add-pause", "--by", "Ada"]);
@@ -205,7 +205,7 @@ describe("kotta approve, the one human gate (BR-01m0f0wn89zb3wfb3t3y4d20a7)", ()
     const root = planningWorkspace("approve-invalid");
     answerPause(root);
     write(root, `${CHANGE}/model/business-rules/pause-freezes-${PAUSE.slice(-8)}.md`, node(
-      { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session" },
+      { id: PAUSE, form: "business-rule", overall: true, title: "Pause freezes the timer", capability: "game/session" },
       { Rule: "While a game is paused its clock SHALL NOT advance.", Rationale: "A pause is not play.", Scope: "Timed games." }));
     run(root, ["plan", "add-pause"]);
     const refused = json(root, ["approve", "add-pause", "--by", "Ada"]);

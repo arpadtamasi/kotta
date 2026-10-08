@@ -53,7 +53,8 @@ function scaffoldFrontmatter(form: SpecForm, id: string, title: string): { data:
     unanswered.push(field);
   }
   for (const edge of form.edges) {
-    if (edge.direction !== "outgoing") continue;
+    // An optional edge (minimum 0) is not laid out: it is offered, not asked for.
+    if (edge.direction !== "outgoing" || edge.minimum === 0) continue;
     for (const field of edge.fields) {
       if (field in data) continue;
       data[field] = [];
@@ -77,7 +78,7 @@ function scaffoldBody(form: SpecForm, title: string, keyword: boolean): string {
     if (normative.has(heading.toLowerCase())) lines.push(`## ${heading}`, "", NORMATIVE_HINT, "", "");
     else lines.push(`## ${heading}`, "", "", "");
   }
-  const outgoing = form.edges.filter((edge) => edge.direction === "outgoing" && edge.question);
+  const outgoing = form.edges.filter((edge) => edge.direction === "outgoing" && edge.question && edge.minimum > 0);
   const incoming = form.edges.filter((edge) => edge.direction === "incoming" && edge.question);
   if (outgoing.length || incoming.length) {
     lines.push("## Open edges", "");

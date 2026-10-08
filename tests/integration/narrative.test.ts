@@ -172,7 +172,7 @@ describe("the planning phase reads the conversation", () => {
 
     expect(json(root, ["narrative", "add-pause", "--from", CLAUDE]).status).toBe(0);
     const cite = (sources: string[]) => write(root, `.kotta/changes/add-pause/model/business-rules/quit-confirmation-${QUIT.slice(-8)}.md`, node(
-      { id: QUIT, form: "business-rule", title: "Quitting asks for confirmation", capability: "game/session", provenance: { level: "stated", decided_by: "agent-proposed-human-approved", sources, quote: "Javaslom, hogy a megerősítő ablak a futó játéknál maradjon meg. — igen (ember, 10:06)" } },
+      { id: QUIT, form: "business-rule", overall: true, title: "Quitting asks for confirmation", capability: "game/session", provenance: { level: "stated", decided_by: "agent-proposed-human-approved", sources, quote: "Javaslom, hogy a megerősítő ablak a futó játéknál maradjon meg. — igen (ember, 10:06)" } },
       { Rule: "The game SHALL ask “Quit? Y/N” before it ends a running game.", Rationale: "r", Scope: "s" }));
 
     cite([".kotta/changes/add-pause/conversation.md · J1", ".kotta/changes/add-pause/conversation.md#E1"]);

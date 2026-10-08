@@ -30,7 +30,7 @@ function workspace(label: string): string {
   git(root, "switch", "-q", "-c", "work");
   write(root, `${CHANGE}/proposal.md`, "# One move per turn\n\n## Why\n\nA turn is one move.\n");
   write(root, rulePath, node(
-    { id: RULE, form: "business-rule", title: "A turn is one move", provenance: stated },
+    { id: RULE, form: "business-rule", overall: true, title: "A turn is one move", provenance: stated },
     { Rule: "The game SHALL take one move per turn.", Rationale: "Two moves is two turns.", Scope: "Every game." }));
   write(root, `${CHANGE}/model/examples/a-move-ends-the-turn-${KEPT.slice(-8)}.md`, node(
     { id: KEPT, form: "example", title: "A move ends the turn", subjects: [RULE], provenance: stated },

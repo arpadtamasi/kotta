@@ -1,11 +1,11 @@
-import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync, readdirSync } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
 import { parse } from "yaml";
 import { receiptErrors } from "../core/approval-receipt.js";
 import { readNarrativeSetting, type NarrativeMode } from "../core/config.js";
 import { displayId } from "../core/identity.js";
 import { findRepositoryRoot, specPath } from "../filesystem/workspace.js";
-import { APPROVAL_FILE, ARCHIVE_DIRECTORY, OPENSPEC_DIRECTORY, approvesDelta, changesPath, nodeFingerprint } from "../spec/change.js";
+import { APPROVAL_FILE, ARCHIVE_DIRECTORY, OPENSPEC_DIRECTORY, approvesDelta, changesPath, nodeFingerprint, FORMS_DIRECTORY } from "../spec/change.js";
 import { SCENARIO_FORM, generateCapabilitySpec, markdownFiles, narrativeDrift, narrativeShapeWarnings, type NarrativeDrift } from "../spec/narrative.js";
 import { referencesIn, type SpecNode, type ValidationIssue } from "../spec/registry.js";
 import { ADMISSION_KINDS, unaccountedPromises } from "./gap.js";
@@ -177,6 +177,14 @@ export function archiveChange(name: string, repositoryRoot?: string, now: Date =
     if (previous && previous.path !== target) rmSync(previous.path);
     mkdirSync(dirname(target), { recursive: true });
     copyFileSync(node.path, target);
+  }
+  // The forms the change carries land in the registry with its nodes (BR-01m4ee245pe1wb8x8n7wxyvxwh, EX-01m4ee25mtyaj0zeh1r5szmz29).
+  const changeForms = join(model.modelDirectory, FORMS_DIRECTORY);
+  if (existsSync(changeForms)) {
+    for (const filename of readdirSync(changeForms).filter((name) => name.endsWith(".yaml"))) {
+      mkdirSync(specPath(root, "forms"), { recursive: true });
+      copyFileSync(join(changeForms, filename), specPath(root, "forms", filename));
+    }
   }
   for (const id of model.removed) {
     const gone = acceptedById.get(id);

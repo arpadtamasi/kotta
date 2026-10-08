@@ -69,7 +69,7 @@ function smallProject(label: string): string {
     "- **THEN** the table is unchanged", "",
   ].join("\n"));
   write(root, `.kotta/spec/business-rules/quit-confirmation-${EXISTING.slice(-8)}.md`, node(
-    { id: EXISTING, form: "business-rule", title: "Quitting asks for confirmation", capability: "game/session" },
+    { id: EXISTING, form: "business-rule", overall: true, title: "Quitting asks for confirmation", capability: "game/session" },
     { Rule: "The game SHALL ask before it quits.", Rationale: "An accidental quit loses the game.", Scope: "Every running game." }));
   return root;
 }
@@ -162,7 +162,7 @@ describe("kotta import openspec", () => {
   test("a requirement bound to an accepted node changes that node, whatever its title", () => {
     const root = repository("bound");
     write(root, `.kotta/spec/business-rules/old-name-${BOUND.slice(-8)}.md`, node(
-      { id: BOUND, form: "business-rule", title: "Old name" },
+      { id: BOUND, form: "business-rule", overall: true, title: "Old name" },
       { Rule: "Old text.", Rationale: "Kept.", Scope: "Kept." }));
     write(root, "openspec/specs/x/spec.md", ["# x Specification", "", "## Purpose", "X.", "", "## Requirements", "", "### Requirement: New name", `<!-- kotta: ${BOUND} -->`, "New text SHALL hold.", ""].join("\n"));
     const imported = json(root, ["import", "openspec"]);
@@ -217,7 +217,9 @@ describe("import after: the oktat-ai narrative spec", () => {
     // Not ready: the planning phase has yet to answer what the narrative does not say.
     expect(planned.status).toBe(1);
     const codes = new Set(planned.body.data.structure.map((issue: { code: string }) => issue.code));
-    expect(codes).toEqual(new Set(["SPEC_NODE_MISSING_SECTION", "SPEC_NODE_MISSING_EDGE"]));
+    // ...and every imported rule still needs a use case that refines it, or the overall marker
+    // (BR-01m4ee23pwf0sg22vta05bc2hz): the planning phase draws the use cases.
+    expect(codes).toEqual(new Set(["SPEC_NODE_MISSING_SECTION", "SPEC_NODE_MISSING_EDGE", "SPEC_NODE_NO_PLACE"]));
     expect(planned.body.data.drift).toEqual([]);
 
     expect(markdownFiles(join(root, "openspec/specs")).map((file) => readFileSync(file, "utf8"))).toEqual(before);
