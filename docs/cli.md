@@ -97,8 +97,11 @@ See [Modules and evidence](modules-and-evidence.md).
 - `spec new --into <change>`: Draft the node into a change's model delta
   (`.kotta/changes/<change>/model/`) instead of the accepted specification. The sections that
   must say SHALL or MUST carry a hint only where the project keeps an OpenSpec narrative.
-- `spec impact <use-case>`: The use case's id, the end of its id, or its exact title. Reads the
-  accepted specification only; the use cases it includes and those extending it go with it.
+- `spec impact <use-case>`: The use case's id, the end of its id, or its exact title. The use cases
+  it includes and those extending it go with it.
+- `spec impact --change <name>`: Measure on the change's model laid over the accepted specification,
+  as `kotta plan` sees it, so a use case still in a change can be measured; without it, the accepted
+  specification only.
 - `narrative --from <path>` (required): A Claude Code or Codex session log (.jsonl), or a directory
   of them.
 - `narrative --since <time>`: Only messages at or after this ISO 8601 time.

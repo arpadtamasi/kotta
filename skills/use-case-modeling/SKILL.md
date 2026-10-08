@@ -41,7 +41,7 @@ Every rule, interface and quality attribute in a change needs a place — a use 
 or `overall: true` — and plan refuses one with neither. Whether a requirement is overall is a
 product decision: when the conversation does not say, list it as an open decision, do not choose.
 `kotta spec impact <use case>` shows what would fall out of the specification if a use case were
-not adopted.
+not adopted; add `--change <change>` while the use cases are still in the change you are planning.
 
 ## When not to use
 
