@@ -9,14 +9,16 @@ provenance:
   level: partly-inferred
   decided_by: agent-proposed-human-approved
   sources:
+    - ".kotta/changes/hasznalati-eset-hierarchia/conversation.md · P4"
+    - "chat · rp, 2026-10-08: asked what the form sentence meant; the rewording follows the form-change rule of this change"
     - ".kotta/changes/fejlesztes-az-archive-elott/conversation.md · P3"
   quote: "rp, 2026-10-01 18:02 UTC: 5 ok"
-  inferred: "The accepted rule is unchanged but for one added sentence, proposed by the agent and accepted by the operator: between approval and archive the approved delta binds for what it touches."
+  inferred: "Only the sentence about the form registry changes: a form change is a change to the agreement and goes through the gate. The rest is the accepted text."
 ---
 
 ## Rule
 
-The specification on the base branch is the accepted agreement. Shaping is free; landing on the base branch, on a human yes, is the acceptance. Between a change's approval and its archive, the approved delta SHALL be the agreement for the nodes it touches: the code that builds the change is held to the approved text, not to the accepted text it replaces, and everything the delta does not touch stays as accepted. A spec node carries no versioning of its own - no version field, no status, no changelog: every node states the current agreement in the present tense, and Git history is the versioning. (The form registry's files version the form, never the agreement.) Work is promised, bounded, and judged by spec nodes; a task only executes them.
+The specification on the base branch is the accepted agreement. Shaping is free; landing on the base branch, on a human yes, is the acceptance. Between a change's approval and its archive, the approved delta SHALL be the agreement for the nodes it touches: the code that builds the change is held to the approved text, not to the accepted text it replaces, and everything the delta does not touch stays as accepted. A spec node carries no versioning of its own - no version field, no status, no changelog: every node states the current agreement in the present tense, and Git history is the versioning. The form registry is part of the agreement too: a form changes only through a change, like a node (BR-01m4ee245pe1wb8x8n7wxyvxwh). Work is promised, bounded, and judged by spec nodes; a task only executes them.
 
 ## Rationale
 

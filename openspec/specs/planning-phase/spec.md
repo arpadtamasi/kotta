@@ -32,6 +32,24 @@ Every change in a Kotta workspace; the shipped rules file and the `plan-change` 
 - **WHEN** `kotta archive` runs on that change.
 - **THEN** It refuses, names the third node by title and says where evidence was sought. Nothing is merged, nothing is moved and nothing is written. Once the third node is either named by the code that keeps it or admitted with a reason, the same command lands the change, asking nobody anything.
 
+### Requirement: A form change goes through the gate
+<!-- kotta: BR-01m4ee245pe1wb8x8n7wxyvxwh -->
+A change SHALL be able to carry form definitions under `model/forms/`. `kotta plan` SHALL measure the delta's nodes against the registry as the change would leave it, `kotta approve` SHALL fingerprint the forms with the nodes, and `kotta archive` SHALL land them in the registry. A form edited in the registry outside a change SHALL be reported by `kotta validate`.
+
+**Rationale**
+
+The form registry decides what every node must say and which edges it answers; changing it changes the agreement as much as changing a node. Today a form change lands by hand, with no gate, and a change that uses a new edge cannot even be measured before the form is in place.
+
+**Scope**
+
+Every change and the form registry of every workspace.
+
+#### Scenario: A new edge lands with the change that uses it
+<!-- kotta: EX-01m4ee25mtyaj0zeh1r5szmz29 -->
+- **GIVEN** A change that adds the `refines` edge to the use-case form under `model/forms/use-case.yaml`, and three use cases in the same change that use it.
+- **WHEN** `kotta plan`, `kotta approve` and `kotta archive` run on the change.
+- **THEN** Plan measures the three use cases against the form with the new edge; the approval fingerprints the form with them; archive lands the form in the registry together with the nodes.
+
 ### Requirement: A proposal opens as a change in the workspace
 <!-- kotta: BR-01m40e0afjevd5jy04135bh7fj -->
 Every request to specify, propose or plan something SHALL open as a change of Kotta's own, at `.kotta/changes/<name>/`, created with `kotta change new <name>`, whether or not the project uses OpenSpec. The change SHALL hold the proposal in prose (`proposal.md`: why, what changes, what is still undecided), the distilled conversation when there is one, and the model delta under `model/`; `kotta plan`, `kotta approve` and `kotta archive` SHALL read the change there, and archive SHALL move it to `.kotta/changes/archive/`. Kotta SHALL NOT write a change under `openspec/`. The workshop skills SHALL draft their nodes into a change (`kotta spec new … --into <change>`), never straight into the accepted specification.
