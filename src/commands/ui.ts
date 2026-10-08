@@ -131,6 +131,10 @@ export interface BoardSpecNode {
   provenance?: BoardProvenance;
   /** The optional capability path (`identity/user-auth`) the diagrams group by. */
   capability?: string;
+  /** A requirement that holds for the whole product (BR-01m4ee23baq19gd87ez4m9zxdw). */
+  overall?: boolean;
+  /** A use case's goal level, when it states one (BR-01m4ee22ypyq06n7vkk4ycnz9v). */
+  level?: string;
 }
 
 const PROVENANCE_LEVELS = ["stated", "partly-inferred", "inferred"] as const;
@@ -274,6 +278,8 @@ function boardNode(content: string, repoPath: string, formId: string): BoardSpec
   return {
     ...(provenance ? { provenance } : {}),
     ...(capability ? { capability } : {}),
+    ...(parsed.data.overall === true ? { overall: true } : {}),
+    ...(typeof parsed.data.level === "string" ? { level: parsed.data.level } : {}),
     id,
     form: String(parsed.data.form ?? formId).trim(),
     title: String(parsed.data.title ?? id).trim(),

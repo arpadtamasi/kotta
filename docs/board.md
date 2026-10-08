@@ -28,11 +28,12 @@ It is read-only: it answers `GET` and `HEAD`, and every other method gets `405` 
 
 ## The views
 
-The rail on the left lists five views, each with its node count.
+The rail on the left lists six views, each with its node count.
 
 | View | Shows |
 | --- | --- |
 | Specification | every node, grouped by form, with filters by admission kind and by form, and a find-by-title box |
+| Hierarchy | the use-case tree: overall requirements on top, then each actor's use cases with the use cases they include («includes») and those extending them («extends») nested under them, and under each the requirements it refines; requirements with no place are listed apart. A capability filter narrows the requirements, and "If dropped" on a use case marks which requirements fall out with it and which stay because another use case relies on them |
 | Use cases | actors, use cases grouped by capability, and goals: an actor owns a use case by its actor edge (solid arrow), a use case serves a goal by its goal edge (dashed arrow) |
 | Stories | the story map: one column per actor, each story with its Story and Value |
 | Entities | the entity map |

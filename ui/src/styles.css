@@ -610,3 +610,26 @@ code { font-family: var(--font-mono); }
 .flow-label.is-faded { opacity: .25; }
 .flow-group { box-sizing: border-box; width: 100%; height: 100%; border: 1px dashed var(--line-soft); border-radius: 10px; background: color-mix(in srgb, var(--color-surface) 45%, transparent); }
 .flow-group__label { display: block; padding: 8px 12px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); }
+
+/* The hierarchy (BR-01m4ee23zg0wx6hyvpkyj9qcr1): use cases nested, requirements under each, the drop
+   marks in the change marks' own weights. */
+.tree-uc { border-bottom: 1px solid var(--line-soft); }
+.tree-uc > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-2); padding: var(--space-2) 0; }
+.tree-uc > summary::-webkit-details-marker { display: none; }
+.tree-uc > summary::before { content: "▸"; color: var(--text-muted); }
+.tree-uc[open] > summary::before { content: "▾"; }
+.tree-uc__title { font: inherit; font-weight: 600; background: none; border: 0; padding: 0; color: var(--color-text); cursor: pointer; text-align: left; }
+.tree-uc__body { padding: 0 0 var(--space-2) var(--space-4); display: grid; gap: var(--space-1); }
+.tree-how { font-size: 11px; color: var(--text-muted); }
+.tree-count { font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.tree-drop { margin-left: auto; font: inherit; font-size: 12px; border: 1px solid var(--line-soft); background: transparent; color: var(--color-text); padding: 1px 8px; cursor: pointer; }
+.tree-drop.is-active { border-color: var(--color-accent); color: var(--color-accent); }
+.tree-req { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--space-2); padding: var(--space-1) var(--space-2); background: var(--color-surface); }
+.tree-req__title { font: inherit; background: none; border: 0; padding: 0; color: var(--color-text); cursor: pointer; text-align: left; min-width: 0; }
+.tree-req__meta, .tree-req__also { font-size: 12px; color: var(--text-muted); }
+.tree-req--out { box-shadow: inset 3px 0 0 var(--color-accent); }
+.tree-req--stays { box-shadow: inset 3px 0 0 var(--color-text); }
+.tree-mark { font-size: 9px; letter-spacing: .08em; text-transform: uppercase; padding: 0 4px; }
+.tree-mark--out { color: var(--color-bg); background: var(--color-accent); }
+.tree-mark--stays { color: var(--color-text); border: 1px solid var(--color-text); }
+.tree-impact { padding: var(--space-2); border: 1px solid var(--color-accent); margin: 0 0 var(--space-3); }

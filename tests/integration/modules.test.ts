@@ -214,6 +214,30 @@ describe("kotta modules", () => {
     expect(report.data.warnings.map((warning) => warning.code)).toContain("MODULE_REFERENCE_STALE");
   });
 
+  test("a use case points to another repository's use case, and a change there makes it stale (EX-01m4ee25tytddkyyq4rxqrazg6)", () => {
+    // BR-01m4ee24bfc9zgkjrmwkjgwwrj: the same reference block an interface carries, resolved the same way.
+    const asked = "UC-01m1b0000000000000000000q1";
+    const useCase = (root: string, id: string, title: string, extra: string[], body: string) =>
+      write(root, `.kotta/spec/use-cases/${id.slice(-8)}.md`, ["---", `id: ${id}`, "form: use-case", `title: ${title}`, ...extra, "---", "", body].join("\n"));
+    const provider = repository("kotta-uc-core-");
+    useCase(provider, asked, "A student asks and gets a cited answer", [], "## Main success scenario\n1. The student asks.\n");
+    const pinned = commit(provider, "the question use case");
+    useCase(provider, asked, "A student asks and gets a cited answer", [], "## Main success scenario\n1. The student asks.\n2. The tutor cites its source.\n");
+    commit(provider, "the answer cites");
+
+    const goschool = repository("kotta-uc-app-");
+    const reference = (version: string) => ["reference:", "  module: oktat-ai", `  version: ${version}`, "  resolve: git", `  url: file://${provider}`, `  id: ${asked}`];
+    useCase(goschool, "UC-01m1b0000000000000000000q2", "The learner asks the tutor", reference(pinned), "## Main success scenario\nSee oktat-ai.\n");
+    useCase(goschool, "UC-01m1b0000000000000000000q3", "The learner asks again", reference(git(provider, "rev-parse", "HEAD")), "## Main success scenario\nSee oktat-ai.\n");
+    commit(goschool, "pin");
+    const report = kotta(goschool, "modules", "check", "--json").json() as { data: { warnings: Array<{ code: string; node?: string }>; references: Array<{ node: string; resolve: string | null; stale: boolean | null; resolved: { target: string } | null }> } };
+    expect(report.data.references).toEqual([
+      expect.objectContaining({ node: "UC-01m1b0000000000000000000q2", resolve: "git", stale: true, resolved: expect.objectContaining({ target: asked }) }),
+      expect.objectContaining({ node: "UC-01m1b0000000000000000000q3", resolve: "git", stale: false }),
+    ]);
+    expect(report.data.warnings.filter((warning) => warning.code === "MODULE_REFERENCE_STALE").map((warning) => warning.node)).toEqual(["UC-01m1b0000000000000000000q2"]);
+  });
+
   test("publish-spec ships a module's interfaces with their rules and examples, and an installed package resolves", () => {
     const published = kotta(shared.root, "modules", "publish-spec", "@shared/corpus", "--json");
     expect(published.status).toBe(0);

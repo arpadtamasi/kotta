@@ -58,14 +58,14 @@ as an error, the rest as warnings.
 ## Other repositories: reference, do not copy
 
 A consumer names another repository's promise with a `reference:` block on one of its own interface
-nodes:
+nodes, or on a use case another repository provides:
 
 ```yaml
 reference:
   module: <package name>
   version: <semver or commit>
   resolve: file | package | git    # optional; omitted tries all three in this order
-  id: <the foreign interface's id> # optional
+  id: <the foreign node's id>      # optional for an interface; a use case's is matched by id or exact title
   url: <git URL>                   # optional; for git when no dependency names one
 ```
 

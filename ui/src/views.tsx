@@ -31,6 +31,7 @@ export const NARRATIVE_ENDPOINT = "/api/narrative";
 
 export const VIEWS = [
   { key: "spec", label: "Specification", forms: [] as string[] },
+  { key: "tree", label: "Hierarchy", forms: ["use-case"] },
   { key: "use-cases", label: "Use cases", forms: ["use-case"] },
   { key: "stories", label: "Stories", forms: ["user-story"] },
   { key: "entities", label: "Entities", forms: ["entity"] },

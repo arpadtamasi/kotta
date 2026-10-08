@@ -321,7 +321,15 @@ export function validateNodeSet(forms: SpecForm[], nodes: SpecNode[], options: N
         if (edge.waived_by && node.data[edge.waived_by] === true) continue;
         const incoming = nodes.filter((candidate) => edge.source_forms.includes(candidate.form)).flatMap((candidate) =>
           edge.fields.flatMap((field) => referencesIn(candidate.data[field]).filter((reference) => reference === node.id).map(() => ({ candidate, field }))));
-        if (incoming.length < edge.minimum) {
+        if (incoming.length < edge.minimum && edge.waived_by) {
+          // A placement edge (BR-01m4ee23pwf0sg22vta05bc2hz): the two ways to give a node its place.
+          const title = typeof node.data.title === "string" ? node.data.title : basename(node.path);
+          issues.push({
+            code: edge.on_accepted === "warning" ? "SPEC_NODE_NO_PLACE" : "SPEC_NODE_MISSING_EDGE",
+            message: `${title} (${basename(node.path)}, ${form.id}) has no place in the hierarchy: no ${edge.source_forms.join(" or ")} names it under ${edge.fields.join(" or ")}, and it is not marked ${edge.waived_by}. ${edge.question ? `${edge.question} ` : ""}Name it under '${edge.fields[0]}' of the ${edge.source_forms[0]} that relies on it, or set '${edge.waived_by}: true' when it holds for the whole product.`,
+            path: node.path,
+          });
+        } else if (incoming.length < edge.minimum) {
           issues.push({
             code: edge.on_accepted === "warning" ? "SPEC_NODE_NO_PLACE" : "SPEC_NODE_MISSING_EDGE",
             message: `${basename(node.path)} (${form.id}) answers incoming edge '${edge.name}' ${incoming.length} time(s); its form requires at least ${edge.minimum}. ${edge.question ? `${edge.question} ` : ""}Add a reference from ${edge.source_forms.join(" or ")} via ${edge.fields.join(", ")}.`,

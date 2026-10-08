@@ -24,6 +24,10 @@ call traces as implementation detail unless they express actor-visible behavior.
 4. For each step, ask what can fail, vary, or be cancelled.
 5. Add alternatives at the step they branch from and state where they rejoin or end.
 6. Link the actor, served goal, proving examples, and any entities or interfaces used.
+7. Place it in the hierarchy: its `level` (`summary`, `user-goal` or `subfunction`), the use cases
+   it `includes` as part of its own behaviour, the one it `extends` with optional behaviour, and under
+   `refines` the rules, interfaces and quality attributes it relies on. A requirement that holds for
+   the whole product, whichever use case runs, is marked `overall: true` instead of being refined.
 
 Ask whether the actor can observe each system response, which guarantee survives a failure, and what
 must be true when the interaction ends. Draft the likely flow before asking follow-ups. Mark uncertain
@@ -32,6 +36,12 @@ facts as assumptions in prose; never hand over an empty use-case template.
 Ask Kotta for the node inside the change you are working in — `kotta spec new use-case --title "…" --into <change>`, after `kotta change new <change>` if none is open — and fill in the sections it lays out; identifiers and filenames are minted, never typed.
 Supply `actor` and `goal` directly. Supply evidence through example nodes whose `subjects` includes
 the use-case id.
+
+Every rule, interface and quality attribute in a change needs a place — a use case that refines it,
+or `overall: true` — and plan refuses one with neither. Whether a requirement is overall is a
+product decision: when the conversation does not say, list it as an open decision, do not choose.
+`kotta spec impact <use case>` shows what would fall out of the specification if a use case were
+not adopted.
 
 ## When not to use
 
