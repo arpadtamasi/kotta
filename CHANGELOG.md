@@ -4,6 +4,24 @@ All notable changes to Kotta (called A-Team before 0.3.0) will be documented in 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.7] — 2026-10-08
+
+### Fixed
+
+- **Archive never puts back an older accepted text** (#61). `kotta approve` records, under
+  `replaced` in `approval.yaml`, the fingerprint of every accepted node the delta replaces, as it
+  stood at the yes. `kotta archive` refuses with `ACCEPTED_CHANGED_SINCE_APPROVAL`, naming the node
+  and writing nothing, when one changed after the approval — before, it wrote the change's older copy
+  back and silently undid a later approved change. An approval recorded before this release carries
+  no fingerprints and is refused with `APPROVAL_WITHOUT_BASES`: plan the change and approve it again.
+
+### Changed
+
+- **The engine's remaining promises leave the model.** The approved change *a-motor-maradek-igeretei*
+  is archived: 63 pre-1.0 process nodes are removed from Kotta's own specification.
+- **The site's board screenshots** show the current board: the state machines drawn by the board
+  itself, and the open changes in the rail.
+
 ## [1.0.0-alpha.6] — 2026-10-03
 
 ### Removed
