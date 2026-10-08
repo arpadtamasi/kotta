@@ -7,18 +7,19 @@ provenance:
   level: partly-inferred
   decided_by: agent-proposed-human-approved
   sources:
+    - "chat · rp, 2026-10-08: „1a / 2a / 3a” — no separate home; overall is a marker on the requirement; a missing place is a warning on accepted nodes and an error on a change's nodes"
     - ".kotta/changes/hasznalati-eset-hierarchia/conversation.md · P4"
     - ".kotta/changes/hasznalati-eset-hierarchia/conversation.md · P5"
     - ".kotta/changes/hasznalati-eset-hierarchia/conversation.md · J1"
   quote: "rp, 2026-10-08: „általában valami hierarchia kéne, de tudjuk, hogy abba nem fér bele mindig minden” — „akár további hierarchia is indokolt, és vannak overall követelmények”"
-  inferred: "Taking the supplementary specification as the model for product-level requirements was the agent's proposal, accepted; how a requirement is marked overall is open below."
+  inferred: "Taking the supplementary specification as the model for product-level requirements was the agent's proposal, accepted; the operator chose the marker on the requirement itself (2a)."
 ---
 
 # Overall requirements belong to the product
 
 ## Rule
 
-A business rule, interface or quality attribute that holds for the whole product, not for one use case, SHALL be markable as an overall requirement, after the supplementary specification of the use-case literature. An overall requirement SHALL belong to the product as a whole: it needs no use case to refine it, and dropping use cases SHALL never drop it.
+A business rule, interface or quality attribute that holds for the whole product, not for one use case, SHALL be markable as an overall requirement with `overall: true` in its own frontmatter, after the supplementary specification of the use-case literature; no further node is needed. An overall requirement SHALL belong to the product as a whole: it needs no use case to refine it, and dropping use cases SHALL never drop it.
 
 ## Rationale
 
@@ -27,7 +28,3 @@ Some requirements hold everywhere — the browser only reads, the error codes ar
 ## Scope
 
 The business-rule, interface and quality-attribute forms Kotta ships.
-
-## Open decisions
-
-- **Hogyan jelölünk egy követelményt overall-nak?** (a) A követelmény maga kap egy jelölést (például `overall: true`), új csomópont nélkül. (b) Lesz egy „termék” csomópont munkaterületenként, és az finomítja az overall követelményeket, ugyanazzal az éllel, mint egy használati eset. A (b) egységesebb, de egy új formát és egy csomópontot hoz, aminek más szerepe nincs. Én az (a)-t javaslom: kevesebb új fogalom, és a fa teteje ugyanúgy megjelenhet a „termék” szinten.

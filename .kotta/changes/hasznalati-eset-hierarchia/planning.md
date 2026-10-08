@@ -1,8 +1,8 @@
 ---
 change: hasznalati-eset-hierarchia
-generated_at: 2026-10-08T18:59:39.573Z
-delta_hash: sha256:d122afe05e7b1e73fba19e6369be6b6f69387d254d3cc238f929fc24cc93af7b
-ready_for_approval: false
+generated_at: 2026-10-08T19:02:19.727Z
+delta_hash: sha256:4ae711360a92d661ef6620e600d0da7711bdcd77d6acdbb7f72aaa2e876e1126
+ready_for_approval: true
 ---
 
 # Planning: hasznalati-eset-hierarchia
@@ -29,7 +29,8 @@ Added:
 - The tree with the drop highlight (EX-6v6rzrpq) — example, .kotta/changes/hasznalati-eset-hierarchia/model/examples/the-tree-with-the-drop-highlight-6v6rzrpq.md
 - Uploading a material is three use cases (EX-pn2cq2wm) — example, .kotta/changes/hasznalati-eset-hierarchia/model/examples/uploading-a-material-is-three-use-cases-pn2cq2wm.md
 
-Changed: none
+Changed:
+- The spec is the agreement (BR-84jsrqbe) — business-rule, .kotta/changes/hasznalati-eset-hierarchia/model/business-rules/the-spec-is-the-agreement-84jsrqbe.md
 
 Removed: none
 
@@ -43,21 +44,31 @@ The accepted model with this delta applied validates as a whole.
 
 ## (c) Conflict candidates
 
-No accepted node shares an edge with, is named by, or contrasts with the delta.
+1. **Building an approved change needs no signal (EX-n48rz5e0)** — names the changed node in 'subjects' (references-changed; because of The spec is the agreement (BR-84jsrqbe)). Awaits judgement.
+2. **Identifiers are permanent (BR-5yn1nw85)** — both name unexamined: Inherited on 2026-08-23 and kinded on 2026-08-24. Nobody has yet checked whether this promise is kept. This is a form that can name itself where it is enforced or proven, so the absence of its id is a real question that has simply not been asked. Answer it by naming the node where the code enforces it or a test proves it, or by reclassifying it as unimplemented. in 'accepted' (shares-edge; because of The spec is the agreement (BR-84jsrqbe)). Awaits judgement.
+3. **Agents never invent intent (BR-1pkv7t9j)** — both name unexamined: Inherited on 2026-08-23 and kinded on 2026-08-24. Nobody has yet checked whether this promise is kept. This is a form that can name itself where it is enforced or proven, so the absence of its id is a real question that has simply not been asked. Answer it by naming the node where the code enforces it or a test proves it, or by reclassifying it as unimplemented. in 'accepted' (shares-edge; because of The spec is the agreement (BR-84jsrqbe)). Awaits judgement.
+4. **What the tool enforces, the spec states (BR-b9wke276)** — both name unexamined: Inherited on 2026-08-23 and kinded on 2026-08-24. Nobody has yet checked whether this promise is kept. This is a form that can name itself where it is enforced or proven, so the absence of its id is a real question that has simply not been asked. Answer it by naming the node where the code enforces it or a test proves it, or by reclassifying it as unimplemented. in 'accepted' (shares-edge; because of The spec is the agreement (BR-84jsrqbe)). Awaits judgement.
+5. **Listing writes nothing (EX-a20rfbq9)** — both name unexamined: Inherited on 2026-08-23 and kinded on 2026-08-24. Nobody has yet checked whether this promise is kept. This is a form that can name itself where it is enforced or proven, so the absence of its id is a real question that has simply not been asked. Answer it by naming the node where the code enforces it or a test proves it, or by reclassifying it as unimplemented. in 'accepted' (shares-edge; because of The spec is the agreement (BR-84jsrqbe)). Awaits judgement.
+6. **The board refuses to write (EX-y9htdeh1)** — both name unexamined: Inherited on 2026-08-23 and kinded on 2026-08-24. Nobody has yet checked whether this promise is kept. This is a form that can name itself where it is enforced or proven, so the absence of its id is a real question that has simply not been asked. Answer it by naming the node where the code enforces it or a test proves it, or by reclassifying it as unimplemented. in 'accepted' (shares-edge; because of The spec is the agreement (BR-84jsrqbe)). Awaits judgement.
+7. **Shaping runs without a task (EX-cxwt26q1)** — both name unexamined: Inherited on 2026-08-23 and kinded on 2026-08-24. Nobody has yet checked whether this promise is kept. This is a form that can name itself where it is enforced or proven, so the absence of its id is a real question that has simply not been asked. Answer it by naming the node where the code enforces it or a test proves it, or by reclassifying it as unimplemented. in 'accepted' (shares-edge; because of The spec is the agreement (BR-84jsrqbe)). Awaits judgement.
+8. **The board survives a restart (EX-7rbytqjh)** — both name unexamined: Inherited on 2026-08-23 and kinded on 2026-08-24. Nobody has yet checked whether this promise is kept. This is a form that can name itself where it is enforced or proven, so the absence of its id is a real question that has simply not been asked. Answer it by naming the node where the code enforces it or a test proves it, or by reclassifying it as unimplemented. in 'accepted' (shares-edge; because of The spec is the agreement (BR-84jsrqbe)). Awaits judgement.
+9. **The release canary times onboarding (EX-5np8cwtt)** — both name unexamined: Inherited on 2026-08-23 and kinded on 2026-08-24. Nobody has yet checked whether this promise is kept. This is a form that can name itself where it is enforced or proven, so the absence of its id is a real question that has simply not been asked. Answer it by naming the node where the code enforces it or a test proves it, or by reclassifying it as unimplemented. in 'accepted' (shares-edge; because of The spec is the agreement (BR-84jsrqbe)). Awaits judgement.
+10. **The suite enforces accessibility (EX-v4b0n2ax)** — both name unexamined: Inherited on 2026-08-23 and kinded on 2026-08-24. Nobody has yet checked whether this promise is kept. This is a form that can name itself where it is enforced or proven, so the absence of its id is a real question that has simply not been asked. Answer it by naming the node where the code enforces it or a test proves it, or by reclassifying it as unimplemented. in 'accepted' (shares-edge; because of The spec is the agreement (BR-84jsrqbe)). Awaits judgement.
+
+6 lower-ranked candidates are not listed; the 10 above rank highest.
 
 The machine's candidates are mechanical and narrow. Contradictions the agent found by comparing every claim of the delta with the accepted nodes it touches, each marked `judged`:
 
 <!-- kotta:judged — the agent's own findings; `kotta plan` keeps this block as written -->
-- judged: *The spec is the agreement* says "the form registry's files version the form, never the agreement". *A form change goes through the gate* treats a form change as a change to the agreement, landed only through the gate. They contradict unless the accepted sentence is read as "a form carries no version field of the agreement"; if the delta lands, that sentence should be reworded in the same change or the next.
+- judged: *The spec is the agreement* says "the form registry's files version the form, never the agreement". *A form change goes through the gate* treats a form change as a change to the agreement, landed only through the gate. They contradict unless the accepted sentence is read as "a form carries no version field of the agreement"; reworded in this change.
 - judged: the cross-repository `reference:` block that *A use case can point to a use case in another repository* extends is described in the documentation (docs/modules-and-evidence.md) but stated by no accepted node; the new rule is the first node to state it at all, and only for use cases.
 - judged: *Every requirement has a place in the hierarchy* names every one of today's accepted business rules, interfaces and quality attributes in every workspace as lacking a place until use cases refine them — in this repository too. Whether that is an error or a warning is the open decision on that rule.
+- judged: of the 16 machine candidates, *Building an approved change needs no signal* names *The spec is the agreement* for its sentence on the approved delta, which this change leaves as it is; the other 15 share only the 2026-08-23 "unexamined" admission text with it and say nothing about forms. No contradiction.
 <!-- /kotta:judged -->
 
 ## (d) Silences
 
-- Open: A use case refines the requirements it relies on (BR-jq5vmw01) BR-jq5vmw01/Q1 — **Legyen-e egy szabálynak „otthona”, vagy elég, hogy több használati eset finomítja?** Egy szabályt több eset is használhat: a „Hivatkozás a helyre” a diák kérdezéséhez és a tanár teszt-chatjéhez is kell. (a) Nincs külön otthon: a szabály minden eset alatt megjelenik, amelyik finomítja, és akkor esik ki, ha mindegyik kiesett. Egyszerűbb, és pontosan a UML/SysML jelentése. (b) Az egyik eset az otthon (a szabály megnevezi), a többi csak „ezt is használja”; a fában egy helyen áll, a többinél hivatkozásként. Áttekinthetőbb fa, de egy mezővel több, és a kettő elcsúszhat. Én az (a)-t javaslom: a kiesés kiszámolásához az otthon nem kell, a fa pedig a többi helyen halványabban is mutathatja. (.kotta/changes/hasznalati-eset-hierarchia/model/business-rules/a-use-case-refines-the-requirements-it-relies-on-jq5vmw01.md:34)
-- Open: Every requirement has a place in the hierarchy (BR-a05bc2hz) BR-a05bc2hz/Q1 — **Hiba legyen vagy figyelmeztetés, ha egy követelménynek nincs helye?** A meglévő projektekben ma egyetlen szabálynak sincs használati esete (az oktat-ai 113 szabálya ilyen), így hibaként minden ilyen projekt validálása azonnal elbukna. (a) Figyelmeztetés: a `kotta validate` megnevezi őket, de átmegy; egy változás új szabálya viszont hibát kap, ha nincs helye. (b) Mindig hiba. Én az (a)-t javaslom: a régi modellek átmenetileg is használhatók maradnak, az új munka viszont már a helyére kerül. (.kotta/changes/hasznalati-eset-hierarchia/model/business-rules/every-requirement-has-a-place-in-the-hierarchy-a05bc2hz.md:32)
-- Open: Overall requirements belong to the product (BR-z4m9zxdw) BR-z4m9zxdw/Q1 — **Hogyan jelölünk egy követelményt overall-nak?** (a) A követelmény maga kap egy jelölést (például `overall: true`), új csomópont nélkül. (b) Lesz egy „termék” csomópont munkaterületenként, és az finomítja az overall követelményeket, ugyanazzal az éllel, mint egy használati eset. A (b) egységesebb, de egy új formát és egy csomópontot hoz, aminek más szerepe nincs. Én az (a)-t javaslom: kevesebb új fogalom, és a fa teteje ugyanúgy megjelenhet a „termék” szinten. (.kotta/changes/hasznalati-eset-hierarchia/model/business-rules/overall-requirements-belong-to-the-product-z4m9zxdw.md:33)
+No open decision, and no question a form asks is left unanswered.
 
 ## (e) Narrative drift
 
@@ -65,8 +76,8 @@ No narrative requirement bound to a node says something else than the node.
 
 ## (f) Provenance
 
-16 delta nodes: 0 stated, 16 partly-inferred, 0 inferred.
-Decided by: 0 human, 8 agent-proposed-human-approved, 8 agent-decided.
+17 delta nodes: 0 stated, 17 partly-inferred, 0 inferred.
+Decided by: 0 human, 9 agent-proposed-human-approved, 8 agent-decided.
 
 What the machine decided alone:
 
@@ -79,4 +90,5 @@ What the machine decided alone:
 - The tree with the drop highlight (EX-6v6rzrpq) — The case is the agent's illustration, drawn from the oktat-ai specification.
 - Uploading a material is three use cases (EX-pn2cq2wm) — The case is the agent's illustration, drawn from the oktat-ai specification.
 
-Conversation: .kotta/changes/hasznalati-eset-hierarchia/conversation.md, cited 36 times. Read it for the why before calling anything inferred.
+Conversation: .kotta/changes/hasznalati-eset-hierarchia/conversation.md, cited 38 times. Read it for the why before calling anything inferred.
+- Unresolved: The spec is the agreement (BR-84jsrqbe) cites “.kotta/changes/fejlesztes-az-archive-elott/conversation.md · P3” — name the conversation as .kotta/changes/hasznalati-eset-hierarchia/conversation.md, the repository-relative path the board opens.

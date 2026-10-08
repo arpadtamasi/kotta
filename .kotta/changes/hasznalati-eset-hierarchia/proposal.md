@@ -26,6 +26,8 @@ Az új fogalmak a bevett UML / use case irodalomra épülnek.
 
 ## Open decisions
 
-- Legyen-e egy szabálynak otthona — a „refines” szabálynál.
-- Hogyan jelölünk overall követelményt — az overall szabálynál.
-- Hiba vagy figyelmeztetés, ha egy követelménynek nincs helye — a „place” szabálynál.
+Nincs (válasz: 1a, 2a, 3a, 2026-10-08): nincs külön otthon; az overall jelölés a követelményen áll;
+a hely hiánya figyelmeztetés az elfogadott, hiba a változás csomópontjain.
+
+A „The spec is the agreement” szabály formákról szóló mondata átfogalmazva: a forma változása is a
+megállapodás része, és változáson át megy.
