@@ -568,6 +568,10 @@ export function discoverModules(files: RepositoryFiles, options: DiscoveryOption
 // ── Placement ────────────────────────────────────────────────────────────────────────────────────
 
 export const INTERFACE_FORM = "interface";
+/** A use case may rely on another repository's use case through the same `reference:` block (BR-01m4ee24bfc9zgkjrmwkjgwwrj). */
+export const USE_CASE_FORM = "use-case";
+const REFERENCING_FORMS = [INTERFACE_FORM, USE_CASE_FORM];
+const DEFAULT_DIRECTORY: Record<string, string> = { [INTERFACE_FORM]: "interfaces", [USE_CASE_FORM]: "use-cases" };
 
 export interface NodeEvidence { kind: EvidenceKind; path: string; module: string }
 
@@ -648,7 +652,7 @@ export function analyzeWorkingTree(root: string): ModuleAnalysis {
   const workspace = workspaceDirectoryName(root);
   const specNodes = specRecords(root);
   const externalNames = new Set(specNodes.flatMap((node) => {
-    const reference = node.form === INTERFACE_FORM ? referenceBlock(node.data) : null;
+    const reference = REFERENCING_FORMS.includes(node.form) ? referenceBlock(node.data) : null;
     const name = text(reference?.module);
     return name ? [name] : [];
   }));
@@ -756,6 +760,8 @@ export function boundaryFindings(analysis: ModuleAnalysis): ModuleFinding[] {
 
 export interface ForeignInterface {
   id: string;
+  /** The form of the foreign node: an interface, or a use case another repository relies on. */
+  form: string;
   title: string;
   module: string | null;
   body: string;
@@ -766,16 +772,16 @@ export interface ForeignInterface {
 
 interface SpecReader { list(directory: string): string[]; read(path: string): string | null }
 
-/** Interface nodes in a specification tree laid out like `.kotta/spec/`: `forms/` names the directories. */
-function readInterfaces(reader: SpecReader, origin: ForeignInterface["origin"]): ForeignInterface[] {
+/** Nodes of one form in a specification tree laid out like `.kotta/spec/`: `forms/` names the directories. */
+function readForeign(reader: SpecReader, origin: ForeignInterface["origin"], form: string = INTERFACE_FORM): ForeignInterface[] {
   const directories = new Set<string>();
-  for (const form of reader.list("forms").filter((name) => name.endsWith(".yaml"))) {
+  for (const file of reader.list("forms").filter((name) => name.endsWith(".yaml"))) {
     try {
-      const data = parseYaml(reader.read(`forms/${form}`) ?? "") as Record<string, unknown> | null;
-      if (data?.id === INTERFACE_FORM && typeof data.directory === "string") directories.add(data.directory);
+      const data = parseYaml(reader.read(`forms/${file}`) ?? "") as Record<string, unknown> | null;
+      if (data?.id === form && typeof data.directory === "string") directories.add(data.directory);
     } catch { /* an unreadable foreign form is the foreign repository's to fix */ }
   }
-  if (!directories.size) directories.add("interfaces");
+  if (!directories.size && DEFAULT_DIRECTORY[form]) directories.add(DEFAULT_DIRECTORY[form]);
   const found: ForeignInterface[] = [];
   for (const directory of directories) {
     for (const name of reader.list(directory).filter((entry) => entry.endsWith(".md"))) {
@@ -784,12 +790,16 @@ function readInterfaces(reader: SpecReader, origin: ForeignInterface["origin"]):
       try {
         const entity = parseMarkdown(source);
         const id = text(entity.data.id);
-        if (!id || (entity.data.form !== undefined && entity.data.form !== INTERFACE_FORM)) continue;
-        found.push({ id, title: text(entity.data.title) ?? id, module: text(entity.data.module), body: entity.content, file: `${directory}/${name}`, origin });
+        if (!id || (entity.data.form !== undefined && entity.data.form !== form)) continue;
+        found.push({ id, form, title: text(entity.data.title) ?? id, module: text(entity.data.module), body: entity.content, file: `${directory}/${name}`, origin });
       } catch { /* as above */ }
     }
   }
   return found;
+}
+
+function readInterfaces(reader: SpecReader, origin: ForeignInterface["origin"]): ForeignInterface[] {
+  return readForeign(reader, origin, INTERFACE_FORM);
 }
 
 function directoryReader(specRoot: string): SpecReader {
@@ -857,7 +867,13 @@ interface Resolved {
 
 type Attempt = { ok: true; resolved: Resolved } | { ok: false; reason: string };
 
-function pickTarget(candidates: ForeignInterface[], moduleName: string, wanted: { id: string | null; title: string }): ForeignInterface | string {
+function pickTarget(candidates: ForeignInterface[], moduleName: string, wanted: { id: string | null; title: string; form: string }): ForeignInterface | string {
+  if (wanted.form !== INTERFACE_FORM) {
+    // A use case belongs to the repository, not to a module: the reference names it by id, or by its exact title.
+    if (wanted.id) return candidates.find((candidate) => candidate.id === wanted.id) ?? `no use case ${wanted.id}`;
+    const titled = candidates.filter((candidate) => candidate.title === wanted.title);
+    return titled.length === 1 ? titled[0] : `no use case titled '${wanted.title}'; name the one meant with 'reference.id'`;
+  }
   const own = candidates.filter((candidate) => candidate.module === moduleName);
   if (wanted.id) return own.find((candidate) => candidate.id === wanted.id) ?? candidates.find((candidate) => candidate.id === wanted.id) ?? `no interface ${wanted.id}`;
   const titled = own.filter((candidate) => candidate.title === wanted.title);
@@ -884,12 +900,12 @@ export interface ReferenceContext {
   cacheDirectory?: string;
 }
 
-function resolveByFile(context: ReferenceContext, moduleName: string, wanted: { id: string | null; title: string }): Attempt {
+function resolveByFile(context: ReferenceContext, moduleName: string, wanted: { id: string | null; title: string; form: string }): Attempt {
   const dependency = context.analysis.modules.flatMap((module) => module.dependencies).find((entry) => entry.name === moduleName && entry.resolve === "file" && entry.path);
   if (!dependency?.path) return { ok: false, reason: `file: no module declares a file: or path dependency on ${moduleName}` };
   const repository = foreignRepository(dependency.path);
   if (!repository) return { ok: false, reason: `file: ${dependency.path} is not inside a repository with a .kotta/spec` };
-  const interfaces = readInterfaces(directoryReader(join(repository, ".kotta", "spec")), { resolve: "file", location: repository });
+  const interfaces = readForeign(directoryReader(join(repository, ".kotta", "spec")), { resolve: "file", location: repository }, wanted.form);
   const target = pickTarget(interfaces, moduleName, wanted);
   if (typeof target === "string") return { ok: false, reason: `file: ${repository}: ${target}` };
   const file = relative(repository, join(repository, ".kotta", "spec", target.file)).split("\\").join("/");
@@ -903,14 +919,14 @@ function resolveByFile(context: ReferenceContext, moduleName: string, wanted: { 
   } };
 }
 
-function resolveByPackage(context: ReferenceContext, moduleName: string, wanted: { id: string | null; title: string }): Attempt {
+function resolveByPackage(context: ReferenceContext, moduleName: string, wanted: { id: string | null; title: string; form: string }): Attempt {
   const { root, modules } = context.analysis;
   const specRoot = [...modules.map((module) => module.path), "."].map((path) => installedSpec(root, path, moduleName)).find(Boolean);
   if (!specRoot) return { ok: false, reason: `package: no installed node_modules/${moduleName}/${PUBLISHED_SPEC_DIRECTORY}/${PUBLISHED_SPEC_MANIFEST}` };
   let manifest: Record<string, unknown> = {};
   try { manifest = JSON.parse(readFileSync(join(specRoot, PUBLISHED_SPEC_MANIFEST), "utf8")) as Record<string, unknown>; }
   catch { return { ok: false, reason: `package: ${join(specRoot, PUBLISHED_SPEC_MANIFEST)} is not valid JSON` }; }
-  const interfaces = readInterfaces(directoryReader(specRoot), { resolve: "package", location: specRoot });
+  const interfaces = readForeign(directoryReader(specRoot), { resolve: "package", location: specRoot }, wanted.form);
   const target = pickTarget(interfaces, moduleName, wanted);
   if (typeof target === "string") return { ok: false, reason: `package: ${specRoot}: ${target}` };
   const commit = text(manifest.commit);
@@ -924,7 +940,7 @@ function resolveByPackage(context: ReferenceContext, moduleName: string, wanted:
   } };
 }
 
-function resolveByGit(context: ReferenceContext, moduleName: string, wanted: { id: string | null; title: string }, reference: Record<string, unknown>): Attempt {
+function resolveByGit(context: ReferenceContext, moduleName: string, wanted: { id: string | null; title: string; form: string }, reference: Record<string, unknown>): Attempt {
   const dependency = context.analysis.modules.flatMap((module) => module.dependencies).find((entry) => entry.name === moduleName && entry.resolve === "git");
   const url = text(reference.url) ?? dependency?.url;
   if (!url) return { ok: false, reason: `git: no git dependency on ${moduleName} and no 'reference.url'` };
@@ -934,7 +950,7 @@ function resolveByGit(context: ReferenceContext, moduleName: string, wanted: { i
     : gitIn(tmpdir(), ["clone", "--quiet", "--bare", url, cache]) !== null ? gitIn(cache, ["fetch", "--quiet", url, "+HEAD:refs/kotta/head"]) : null;
   if (cloned === null) return { ok: false, reason: `git: could not fetch ${url}` };
   const ref = "refs/kotta/head";
-  const interfaces = readInterfaces(treeReader(cache, ref, ".kotta/spec/"), { resolve: "git", location: url });
+  const interfaces = readForeign(treeReader(cache, ref, ".kotta/spec/"), { resolve: "git", location: url }, wanted.form);
   const target = pickTarget(interfaces, moduleName, wanted);
   if (typeof target === "string") return { ok: false, reason: `git: ${url}: ${target}` };
   const file = `.kotta/spec/${target.file}`;
@@ -973,7 +989,7 @@ export function referenceFindings(context: ReferenceContext): { findings: Module
   const references: ReferenceStatus[] = [];
   const foreign = new Map<string, ForeignInterface>();
 
-  for (const record of analysis.specNodes.filter((node) => node.form === INTERFACE_FORM)) {
+  for (const record of analysis.specNodes.filter((node) => REFERENCING_FORMS.includes(node.form))) {
     const reference = referenceBlock(record.data);
     if (!reference) continue;
     const moduleName = text(reference.module);
@@ -989,7 +1005,7 @@ export function referenceFindings(context: ReferenceContext): { findings: Module
       });
       continue;
     }
-    const wanted = { id: text(reference.id), title: record.title };
+    const wanted = { id: text(reference.id), title: record.title, form: record.form };
     const tried: string[] = [];
     let resolved: Resolved | null = null;
     for (const candidate of method ? [method as ReferenceResolution] : RESOLUTIONS) {
@@ -1057,7 +1073,7 @@ export function referenceFindings(context: ReferenceContext): { findings: Module
     }
   }
 
-  const candidates = [...foreign.values()];
+  const candidates = [...foreign.values()].filter((target) => target.form === INTERFACE_FORM);
   for (const record of analysis.specNodes.filter((node) => node.form === INTERFACE_FORM && !referenceBlock(node.data))) {
     let best: { target: ForeignInterface; ratio: number } | null = null;
     for (const target of candidates) {

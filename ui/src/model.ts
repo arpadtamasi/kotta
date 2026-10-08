@@ -24,6 +24,10 @@ export type SpecNode = {
   provenance?: Provenance;
   /** The optional capability path the diagrams group by. */
   capability?: string;
+  /** A requirement that holds for the whole product. */
+  overall?: boolean;
+  /** A use case's goal level: summary, user-goal or subfunction. */
+  level?: string;
   /** Inside an open change: what the change does to this node. Absent in the accepted view. */
   mark?: ChangeMark;
   /** For a changed node, its accepted sections — what the change replaces. */
@@ -439,3 +443,101 @@ export function stateGraph(machine: StateMachine): FlowGraph {
   }
   return { direction: "DOWN", groups: [], nodes, edges };
 }
+
+/* ── The use-case hierarchy ────────────────────────────
+   The tree the board draws (BR-01m4ee23zg0wx6hyvpkyj9qcr1): overall requirements on top, each actor
+   with its use cases, included and extending use cases nested, and under each use case the
+   requirements it refines (BR-01m4ee234nxva765r3jq5vmw01). Dropping a use case marks what falls out
+   and what stays (BR-01m4ee23h66jzr4wzd0a3grf02); the same rule the CLI's `spec impact` applies. */
+export const REQUIREMENT_FORMS = ["business-rule", "interface", "quality-attribute"];
+const refinedIn = (node: SpecNode) => [...(node.edges?.refines ?? []), ...(node.edges?.interfaces ?? [])];
+
+export type Hierarchy = {
+  overall: SpecNode[];
+  actors: Array<{ actor: SpecNode | null; roots: string[] }>;
+  /** A use case's children: what it includes, then what extends it. */
+  children: Map<string, Array<{ id: string; how: "includes" | "extends" }>>;
+  /** For each use case, the requirements it refines. */
+  refines: Map<string, SpecNode[]>;
+  /** For each requirement, the use cases that refine it. */
+  refiners: Map<string, string[]>;
+  /** Requirements nothing refines and that are not overall. */
+  unplaced: SpecNode[];
+  /** Examples per node, from the example form's subjects. */
+  examples: Map<string, number>;
+};
+
+export function readHierarchy(spec: SpecNode[], capability: string | null = null): Hierarchy {
+  const byId = new Map(spec.map((node) => [node.id, node]));
+  const useCases = spec.filter((node) => node.form === "use-case");
+  const requirements = spec.filter((node) => REQUIREMENT_FORMS.includes(node.form) && (!capability || node.capability === capability));
+  const refiners = new Map<string, string[]>();
+  const refines = new Map<string, SpecNode[]>();
+  for (const useCase of useCases) {
+    const list = refinedIn(useCase).map((id) => byId.get(id)).filter((node): node is SpecNode => Boolean(node) && requirements.includes(node!));
+    refines.set(useCase.id, list.sort((a, b) => a.title.localeCompare(b.title)));
+    for (const node of list) refiners.set(node.id, [...(refiners.get(node.id) ?? []), useCase.id]);
+  }
+  const children = new Map<string, Array<{ id: string; how: "includes" | "extends" }>>();
+  const nested = new Set<string>();
+  for (const useCase of useCases) {
+    for (const id of useCase.edges?.includes ?? []) if (byId.get(id)?.form === "use-case") {
+      children.set(useCase.id, [...(children.get(useCase.id) ?? []), { id, how: "includes" }]); nested.add(id);
+    }
+    for (const id of useCase.edges?.extends ?? []) if (byId.get(id)?.form === "use-case") {
+      children.set(id, [...(children.get(id) ?? []), { id: useCase.id, how: "extends" }]); nested.add(useCase.id);
+    }
+  }
+  const roots = useCases.filter((node) => !nested.has(node.id)).sort((a, b) => a.title.localeCompare(b.title));
+  const actorIds = [...new Set(roots.flatMap((node) => node.edges?.actor ?? []))];
+  const actors = actorIds.map((id) => ({ actor: byId.get(id) ?? null, roots: roots.filter((node) => (node.edges?.actor ?? []).includes(id)).map((node) => node.id) }))
+    .sort((a, b) => (a.actor?.title ?? "").localeCompare(b.actor?.title ?? ""));
+  const noActor = roots.filter((node) => !(node.edges?.actor ?? []).length).map((node) => node.id);
+  if (noActor.length) actors.push({ actor: null, roots: noActor });
+  const examples = new Map<string, number>();
+  for (const node of spec.filter((candidate) => candidate.form === "example")) {
+    for (const id of node.edges?.subjects ?? []) examples.set(id, (examples.get(id) ?? 0) + 1);
+  }
+  return {
+    overall: requirements.filter((node) => node.overall).sort((a, b) => a.title.localeCompare(b.title)),
+    actors, children, refines, refiners,
+    unplaced: requirements.filter((node) => !node.overall && !(refiners.get(node.id) ?? []).length).sort((a, b) => a.title.localeCompare(b.title)),
+    examples,
+  };
+}
+
+/** What goes with a dropped use case: it, what it includes, what extends these — unless included from outside. */
+export function dropBranch(spec: SpecNode[], useCase: string): Set<string> {
+  const useCases = spec.filter((node) => node.form === "use-case");
+  const branch = new Set([useCase]);
+  for (let grew = true; grew;) {
+    grew = false;
+    for (const node of useCases) {
+      if (branch.has(node.id)) continue;
+      const included = [...branch].some((id) => (spec.find((candidate) => candidate.id === id)?.edges?.includes ?? []).includes(node.id));
+      const extending = (node.edges?.extends ?? []).some((id) => branch.has(id));
+      if (included || extending) { branch.add(node.id); grew = true; }
+    }
+  }
+  for (let shrank = true; shrank;) {
+    shrank = false;
+    for (const id of [...branch]) {
+      if (id === useCase) continue;
+      if (useCases.some((node) => !branch.has(node.id) && (node.edges?.includes ?? []).includes(id))) { branch.delete(id); shrank = true; }
+    }
+  }
+  return branch;
+}
+
+export function dropMarks(spec: SpecNode[], hierarchy: Hierarchy, useCase: string | null): Map<string, "out" | "stays"> {
+  const marks = new Map<string, "out" | "stays">();
+  if (!useCase) return marks;
+  const branch = dropBranch(spec, useCase);
+  for (const [id, by] of hierarchy.refiners) {
+    if (!by.some((candidate) => branch.has(candidate))) continue;
+    const node = spec.find((candidate) => candidate.id === id);
+    marks.set(id, !node?.overall && by.every((candidate) => branch.has(candidate)) ? "out" : "stays");
+  }
+  return marks;
+}
+

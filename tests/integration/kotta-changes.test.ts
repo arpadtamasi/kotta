@@ -70,7 +70,7 @@ describe("narrative: none, the default", () => {
     const root = planningWorkspace("none-keyword", null);
     answerPause(root);
     write(root, `.kotta/changes/add-pause/model/business-rules/pause-freezes-${PAUSE.slice(-8)}.md`, node(
-      { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: [".kotta/changes/add-pause/proposal.md · Why"] } },
+      { id: PAUSE, form: "business-rule", overall: true, title: "Pause freezes the timer", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: [".kotta/changes/add-pause/proposal.md · Why"] } },
       { Rule: "Szünet alatt az óra nem jár.", Rationale: "A pause is not play.", Scope: "Timed games.", "Open decisions": "None." }));
     expect(json(root, ["validate"]).body.ok).toBe(true);
     expect(json(root, ["plan", "add-pause"]).status).toBe(0);
@@ -95,7 +95,7 @@ describe("kotta migrate takes the changes out of OpenSpec's folder", () => {
     // An open change, with provenance naming its old folder.
     write(root, "openspec/changes/add-pause/proposal.md", "# Add pause\n\n## Why\n\nPlayers step away.\n");
     write(root, `openspec/changes/add-pause/model/business-rules/pause-freezes-${PAUSE.slice(-8)}.md`, node(
-      { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", provenance: { level: "stated", decided_by: "human", sources: ["openspec/changes/add-pause/proposal.md · Why"] } },
+      { id: PAUSE, form: "business-rule", overall: true, title: "Pause freezes the timer", provenance: { level: "stated", decided_by: "human", sources: ["openspec/changes/add-pause/proposal.md · Why"] } },
       { Rule: "The clock SHALL NOT advance while paused.", Rationale: "A pause is not play.", Scope: "Timed games." }));
     // An OpenSpec proposal with no model yet, a landed Kotta change, and OpenSpec's own history.
     write(root, "openspec/changes/per-turn-model/proposal.md", "# Per-turn model\n");

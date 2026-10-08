@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { TreeView } from "./Tree";
 import { agentDecided, type ChangeMark, type SpecNode } from "./model";
 import { EntityMapView, ProvenanceBadges, ProvenancePanel, ProvenanceSummary, StateMachineView, StoryMapView, UseCaseView, VIEWS, type ViewKey } from "./views";
 
@@ -546,6 +547,7 @@ export function App() {
         {board && view === "stories" && <StoryMapView board={board} agentOnly={agentOnly} onOpen={setDetailId} />}
         {board && view === "entities" && <EntityMapView board={board} agentOnly={agentOnly} onOpen={setDetailId} />}
         {board && view === "states" && <StateMachineView board={board} agentOnly={agentOnly} onOpen={setDetailId} />}
+        {board && view === "tree" && <TreeView board={board} onOpen={setDetailId} />}
       </main>
     </div>
     {detailId && board && <EntityDrawer id={detailId} board={board} onClose={() => setDetailId(null)} onOpen={setDetailId} />}

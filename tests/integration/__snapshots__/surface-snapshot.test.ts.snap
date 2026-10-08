@@ -164,12 +164,15 @@ Usage: kotta spec [options] [command]
 Draft specification nodes from the registered forms
 
 Options:
-  -h, --help            display help for command
+  -h, --help                   display help for command
 
 Commands:
-  new [options] <form>  Mint and scaffold a specification node from its
-                        registered form
-  help [command]        display help for command
+  new [options] <form>         Mint and scaffold a specification node from its
+                               registered form
+  impact [options] <use-case>  Show what falls out of the specification if a use
+                               case is dropped, and what stays because another
+                               use case relies on it
+  help [command]               display help for command
 
 ### kotta spec new
 Usage: kotta spec new [options] <form>
@@ -186,6 +189,19 @@ Options:
                    specification
   --json
   -h, --help       display help for command
+
+### kotta spec impact
+Usage: kotta spec impact [options] <use-case>
+
+Show what falls out of the specification if a use case is dropped, and what
+stays because another use case relies on it
+
+Arguments:
+  use-case    The use case's id, the end of its id, or its exact title
+
+Options:
+  --json
+  -h, --help  display help for command
 
 ### kotta change
 Usage: kotta change [options] [command]

@@ -75,7 +75,7 @@ export function planningWorkspace(label: string, narrative: string | null = "gen
     { id: GOAL, form: "goal", title: "Players finish the games they start", capability: "game/session", measured_by: [PROMPT] },
     { Outcome: "Fewer games end by accident.", Context: "Players quit by mistake.", "Baseline and target": "From 12% accidental quits to 2%." }));
   write(root, `${spec}/business-rules/quit-confirmation-${QUIT.slice(-8)}.md`, node(
-    { id: QUIT, form: "business-rule", title: "Quitting asks for confirmation", capability: "game/session" },
+    { id: QUIT, form: "business-rule", overall: true, title: "Quitting asks for confirmation", capability: "game/session" },
     { Rule: "The game SHALL ask “Quit? Y/N” before it ends a running game.", Rationale: "An accidental quit loses the game.", Scope: "Every running game." }));
   write(root, `${spec}/examples/quit-prompt-${PROMPT.slice(-8)}.md`, node(
     { id: PROMPT, form: "example", title: "The quit prompt appears", subjects: [QUIT] },
@@ -93,13 +93,13 @@ export function planningWorkspace(label: string, narrative: string | null = "gen
   const change = ".kotta/changes/add-pause";
   write(root, `${change}/proposal.md`, "# Add pause\n\n## Why\n\nA paused game should just quit.\n");
   write(root, `${change}/model/business-rules/quit-confirmation-${QUIT.slice(-8)}.md`, node(
-    { id: QUIT, form: "business-rule", title: "Quitting asks for confirmation", capability: "game/session", accepted: UNBUILT, provenance: stated(".kotta/changes/add-pause/proposal.md · Why") },
+    { id: QUIT, form: "business-rule", overall: true, title: "Quitting asks for confirmation", capability: "game/session", accepted: UNBUILT, provenance: stated(".kotta/changes/add-pause/proposal.md · Why") },
     { Rule: QUIT_RULE_AFTER, Rationale: "An accidental quit loses the game; a paused one is already stopped.", Scope: "Every running or paused game." }));
   write(root, `${change}/model/state-machines/game-lifecycle-${LIFECYCLE.slice(-8)}.md`, node(
     { id: LIFECYCLE, form: "state-machine", title: "Game lifecycle", entity: [GAME], accepted: UNBUILT, provenance: { level: "partly-inferred", decided_by: "agent-decided", sources: [".kotta/changes/add-pause/proposal.md · Why"], inferred: "that a finished game can be restarted" } },
     { "Governed lifecycle": "A game from start to end.", States: "running, paused, over", Transitions: "- running -> paused\n- paused -> over\n- over -> running" }));
   write(root, `${change}/model/business-rules/pause-freezes-${PAUSE.slice(-8)}.md`, node(
-    { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session", accepted: UNBUILT, provenance: stated(".kotta/changes/add-pause/proposal.md · Why") },
+    { id: PAUSE, form: "business-rule", overall: true, title: "Pause freezes the timer", capability: "game/session", accepted: UNBUILT, provenance: stated(".kotta/changes/add-pause/proposal.md · Why") },
     { Rule: "While a game is paused its clock SHALL NOT advance.", Rationale: "A pause is not play.", Scope: "Timed games.", "Open decisions": "- How long may a pause last?" }));
   write(root, `${change}/model/examples/timer-holds-${HOLD.slice(-8)}.md`, node(
     { id: HOLD, form: "example", title: "The timer holds while paused", subjects: [PAUSE], accepted: UNBUILT, provenance: stated(".kotta/changes/add-pause/proposal.md · Why") },
@@ -125,6 +125,6 @@ export function admitUnbuilt(root: string, change = ".kotta/changes/add-pause"):
 /** Answer the open question the fixture leaves, the way an agent records the human's answer. */
 export function answerPause(root: string): void {
   write(root, `.kotta/changes/add-pause/model/business-rules/pause-freezes-${PAUSE.slice(-8)}.md`, node(
-    { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session", accepted: UNBUILT, provenance: stated(".kotta/changes/add-pause/proposal.md · Why") },
+    { id: PAUSE, form: "business-rule", overall: true, title: "Pause freezes the timer", capability: "game/session", accepted: UNBUILT, provenance: stated(".kotta/changes/add-pause/proposal.md · Why") },
     { Rule: "While a game is paused its clock SHALL NOT advance.", Rationale: "A pause is not play.", Scope: "Timed games.", "Open decisions": "None." }));
 }

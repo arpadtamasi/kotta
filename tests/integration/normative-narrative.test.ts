@@ -19,7 +19,7 @@ const CHANGE = ".kotta/changes/add-pause";
 const PAUSE = id("BR", "b2");
 const IFACE = id("IF", "f1");
 const pauseRule = (rule: string) => node(
-  { id: PAUSE, form: "business-rule", title: "Pause freezes the timer", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: [".kotta/changes/add-pause/proposal.md · Why"] } },
+  { id: PAUSE, form: "business-rule", overall: true, title: "Pause freezes the timer", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: [".kotta/changes/add-pause/proposal.md · Why"] } },
   { Rule: rule, Rationale: "A pause is not play.", Scope: "Timed games.", "Open decisions": "None." });
 
 describe("the normative keyword", () => {
@@ -27,7 +27,7 @@ describe("the normative keyword", () => {
     const root = planningWorkspace("normative");
     answerPause(root);
     write(root, `.kotta/spec/business-rules/quit-confirmation-${QUIT.slice(-8)}.md`, node(
-      { id: QUIT, form: "business-rule", title: "Quitting asks for confirmation", capability: "game/session" },
+      { id: QUIT, form: "business-rule", overall: true, title: "Quitting asks for confirmation", capability: "game/session" },
       { Rule: "A játék megerősítést kér, mielőtt kilép.", Rationale: "An accidental quit loses the game.", Scope: "Every running game." }));
     write(root, `${CHANGE}/model/business-rules/pause-freezes-${PAUSE.slice(-8)}.md`, pauseRule("Szünet alatt az óra nem jár."));
 
@@ -51,7 +51,7 @@ describe("the normative keyword", () => {
     const root = planningWorkspace("normative-interface");
     answerPause(root);
     const iface = (postconditions: string) => node(
-      { id: IFACE, form: "interface", title: "Pause command", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: [".kotta/changes/add-pause/proposal.md · Why"] } },
+      { id: IFACE, form: "interface", overall: true, title: "Pause command", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: [".kotta/changes/add-pause/proposal.md · Why"] } },
       { Purpose: "Pauses a running game.", Preconditions: "The game is running.", Postconditions: postconditions, Invariants: "The score is unchanged.", Failures: "A game already paused is refused." });
     write(root, `${CHANGE}/model/interfaces/pause-command-${IFACE.slice(-8)}.md`, iface("The game is paused."));
     const refused = json(root, ["validate"]);
@@ -89,7 +89,7 @@ describe("the generated narrative", () => {
   test("gives an interface its own contract as the scenario, and says what OpenSpec will still refuse", () => {
     const root = approved("contract", (base) => {
       write(base, `${CHANGE}/model/interfaces/pause-command-${IFACE.slice(-8)}.md`, node(
-        { id: IFACE, form: "interface", title: "Pause command", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: [".kotta/changes/add-pause/proposal.md · Why"] } },
+        { id: IFACE, form: "interface", overall: true, title: "Pause command", capability: "game/session", provenance: { level: "stated", decided_by: "human", sources: [".kotta/changes/add-pause/proposal.md · Why"] } },
         { Purpose: "Pauses a running game.", Preconditions: "The game is running.", Postconditions: "The game SHALL be paused.", Invariants: "The score is unchanged.", Failures: "A game already paused is refused." }));
       write(base, `${CHANGE}/model/entities/game-${GAME.slice(-8)}.md`, node(
         { id: GAME, form: "entity", title: "Game", used_by: [QUIT], interfaces: [IFACE], provenance: { level: "stated", decided_by: "human", sources: [".kotta/changes/add-pause/proposal.md · Why"] } },
@@ -122,13 +122,13 @@ describe("the generated narrative", () => {
         { Outcome: "Fewer games end by accident: a player who starts a game sees it through to its end.", Context: "Players quit by mistake.", "Baseline and target": "From 12% accidental quits to 2%." }));
       write(base, at("actors", "player", ACTOR), node({ id: ACTOR, form: "actor", title: "Player", provenance: stated }, { Role: "Plays a game.", Goals: "Finish it.", Responsibilities: "Pauses and resumes." }));
       write(base, at("interfaces", "pause-command", IFACE), node(
-        { id: IFACE, form: "interface", title: "Pause command", capability: "game/session", provenance: stated },
+        { id: IFACE, form: "interface", overall: true, title: "Pause command", capability: "game/session", provenance: stated },
         { Purpose: "Pauses a running game.", Preconditions: "The game is running.", Postconditions: "The game SHALL be paused.", Invariants: "The score is unchanged.", Failures: "A game already paused is refused." }));
       write(base, at("entities", "game", GAME), node(
         { id: GAME, form: "entity", title: "Game", used_by: [QUIT], interfaces: [IFACE], provenance: stated },
         { Meaning: "One play-through.", Identity: "A session id.", Attributes: "Score, clock.", Invariants: "The clock never runs backwards." }));
       write(base, at("quality-attributes", "pause-latency", QA), node(
-        { id: QA, form: "quality-attribute", title: "Pause is immediate", capability: "game/session", provenance: stated },
+        { id: QA, form: "quality-attribute", overall: true, title: "Pause is immediate", capability: "game/session", provenance: stated },
         { Source: "A player.", Stimulus: "Presses P.", Environment: "A running game.", Artifact: "The game loop.", Response: "The clock SHALL stop within one frame.", Measure: "16 ms." }));
       for (const [key, title, intent] of [[PLAY, "Play a game", "The player plays a game to its end."], [RESUME, "Resume a paused game", "The player picks a paused game up again."]] as const) {
         write(base, at("use-cases", title.toLowerCase().replace(/\W+/g, "-"), key), node(

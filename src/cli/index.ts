@@ -9,6 +9,7 @@ import { validateWorkspace } from "../commands/validate.js";
 import { resolveWorkspaceLocation, uiCommand } from "../commands/ui.js";
 import { formatMigration, migrateWorkspace } from "../commands/migrate.js";
 import { formatSpecNew, newSpecNode, type SpecNewResult } from "../commands/spec.js";
+import { formatImpact, specImpact, type ImpactResult } from "../commands/impact.js";
 import { WorkspaceShapeError, assertCurrentWorkspaceShape, findRepositoryRoot } from "../filesystem/workspace.js";
 import { mcpCommand } from "../commands/mcp.js";
 import { integrateCodex } from "../commands/integrate.js";
@@ -284,6 +285,12 @@ spec.command("new")
   .option("--json")
   .action((form: string, options: { title: string; into?: string; json?: boolean }) => print(newSpecNode({ form, title: options.title, into: options.into }), Boolean(options.json)));
 renderers.set("spec new", (result: unknown) => formatSpecNew(result as SpecNewResult));
+spec.command("impact")
+  .description("Show what falls out of the specification if a use case is dropped, and what stays because another use case relies on it")
+  .argument("<use-case>", "The use case's id, the end of its id, or its exact title")
+  .option("--json")
+  .action((useCase: string, options: { json?: boolean }) => print(specImpact(useCase), Boolean(options.json)));
+renderers.set("spec impact", (result: unknown) => formatImpact(result as ImpactResult));
 
 // Where every proposal starts: a change of Kotta's own, whether or not the project uses OpenSpec.
 const change = program.command("change").description("Open and list changes: a proposal and its model delta, under .kotta/changes/");

@@ -18,7 +18,11 @@ A form is one YAML file. It declares:
   HTML comment counts as empty);
 - `required_edges`: each names the frontmatter `fields` that carry it, whether it is `outgoing` (this
   node names others) or `incoming` (others must name this one), the forms on each end, a `minimum`,
-  and the `question` the validator prints when it is missing;
+  and the `question` the validator prints when it is missing. An edge may also be `acyclic` (no node
+  reaches itself through it), `waived_by` a frontmatter flag (a node with that flag set to `true`
+  needs no such edge), and `on_accepted: warning` (missing on an accepted node it is a warning, in a
+  change's model an error);
+- `field_values`: the values a frontmatter field may take, when the node carries it;
 - `normative_sections`: the sections one of which must say SHALL or MUST. Missing on an accepted
   node, that is a warning; in a change's model, an error;
 - `recognition_signals`: when a conversation calls for this form. The skills read them.
@@ -26,11 +30,30 @@ A form is one YAML file. It declares:
 `kotta spec new <form> --title "…"` mints a node with its id, a section per required heading, a
 field per outgoing edge with the form's question beside it, and an empty `provenance` block. Add a
 form by adding a YAML file: nothing is compiled in. `kotta sync` adds newly shipped forms and leaves
-yours alone.
+yours alone. The registry is part of the agreement: a form changes through a change, which carries
+the new version under `model/forms/<form>.yaml`. Plan measures the change's nodes against it, the
+approval fingerprints it with them, and archive lands it in the registry. `kotta validate` warns
+when a registry form differs from the last commit and no change carries that version.
 
 Any node may also carry `capability: <path>` (which narrative spec it is generated into),
 `provenance` (see [Concepts](concepts.md#provenance)) and `accepted` (an admitted evidence gap, see
-[Modules and evidence](modules-and-evidence.md)). An interface may carry `module:` and `reference:`.
+[Modules and evidence](modules-and-evidence.md)). An interface may carry `module:` and `reference:`; a use case may carry `reference:` too, to say
+that another repository provides it (see [Modules and evidence](modules-and-evidence.md)).
+
+### The use-case hierarchy
+
+The forms Kotta ships draw a hierarchy after UML. A use case may `includes` other use cases (they are
+part of its behaviour) and `extends` one (it adds optional behaviour to it); neither may form a cycle.
+Its `level` is Cockburn's goal level: `summary`, `user-goal` or `subfunction`. It names the rules,
+interfaces and quality attributes it relies on under `refines` (SysML «refine»), and the interfaces
+it uses under `interfaces`; the requirement itself names no use case.
+
+Every rule, interface and quality attribute needs a place: a use case that refines it, or
+`overall: true` when it holds for the whole product. A requirement with neither is a warning on the
+accepted model (`SPEC_NODE_NO_PLACE`) and an error in a change. `kotta spec impact <use case>` and
+the board's Hierarchy view read the tree: dropping a use case takes with it the use cases it includes
+(unless something outside also includes them) and those that extend it, and a requirement falls out
+when every use case refining it goes; an overall requirement never falls out.
 
 ## The eleven forms
 
@@ -85,6 +108,11 @@ A goal-directed interaction between an actor and the system, including alternati
 | actor | outgoing | `actor` | use-case → actor | 1 | Which actor owns this interaction? |
 | goal | outgoing | `goal` | use-case → goal | 1 | Which goal does this use case serve? |
 | evidence | incoming | `subjects` | example → use-case | 1 | What example proves this use case? |
+| includes | outgoing, acyclic | `includes` | use-case → use-case | 0 | Which use cases does this one include as part of its own behaviour? |
+| extends | outgoing, acyclic | `extends` | use-case → use-case | 0 | Which use case does this one extend with optional behaviour? |
+| refines | outgoing | `refines` | use-case → business-rule, interface, quality-attribute | 0 | Which rules, interfaces and quality attributes does this use case rely on? |
+
+`level`, when given, is `summary`, `user-goal` or `subfunction`.
 
 Recognition signals:
 
@@ -114,6 +142,7 @@ A durable constraint or derivation that the business expects behavior to obey.
 | Edge | Direction | Field | From → to | Min | The form's question |
 | --- | --- | --- | --- | ---: | --- |
 | evidence | incoming | `subjects` | example → business-rule | 1 | What would break if this rule were violated? |
+| placement | incoming, waived by `overall` | `refines` | use-case → business-rule | 1 | Which use case relies on this rule, or does it hold for the whole product (overall)? |
 
 Recognition signals:
 
@@ -170,6 +199,7 @@ A boundary whose obligations are stated as preconditions, postconditions, and in
 | Edge | Direction | Field | From → to | Min | The form's question |
 | --- | --- | --- | --- | ---: | --- |
 | reference | incoming | `interfaces` | use-case, entity → interface | 1 | Who uses this interface? |
+| placement | incoming, waived by `overall` | `refines`, `interfaces` | use-case → interface | 1 | Which use case relies on this interface, or does it hold for the whole product (overall)? |
 
 Recognition signals:
 
@@ -184,6 +214,7 @@ A measurable non-functional response under a stated stimulus and environment.
 | Edge | Direction | Field | From → to | Min | The form's question |
 | --- | --- | --- | --- | ---: | --- |
 | verification | incoming | `subjects` | example → quality-attribute | 1 | Who measures this quality, and where? |
+| placement | incoming, waived by `overall` | `refines` | use-case → quality-attribute | 1 | Which use case relies on this quality attribute, or does it hold for the whole product (overall)? |
 
 Recognition signals:
 

@@ -128,7 +128,8 @@ Modules come from the manifests, a node's module from where its evidence lives. 
 crosses a module boundary belongs in an interface node; a promise from another repository is
 referenced by version, not copied. Measured: on assistant-core, stating the boundary left 42% of the
 spec (35 nodes) out of `chat-ui` work and cut straddling promises from 8 to 1; the `corpus.search`
-interface, copied into two repositories, already said different things in each.
+interface, copied into two repositories, already said different things in each. A use case can point
+to another repository's use case the same way, so one product can say that a piece of it is another's.
 
 ## Where the measurements come from
 

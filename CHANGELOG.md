@@ -4,6 +4,33 @@ All notable changes to Kotta (called A-Team before 0.3.0) will be documented in 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **The use-case hierarchy.** The approved change *hasznalati-eset-hierarchia* adds UML's
+  decomposition to the shipped forms: a use case `includes` and `extends` other use cases (never in a
+  cycle), carries Cockburn's `level`, and names under `refines` the rules, interfaces and quality
+  attributes it relies on. A requirement that holds for the whole product carries `overall: true`.
+- **Every requirement has a place.** A rule, interface or quality attribute that no use case refines
+  and that is not overall is a warning on the accepted model (`SPEC_NODE_NO_PLACE`) and an error in
+  a change, naming both ways to place it.
+- **`kotta spec impact <use case>`** shows what falls out of the specification if a use case is
+  dropped, and what stays because another use case relies on it or it is overall.
+- **The board's Hierarchy view**: overall requirements, each actor's use cases with included and
+  extending use cases nested and the requirements they refine, the unplaced apart, and an "If
+  dropped" mark per use case.
+- **A use case can reference another repository's use case** with the `reference:` block an
+  interface carries; `kotta modules check` resolves it and reports it stale or missing.
+- **Forms change through a change.** A change may carry `model/forms/<form>.yaml`: plan measures its
+  nodes against it, the approval fingerprints it, archive lands it in the registry. `kotta validate`
+  warns (`SPEC_FORM_EDITED_OUTSIDE_CHANGE`) about a registry form edited outside any change.
+- Forms may declare `field_values`, and edges `acyclic`, `waived_by` and `on_accepted`.
+
+### Changed
+
+- `kotta spec new` no longer scaffolds optional edges.
+
 ## [1.0.0-alpha.7] — 2026-10-08
 
 ### Fixed

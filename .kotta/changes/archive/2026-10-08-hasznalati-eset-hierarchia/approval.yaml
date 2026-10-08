@@ -1,0 +1,44 @@
+change: hasznalati-eset-hierarchia
+approved_by: rp
+approved_at: 2026-10-08T19:03:01.018Z
+approval_basis: sha256:4ae711360a92d661ef6620e600d0da7711bdcd77d6acdbb7f72aaa2e876e1126
+replaced:
+  BR-01m0fp2hdkfn519h1w84jsrqbe: sha256:9e01a57f5d4788e17625d3ba9c48ce6044834ed49261f324741388ebe5c3763a
+approved:
+  added:
+    - id: BR-01m4ee245pe1wb8x8n7wxyvxwh
+      title: A form change goes through the gate
+    - id: BR-01m4ee22ypyq06n7vkk4ycnz9v
+      title: A use case can be decomposed
+    - id: BR-01m4ee24bfc9zgkjrmwkjgwwrj
+      title: A use case can point to a use case in another repository
+    - id: BR-01m4ee234nxva765r3jq5vmw01
+      title: A use case refines the requirements it relies on
+    - id: BR-01m4ee23h66jzr4wzd0a3grf02
+      title: Dropping a use case shows what falls out with it
+    - id: BR-01m4ee23pwf0sg22vta05bc2hz
+      title: Every requirement has a place in the hierarchy
+    - id: BR-01m4ee23baq19gd87ez4m9zxdw
+      title: Overall requirements belong to the product
+    - id: BR-01m4ee23zg0wx6hyvpkyj9qcr1
+      title: The board shows the specification as a tree
+    - id: EX-01m4ee25mtyaj0zeh1r5szmz29
+      title: A new edge lands with the change that uses it
+    - id: EX-01m4ee258z2d2chy2atcq4ken0
+      title: A rule nothing places is named
+    - id: EX-01m4ee24q2jttknm7v1bxrtfn0
+      title: A rule refined by two use cases
+    - id: EX-01m4ee25302x5t30r2h67hcxk8
+      title: Dropping the teacher's test chat
+    - id: EX-01m4ee25tytddkyyq4rxqrazg6
+      title: GoSchool points to oktat-ai's question use case
+    - id: EX-01m4ee24wn2str3e4x5bw102cn
+      title: The browser only reads is an overall requirement
+    - id: EX-01m4ee25ey0g2x0bmj6v6rzrpq
+      title: The tree with the drop highlight
+    - id: EX-01m4ee24hbczjt2k76pn2cq2wm
+      title: Uploading a material is three use cases
+  changed:
+    - id: BR-01m0fp2hdkfn519h1w84jsrqbe
+      title: The spec is the agreement
+  removed: []

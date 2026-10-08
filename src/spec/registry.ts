@@ -22,6 +22,12 @@ export interface SpecFormEdge {
   target_forms: string[];
   minimum: number;
   question: string;
+  /** A frontmatter field whose true value waives this edge — an overall requirement needs no use case. */
+  waived_by?: string;
+  /** `warning`: a missing edge is a warning on an accepted node and an error on a change's node. */
+  on_accepted?: "error" | "warning";
+  /** The edge may not close a cycle through nodes of its own form. */
+  acyclic?: boolean;
 }
 
 export interface SpecForm {
@@ -33,8 +39,17 @@ export interface SpecForm {
   edges: SpecFormEdge[];
   /** The sections that state an obligation, one of which must carry SHALL or MUST. */
   normative: string[];
+  /** Fields whose value, when present, must be one of these. */
+  values: Record<string, unknown[]>;
   path: string;
 }
+
+/**
+ * The codes that are a warning on an accepted node and an error on a change's node: what is new
+ * work must land in its place, while a model written before the rule stays usable
+ * (BR-01m4ee23pwf0sg22vta05bc2hz).
+ */
+export const ACCEPTED_WARNING_CODES = new Set(["SPEC_NODE_NO_PLACE"]);
 
 /**
  * The normative sections of the standard forms, for a registry written before `normative_sections`
@@ -61,14 +76,24 @@ function strings(value: unknown): string[] {
   return Array.isArray(value) ? value.map(String) : [];
 }
 
-export function readFormRegistry(root: string): { forms: SpecForm[]; issues: ValidationIssue[] } {
+/**
+ * The form registry, optionally as a change would leave it: a form file under `overlay` (a change's
+ * `model/forms/`) replaces the registry's file of the same name, or is added
+ * (BR-01m4ee245pe1wb8x8n7wxyvxwh).
+ */
+export function readFormRegistry(root: string, overlay?: string): { forms: SpecForm[]; issues: ValidationIssue[] } {
   const directory = specPath(root, "forms");
   const issues: ValidationIssue[] = [];
   const forms: SpecForm[] = [];
-  if (!existsSync(directory)) return { forms, issues };
+  const files = new Map<string, string>();
+  for (const base of [directory, overlay]) {
+    if (!base || !existsSync(base)) continue;
+    for (const filename of readdirSync(base).filter((name) => name.endsWith(".yaml"))) files.set(filename, join(base, filename));
+  }
+  if (!files.size) return { forms, issues };
 
-  for (const filename of readdirSync(directory).filter((name) => name.endsWith(".yaml")).sort()) {
-    const path = join(directory, filename);
+  for (const filename of [...files.keys()].sort()) {
+    const path = files.get(filename)!;
     let data: Record<string, unknown> | null;
     try { data = parse(readFileSync(path, "utf8")) as Record<string, unknown> | null; }
     catch (error) { issues.push({ code: "SPEC_FORM_UNREADABLE", message: `${basename(path)} is not valid YAML: ${String(error)}`, path }); continue; }
@@ -102,6 +127,9 @@ export function readFormRegistry(root: string): { forms: SpecForm[]; issues: Val
         target_forms: targets,
         minimum: Number(edge.minimum ?? 0),
         question: String(edge.question ?? "").trim(),
+        ...(edge.waived_by ? { waived_by: String(edge.waived_by) } : {}),
+        ...(edge.on_accepted === "warning" ? { on_accepted: "warning" as const } : {}),
+        ...(edge.acyclic === true ? { acyclic: true } : {}),
       });
     }
 
@@ -113,6 +141,9 @@ export function readFormRegistry(root: string): { forms: SpecForm[]; issues: Val
       headings: strings(required.body_headings),
       edges,
       normative: Array.isArray(data.normative_sections) ? strings(data.normative_sections) : DEFAULT_NORMATIVE_SECTIONS[id] ?? [],
+      values: data.field_values && typeof data.field_values === "object" && !Array.isArray(data.field_values)
+        ? Object.fromEntries(Object.entries(data.field_values as Record<string, unknown>).filter(([, allowed]) => Array.isArray(allowed)).map(([field, allowed]) => [field, allowed as unknown[]]))
+        : {},
       path,
     });
   }
@@ -269,6 +300,13 @@ export function validateNodeSet(forms: SpecForm[], nodes: SpecNode[], options: N
       if (empty) issues.push({ code: "SPEC_NODE_MISSING_FIELD", message: `${basename(node.path)} (${form.id}) is missing required frontmatter field '${field}'.`, path: node.path });
     }
     issues.push(...commonFrontmatterIssues(node, requireProvenance(node)));
+    for (const [field, allowed] of Object.entries(form.values)) {
+      const value = node.data[field];
+      if (value === undefined || value === null) continue;
+      if (!allowed.some((candidate) => candidate === value)) {
+        issues.push({ code: "SPEC_NODE_INVALID_VALUE", message: `${basename(node.path)} (${form.id}) has ${field}: ${JSON.stringify(value)}; it is one of ${allowed.map((candidate) => JSON.stringify(candidate)).join(", ")}.`, path: node.path });
+      }
+    }
 
     const body = sections(parseMarkdown(readFileSync(node.path, "utf8")).content);
     for (const heading of form.headings) {
@@ -280,11 +318,20 @@ export function validateNodeSet(forms: SpecForm[], nodes: SpecNode[], options: N
     if (!measureEdges) continue;
     for (const edge of form.edges) {
       if (edge.direction === "incoming") {
+        if (edge.waived_by && node.data[edge.waived_by] === true) continue;
         const incoming = nodes.filter((candidate) => edge.source_forms.includes(candidate.form)).flatMap((candidate) =>
           edge.fields.flatMap((field) => referencesIn(candidate.data[field]).filter((reference) => reference === node.id).map(() => ({ candidate, field }))));
-        if (incoming.length < edge.minimum) {
+        if (incoming.length < edge.minimum && edge.waived_by) {
+          // A placement edge (BR-01m4ee23pwf0sg22vta05bc2hz): the two ways to give a node its place.
+          const title = typeof node.data.title === "string" ? node.data.title : basename(node.path);
           issues.push({
-            code: "SPEC_NODE_MISSING_EDGE",
+            code: edge.on_accepted === "warning" ? "SPEC_NODE_NO_PLACE" : "SPEC_NODE_MISSING_EDGE",
+            message: `${title} (${basename(node.path)}, ${form.id}) has no place in the hierarchy: no ${edge.source_forms.join(" or ")} names it under ${edge.fields.join(" or ")}, and it is not marked ${edge.waived_by}. ${edge.question ? `${edge.question} ` : ""}Name it under '${edge.fields[0]}' of the ${edge.source_forms[0]} that relies on it, or set '${edge.waived_by}: true' when it holds for the whole product.`,
+            path: node.path,
+          });
+        } else if (incoming.length < edge.minimum) {
+          issues.push({
+            code: edge.on_accepted === "warning" ? "SPEC_NODE_NO_PLACE" : "SPEC_NODE_MISSING_EDGE",
             message: `${basename(node.path)} (${form.id}) answers incoming edge '${edge.name}' ${incoming.length} time(s); its form requires at least ${edge.minimum}. ${edge.question ? `${edge.question} ` : ""}Add a reference from ${edge.source_forms.join(" or ")} via ${edge.fields.join(", ")}.`,
             path: node.path,
           });
@@ -302,6 +349,44 @@ export function validateNodeSet(forms: SpecForm[], nodes: SpecNode[], options: N
         else if (edge.target_forms.length && !edge.target_forms.includes(target.form)) {
           issues.push({ code: "SPEC_NODE_WRONG_TARGET", message: `${basename(node.path)} (${form.id}) edge '${edge.name}' field '${field}' references '${reference}', which is a ${target.form}; point '${field}' at ${edge.target_forms.join(" or ")}.`, path: node.path });
         }
+      }
+    }
+  }
+  if (measureEdges) issues.push(...cycleIssues(forms, nodes, subject));
+  return issues;
+}
+
+/**
+ * A use case may not include or extend itself, directly or through others
+ * (BR-01m4ee22ypyq06n7vkk4ycnz9v): every edge a form marks `acyclic` is followed, and each cycle is
+ * named once, on a measured node in it.
+ */
+function cycleIssues(forms: SpecForm[], nodes: SpecNode[], subject: (node: SpecNode) => boolean): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  for (const form of forms) {
+    for (const edge of form.edges.filter((candidate) => candidate.acyclic && candidate.direction === "outgoing")) {
+      const next = (node: SpecNode) => edge.fields.flatMap((field) => referencesIn(node.data[field])).filter((id) => byId.get(id)?.form === form.id);
+      const reported = new Set<string>();
+      for (const start of nodes.filter((node) => node.form === form.id && subject(node))) {
+        const path: string[] = [];
+        const onPath = new Set<string>();
+        const done = new Set<string>();
+        const visit = (id: string): string[] | null => {
+          if (onPath.has(id)) return path.slice(path.indexOf(id)).concat(id);
+          if (done.has(id)) return null;
+          onPath.add(id); path.push(id);
+          for (const target of next(byId.get(id)!)) { const cycle = visit(target); if (cycle) return cycle; }
+          onPath.delete(id); path.pop(); done.add(id);
+          return null;
+        };
+        const cycle = visit(start.id);
+        if (!cycle || !cycle.includes(start.id)) continue;
+        const key = [...new Set(cycle)].sort().join(",");
+        if (reported.has(key)) continue;
+        reported.add(key);
+        const titles = cycle.map((id) => String(byId.get(id)?.data.title ?? id));
+        issues.push({ code: "SPEC_NODE_CYCLE", message: `${basename(start.path)} (${form.id}) closes a cycle through '${edge.name}': ${titles.join(" → ")}. A use case may not ${edge.name === "extends" ? "extend" : "include"} itself, directly or through others.`, path: start.path });
       }
     }
   }

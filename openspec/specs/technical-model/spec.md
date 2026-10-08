@@ -8,6 +8,114 @@
 
 ## Requirements
 
+### Requirement: A use case can be decomposed
+<!-- kotta: BR-01m4ee22ypyq06n7vkk4ycnz9v -->
+A use case SHALL be able to name the use cases it includes (`includes`) and the use cases it extends (`extends`), as UML defines the two relationships, and MAY state its goal level (`level`: `summary`, `user-goal` or `subfunction`, after Cockburn). A use case SHALL NOT include or extend itself, directly or through others; `kotta validate` names such a cycle.
+
+**Rationale**
+
+A single level of use cases does not fit a real product: uploading a material is one goal for the teacher, and three separate pieces of behaviour underneath. The operator asked for further hierarchy, built on what UML and the use-case literature already name, so a reader who knows them understands the model without learning Kotta's own words.
+
+**Scope**
+
+The use-case form Kotta ships, every workspace that uses it, and the board's use-case drawing.
+
+#### Scenario: Uploading a material is three use cases
+<!-- kotta: EX-01m4ee24hbczjt2k76pn2cq2wm -->
+- **GIVEN** The use case *A teacher uploads a material and it becomes searchable*, at level `user-goal`.
+- **WHEN** It names under `includes` *The system processes the material* and *The material becomes searchable*, both at level `subfunction`, and *Choosing the image mode* names it under `extends`.
+- **THEN** `kotta validate` accepts the three edges; the board draws the two included use cases and the extension under it. Had *The material becomes searchable* also included the upload use case, `kotta validate` would name the cycle.
+
+### Requirement: A use case can point to a use case in another repository
+<!-- kotta: BR-01m4ee24bfc9zgkjrmwkjgwwrj -->
+A use case SHALL be able to carry the same `reference:` block an interface carries today — the module, the version it relies on, and the foreign use case's id — to state that another repository provides it. `kotta modules check` SHALL resolve it and report a stale or missing reference as it does for an interface.
+
+**Rationale**
+
+One product builds on another's pieces: GoSchool wants to say that its chat and its upload are oktat-ai's. Today only an interface can point across repositories; a use case can only name the other one in prose, unchecked.
+
+**Scope**
+
+The use-case form Kotta ships and `kotta modules check`.
+
+#### Scenario: GoSchool points to oktat-ai's question use case
+<!-- kotta: EX-01m4ee25tytddkyyq4rxqrazg6 -->
+- **GIVEN** In the GoSchool workspace, a use case *The learner asks the tutor* with a `reference:` block naming oktat-ai, a version, and the id of oktat-ai's *A student asks and gets a cited answer*.
+- **WHEN** `kotta modules check` runs in GoSchool.
+- **THEN** It resolves the reference to oktat-ai's use case; had that use case changed since the pinned version, it would report the reference as stale.
+
+### Requirement: A use case refines the requirements it relies on
+<!-- kotta: BR-01m4ee234nxva765r3jq5vmw01 -->
+A use case SHALL be able to name, under `refines`, the business rules, interfaces and quality attributes that state what it relies on, after the SysML «refine» relationship. A requirement MAY be refined by several use cases, and none of them is its home: it stands under every use case that refines it. The list SHALL stand on the use case; Kotta SHALL find the use cases that refine a requirement from the requirement's side without the requirement naming them.
+
+**Rationale**
+
+Today a rule reaches a use case only through the examples that prove both, so the question which rules a use case relies on can be answered only by walking every example. A direct edge answers it in one step, and keeping the list on the use case means a dozen files change, not a hundred.
+
+**Scope**
+
+The use-case form Kotta ships; the business-rule, interface and quality-attribute forms gain the matching incoming edge.
+
+#### Scenario: A rule refined by two use cases
+<!-- kotta: EX-01m4ee24q2jttknm7v1bxrtfn0 -->
+- **GIVEN** The rule *Citation to the place* and two use cases, *A student asks and gets a cited answer* and *The teacher tries the course chat*.
+- **WHEN** Both use cases name the rule under `refines`; the rule itself names neither.
+- **THEN** Asked from the rule's side, Kotta lists both use cases as refining it; the rule's file is unchanged.
+
+### Requirement: Dropping a use case shows what falls out with it
+<!-- kotta: BR-01m4ee23h66jzr4wzd0a3grf02 -->
+For a use case, Kotta SHALL tell which requirements fall out if it is dropped: every requirement whose refining use cases all lie in the dropped branch — the use case, the use cases it includes and the use cases that extend it, except one that a use case outside the branch also includes. A requirement refined by any use case outside the branch SHALL be reported as staying, and an overall requirement SHALL never fall out.
+
+**Rationale**
+
+When one product takes over pieces of another, the question is what it takes and what it leaves behind. The operator asked that this be easy to compute; with the refining edges it is one pass over the model.
+
+**Scope**
+
+The board's tree view and the CLI's report of the same answer.
+
+#### Scenario: Dropping the teacher's test chat
+<!-- kotta: EX-01m4ee25302x5t30r2h67hcxk8 -->
+- **GIVEN** The use case *The teacher tries the course chat* refines *Own test chat* and *Citation to the place*; *A student asks and gets a cited answer* also refines *Citation to the place*.
+- **WHEN** *The teacher tries the course chat* is selected as dropped.
+- **THEN** *Own test chat* is reported as falling out; *Citation to the place* is reported as staying, because the student's use case still refines it.
+
+### Requirement: Every requirement has a place in the hierarchy
+<!-- kotta: BR-01m4ee23pwf0sg22vta05bc2hz -->
+Every business rule, interface and quality attribute SHALL either be refined by at least one use case or be marked overall. `kotta validate` SHALL name each one that is neither: as a warning for an accepted node, and as an error for a node a change adds or changes, so earlier models stay usable while new work lands in its place.
+
+**Rationale**
+
+A requirement that no use case relies on and that is not overall either serves nobody the model knows of; naming it makes that visible. With the overall marker there is a place for what genuinely holds everywhere, so nothing has to be forced in.
+
+**Scope**
+
+Every workspace using the shipped forms.
+
+#### Scenario: A rule nothing places is named
+<!-- kotta: EX-01m4ee258z2d2chy2atcq4ken0 -->
+- **GIVEN** A rule *Slug format* that no use case refines and that is not marked overall.
+- **WHEN** `kotta validate` runs.
+- **THEN** It names *Slug format* as having no place in the hierarchy, with the two ways to give it one: a use case that refines it, or the overall marker.
+
+### Requirement: Overall requirements belong to the product
+<!-- kotta: BR-01m4ee23baq19gd87ez4m9zxdw -->
+A business rule, interface or quality attribute that holds for the whole product, not for one use case, SHALL be markable as an overall requirement with `overall: true` in its own frontmatter, after the supplementary specification of the use-case literature; no further node is needed. An overall requirement SHALL belong to the product as a whole: it needs no use case to refine it, and dropping use cases SHALL never drop it.
+
+**Rationale**
+
+Some requirements hold everywhere — the browser only reads, the error codes are uniform, one provider's data never reaches another. Forcing them under a use case misplaces them, and leaving them homeless hides that they are deliberate. The operator named them overall requirements.
+
+**Scope**
+
+The business-rule, interface and quality-attribute forms Kotta ships.
+
+#### Scenario: The browser only reads is an overall requirement
+<!-- kotta: EX-01m4ee24wn2str3e4x5bw102cn -->
+- **GIVEN** The rule *The browser only reads*, marked overall, refined by no use case.
+- **WHEN** The model is validated and every use case is dropped in turn.
+- **THEN** `kotta validate` does not name the rule as lacking a place, and no drop ever reports it as falling out.
+
 ### Requirement: The accepted model promises only what a shipped command does
 <!-- kotta: BR-01m3f47dgh74a0dm9bwv0pwgc3 -->
 An accepted node SHALL promise behaviour that a command, a surface or a published artefact of the current release has or is meant to have. When a release removes a behaviour, the nodes that promise only that behaviour MUST leave the accepted model through a change - listed in its `model/REMOVED.md` and landed on the one human gate - and never stay behind as admitted gaps or be deleted by hand. A node that still promises something the release keeps is reworded in the same change instead of being removed.
@@ -25,3 +133,21 @@ The accepted nodes under `.kotta/spec/`, and the changes that remove or reword t
 - **GIVEN** An accepted state machine, "Task lifecycle", whose every transition is a `kotta task` command that the current release no longer ships, and `kotta gap` naming it as a promise without evidence.
 - **WHEN** The project accounts for it.
 - **THEN** The node is listed in a change's `model/REMOVED.md`, together with every accepted node that names it and promises nothing the release keeps; `kotta plan` measures the removal, and the node leaves `.kotta/spec/` only when the human approves the change and it is archived. Admitting it as unimplemented, citing it in a comment, or deleting the file by hand is not how it leaves.
+
+### Requirement: The board shows the specification as a tree
+<!-- kotta: BR-01m4ee23zg0wx6hyvpkyj9qcr1 -->
+The board SHALL offer a view of the specification as a tree: the overall requirements at the top, then each actor with its use cases, a use case's included and extending use cases nested under it, and under each use case the requirements it refines, each with the number of its examples. Requirements that have no place SHALL be listed apart. A use case SHALL be selectable as dropped, and the board SHALL then mark what falls out and what stays. The capability SHALL filter the tree, never group it.
+
+**Rationale**
+
+A flat list by form is hard to read at a few hundred nodes: the rule and the use case it serves never stand side by side. The operator looked at the oktat-ai specification laid out this way and found it right.
+
+**Scope**
+
+`kotta ui`, beside the existing views.
+
+#### Scenario: The tree with the drop highlight
+<!-- kotta: EX-01m4ee25ey0g2x0bmj6v6rzrpq -->
+- **GIVEN** A workspace with three actors, thirteen use cases, two overall rules and one rule with no place.
+- **WHEN** The human opens the tree view on the board and marks *The teacher tries the course chat* as dropped.
+- **THEN** The overall rules stand at the top, each actor's use cases below with their requirements, the unplaced rule apart; the requirements that fall out are marked as such and the ones that stay are marked as staying.

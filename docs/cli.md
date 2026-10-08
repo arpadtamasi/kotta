@@ -79,6 +79,7 @@ See [Modules and evidence](modules-and-evidence.md).
 | `kotta change new [options] <name>` | Open a change: .kotta/changes/<name>/ with a proposal.md to write and an empty model/ for the planning phase |
 | `kotta change list [options]` | List the open changes, and any an earlier release left under openspec/changes/ |
 | `kotta spec new [options] <form>` | Mint and scaffold a specification node from its registered form |
+| `kotta spec impact [options] <use-case>` | Show what falls out of the specification if a use case is dropped, and what stays because another use case relies on it |
 | `kotta narrative [options] <change>` | Distil an agent session log into the change's conversation.md: intent, proposals with the human's answers, paths turned down, questions |
 | `kotta plan [options] <change>` | Measure a change's model delta against the accepted model and write its planning.md: structure, conflicts, silences, drift, provenance |
 | `kotta approve [options] <change>` | Record the human's yes to a planned change's model delta: the one gate, written as approval.yaml |
@@ -96,6 +97,8 @@ See [Modules and evidence](modules-and-evidence.md).
 - `spec new --into <change>`: Draft the node into a change's model delta
   (`.kotta/changes/<change>/model/`) instead of the accepted specification. The sections that
   must say SHALL or MUST carry a hint only where the project keeps an OpenSpec narrative.
+- `spec impact <use-case>`: The use case's id, the end of its id, or its exact title. Reads the
+  accepted specification only; the use cases it includes and those extending it go with it.
 - `narrative --from <path>` (required): A Claude Code or Codex session log (.jsonl), or a directory
   of them.
 - `narrative --since <time>`: Only messages at or after this ISO 8601 time.
