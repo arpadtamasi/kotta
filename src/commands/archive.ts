@@ -5,7 +5,7 @@ import { receiptErrors } from "../core/approval-receipt.js";
 import { readNarrativeSetting, type NarrativeMode } from "../core/config.js";
 import { displayId } from "../core/identity.js";
 import { findRepositoryRoot, specPath } from "../filesystem/workspace.js";
-import { APPROVAL_FILE, ARCHIVE_DIRECTORY, OPENSPEC_DIRECTORY, approvesDelta, changesPath } from "../spec/change.js";
+import { APPROVAL_FILE, ARCHIVE_DIRECTORY, OPENSPEC_DIRECTORY, approvesDelta, changesPath, nodeFingerprint } from "../spec/change.js";
 import { SCENARIO_FORM, generateCapabilitySpec, markdownFiles, narrativeDrift, narrativeShapeWarnings, type NarrativeDrift } from "../spec/narrative.js";
 import { referencesIn, type SpecNode, type ValidationIssue } from "../spec/registry.js";
 import { ADMISSION_KINDS, unaccountedPromises } from "./gap.js";
@@ -70,6 +70,24 @@ export function archiveChange(name: string, repositoryRoot?: string, now: Date =
     for (const problem of incomplete) errors.push({ ...problem, path: approvalPath });
     if (!incomplete.length && !approvesDelta(receipt.approval_basis, model.files, (file) => readFileSync(join(model.modelDirectory, file)))) {
       errors.push({ code: "APPROVAL_STALE", message: `${APPROVAL_FILE} approved the delta ${String(receipt.approval_basis)}, but model/ now hashes to ${analysis.deltaHash}: it changed after the yes. Plan it again and ask again.`, path: approvalPath });
+    }
+    // Archive never puts back an older accepted text (BR-01m4at3x2fffqepx85tmvf3hxw): every node the
+    // delta replaces must still be what it was at the yes (EX-01m4at3x8bvsh0cfn5z5wvp380); an approval
+    // recorded before the fingerprints existed cannot be checked, so it is asked for again.
+    const replacedNow = analysis.delta.modified;
+    const recorded = receipt.replaced as Record<string, unknown> | undefined;
+    if (!incomplete.length && replacedNow.length) {
+      if (!recorded || typeof recorded !== "object") {
+        errors.push({ code: "APPROVAL_WITHOUT_BASES", message: `${APPROVAL_FILE} does not record what the ${replacedNow.length} node${replacedNow.length === 1 ? "" : "s"} it replaces said at the yes, so archive cannot tell whether one changed since. Run 'kotta plan ${analysis.change}', put it to the human again, and record the yes with 'kotta approve'.`, path: approvalPath });
+      } else {
+        const acceptedNow = new Map(accepted.map((node) => [node.id, node]));
+        for (const node of replacedNow) {
+          const current = acceptedNow.get(node.id);
+          if (current && recorded[node.id] !== nodeFingerprint(current.path)) {
+            errors.push({ code: "ACCEPTED_CHANGED_SINCE_APPROVAL", message: `${node.title} (${displayId(node.id)}) changed in the accepted specification after this change was approved; archiving would put its older text back. Take the change's copy again from the accepted node, apply the change's own edit to it, plan it, and ask again.`, path: current.path });
+          }
+        }
+      }
     }
   }
 

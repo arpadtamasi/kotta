@@ -4,7 +4,7 @@ import { stringify } from "yaml";
 import { gateApprovalReceipt, type ApprovalReceipt } from "../core/approval-receipt.js";
 import { displayId } from "../core/identity.js";
 import { findRepositoryRoot } from "../filesystem/workspace.js";
-import { APPROVAL_FILE, PLANNING_FILE } from "../spec/change.js";
+import { APPROVAL_FILE, PLANNING_FILE, nodeFingerprint } from "../spec/change.js";
 import type { ValidationIssue } from "../spec/registry.js";
 import { analyzeChange, blockingIssues, readPlanning, type NodeRef } from "./plan.js";
 
@@ -62,9 +62,17 @@ export function approveChange(name: string, by: string, repositoryRoot?: string,
   const receipt = gateApprovalReceipt(by, analysis.deltaHash, now);
   const path = join(directory, APPROVAL_FILE);
   const titled = (nodes: NodeRef[]) => nodes.map((node) => ({ id: node.id, title: node.title }));
+  // The accepted text each replaced node had at the yes, so archive never puts back an older copy
+  // over a node another change landed on since (BR-01m4at3x2fffqepx85tmvf3hxw, EX-01m0f0wn8am4hb2vy03wmn4brs).
+  const acceptedById = new Map(analysis.accepted.map((node) => [node.id, node]));
+  const replaced = Object.fromEntries(approved.modified
+    .map((node) => acceptedById.get(node.id))
+    .filter((node): node is NonNullable<typeof node> => Boolean(node))
+    .map((node) => [node.id, nodeFingerprint(node.path)]));
   writeFileSync(path, stringify({
     change: analysis.change,
     ...receipt,
+    replaced,
     approved: { added: titled(approved.added), changed: titled(approved.modified), removed: titled(approved.removed) },
   }));
   return { ok: true, command: "approve", data: { change: analysis.change, approval: relative(root, path), receipt, approved }, errors: [] };
