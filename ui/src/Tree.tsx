@@ -245,7 +245,7 @@ export function TreeView({ board, onOpen, arrangement = "goal", onArrangement = 
   return <div className="view tree" onKeyDown={walk}>
     <div className="view__head"><div>
       <h2>Hierarchy</h2>
-      <p>From the purpose down: each goal, the use cases that pursue it, the requirements they rely on and the examples that prove them. Read it along the journey above.</p>
+      <p>From the purpose down: each goal, the use cases that pursue it, the requirements they rely on and the examples that prove them.{tree.journeys.length ? " Read it along the journey above." : " No journey is told yet, so the goals stand in title order."}</p>
     </div></div>
     <nav id="tree-outline" className="tree-outline" aria-label="Outline of the goals">
       <ul>{[...tree.roots, ...tree.apart].map(outlineGoal)}</ul>
