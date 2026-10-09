@@ -1,0 +1,89 @@
+change: spec-hierarchiaja
+approved_by: Árpád Tamási
+approved_at: 2026-10-09T14:42:32.933Z
+approval_basis: sha256:51f03e39e47abb2c538cc0be326d2f148b7147fcc12c6e6db3deee19751b3b96
+replaced:
+  BR-01m4ee22ypyq06n7vkk4ycnz9v: sha256:577962998a285b9129d05e00753fed95bd22967ceb47f2e423c418365a1e42ee
+  BR-01m4ee23zg0wx6hyvpkyj9qcr1: sha256:e47a643e067e2cde295f5cfd090894deed6c12af6d98b19196df60d8a9bcfc10
+  BR-01m40e522gtq49knhy51hr9e3d: sha256:4a43d691f73c2d104a828bb2c726af7c047a80beda1093131f561415be5627bd
+  EX-01m4ee25ey0g2x0bmj6v6rzrpq: sha256:f71a6f63a3cca3145437c7c8d27d6567a13d370be3382c6e116523743afbd2d3
+approved:
+  added:
+    - id: BR-01m4gg8vnq75d4rkw1e0x1b734
+      title: A goal can serve a goal
+    - id: BR-01m4ggqbayfx5szaspsvpc7apt
+      title: A summary use case tells a journey
+    - id: BR-01m4gg8w74b37208tgnb4w6cvj
+      title: The board names a relation in words
+    - id: BR-01m4gh4rxe5navrnzfz0t5a2jf
+      title: The board says what the human decided
+    - id: BR-01m4ggqbpgfp2w72q9p9yt2era
+      title: The import asks what its goals serve
+    - id: BR-01m4gg8w19p98hafy5m1q4g452
+      title: The tree names the gaps in its structure
+    - id: BR-01m4gg8wd62m9h75yczmmzphs7
+      title: The use-case diagram draws how use cases relate
+    - id: BR-01m4ggqbgh250jcn09w3t5sxqq
+      title: Validate names a flat structure
+    - id: EX-01m4ggqc904qbhpg0j4xrj0gj4
+      title: A complete structure says so
+    - id: EX-01m4gg8x90azvgnb0f5ctm7b4h
+      title: A flat import names its gaps
+    - id: EX-01m4ghr8w38wt1tweg4bb2r1te
+      title: A phrase from a rule body is found and shared
+    - id: EX-01m4gg8xfhm8raymbdwy1b3tmj
+      title: A rule's drawer says which use case it is part of
+    - id: EX-01m4ggqcemksxzh5hwaf95ha1m
+      title: A shared link opens the same drawer
+    - id: EX-01m4ggqc1zvpsm5ksv2mtcpr6m
+      title: A use case under two parents is drawn once
+    - id: EX-01m4ggqcmnpc67n7k0bte54kd5
+      title: An edge of a project's own form is named by its field
+    - id: EX-01m4gg8xtv2dgnnazgrfag2j59
+      title: An empty specification opens on its one change
+    - id: EX-01m4ggqbwcb2045qa1dvtcbk4k
+      title: An evening together tells the intimity journey
+    - id: EX-01m4ggxas3te2f5f4h2644eje9
+      title: Dropping the evening together marks its whole journey
+    - id: EX-01m4gg8wkj7dzaje345c4ska46
+      title: Intimity's goals serve one purpose
+    - id: EX-01m4ghr91fmchrjjrvy1sps150
+      title: No raw label on the intimity board
+    - id: EX-01m4ggxaz5qcvdannbap8r0dek
+      title: Off-journey goals keep their own nesting
+    - id: EX-01m4ghr97pebezq1r7qmwzrtgt
+      title: Returning to the tree finds it where it was left
+    - id: EX-01m4ggqcvsax811dfpeqm4emh4
+      title: Several open changes open on their list
+    - id: EX-01m4gg8xn5gczyzcygyctfw3j1
+      title: The evening apart is drawn as extending the deal
+    - id: EX-01m4gh4s32tcgq6yj2zm5ynnr7
+      title: The intimity baseline says what its approval covered
+    - id: EX-01m4ghr8pn9bjgmcm557zf5xdt
+      title: The intimity change fits one calm screen
+    - id: EX-01m4ggqd7z6b055594jy17zjzw
+      title: The intimity import asks what its goals serve
+    - id: EX-01m4gg8x36bgmg3ebmfzdg5mmf
+      title: The intimity tree reads from its purpose
+    - id: EX-01m4gh4s9gyew9m3trn627jrac
+      title: The use-case diagram is drawn in UML notation
+    - id: EX-01m4ggqd1y597jjpamfw69d6j8
+      title: Validate warns about a flat import
+    - id: QA-01m4ghr864w6xe125fkvrdptmh
+      title: Anything on the board can be found and linked
+    - id: QA-01m4ghr80v0r92aw1d9rq9zt6f
+      title: The board reads calmly
+    - id: QA-01m4ghr8bn64wazxnap80vhvhe
+      title: The board speaks in plain words
+    - id: QA-01m4ghr8h4345h3tt86nb28eqx
+      title: The view holds still
+  changed:
+    - id: BR-01m4ee22ypyq06n7vkk4ycnz9v
+      title: A use case can be decomposed
+    - id: BR-01m4ee23zg0wx6hyvpkyj9qcr1
+      title: The board shows the specification as a tree
+    - id: BR-01m40e522gtq49knhy51hr9e3d
+      title: The board shows what waits at the gate
+    - id: EX-01m4ee25ey0g2x0bmj6v6rzrpq
+      title: The tree with the drop highlight
+  removed: []
