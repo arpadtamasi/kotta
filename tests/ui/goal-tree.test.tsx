@@ -384,3 +384,13 @@ describe("the drawer opens a node at its top (BR-01m4gmdmcjc5rcf90rh8hjz3g3)", (
     expect(screen.getByRole("dialog").scrollTop).toBe(240);
   });
 });
+
+describe("the tree after a change", () => {
+  it("leaves out what the change removes: no removed goal in the outline, the tree or the gaps", () => {
+    const spec = boardSpec(told()).map((entry) => entry.id === IDS.install ? { ...entry, mark: "removed" as const } : entry.id === IDS.homeScreen ? { ...entry, edges: { ...entry.edges, goal: [IDS.purpose] } } : entry);
+    const { container } = render(<TreeView board={readBoard(workspace({ spec }))} onOpen={() => {}} />);
+    expect(container.querySelector(".tree-outline")!.textContent).not.toContain("The app is opened from the home screen like an app");
+    expect(container.querySelector(`#tree-${IDS.install}`)).toBeNull();
+    expect(container.querySelector(".tree-gaps")!.textContent).toContain("no gap");
+  });
+});

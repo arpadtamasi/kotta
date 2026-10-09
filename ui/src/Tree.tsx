@@ -70,7 +70,9 @@ export function TreeView({ board, onOpen, arrangement = "goal", onArrangement = 
   const [ownExpansion, setOwnExpansion] = useState<Expansion>({ open: false, round: 0 });
   const expansion = heldExpansion ?? ownExpansion;
   const setExpansion = (next: (current: Expansion) => Expansion) => (onExpansion ? onExpansion(next(expansion)) : setOwnExpansion(next));
-  const spec = board.spec;
+  // The tree shows the model as it will be after the change: a node the change removes is not in it
+  // (BR-01m4ee23zg0wx6hyvpkyj9qcr1, BR-01m40e522gtq49knhy51hr9e3d).
+  const spec = useMemo(() => board.spec.filter((node) => node.mark !== "removed"), [board.spec]);
   const byId = useMemo(() => new Map(spec.map((node) => [node.id, node])), [spec]);
   const hierarchy = useMemo(() => readHierarchy(spec, capability), [spec, capability]);
   const tree = useMemo(() => readGoalTree(spec), [spec]);
