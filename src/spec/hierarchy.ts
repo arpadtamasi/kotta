@@ -81,7 +81,11 @@ export function dropImpact(nodes: SpecNode[], useCase: string): DropImpact {
   const refiners = refiningUseCases(nodes);
   const out: string[] = [];
   const stays: string[] = [];
-  for (const node of nodes.filter(isRequirement)) {
+  // Listed in the order the branch's use cases name them, the dropped one first (BR-01m4gmdmr2h33x4cr7t217yr9t).
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const ordered = [...new Set([...branch].flatMap((id) => REFINING_FIELDS.flatMap((field) => referencesIn(byId.get(id)?.data[field]))))]
+    .map((id) => byId.get(id)).filter((node): node is SpecNode => Boolean(node) && isRequirement(node!));
+  for (const node of ordered) {
     const by = refiners.get(node.id) ?? [];
     if (!by.some((id) => branch.has(id))) continue;
     if (!isOverall(node) && by.every((id) => branch.has(id))) out.push(node.id);

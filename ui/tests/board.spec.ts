@@ -88,3 +88,56 @@ test("on a phone every view stays named and reachable, and nothing scrolls sidew
   await expect(page.getByRole("heading", { name: "Hierarchy" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
+
+test.describe("finding one's way in the hierarchy (QA-01m4gmdm6r7t4ajnxa3515ccvd)", () => {
+  test("the outline starts on the first screen, the gaps take two lines, any goal is two actions from anywhere (EX-01m4gmdn3rgp6nyh7a5c34eh2c)", async ({ page }) => {
+    await page.goto("/?view=tree");
+    const outline = page.locator("#tree-outline");
+    await expect(outline).toBeVisible();
+    const top = await outline.evaluate((element) => element.getBoundingClientRect().top);
+    expect(top).toBeLessThan(735);
+    const gaps = page.locator("details.tree-gaps");
+    if (await gaps.count()) {
+      const height = await gaps.locator("summary").evaluate((summary) => summary.getBoundingClientRect().height);
+      const line = await gaps.locator("summary").evaluate((summary) => parseFloat(getComputedStyle(summary).lineHeight) || 20);
+      expect(height).toBeLessThanOrEqual(line * 2 + 8);
+    }
+    await expect(page.locator(".tree-drop")).toHaveCount(0);
+    await page.locator(".stage").evaluate((stage) => { stage.scrollTop = stage.scrollHeight; });
+    // From deep in the view: one action to the outline, one to the goal.
+    await page.locator(".tree-to-outline").click();
+    await outline.getByRole("button", { name: "Each partner can answer honestly, in private" }).click();
+    const head = page.locator("details.tree-goal > summary", { hasText: "Each partner can answer honestly, in private" }).first();
+    await expect(head).toBeInViewport();
+    expect(await head.evaluate((summary) => (summary.parentElement as HTMLDetailsElement).open)).toBe(true);
+  });
+
+  test("a rule is three actions from anywhere, at desktop and at phone width (EX-01m4gmtcgffy7y5rd5ztk2jysn)", async ({ page }) => {
+    for (const width of [1312, 390]) {
+      await page.setViewportSize({ width, height: width === 390 ? 800 : 735 });
+      await page.goto("/?view=tree");
+      await page.locator(".stage").evaluate((stage) => { stage.scrollTop = stage.scrollHeight; });
+      await page.locator(".tree-to-outline").click();
+      await page.locator("#tree-outline").getByRole("button", { name: "Deal or join tonight's round" }).or(page.locator("#tree-outline").getByRole("button", { name: "Both phones play one shared round" })).first().click();
+      await page.locator("details.tree-uc > summary", { hasText: "Deal or join tonight's round" }).first().click();
+      await expect(page.getByRole("button", { name: "Every new round contains two equal sides" }).first()).toBeInViewport();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    }
+  });
+});
+
+test("stepping back in the drawer returns to where the reader left the node (EX-01m4gmdn9dhm640cr5j8aq0701)", async ({ page }) => {
+  await page.goto("/?view=tree");
+  await page.getByRole("button", { name: "expand all" }).click();
+  await page.locator(".tree-uc__title", { hasText: "Choose a side and answer the cards" }).first().click();
+  const dialog = page.getByRole("dialog");
+  await dialog.evaluate((element) => { element.scrollTop = element.scrollHeight; });
+  const left = await dialog.evaluate((element) => element.scrollTop);
+  await dialog.getByRole("button", { name: "Each partner can answer honestly, in private" }).last().click();
+  await expect(dialog).toHaveAttribute("aria-label", /Each partner can answer honestly/);
+  expect(await dialog.evaluate((element) => element.scrollTop)).toBe(0);
+  await expect(dialog.locator(".drawer__title")).toBeFocused();
+  await dialog.getByRole("button", { name: "← Back" }).click();
+  await expect(dialog).toHaveAttribute("aria-label", /Choose a side and answer the cards/);
+  expect(Math.abs(await dialog.evaluate((element) => element.scrollTop) - left)).toBeLessThanOrEqual(10);
+});

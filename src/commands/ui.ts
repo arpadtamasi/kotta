@@ -186,6 +186,8 @@ export interface BoardChange {
   approval?: BoardApproval;
   /** Repository paths under the change that Git does not hold as they are on disk. */
   uncommitted: string[];
+  /** Files of the change's model the board could not read, and why (BR-01m4gmdmy4keq12tj73ahtskx0). */
+  unreadable: Array<{ path: string; reason: string }>;
 }
 
 /** What one yes covered: the receipt, and the agent's decisions exactly as the planning report listed them at the gate. */
@@ -397,6 +399,7 @@ export function readChanges(projectRoot: string, acceptedIds: Set<string>): Boar
         approved: receipt?.approval_basis === hash,
         ...(approval ? { approval } : {}),
         uncommitted: uncommittedUnder(projectRoot, repoPath(changesPath(projectRoot, name))),
+        unreadable: model.issues.filter((issue) => issue.path).map((issue) => ({ path: repoPath(issue.path!), reason: issue.message })),
       }];
     } catch {
       return [];
@@ -452,7 +455,7 @@ export class NarrativeError extends Error {
  * normalises, anything that could leave that folder: an absolute path, a `..` segment, a backslash, a
  * NUL byte, a non-Markdown file, and a symbolic link whose target resolves outside it.
  */
-export function readNarrative(projectRoot: string, requested: unknown): { path: string; content: string } {
+export function readNarrative(projectRoot: string, requested: unknown): { path: string; content: string; archived?: string } {
   const roots = narrativeRoots(projectRoot);
   if (typeof requested !== "string" || !requested.trim()) throw new NarrativeError(400, `Name a file: ?path=${roots[0]}/<change>/conversation.md.`);
   const path = requested.trim();
@@ -469,8 +472,20 @@ export function readNarrative(projectRoot: string, requested: unknown): { path: 
   }
   if (extname(path).toLowerCase() !== ".md") throw new NarrativeError(400, `Only Markdown narrative is served; '${path}' is not a .md file.`);
   const folder = join(projectRoot, ...root.split("/"));
-  const candidate = join(projectRoot, ...segments);
-  if (!existsSync(folder) || !existsSync(candidate)) throw new NarrativeError(404, `No such file: ${path}.`);
+  let candidate = join(projectRoot, ...segments);
+  let archived: string | undefined;
+  // A change cited by its open path that has since been archived is read from its archive folder,
+  // `<date>-<name>`, the latest when several are; an open change of that name wins
+  // (BR-01m4gmdmhz5zs80j07660yjaeq).
+  const change = segments[root.split("/").length];
+  if (!existsSync(candidate) && change && change !== "archive" && !existsSync(join(folder, change))) {
+    const archive = join(folder, "archive");
+    const match = existsSync(archive) ? readdirSync(archive).filter((entry) => entry === change || entry.endsWith(`-${change}`)).sort().pop() : undefined;
+    if (!match) throw new NarrativeError(404, `The change '${change}' that ${path} cites is neither open nor archived, so the citation is broken. Correct the source in the node's provenance, in a change.`);
+    candidate = join(archive, match, ...segments.slice(root.split("/").length + 1));
+    archived = match;
+  }
+  if (!existsSync(folder) || !existsSync(candidate)) throw new NarrativeError(404, `No such file: ${path}${archived ? ` (looked in the archived change ${archived})` : ""}. Correct the source in the node's provenance, in a change.`);
   // The lexical checks above keep the name inside the folder; the real path keeps a link from leaving it.
   const realFolder = realpathSync(folder);
   const realFile = realpathSync(candidate);
@@ -481,7 +496,7 @@ export function readNarrative(projectRoot: string, requested: unknown): { path: 
   const stat = statSync(realFile);
   if (!stat.isFile()) throw new NarrativeError(404, `No such file: ${path}.`);
   if (stat.size > NARRATIVE_MAX_BYTES) throw new NarrativeError(400, `'${path}' is larger than the narrative limit of ${NARRATIVE_MAX_BYTES} bytes.`);
-  return { path, content: readFileSync(realFile, "utf8") };
+  return { path, content: readFileSync(realFile, "utf8"), ...(archived ? { archived } : {}) };
 }
 
 function json(response: ServerResponse, status: number, value: unknown): void {

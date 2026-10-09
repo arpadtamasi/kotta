@@ -79,7 +79,7 @@ export function ProvenanceSummary({ board, agentOnly, onAgentOnly }: { board: Bo
 }
 
 /* ── Node to narrative ───────────────────────────────── */
-type Narrative = { state: "loading" } | { state: "failed"; error: string } | { state: "read"; content: string };
+type Narrative = { state: "loading" } | { state: "failed"; error: string } | { state: "read"; content: string; archived?: string };
 
 function useNarrative(path: string | null): Narrative | null {
   const [narrative, setNarrative] = useState<Narrative | null>(path ? { state: "loading" } : null);
@@ -89,9 +89,9 @@ function useNarrative(path: string | null): Narrative | null {
     setNarrative({ state: "loading" });
     fetch(`${NARRATIVE_ENDPOINT}?path=${encodeURIComponent(path)}`)
       .then(async (response) => {
-        const body = await response.json().catch(() => ({})) as { content?: string; error?: string };
+        const body = await response.json().catch(() => ({})) as { content?: string; error?: string; archived?: string };
         if (!response.ok || typeof body.content !== "string") throw new Error(body.error ?? `the server answered HTTP ${response.status}`);
-        if (live) setNarrative({ state: "read", content: body.content });
+        if (live) setNarrative({ state: "read", content: body.content, ...(body.archived ? { archived: body.archived } : {}) });
       })
       .catch((reason: unknown) => { if (live) setNarrative({ state: "failed", error: reason instanceof Error ? reason.message : String(reason) }); });
     return () => { live = false; };
@@ -107,7 +107,8 @@ function SourceItem({ source, onOpen }: { source: string; onOpen: (id: string) =
   return <li className="source">
     <span className="source__cite"><code>{file}</code>{section && <span className="source__section"> · {section}</span>}</span>
     {read?.state === "loading" && <span className="source__note" role="status">Reading the narrative…</span>}
-    {read?.state === "failed" && <span className="source__note">The narrative could not be read: {read.error}</span>}
+    {read?.state === "failed" && <span className="source__note broken-ref" role="note"><b>Broken source.</b> {read.error}</span>}
+    {read?.state === "read" && read.archived && <span className="source__note">The change is archived; read from <code>changes/archive/{read.archived}/</code>.</span>}
     {read?.state === "read" && <>
       {excerpt
         ? <blockquote className="narrative"><MarkdownContent value={excerpt} onEntity={onOpen} /></blockquote>

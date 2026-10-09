@@ -24,6 +24,8 @@ export type OpenChange = {
   /** Who said yes, when, and what the gate listed as the agent's own decisions (BR-01m4gh4rxe5navrnzfz0t5a2jf). */
   approval?: Approval;
   uncommitted: string[];
+  /** Model files the board could not read, and why (BR-01m4gmdmy4keq12tj73ahtskx0). */
+  unreadable?: Array<{ path: string; reason: string }>;
 };
 export type Approval = { by: string; at: string; agentDecidedAtGate: string[] };
 /** An archived change: who approved it, when, and the accepted ids it landed. */
@@ -405,6 +407,7 @@ export function SpecView({ board, filter, form, query, agentOnly = false, onFilt
                 ? <span className={`tag admission admission-${kind}`}>{ADMISSION_LABEL[kind]}</span>
                 : <span className="tag tag-neutral">{ADMISSION_LABEL.none}</span>)}
               <span className="spec-row__leaning">{named ? `${named} node${named === 1 ? "" : "s"} name${named === 1 ? "s" : ""} it` : "nothing names it"}</span>
+              {brokenReferences(node, board).length > 0 && <span className="tag broken-tag">holds a broken reference</span>}
             </span>
           </EntityButton>;
         })}
@@ -460,9 +463,23 @@ function Relations({ node, board, onOpen }: { node: SpecNode; board: Board; onOp
     <div className="drawer__section-head">Relations</div>
     {[...groups].map(([phrase, ids]) => <div key={phrase} className="spec-edge">
       <span className="spec-edge__phrase">{phrase}</span>
-      <span className="spec-panel__refs">{[...new Set(ids)].map((id) => <RelatedRef key={id} id={id} onOpen={onOpen} />)}</span>
+      <span className="spec-panel__refs">{[...new Set(ids)].map((id) => board.specById.has(id)
+        ? <RelatedRef key={id} id={id} onOpen={onOpen} />
+        : <BrokenRef key={id} id={id} />)}</span>
     </div>)}
   </section>;
+}
+
+/**
+ * A reference to a node that does not exist, said as such with what closes it, wherever it is shown
+ * (BR-01m4gmdmy4keq12tj73ahtskx0).
+ */
+export function BrokenRef({ id }: { id: string }) {
+  return <span className="broken-ref" role="note"><b>Broken reference</b> <code>{id}</code> — no such node. Add the node, or correct or remove the reference, in a change.</span>;
+}
+/** The ids a node names that no node of the board carries. */
+export function brokenReferences(node: SpecNode, board: Board): string[] {
+  return [...new Set(Object.values(node.edges ?? {}).flat().filter((id) => !board.specById.has(id)))];
 }
 
 const day = (at: string) => (at ? at.slice(0, 10) : "an unrecorded day");
@@ -487,10 +504,27 @@ function ApprovalNote({ node, board }: { node: SpecNode; board: Board }) {
   return <p className="approval-note">Landed with the change <b>{landing.title}</b>, approved by {landing.by} on {day(landing.at)}. {own}</p>;
 }
 
-export function EntityDrawer({ id, board, onClose, onOpen, onBack, canGoBack = false }: {
+export function EntityDrawer({ id, board, onClose, onOpen, onBack, canGoBack = false, restoreTo, onLeave }: {
   id: string; board: Board; onClose: () => void; onOpen: (id: string) => void; onBack?: () => void; canGoBack?: boolean;
+  /** Where to show the node from when the reader stepped back to it; opened forward it shows from its top. */
+  restoreTo?: number;
+  /** Told how far the reader had scrolled a node when another one replaces it. */
+  onLeave?: (id: string, scroll: number) => void;
 }) {
   const ref = useDialog(onClose);
+  const title = useRef<HTMLHeadingElement>(null);
+  // Recorded while the node is read: by the time it is replaced, the new content may have clamped it.
+  const scrolled = useRef(0);
+  // A node opened from a list or another node shows from its top with its title focused; stepping
+  // back returns to where the reader left it (BR-01m4gmdmcjc5rcf90rh8hjz3g3).
+  useLayoutEffect(() => {
+    const drawer = ref.current;
+    if (!drawer) return;
+    drawer.scrollTop = restoreTo ?? 0;
+    scrolled.current = drawer.scrollTop;
+    if (restoreTo === undefined) title.current?.focus({ preventScroll: true });
+    return () => { onLeave?.(id, scrolled.current); };
+  }, [id]);
   const node = board.specById.get(id);
   const place = node ? placeOf(board.spec, id) : [];
   const fields: Array<[string, string]> = [];
@@ -501,7 +535,8 @@ export function EntityDrawer({ id, board, onClose, onOpen, onBack, canGoBack = f
   }
 
   return <div className="scrim" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-    <div className="drawer scroll" role="dialog" aria-modal="true" aria-label={`${node?.form ?? "node"}: ${node?.title ?? id}`} tabIndex={-1} ref={ref}>
+    <div className="drawer scroll" role="dialog" aria-modal="true" aria-label={`${node?.form ?? "node"}: ${node?.title ?? id}`} tabIndex={-1} ref={ref}
+      onScroll={(event) => { scrolled.current = event.currentTarget.scrollTop; }}>
       <div className="drawer__bar">
         {canGoBack && onBack && <button type="button" className="drawer__back" onClick={onBack}>← Back</button>}
         <span className="tag tag-outline">{node?.form.replace(/-/g, " ") ?? "node"}</span>
@@ -515,7 +550,7 @@ export function EntityDrawer({ id, board, onClose, onOpen, onBack, canGoBack = f
             {place.map((step, index) => <span key={step.id}>{index > 0 && <span aria-hidden="true"> › </span>}
               <button type="button" className="drawer__place-step" onClick={() => onOpen(step.id)}>{step.title}</button></span>)}
           </nav>}
-          <h2 className="drawer__title">{node.title}</h2>
+          <h2 className="drawer__title" tabIndex={-1} ref={title}>{node.title}</h2>
           {node.mark && <p className="drawer__change"><ChangeTag node={node} /></p>}
           {Object.entries(node.sections ?? {}).map(([name, body]) => body && body.trim()
             ? <section key={name} className="drawer__section">
@@ -573,6 +608,10 @@ export function ChangeHeader({ change, onOpen }: { change: OpenChange; onOpen: (
       <summary>Proposal</summary>
       <MarkdownContent value={change.proposal} onEntity={onOpen} />
     </details>
+    {(change.unreadable ?? []).length > 0 && <div className="unreadable" role="alert">
+      <b>{change.unreadable!.length === 1 ? "One file of this change cannot be read" : `${change.unreadable!.length} files of this change cannot be read`}</b> — the change is not empty; these are left out until they are fixed:
+      <ul>{change.unreadable!.map((file) => <li key={file.path}><code>{file.path}</code> — {file.reason}</li>)}</ul>
+    </div>}
     {change.openDecisions.length > 0 && <details open>
       <summary>Open decisions · {change.openDecisions.length}</summary>
       <ul>{change.openDecisions.map((decision, index) => <li key={index}>
@@ -713,14 +752,17 @@ export function App() {
       setSpecQuery(read.query ?? "");
       setArrangement(read.arrangement ?? "goal");
       setDepth(typeof event.state?.depth === "number" ? event.state.depth : 0);
+      setSteppedBack(true);
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
   }, []);
   const detailIdRef = useRef(detailId);
   detailIdRef.current = detailId;
-  const open = useCallback((id: string) => { setDepth((current) => (detailIdRef.current ? current + 1 : 1)); setDetailId(id); }, []);
+  const open = useCallback((id: string) => { setSteppedBack(false); setDepth((current) => (detailIdRef.current ? current + 1 : 1)); setDetailId(id); }, []);
   const close = useCallback(() => { setDetailId(null); setDepth(0); }, []);
+  const drawerScrolls = useRef(new Map<string, number>());
+  const [steppedBack, setSteppedBack] = useState(false);
 
   // `/` reaches search from anywhere but a field; the view a reader returns to opens where it was left,
   // and a view switched to opens at its top (QA-01m4ghr864w6xe125fkvrdptmh, QA-01m4ghr8h4345h3tt86nb28eqx).
@@ -782,6 +824,7 @@ export function App() {
         {board && view === "tree" && <TreeView board={board} onOpen={open} arrangement={arrangement} onArrangement={setArrangement} expansion={treeExpansion} onExpansion={setTreeExpansion} />}
       </main>
     </div>
-    {detailId && board && <EntityDrawer id={detailId} board={board} onClose={close} onOpen={open} canGoBack={depth > 1} onBack={() => window.history.back()} />}
+    {detailId && board && <EntityDrawer id={detailId} board={board} onClose={close} onOpen={open} canGoBack={depth > 1} onBack={() => window.history.back()}
+      restoreTo={steppedBack ? drawerScrolls.current.get(detailId) : undefined} onLeave={(id, scroll) => drawerScrolls.current.set(id, scroll)} />}
   </div>;
 }

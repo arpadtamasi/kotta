@@ -492,7 +492,8 @@ export function readHierarchy(spec: SpecNode[], capability: string | null = null
   const refines = new Map<string, SpecNode[]>();
   for (const useCase of useCases) {
     const list = refinedIn(useCase).map((id) => byId.get(id)).filter((node): node is SpecNode => Boolean(node) && requirements.includes(node!));
-    refines.set(useCase.id, list.sort((a, b) => a.title.localeCompare(b.title)));
+    // In the order the use case names them, never by title (BR-01m4gmdmr2h33x4cr7t217yr9t).
+    refines.set(useCase.id, list);
     for (const node of list) refiners.set(node.id, [...(refiners.get(node.id) ?? []), useCase.id]);
   }
   const children = new Map<string, Array<{ id: string; how: "includes" | "extends" }>>();

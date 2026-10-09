@@ -85,7 +85,9 @@ describe("the tree from its purpose", () => {
   it("names a flat import's two gaps, what closes each, and never says the structure is complete (EX-01m4gg8x90azvgnb0f5ctm7b4h)", () => {
     const { container } = render(<TreeView board={board(flat())} onOpen={() => {}} />);
     const gaps = container.querySelector(".tree-gaps")!;
-    expect(gaps.querySelector("h3")!.textContent).toBe("2 gaps in the structure");
+    expect(gaps.tagName).toBe("DETAILS");
+    expect((gaps as HTMLDetailsElement).open).toBe(false);
+    expect(gaps.querySelector("summary")!.textContent).toBe("2 gaps in the structure — open to see what closes each");
     const lines = [...gaps.querySelectorAll("li")].map((line) => line.textContent ?? "");
     expect(lines[0]).toMatch(/^8 goals serve no other goal/);
     expect(lines[0]).toContain("in a change");
@@ -102,7 +104,7 @@ describe("the tree from its purpose", () => {
 
   it("dropping the evening together marks its whole journey, and leaves its goals with no use case (EX-01m4ggxas3te2f5f4h2644eje9)", () => {
     const { container } = render(<TreeView board={board(told())} onOpen={() => {}} />);
-    fireEvent.click(within(container.querySelector(".tree-uc--journey") as HTMLElement).getByText("Simulate dropping it"));
+    fireEvent.change(screen.getByLabelText("simulate dropping"), { target: { value: IDS.evening } });
     const status = screen.getByRole("status").textContent ?? "";
     expect(status).toContain("Simulation — nothing in the specification changes.");
     expect(status).toContain("7 use cases would go");
@@ -288,5 +290,97 @@ describe("the board's quality", () => {
       expect(group.querySelector(".spec-group__shared")!.textContent).toContain("added · partly filled in");
       for (const row of group.querySelectorAll(".spec-row")) expect(row.textContent).not.toContain("partly filled in");
     }
+  });
+});
+
+describe("finding one's way in the hierarchy (QA-01m4gmdm6r7t4ajnxa3515ccvd)", () => {
+  it("lists goals nested by serves in the outline, and the actors when arranged by actor (EX-01m4gmtcnvd2744y8ccg4qtn4s)", () => {
+    const PRIVATE = "G-01m4gh0000000000000000gp01";
+    const structure = told().map((item) => item.id === IDS.discreet ? { ...item, edges: { serves: [PRIVATE] } } : item);
+    structure.push({ id: PRIVATE, form: "goal", title: "Kept private around others", edges: { serves: [] } });
+    const { container, unmount } = render(<TreeView board={board(structure)} onOpen={() => {}} />);
+    const outline = container.querySelector(".tree-outline")!;
+    const top = [...outline.querySelectorAll(":scope > ul > li > .tree-outline__item")].map((item) => item.textContent);
+    expect(top).toContain("Find an evening both welcome, without one-sided vulnerability");
+    expect(top).toContain("Kept private around others");
+    const nested = [...outline.querySelectorAll(":scope > ul > li li > .tree-outline__item")].map((item) => item.textContent);
+    expect(nested).toContain("Two accounts become one private couple");
+    expect(nested).toContain("The app can be used where someone could glance over a shoulder");
+    // Goals start closed, with their counts; the whole-product and unplaced requirements too.
+    expect([...container.querySelectorAll("details.tree-goal")].every((goal) => !(goal as HTMLDetailsElement).open)).toBe(true);
+    expect([...container.querySelectorAll("details.tree-closed-group")].every((group) => !(group as HTMLDetailsElement).open)).toBe(true);
+    expect(container.querySelector(".tree-drop")).toBeNull();
+    unmount();
+    const byActor = render(<TreeView board={board(structure)} onOpen={() => {}} arrangement="actor" />);
+    expect([...byActor.container.querySelectorAll(".tree-outline__item")].map((item) => item.textContent)).toEqual(["Player", "Visitor"]);
+  });
+
+  it("a goal reached from the outline opens (EX-01m4gmdn3rgp6nyh7a5c34eh2c)", () => {
+    const { container } = render(<TreeView board={board(flat())} onOpen={() => {}} />);
+    const goal = container.querySelector(`#tree-${IDS.honest}`) as HTMLDetailsElement;
+    expect(goal.open).toBe(false);
+    fireEvent.click(within(container.querySelector(".tree-outline") as HTMLElement).getByText("Each partner can answer honestly, in private"));
+    expect(goal.open).toBe(true);
+    expect(container.querySelector(".tree-to-outline")!.getAttribute("href")).toBe("#tree-outline");
+  });
+
+  it("a simulated drop opens the goals it touches and counts them in the outline (EX-01m4gmtcvge4npnyqcgxy4hsnb)", () => {
+    const { container } = render(<TreeView board={board(told())} onOpen={() => {}} />);
+    fireEvent.change(screen.getByLabelText("simulate dropping"), { target: { value: IDS.playApart } });
+    const apart = container.querySelector(`#tree-${IDS.apart}`) as HTMLDetailsElement;
+    expect(apart.open).toBe(true);
+    expect(apart.querySelector("summary")!.textContent).toContain("1 would fall out");
+    expect((container.querySelector(`#tree-${IDS.discreet}`) as HTMLDetailsElement).open).toBe(false);
+    const line = [...container.querySelectorAll(".tree-outline li")].find((item) => item.querySelector(".tree-outline__item")?.textContent === "An evening apart can still be played")!;
+    expect(line.textContent).toContain("1 would fall out");
+    expect(screen.getByRole("status").textContent).toContain("Simulation — nothing in the specification changes.");
+  });
+
+  it("the deal's rules stand in the order the deal names them (EX-01m4gmdnmh5q4860ep2aff9evc)", () => {
+    const FIRST = "BR-01m4gh0000000000000000r101";
+    const LAST = "BR-01m4gh0000000000000000r102";
+    const spec = boardSpec(told()).map((entry) => entry.id === IDS.deal ? { ...entry, edges: { ...entry.edges, refines: [FIRST, LAST] } } : entry);
+    spec.push(node(FIRST, "business-rule", "Every new round contains two equal sides"), node(LAST, "business-rule", "A deal is never stored on the device"));
+    const { container } = render(<TreeView board={readBoard(workspace({ spec }))} onOpen={() => {}} />);
+    const rows = [...container.querySelectorAll(`#tree-${IDS.deal} > .tree-uc__body > .tree-req .tree-req__title`)].map((row) => row.textContent);
+    expect(rows).toEqual(["Every new round contains two equal sides", "A deal is never stored on the device"]);
+  });
+});
+
+describe("errors said with what to do (BR-01m4gmdmy4keq12tj73ahtskx0)", () => {
+  it("a dangling refines is marked in the list and among the relations, with what closes it (EX-01m4gmdnv48mw2p5vkfy197s0f)", () => {
+    const GONE = "BR-01m4gh0000000000000000zzzz";
+    const spec = boardSpec(told()).map((entry) => entry.id === IDS.see ? { ...entry, edges: { ...entry.edges, refines: [GONE] } } : entry);
+    const broken = readBoard(workspace({ spec }));
+    render(<SpecView board={broken} filter="all" form="all" query="See the shared result" onFilter={() => {}} onForm={() => {}} onQuery={() => {}} onOpen={() => {}} />);
+    expect(screen.getByText("holds a broken reference")).toBeTruthy();
+    cleanup();
+    render(<EntityDrawer id={IDS.see} board={broken} onClose={() => {}} onOpen={() => {}} />);
+    const note = screen.getByRole("note");
+    expect(note.textContent).toContain(GONE);
+    expect(note.textContent).toContain("Add the node, or correct or remove the reference, in a change.");
+  });
+
+  it("a change with an unreadable node names it and why (EX-01m4gmdp0mehp38zeye60apv59)", () => {
+    render(<ChangeHeader change={change("broken", { unreadable: [{ path: ".kotta/changes/broken/model/business-rules/bad.md", reason: "bad.md has unreadable frontmatter: YAMLException" }] })} onOpen={() => {}} />);
+    const alert = screen.getByRole("alert");
+    expect(alert.textContent).toContain("One file of this change cannot be read");
+    expect(alert.textContent).toContain(".kotta/changes/broken/model/business-rules/bad.md — bad.md has unreadable frontmatter");
+  });
+});
+
+describe("the drawer opens a node at its top (BR-01m4gmdmcjc5rcf90rh8hjz3g3)", () => {
+  it("opening a goal from a use case focuses its title; stepping back restores where the reader was (EX-01m4gmdn9dhm640cr5j8aq0701)", () => {
+    const left = vi.fn();
+    const { rerender } = render(<EntityDrawer id={IDS.choose} board={board(told())} onClose={() => {}} onOpen={() => {}} onLeave={left} />);
+    const drawer = screen.getByRole("dialog");
+    drawer.scrollTop = 240;
+    fireEvent.scroll(drawer);
+    rerender(<EntityDrawer id={IDS.honest} board={board(told())} onClose={() => {}} onOpen={() => {}} onLeave={left} />);
+    expect(left).toHaveBeenCalledWith(IDS.choose, 240);
+    expect(document.activeElement?.textContent).toBe("Each partner can answer honestly, in private");
+    expect(screen.getByRole("dialog").scrollTop).toBe(0);
+    rerender(<EntityDrawer id={IDS.choose} board={board(told())} onClose={() => {}} onOpen={() => {}} onLeave={left} restoreTo={240} />);
+    expect(screen.getByRole("dialog").scrollTop).toBe(240);
   });
 });

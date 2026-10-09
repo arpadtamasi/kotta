@@ -694,3 +694,33 @@ code { font-family: var(--font-mono); }
    its counts give way before it grows. */
 .top { flex-wrap: nowrap; min-height: 56px; }
 .top__stats { flex-wrap: nowrap; overflow: hidden; gap: var(--space-2) var(--space-4); }
+
+/* Finding one's way (QA-01m4gmdm6r7t4ajnxa3515ccvd): an outline first, closed groups with their
+   counts, one drop control, and the way back to the outline always one action away. */
+.tree-outline { margin: 0 0 var(--space-3); padding: var(--space-2) var(--space-3); border: 1px solid var(--line-soft); background: var(--color-surface); }
+.tree-outline ul { margin: 0; padding-left: var(--space-4); display: grid; gap: 2px; }
+.tree-outline > ul { padding-left: 0; list-style: none; columns: 2 280px; column-gap: var(--space-6); display: block; }
+.tree-outline li { break-inside: avoid; }
+.tree-outline__item { font: inherit; font-weight: 600; background: none; border: 0; padding: 2px 0; cursor: pointer; color: var(--color-text); text-align: left; }
+.tree-outline__item:hover { text-decoration: underline; }
+.tree-gaps > summary { cursor: pointer; list-style: none; }
+.tree-gaps > summary::-webkit-details-marker { display: none; }
+.tree-gaps > summary::before { content: "▸ "; color: var(--text-muted); }
+.tree-gaps[open] > summary::before { content: "▾ "; }
+.tree-goal > summary { list-style: none; cursor: pointer; }
+.tree-goal > summary::-webkit-details-marker { display: none; }
+.tree-goal > summary::before { content: "▸"; color: var(--text-muted); }
+.tree-goal[open] > summary::before { content: "▾"; }
+.tree-goal__body { padding-left: var(--space-3); }
+.tree-closed-group > summary { cursor: pointer; }
+.tree-actor > summary { cursor: pointer; }
+.tree-drop-control { align-items: center; }
+.tree-drop-select { font: inherit; font-size: 13px; padding: 2px 6px; border: 1px solid var(--line-soft); background: var(--color-bg); color: var(--color-text); max-width: 100%; }
+.tree-to-outline {
+  position: sticky; bottom: var(--space-3); float: right; margin: var(--space-2) 0; padding: 4px 10px;
+  font-size: 12.5px; background: var(--color-text); color: var(--color-bg); text-decoration: none; z-index: 5;
+}
+.broken-ref { display: inline-block; padding: 2px 6px; border: 1px solid var(--color-accent-700); color: var(--color-text); font-size: 12.5px; }
+.broken-tag { border: 1px solid var(--color-accent-700); color: var(--color-accent-700); }
+.unreadable { margin-top: var(--space-2); padding: var(--space-2); border: 1px solid var(--color-accent-700); }
+.unreadable ul { margin: var(--space-1) 0 0; padding-left: var(--space-4); }

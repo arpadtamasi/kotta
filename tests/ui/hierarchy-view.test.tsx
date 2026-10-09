@@ -77,8 +77,7 @@ describe("the hierarchy view", () => {
     expect(screen.getAllByText("«includes»")).toHaveLength(2);
     expect(screen.getAllByText("«extends»")).toHaveLength(1);
 
-    const teacherChat = screen.getByText("The teacher tries the course chat").closest("summary")!;
-    fireEvent.click(within(teacherChat).getByText("Simulate dropping it"));
+    fireEvent.change(screen.getByLabelText("simulate dropping"), { target: { value: TEST_CHAT } });
     const status = screen.getByRole("status").textContent ?? "";
     expect(status).toContain("Simulation — nothing in the specification changes.");
     expect(status).toContain("1 requirement would fall out, 1 would stay");

@@ -228,7 +228,7 @@ describe("from a node to its narrative", () => {
   it("says so when the narrative cannot be read", async () => {
     vi.stubGlobal("fetch", () => Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({ error: "No such file." }) } as Response));
     render(<EntityDrawer id={GOAL} board={board()} onClose={() => {}} onOpen={() => {}} />);
-    await waitFor(() => expect(document.body.textContent).toContain("The narrative could not be read: No such file."));
+    await waitFor(() => expect(document.body.textContent).toContain("Broken source. No such file."));
   });
 });
 
