@@ -197,11 +197,13 @@ Show what falls out of the specification if a use case is dropped, and what
 stays because another use case relies on it
 
 Arguments:
-  use-case    The use case's id, the end of its id, or its exact title
+  use-case         The use case's id, the end of its id, or its exact title
 
 Options:
+  --change <name>  Measure on this open change's model laid over the accepted
+                   specification, as planning sees it
   --json
-  -h, --help  display help for command
+  -h, --help       display help for command
 
 ### kotta change
 Usage: kotta change [options] [command]

@@ -1,0 +1,14 @@
+change: impact-valtozasban
+approved_by: rp
+approved_at: 2026-10-08T20:15:42.175Z
+approval_basis: sha256:a5bbfdff9d2cb60c20baba7bb617c8f22a327e064190e131751b7918eaace40f
+replaced:
+  BR-01m4ee23h66jzr4wzd0a3grf02: sha256:fc1e29e75e588dfeb3af0aed9580c24f21f751c74129da7dae8bd43e0443f661
+approved:
+  added:
+    - id: EX-01m4ej5pndmcaajrrvz6vwhc7r
+      title: Measuring the test chat's drop while planning
+  changed:
+    - id: BR-01m4ee23h66jzr4wzd0a3grf02
+      title: Dropping a use case shows what falls out with it
+  removed: []

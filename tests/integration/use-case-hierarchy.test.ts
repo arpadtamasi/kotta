@@ -119,6 +119,26 @@ describe("the use-case hierarchy", () => {
     expect(run(root, ["spec", "impact", "No such use case"]).status).not.toBe(0);
   });
 
+  test("spec impact --change measures a use case still in a change (EX-01m4ej5pndmcaajrrvz6vwhc7r)", () => {
+    const root = workspace("impact-change");
+    // The test chat is not accepted yet: it lives only in an open change.
+    git(root, "rm", "-q", execFileSync("git", ["ls-files", `${SPEC}/use-cases/*${TEST_CHAT.slice(-8)}.md`], { cwd: root, encoding: "utf8" }).trim());
+    const change = ".kotta/changes/test-chat";
+    write(root, `${change}/proposal.md`, "# Test chat\n\n## Why\n\nTeachers try the chat.\n");
+    useCase(root, TEST_CHAT, "The teacher tries the course chat", { level: "user-goal", refines: [OWN_CHAT, CITATION] }, `${change}/model`);
+
+    const refused = run(root, ["spec", "impact", "The teacher tries the course chat"]);
+    expect(refused.status).not.toBe(0);
+    expect(refused.stderr + refused.stdout).toContain("--change");
+
+    const measured = json(root, ["spec", "impact", "The teacher tries the course chat", "--change", "test-chat"]);
+    expect(measured.status).toBe(0);
+    expect(measured.body.data.change).toBe("test-chat");
+    expect(measured.body.data.out.map((entry: { title: string }) => entry.title)).toEqual(["Own test chat"]);
+    expect(measured.body.data.stays.map((entry: { title: string }) => entry.title)).toEqual(["Citation to the place"]);
+    expect(run(root, ["spec", "impact", TEST_CHAT, "--change", "test-chat"]).stdout).toContain("measured on change test-chat");
+  });
+
   test("a new edge lands with the change that uses it, and a form edited outside a change is named (EX-01m4ee25mtyaj0zeh1r5szmz29)", () => {
     const root = workspace("forms");
     // The project's registry predates the refinement edge: no use case may name a rule under `refines` yet.

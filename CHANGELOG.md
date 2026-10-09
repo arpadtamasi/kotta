@@ -4,6 +4,14 @@ All notable changes to Kotta (called A-Team before 0.3.0) will be documented in 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`kotta spec impact --change <name>`** measures a drop on an open change's model laid over the
+  accepted specification, as planning sees it, so a use case still in a change can be measured before
+  the gate. Asked for by the oktat-ai planning, which had to compute it by hand.
+
 ## [1.0.0-alpha.8] — 2026-10-08
 
 ### Added

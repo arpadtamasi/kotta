@@ -288,8 +288,9 @@ renderers.set("spec new", (result: unknown) => formatSpecNew(result as SpecNewRe
 spec.command("impact")
   .description("Show what falls out of the specification if a use case is dropped, and what stays because another use case relies on it")
   .argument("<use-case>", "The use case's id, the end of its id, or its exact title")
+  .option("--change <name>", "Measure on this open change's model laid over the accepted specification, as planning sees it")
   .option("--json")
-  .action((useCase: string, options: { json?: boolean }) => print(specImpact(useCase), Boolean(options.json)));
+  .action((useCase: string, options: { change?: string; json?: boolean }) => print(specImpact(useCase, undefined, options.change), Boolean(options.json)));
 renderers.set("spec impact", (result: unknown) => formatImpact(result as ImpactResult));
 
 // Where every proposal starts: a change of Kotta's own, whether or not the project uses OpenSpec.
