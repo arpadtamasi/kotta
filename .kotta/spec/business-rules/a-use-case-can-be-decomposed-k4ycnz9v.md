@@ -7,12 +7,12 @@ provenance:
   level: partly-inferred
   decided_by: agent-proposed-human-approved
   sources:
-    - ".kotta/changes/hasznalati-eset-hierarchia/conversation.md · P1"
-    - ".kotta/changes/hasznalati-eset-hierarchia/conversation.md · P4"
-    - ".kotta/changes/hasznalati-eset-hierarchia/conversation.md · P5"
-    - ".kotta/changes/hasznalati-eset-hierarchia/conversation.md · J1"
+    - ".kotta/changes/archive/2026-10-08-hasznalati-eset-hierarchia/conversation.md · P1"
+    - ".kotta/changes/archive/2026-10-08-hasznalati-eset-hierarchia/conversation.md · P4"
+    - ".kotta/changes/archive/2026-10-08-hasznalati-eset-hierarchia/conversation.md · P5"
+    - ".kotta/changes/archive/2026-10-08-hasznalati-eset-hierarchia/conversation.md · J1"
   quote: "rp, 2026-10-08: „belefér a standard uml use case-be?” — „igen” (to: build on include/extend, Cockburn levels, SysML refine, a supplementary specification)"
-  inferred: "The UML relationships (include, extend) and Cockburn's goal levels as the way to decompose were the agent's proposal, accepted; the field names are the agent's."
+  inferred: "2026-10-09: the Scope names where the order of includes means something, so a reader of this rule alone learns it; the sentence is the agent's (spec-hierarchiaja). The UML relationships (include, extend) and Cockburn's goal levels as the way to decompose were the agent's proposal, accepted; the field names are the agent's."
 ---
 
 # A use case can be decomposed
@@ -27,4 +27,4 @@ A single level of use cases does not fit a real product: uploading a material is
 
 ## Scope
 
-The use-case form Kotta ships, every workspace that uses it, and the board's use-case drawing.
+The use-case form Kotta ships, every workspace that uses it, and the board's use-case drawing. The order of an `includes` list means nothing here, except at the `summary` level, where it is the order of a journey's steps (*A summary use case tells a journey*).

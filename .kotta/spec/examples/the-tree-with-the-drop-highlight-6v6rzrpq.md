@@ -9,10 +9,10 @@ provenance:
   level: partly-inferred
   decided_by: agent-decided
   sources:
-    - ".kotta/changes/hasznalati-eset-hierarchia/conversation.md · P4"
-    - ".kotta/changes/hasznalati-eset-hierarchia/conversation.md · J1"
+    - ".kotta/changes/archive/2026-10-08-hasznalati-eset-hierarchia/conversation.md · P4"
+    - ".kotta/changes/archive/2026-10-08-hasznalati-eset-hierarchia/conversation.md · J1"
   quote: "rp, 2026-10-08: „általában valami hierarchia kéne, de tudjuk, hogy abba nem fér bele mindig minden” — „akár további hierarchia is indokolt, és vannak overall követelmények”"
-  inferred: "The case is the agent's illustration, drawn from the oktat-ai specification."
+  inferred: "The case is the agent's illustration, drawn from the oktat-ai specification. 2026-10-09: the switch to the arrangement by actor is added because the tree now starts from the goal (spec-hierarchiaja)."
 ---
 
 # The tree with the drop highlight
@@ -23,7 +23,7 @@ A workspace with three actors, thirteen use cases, two overall rules and one rul
 
 ## When
 
-The human opens the tree view on the board and marks *The teacher tries the course chat* as dropped.
+The human opens the tree view on the board, switches it to the arrangement by actor, and marks *The teacher tries the course chat* as dropped.
 
 ## Then
 
