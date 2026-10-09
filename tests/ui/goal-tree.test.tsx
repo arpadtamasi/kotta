@@ -218,7 +218,7 @@ describe("where the board opens", () => {
     expect(within(list as HTMLElement).getByRole("button", { name: /The two change/ })).toBeTruthy();
   });
 
-  it("restores the same view, search and node from a copied address (EX-01m4ghr8w38wt1tweg4bb2r1te)", async () => {
+  it("restores the same view, search and node from a copied address (EX-01m4ghr8w38wt1tweg4bb2r1te, EX-01m4ggqcemksxzh5hwaf95ha1m)", async () => {
     const spec = boardSpec(told());
     serve(workspace({ spec }));
     window.history.replaceState(null, "", `/${writeAddress("", { view: "spec", change: null, filter: "all", form: "all", query: "at least three cards", node: RULE, arrangement: "goal" })}`);

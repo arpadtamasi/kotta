@@ -26,7 +26,7 @@ test("the change fits one calm screen: the fixed part stays under 120 pixels, th
   }
 });
 
-test("a phrase from a rule's body is found with /, and a copied address opens the same screen (EX-01m4ghr8w38wt1tweg4bb2r1te)", async ({ page, context }) => {
+test("a phrase from a rule's body is found with /, and a copied address opens the same screen (EX-01m4ghr8w38wt1tweg4bb2r1te, EX-01m4ggqcemksxzh5hwaf95ha1m)", async ({ page, context }) => {
   await page.goto("/?view=tree");
   await page.locator("body").press("/");
   await expect(page.getByRole("searchbox")).toBeFocused();
