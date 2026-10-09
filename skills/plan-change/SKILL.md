@@ -103,6 +103,12 @@ overwritten.
    your suggestion, marked as yours. A reader who has never opened the repository must be able to
    answer with one line. The same goes for a judged contradiction, a conflict candidate, and every
    line you bring to the gate.
+5. **Quality said is quality recorded.** A sentence about how well the product must do something —
+   readable, findable, fast, stable, accessible, calm — is a quality requirement. Say so in the
+   conversation, and draft it as a `quality-attribute` node (the `quality-scenarios` skill is the
+   how) with a response and a measure; where nobody said the measure, ask for it under
+   `## Open decisions` rather than choosing it. Do not leave it as a build note in the proposal's
+   prose: a note protects nothing once the change is archived.
 
 ## Run the measuring
 
@@ -112,7 +118,8 @@ kotta plan <name>          # writes .kotta/changes/<name>/planning.md; non-zero 
 
 It reports (a) the delta's structure, (b) the merged model as a whole, (c) conflict candidates —
 accepted nodes that share an edge with, are named by, or contrast with what the delta changes, and
-lifecycle transitions removed or reversed — ranked, at most ten, each awaiting judgement, (d) the
+lifecycle transitions removed or reversed — ranked, at most ten, each awaiting judgement — and every
+item of the proposal's What changes that names no node, asking whether it is a promise that needs one, (d) the
 silences: open decisions and unanswered form questions, (e) drift against a kept narrative (last section), (f) the provenance
 summary with the list of what the machine decided, each with what it rests on, and every citation of
 `conversation.md` that does not open at a heading. Fix what is structurally wrong, re-run, and repeat

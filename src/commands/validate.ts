@@ -6,7 +6,8 @@ import { changesFolder, listChanges, openSpecChangesPath, readChangeModel, stran
 import { readNarrativeSetting, requiresNormativeKeyword } from "../core/config.js";
 import { markdownFiles } from "../spec/narrative.js";
 import { join, relative, sep } from "node:path";
-import { ACCEPTED_WARNING_CODES, normativeIssues, readFormRegistry, readSpecNodes, validateNodeSet, validateSpecWorkspace, type ValidationIssue } from "../spec/registry.js";
+import { ACCEPTED_WARNING_CODES, normativeIssues, readFormRegistry, readSpecNodes, referencesIn, validateNodeSet, validateSpecWorkspace, type SpecNode, type ValidationIssue } from "../spec/registry.js";
+import { describeGap, structureGaps, type StructureGap, type StructureNode } from "../spec/structure.js";
 
 export interface ValidateResult {
   ok: boolean;
@@ -44,6 +45,7 @@ export function validateWorkspace(repositoryRoot?: string): ValidateResult {
   const normative = requiresNormativeKeyword(root);
   let changes = 0;
   let changeNodes = 0;
+  const changeWarnings: ValidationIssue[] = [];
   for (const name of listChanges(root)) {
     // A change's nodes are measured against the forms it carries (BR-01m4ee245pe1wb8x8n7wxyvxwh).
     const changeForms = readFormRegistry(root, join(changesPath(root, name), MODEL_DIRECTORY, FORMS_DIRECTORY)).forms;
@@ -52,6 +54,12 @@ export function validateWorkspace(repositoryRoot?: string): ValidateResult {
     changes += 1;
     changeNodes += model.nodes.length;
     errors.push(...model.issues, ...validateNodeSet(changeForms, model.nodes, { requireProvenance: () => true, edges: false }), ...(normative ? normativeIssues(changeForms, model.nodes) : []));
+    // The structure is measured on the model as the change would leave it, and named once per change.
+    const removedIds = new Set(model.removed);
+    const delta = new Map(model.nodes.map((node) => [node.id, node]));
+    const merged = [...accepted.filter((node) => !delta.has(node.id) && !removedIds.has(node.id)), ...model.nodes];
+    const before = new Set(flatStructureWarnings(accepted).map((warning) => warning.message));
+    changeWarnings.push(...flatStructureWarnings(merged).filter((warning) => !before.has(warning.message)).map((warning) => ({ ...warning, message: `In the change ${name}: ${warning.message}` })));
   }
   const findings = boundaryFindings(analyzeWorkingTree(root));
   errors.push(...findings.filter((finding) => finding.severity === "error").map(issue));
@@ -64,11 +72,37 @@ export function validateWorkspace(repositoryRoot?: string): ValidateResult {
     warnings.push({ code: "NARRATIVE_UNSET", message: `openspec/specs/ holds narrative specs, but no config sets 'narrative:', so Kotta keeps none: archive will neither regenerate nor check them. To keep them, set narrative: generated (Kotta writes them from the model) or narrative: authored (people write them, Kotta reports drift) in ${changesFolder(root).split("/")[0]}/config.yaml; to drop them, set narrative: none.`, path: join(root, "openspec", "specs") });
   }
   warnings.push(...formsEditedOutsideAChange(root));
+  warnings.push(...flatStructureWarnings(accepted), ...changeWarnings);
   // A change an earlier release kept in OpenSpec's folder is read by nothing now; say where it belongs.
   for (const name of strandedChanges(root)) {
     warnings.push({ code: "CHANGE_STRANDED", message: `openspec/changes/${name}/ is a change in OpenSpec's folder, where nothing reads it: a change lives at ${changesFolder(root)}/${name}/. 'kotta migrate' moves every such change, or move this one: git mv openspec/changes/${name} ${changesFolder(root)}/${name}`, path: openSpecChangesPath(root, name) });
   }
   return { ok: errors.length === 0, command: "validate", data: { forms: forms.length, specNodes, changes, changeNodes }, errors, warnings };
+}
+
+const STRUCTURE_FIELDS = ["serves", "goal", "actor", "includes", "extends"];
+
+/** A node as the structure reads it: its title, its level and the edges the structure follows. */
+export function structureNode(node: SpecNode): StructureNode {
+  const edges: Record<string, string[]> = {};
+  for (const field of STRUCTURE_FIELDS) edges[field] = referencesIn(node.data[field]);
+  const level = typeof node.data.level === "string" ? node.data.level : undefined;
+  return { id: node.id, form: node.form, title: String(node.data.title ?? node.id), ...(level ? { level } : {}), edges };
+}
+
+/**
+ * A flat structure is named, never refused (BR-01m4ggqbgh250jcn09w3t5sxqq): several goals serving no
+ * other goal, an actor with several user-goal use cases and no journey, a user-goal use case off every
+ * journey whose goal a step serves. Agents read the CLI, not the board, so the CLI says it too.
+ */
+export function flatStructureWarnings(nodes: SpecNode[]): ValidationIssue[] {
+  const structure = nodes.map(structureNode);
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const title = (id: string) => String(byId.get(id)?.data.title ?? id);
+  const path = (gap: StructureGap) => byId.get(gap.kind === "root-goals" ? gap.goals[0] : gap.kind === "no-journey" ? gap.useCases[0] : gap.kind === "off-journey" ? gap.useCase : gap.goal)?.path;
+  return structureGaps(structure)
+    .filter((gap) => gap.kind !== "goal-unserved")
+    .map((gap) => ({ code: gap.kind === "root-goals" ? "SPEC_GOALS_WITHOUT_PURPOSE" : gap.kind === "no-journey" ? "SPEC_NO_JOURNEY" : "SPEC_OFF_JOURNEY", message: describeGap(gap, title), ...(path(gap) ? { path: path(gap)! } : {}) }));
 }
 
 /**

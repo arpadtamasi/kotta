@@ -11,15 +11,15 @@ const spec = modelWorkspace.spec as SpecNode[];
 const withoutCapabilities = spec.map(({ capability: _dropped, ...node }) => node as SpecNode);
 
 describe("the use case diagram", () => {
-  it("draws actors, use cases and goals in three groups, solid to a use case, dashed to a goal", () => {
+  it("draws in UML terms: goals apart and dotted, use cases inside the system, actors on plain lines (BR-01m4gg8wd62m9h75yczmmzphs7)", () => {
     const { source, nodes } = useCaseDiagram(spec);
     expect(source.split("\n")[0]).toBe("flowchart LR");
-    expect(source).toContain('subgraph actors["Actors"]');
     expect(source).toContain('subgraph goals["Goals"]');
+    expect(source).toContain('subgraph system["System"]');
     const short = (id: string) => [...nodes].find(([, node]) => node === id)![0];
-    expect(source).toContain(`A0 --> ${short(EXPORT)}`);
-    expect(source).toContain(`${short(EXPORT)} -.-> ${short(GOAL)}`);
-    expect(source).toContain(`${short(REVIEW)} -.-> ${short(COSTS)}`);
+    expect(source).toContain(`${short(EXPORT)} --- A0`);
+    expect(source).toContain(`${short(GOAL)} -.- ${short(EXPORT)}`);
+    expect(source).toContain(`${short(COSTS)} -.- ${short(REVIEW)}`);
     expect(nodes.size).toBe(7);
   });
 
@@ -40,12 +40,13 @@ describe("the use case diagram", () => {
     expect(source).not.toMatch(new RegExp(`class [^\\n]*\\b${short(ARCHIVE)}\\b`));
   });
 
-  it("groups use cases by capability when nodes carry one, and draws one group otherwise", () => {
-    const grouped = useCaseDiagram(spec).source;
-    expect(grouped).toContain('subgraph cap0["reporting/export"]');
-    expect(grouped).toContain('subgraph cap1["review"]');
-    expect(grouped).toContain('subgraph cap2["no capability"]');
-    expect(useCaseDiagram(withoutCapabilities).source).not.toContain("subgraph cap");
+  it("draws «include» and «extend» as labelled dotted links, and keeps the capability out of the boundary", () => {
+    const included = spec.map((node) => node.id === EXPORT ? { ...node, edges: { ...node.edges, includes: [REVIEW] } } : node.id === ARCHIVE ? { ...node, edges: { ...node.edges, extends: [EXPORT] } } : node);
+    const { source, nodes } = useCaseDiagram(included);
+    const short = (id: string) => [...nodes].find(([, node]) => node === id)![0];
+    expect(source).toContain(`${short(EXPORT)} -.->|"«include»"| ${short(REVIEW)}`);
+    expect(source).toContain(`${short(ARCHIVE)} -.->|"«extend»"| ${short(EXPORT)}`);
+    expect(source).not.toContain("subgraph cap");
     expect(byCapability(withoutCapabilities)).toHaveLength(1);
   });
 });
@@ -131,11 +132,17 @@ describe("the graphs the drawn renderer lays out", () => {
     const grouped = spec.map((node) => (node.id === ORDER ? { ...node, capability: "commerce" } : node));
     expect(entityGraph(grouped).groups.map((group) => group.label)).toEqual(["commerce", "no capability"]);
   });
-  it("draws actors to use cases solid and use cases to goals dashed, each node opening itself", () => {
-    const graph = useCaseGraph(withoutCapabilities);
+  it("draws goals first and dotted, use cases inside the system boundary, actors on plain lines, include and extend as open arrows", () => {
+    const included = withoutCapabilities.map((node) => node.id === ARCHIVE ? { ...node, edges: { ...node.edges, extends: [EXPORT] } } : node);
+    const graph = useCaseGraph(included);
     expect(graph.direction).toBe("RIGHT");
-    expect(graph.edges.find((edge) => edge.from === EXPORT && edge.to === GOAL)).toMatchObject({ dashed: true });
-    expect(graph.edges.some((edge) => edge.to === EXPORT && !edge.dashed)).toBe(true);
+    expect(graph.groups).toEqual([{ id: "system", label: "System", boundary: true }]);
+    expect(graph.nodes.filter((node) => node.shape === "use-case").every((node) => node.group === "system")).toBe(true);
+    expect(graph.nodes.filter((node) => node.shape !== "use-case").every((node) => !node.group)).toBe(true);
+    expect(graph.nodes[0].shape).toBe("goal");
+    expect(graph.edges.find((edge) => edge.from === GOAL && edge.to === EXPORT)).toMatchObject({ dotted: true });
+    expect(graph.edges.find((edge) => edge.from === EXPORT && edge.plain)).toBeTruthy();
+    expect(graph.edges.find((edge) => edge.from === ARCHIVE && edge.to === EXPORT)).toMatchObject({ dashed: true, open: true, label: "«extend»" });
     expect(graph.nodes.every((node) => node.opens === node.id)).toBe(true);
   });
   it("draws a machine's start, its states, its transitions labelled by their reason, and its end", () => {

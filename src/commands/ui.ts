@@ -9,7 +9,7 @@ import { sections } from "../core/markdown.js";
 import { MINTED_BODY } from "../core/identity.js";
 import { ENV_PREFIX, readEnv } from "../core/env.js";
 import { SPEC_DIRECTORY, WORKSPACE_DIRECTORY, WORKSPACE_SCHEMA_VERSION, WorkspaceShapeError, assertCurrentWorkspaceShape, hasWorkspace, workspaceDirectoryName } from "../filesystem/workspace.js";
-import { APPROVAL_FILE, PROPOSAL_FILE, changesFolder, changesPath, deltaHash, listChanges, readChangeModel } from "../spec/change.js";
+import { APPROVAL_FILE, PLANNING_FILE, PROPOSAL_FILE, changesFolder, changesPath, deltaHash, listChanges, readChangeModel } from "../spec/change.js";
 import { readFormRegistry } from "../spec/registry.js";
 import { parseOpenQuestions, unresolvedQuestions } from "../core/questions.js";
 import { readPlanning } from "./plan.js";
@@ -182,8 +182,25 @@ export interface BoardChange {
   planned: boolean;
   /** `kotta approve` recorded a yes to the delta as it is now. */
   approved: boolean;
+  /** Who said yes and when, from the receipt, when the yes holds (BR-01m4gh4rxe5navrnzfz0t5a2jf). */
+  approval?: BoardApproval;
   /** Repository paths under the change that Git does not hold as they are on disk. */
   uncommitted: string[];
+}
+
+/** What one yes covered: the receipt, and the agent's decisions exactly as the planning report listed them at the gate. */
+export interface BoardApproval {
+  by: string;
+  at: string;
+  /** The lines of the report's "What the machine decided alone" list, as written. */
+  agentDecidedAtGate: string[];
+}
+
+/** An archived change: its receipt, and the ids it landed (BR-01m4gh4rxe5navrnzfz0t5a2jf). */
+export interface BoardLanding extends BoardApproval {
+  change: string;
+  title: string;
+  nodes: string[];
 }
 
 export interface BoardWorkspace {
@@ -193,7 +210,27 @@ export interface BoardWorkspace {
   changes: BoardChange[];
   specForms: Array<{ id: string; directory: string; title: string }>;
   notices: string[];
+  /** Archived changes, newest first: which change landed each accepted node, who approved it and when. */
+  landings: BoardLanding[];
   generatedAt: string;
+}
+
+/** The "What the machine decided alone" list of a planning report, each line as written. */
+export function agentDecidedAtGate(planning: string): string[] {
+  const start = planning.indexOf("What the machine decided alone:");
+  if (start < 0) return [];
+  const lines: string[] = [];
+  for (const line of planning.slice(start).split(/\r?\n/).slice(1)) {
+    if (line.startsWith("- ")) lines.push(line.slice(2).trim());
+    else if (line.trim() && lines.length) break;
+  }
+  return lines;
+}
+
+function approvalOf(receiptText: string, planningText: string): BoardApproval | null {
+  const receipt = (parse(receiptText) ?? {}) as { approved_by?: unknown; approved_at?: unknown };
+  if (typeof receipt.approved_by !== "string") return null;
+  return { by: receipt.approved_by, at: String(receipt.approved_at ?? ""), agentDecidedAtGate: agentDecidedAtGate(planningText) };
 }
 
 const MINTED_REFERENCE = new RegExp(`^[A-Za-z]{1,4}-${MINTED_BODY}$`);
@@ -264,7 +301,27 @@ export function readWorkspace(workspaceOption: string): BoardWorkspace {
 
   const notices = readNotices(workspace, useBase, base, spec.length);
   const changes = readChanges(projectRoot, new Set(spec.map((node) => node.id)));
-  return { workspace, project: config.project?.name ?? "Kotta workspace", spec, changes, specForms, notices, generatedAt: new Date().toISOString() };
+  // Archived changes are read from the same place as the accepted nodes they landed.
+  const archivePrefix = `${workspaceDirectory}/changes/archive/`;
+  const archived = useBase
+    ? (refFiles ? [...refFiles.keys()] : listFilesFromRef(projectRoot, base, workspaceDirectory, "changes/archive", ".yaml")).filter((path) => path.startsWith(archivePrefix) && path.endsWith(`/${APPROVAL_FILE}`))
+    : (() => {
+        const directory = join(workspace, "changes", "archive");
+        return existsSync(directory) ? readdirSync(directory).filter((name) => existsSync(join(directory, name, APPROVAL_FILE))).map((name) => `${archivePrefix}${name}/${APPROVAL_FILE}`) : [];
+      })();
+  const landings: BoardLanding[] = archived.flatMap((receiptPath) => {
+    const folder = receiptPath.slice(0, -APPROVAL_FILE.length);
+    const receiptText = readRepoFile(receiptPath, useBase);
+    const approval = approvalOf(receiptText, readRepoFile(`${folder}${PLANNING_FILE}`, useBase));
+    if (!approval) return [];
+    const receipt = (parse(receiptText) ?? {}) as { change?: unknown; approved?: { added?: Array<{ id?: unknown }>; changed?: Array<{ id?: unknown }> } };
+    const ids = [...(receipt.approved?.added ?? []), ...(receipt.approved?.changed ?? [])].map((entry) => String(entry?.id ?? "")).filter(Boolean);
+    const proposal = readRepoFile(`${folder}${PROPOSAL_FILE}`, useBase);
+    const heading = /^#\s+(.+)$/m.exec(proposal);
+    const change = String(receipt.change ?? basename(folder.replace(/\/$/, "")));
+    return [{ ...approval, change, title: heading ? heading[1].trim() : change, nodes: ids }];
+  }).sort((left, right) => right.at.localeCompare(left.at));
+  return { workspace, project: config.project?.name ?? "Kotta workspace", spec, changes, specForms, notices, landings, generatedAt: new Date().toISOString() };
 }
 
 const byTitle = (left: BoardSpecNode, right: BoardSpecNode) => left.title.localeCompare(right.title) || left.id.localeCompare(right.id);
@@ -319,7 +376,10 @@ export function readChanges(projectRoot: string, acceptedIds: Set<string>): Boar
       const heading = /^#\s+(.+)$/m.exec(proposalText);
       const hash = deltaHash(model);
       const approvalPath = join(model.directory, APPROVAL_FILE);
-      const receipt = existsSync(approvalPath) ? (parse(readFileSync(approvalPath, "utf8")) ?? {}) as { approval_basis?: unknown } : null;
+      const receiptText = existsSync(approvalPath) ? readFileSync(approvalPath, "utf8") : "";
+      const receipt = receiptText ? (parse(receiptText) ?? {}) as { approval_basis?: unknown } : null;
+      const planningPath = join(model.directory, PLANNING_FILE);
+      const approval = receipt?.approval_basis === hash ? approvalOf(receiptText, existsSync(planningPath) ? readFileSync(planningPath, "utf8") : "") : null;
       const nodes = model.nodes.map((node) => {
         const content = readFileSync(node.path, "utf8");
         return { ...boardNode(content, repoPath(node.path), node.form), mark: acceptedIds.has(node.id) ? "changed" as const : "added" as const };
@@ -335,6 +395,7 @@ export function readChanges(projectRoot: string, acceptedIds: Set<string>): Boar
         openDecisions,
         planned: readPlanning(model.directory)?.deltaHash === hash,
         approved: receipt?.approval_basis === hash,
+        ...(approval ? { approval } : {}),
         uncommitted: uncommittedUnder(projectRoot, repoPath(changesPath(projectRoot, name))),
       }];
     } catch {

@@ -17,7 +17,7 @@ function Drawing({ graph, diagram, label, onOpen }: { graph: () => FlowGraph; di
   return <DiagramFigure source={mermaid!.source} nodes={mermaid!.nodes} onOpen={onOpen} label={label} />;
 }
 import {
-  DECIDER_LABEL, LEVEL_LABEL, PROVENANCE_DECIDERS, PROVENANCE_LEVELS, agentDecided, entityDiagram, narrativeSection,
+  DECIDER_LABEL, LEVEL_LABEL, PROVENANCE_DECIDERS, relationPhrase, PROVENANCE_LEVELS, agentDecided, entityDiagram, narrativeSection,
   entityGraph, parseSource, parseStateMachine, provenanceCounts, stateDiagram, stateGraph, storyMap, useCaseDiagram, useCaseGraph,
   type FlowGraph, type Provenance, type SpecNode,
 } from "./model";
@@ -31,8 +31,8 @@ export const NARRATIVE_ENDPOINT = "/api/narrative";
 
 export const VIEWS = [
   { key: "spec", label: "Specification", forms: [] as string[] },
-  { key: "tree", label: "Hierarchy", forms: ["use-case"] },
-  { key: "use-cases", label: "Use cases", forms: ["use-case"] },
+  { key: "tree", label: "Hierarchy", forms: ["goal", "use-case"] },
+  { key: "use-cases", label: "Use cases", forms: ["use-case", "actor", "goal"] },
   { key: "stories", label: "Stories", forms: ["user-story"] },
   { key: "entities", label: "Entities", forms: ["entity"] },
   { key: "states", label: "State machines", forms: ["state-machine"] },
@@ -41,11 +41,11 @@ export type ViewKey = typeof VIEWS[number]["key"];
 
 /* ── Provenance marks ────────────────────────────────── */
 /** The level and the decider as two badges; nothing at all for a node that records neither. */
-export function ProvenanceBadges({ provenance }: { provenance?: Provenance }) {
-  if (!provenance?.level && !provenance?.decided_by) return null;
+export function ProvenanceBadges({ provenance, hideLevel = false, hideDecider = false }: { provenance?: Provenance; hideLevel?: boolean; hideDecider?: boolean }) {
+  if ((!provenance?.level || hideLevel) && (!provenance?.decided_by || hideDecider)) return null;
   return <span className="prov-badges">
-    {provenance.level && <span className={`tag prov prov-level-${provenance.level}`} title="How much of this node was said, and how much filled in">{LEVEL_LABEL[provenance.level]}</span>}
-    {provenance.decided_by && <span className={`tag prov prov-by-${provenance.decided_by}`} title="Who settled this node">{DECIDER_LABEL[provenance.decided_by]}</span>}
+    {provenance!.level && !hideLevel && <span className={`tag prov prov-level-${provenance!.level}`} title="How much of this node was said, and how much filled in">{LEVEL_LABEL[provenance!.level]}</span>}
+    {provenance!.decided_by && !hideDecider && <span className={`tag prov prov-by-${provenance!.decided_by}`} title="Who settled this node">{DECIDER_LABEL[provenance!.decided_by]}</span>}
   </span>;
 }
 
@@ -56,7 +56,10 @@ export function ProvenanceBadges({ provenance }: { provenance?: Provenance }) {
 export function ProvenanceSummary({ board, agentOnly, onAgentOnly }: { board: Board; agentOnly: boolean; onAgentOnly: (on: boolean) => void }) {
   const counts = provenanceCounts(board.spec);
   const marked = board.spec.length - counts.unmarked;
-  return <section className="prov-summary" aria-label="Provenance">
+  // Closed until asked for, in the page's flow, so the fixed part of the page stays small (QA-01m4ghr80v0r92aw1d9rq9zt6f).
+  return <details className="prov-summary-wrap">
+    <summary className="prov-summary__toggle">Where the model comes from · {counts.deciders["agent-decided"]} decided by the agent alone{agentOnly ? " · showing only those" : ""}</summary>
+    <section className="prov-summary" aria-label="Provenance">
     <span className="filters__label">provenance</span>
     {marked === 0
       ? <span className="prov-summary__none">No node records where it came from.</span>
@@ -71,7 +74,8 @@ export function ProvenanceSummary({ board, agentOnly, onAgentOnly }: { board: Bo
       </>}
     <button type="button" className={`filter prov-summary__filter ${agentOnly ? "is-active" : ""}`} aria-pressed={agentOnly}
       onClick={() => onAgentOnly(!agentOnly)}>only what the agent decided<span>{counts.deciders["agent-decided"]}</span></button>
-  </section>;
+  </section>
+  </details>;
 }
 
 /* ── Node to narrative ───────────────────────────────── */
@@ -153,22 +157,22 @@ function FilterNote({ agentOnly, shown, total }: { agentOnly: boolean; shown: nu
 }
 
 /** A node in a view's list: its title and marks, opening onto its sections and its edges. */
-export function NodeDetails({ node, board, onOpen }: { node: SpecNode; board: Board; onOpen: (id: string) => void }) {
+export function NodeDetails({ node, board, onOpen, hideLevel = false, hideDecider = false }: { node: SpecNode; board: Board; onOpen: (id: string) => void; hideLevel?: boolean; hideDecider?: boolean }) {
   const outgoing = Object.entries(node.edges ?? {}).filter(([, ids]) => ids.length);
   const incoming = board.incoming.get(node.id) ?? [];
   const ref = (id: string, key: string) => <EntityButton key={key} id={id} className="spec-ref" onOpen={onOpen}>{titleOf(id) ?? id}<Tail id={id} /></EntityButton>;
   return <details className={`node-detail${node.provenance?.level ? ` prov-card-${node.provenance.level}` : ""}`}>
     <summary className="node-detail__summary">
       <span className="node-detail__title">{node.title}</span>
-      <span className="node-detail__meta"><Tail id={node.id} /><ProvenanceBadges provenance={node.provenance} /></span>
+      <span className="node-detail__meta"><Tail id={node.id} /><ProvenanceBadges provenance={node.provenance} hideLevel={hideLevel} hideDecider={hideDecider} /></span>
     </summary>
     <div className="node-detail__body">
       {outgoing.map(([field, ids]) => <div key={field} className="spec-edge">
-        <span className="spec-edge__field">{field}</span>
+        <span className="spec-edge__phrase">{relationPhrase(field, "out")}</span>
         <span className="spec-panel__refs">{ids.map((id) => ref(id, `${field}-${id}`))}</span>
       </div>)}
       {incoming.length > 0 && <div className="spec-edge">
-        <span className="spec-edge__field">named by</span>
+        <span className="spec-edge__phrase">named by</span>
         <span className="spec-panel__refs">{incoming.map(({ from, field }) => ref(from, `${from}-${field}`))}</span>
       </div>}
       {Object.entries(node.sections ?? {}).filter(([, body]) => body && body.trim()).map(([name, body]) => <section key={name} className="node-detail__section">
@@ -183,9 +187,12 @@ export function NodeDetails({ node, board, onOpen }: { node: SpecNode; board: Bo
 function NodeList({ heading, nodes, board, agentOnly, onOpen }: { heading: string; nodes: SpecNode[]; board: Board; agentOnly: boolean; onOpen: (id: string) => void }) {
   const shown = agentOnly ? nodes.filter(agentDecided) : nodes;
   if (!nodes.length) return null;
+  const level = shown.length > 1 && shown.every((node) => node.provenance?.level === shown[0].provenance?.level) ? shown[0].provenance?.level : undefined;
+  const decider = shown.length > 1 && shown.every((node) => node.provenance?.decided_by === shown[0].provenance?.decided_by) ? shown[0].provenance?.decided_by : undefined;
+  const said = [level && LEVEL_LABEL[level], decider && DECIDER_LABEL[decider]].filter(Boolean);
   return <section className="spec-group node-list">
-    <h3 className="spec-group__head">{heading}<span>{shown.length}</span></h3>
-    {shown.map((node) => <NodeDetails key={node.id} node={node} board={board} onOpen={onOpen} />)}
+    <h3 className="spec-group__head">{heading}<span>{shown.length}</span>{said.length > 0 && <em className="spec-group__shared">every one: {said.join(" · ")}</em>}</h3>
+    {shown.map((node) => <NodeDetails key={node.id} node={node} board={board} onOpen={onOpen} hideLevel={Boolean(level)} hideDecider={Boolean(decider)} />)}
   </section>;
 }
 
@@ -205,7 +212,7 @@ export function UseCaseView({ board, agentOnly, onOpen }: ViewProps) {
   const graph = useCallback(() => useCaseGraph(board.spec, { dim: dimmer(agentOnly) }), [board, agentOnly]);
   const all = [...actors, ...cases, ...goals];
   return <div className="view">
-    <ViewHead title="Use cases">Who does what, and for which goal: an actor owns a use case by its actor edge (solid arrow); a use case serves a goal by its goal edge (dashed arrow).</ViewHead>
+    <ViewHead title="Use cases">The use-case diagram in UML notation: use cases as ellipses inside the system boundary, actors outside it on plain lines, «include» and «extend» as dashed open arrows. Goals, which UML does not draw, stand apart on the left, dotted to the use cases that pursue them.</ViewHead>
     <Legend />
     <RendererSwitch />
     <FilterNote agentOnly={agentOnly} shown={all.filter(agentDecided).length} total={all.length} />

@@ -4,7 +4,7 @@ import { parseMarkdown, sections } from "../core/markdown.js";
 import { displayId } from "../core/identity.js";
 import { parseOpenQuestions, unresolvedQuestions } from "../core/questions.js";
 import { findRepositoryRoot, specPath } from "../filesystem/workspace.js";
-import { deltaHash, FORMS_DIRECTORY, MODEL_DIRECTORY, OPENSPEC_DIRECTORY, PLANNING_FILE, readChangeModel, resolveChange, type ChangeModel } from "../spec/change.js";
+import { deltaHash, FORMS_DIRECTORY, MODEL_DIRECTORY, OPENSPEC_DIRECTORY, PLANNING_FILE, PROPOSAL_FILE, readChangeModel, resolveChange, type ChangeModel } from "../spec/change.js";
 import { claimSentences, glossaryContrasts, readContent } from "../spec/contrast.js";
 import { markdownFiles, narrativeDrift, type NarrativeDrift } from "../spec/narrative.js";
 import { readNarrativeSetting, requiresNormativeKeyword } from "../core/config.js";
@@ -91,6 +91,35 @@ export interface ChangeAnalysis {
   provenance: ProvenanceSummary;
   /** The change's distilled conversation, and the provenance citations of it that do not resolve. */
   conversation: ConversationCitations;
+  /** List items of the proposal's What changes that name no node: a promise left in prose, or work that keeps none. */
+  prose: ProseItem[];
+}
+
+export interface ProseItem { line: number; text: string }
+
+/**
+ * What the proposal promises without a node (BR-01m4gj0endmfx601pm929wcp41): every list item under its
+ * What changes that names no node of the delta and no accepted node, by title or id. A candidate to
+ * judge, never a block — the check cannot tell a quality requirement from work that keeps no promise.
+ */
+export function proseWithoutNode(proposal: string, nodes: SpecNode[]): ProseItem[] {
+  const titles = nodes.map((node) => title(node).toLowerCase()).filter((name) => name.length > 3);
+  const ids = nodes.map((node) => node.id.toLowerCase());
+  const tails = nodes.map((node) => displayId(node.id).toLowerCase());
+  const items: ProseItem[] = [];
+  let inside = false;
+  proposal.split(/\r?\n/).forEach((raw, index) => {
+    const heading = /^##\s+(.+?)\s*$/.exec(raw);
+    if (heading) { inside = /^what( changes)?$/i.test(heading[1].trim()); return; }
+    if (!inside) return;
+    const item = /^\s*(?:[-*+]|\d+[.)])\s+(.+)$/.exec(raw);
+    if (!item) return;
+    const text = item[1].trim();
+    const flat = text.toLowerCase().replace(/[*_`]/g, "");
+    if (titles.some((name) => flat.includes(name)) || ids.some((id) => flat.includes(id)) || tails.some((tail) => flat.includes(tail))) return;
+    items.push({ line: index + 1, text });
+  });
+  return items;
 }
 
 export interface Analysis extends ChangeAnalysis {
@@ -319,6 +348,7 @@ export function analyzeChange(root: string, name: string): Analysis {
     drift,
     provenance: provenanceSummary(root, model.nodes),
     conversation: conversationCitations(root, model),
+    prose: existsSync(join(model.directory, PROPOSAL_FILE)) ? proseWithoutNode(readFileSync(join(model.directory, PROPOSAL_FILE), "utf8"), [...accepted, ...model.nodes]) : [],
     forms,
     model,
     accepted,
@@ -410,6 +440,10 @@ export function renderPlanning(analysis: ChangeAnalysis, root: string, generated
     lines.push(`${conflict.rank}. **${named(conflict.node)}** — ${conflict.detail} (${conflict.kind}; because of ${named(conflict.because)}). Awaits judgement.`);
   }
   if (analysis.conflictsTotal > analysis.conflicts.length) lines.push("", `${analysis.conflictsTotal - analysis.conflicts.length} lower-ranked candidates are not listed; the ${analysis.conflicts.length} above rank highest.`);
+  if (analysis.prose.length) {
+    lines.push("", "The proposal's What changes names no node in these items. Is each a promise — a quality attribute, a rule — that needs a node, or work that keeps no promise? Awaits judgement:", "");
+    for (const item of analysis.prose) lines.push(`- proposal.md:${item.line} — ${item.text}`);
+  }
   lines.push("", "The machine's candidates are mechanical and narrow. Contradictions the agent found by comparing every claim of the delta with the accepted nodes it touches, each marked `judged`:", "");
   lines.push(JUDGED_OPEN, ...(judged.trim() ? [judged.trim()] : []), JUDGED_CLOSE, "");
 
@@ -467,7 +501,7 @@ export function formatPlan(result: PlanResult): string {
   const data = result.data;
   const lines = [
     `Planned ${data.change}: ${data.delta.added.length} added, ${data.delta.modified.length} changed, ${data.delta.removed.length} removed. Report: ${data.planning}.`,
-    `Conflict candidates awaiting judgement: ${data.conflictsTotal}${data.conflictsTotal > data.conflicts.length ? ` (top ${data.conflicts.length} listed)` : ""}. Open decisions: ${data.silences.openDecisions.length}. Narrative drift: ${data.drift.length}. Judged by the agent: ${data.judged.length}. Decided by the machine alone: ${data.provenance.machineDecisions.length}.`,
+    `Conflict candidates awaiting judgement: ${data.conflictsTotal}${data.conflictsTotal > data.conflicts.length ? ` (top ${data.conflicts.length} listed)` : ""}. Proposal items naming no node: ${data.prose.length}. Open decisions: ${data.silences.openDecisions.length}. Narrative drift: ${data.drift.length}. Judged by the agent: ${data.judged.length}. Decided by the machine alone: ${data.provenance.machineDecisions.length}.`,
   ];
   if (result.ok) lines.push("Ready for the gate: put the delta, the candidates and the machine's decisions to the human, then record their yes with 'kotta approve'.");
   return lines.join("\n");

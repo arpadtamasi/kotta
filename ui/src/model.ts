@@ -4,6 +4,8 @@
    four diagram views read the standard form ids (actor, goal, use-case, user-story, entity,
    state-machine); a project's own form still appears in the specification list. */
 
+import { goalPositions, journeys as journeysOf, onJourney, structureGaps, type StructureGap, type StructureNode } from "../../src/spec/structure.js";
+
 /* ── Types ───────────────────────────────────────────── */
 export const PROVENANCE_LEVELS = ["stated", "partly-inferred", "inferred"] as const;
 export type ProvenanceLevel = typeof PROVENANCE_LEVELS[number];
@@ -39,9 +41,11 @@ export type SpecNode = {
 export type ChangeMark = "added" | "changed" | "removed";
 
 /* ── Provenance ──────────────────────────────────────── */
+/* Plain words for every mark (QA-01m4ghr8bn64wazxnap80vhvhe): never a field's raw name or value. */
 export const LEVEL_LABEL: Record<ProvenanceLevel, string> = {
-  stated: "stated", "partly-inferred": "partly inferred", inferred: "inferred",
+  stated: "said in a source", "partly-inferred": "partly filled in", inferred: "filled in by the agent",
 };
+export const LEVEL_WORD: Record<string, string> = { summary: "journey", "user-goal": "user goal", subfunction: "part of a step" };
 export const DECIDER_LABEL: Record<ProvenanceDecider, string> = {
   human: "you said it", "agent-proposed-human-approved": "agent proposed, you approved", "agent-decided": "the agent decided",
 };
@@ -152,8 +156,11 @@ export function byCapability(nodes: SpecNode[]): Array<{ capability: string | nu
 export const NO_CAPABILITY = "no capability";
 
 /**
- * Actors on the left, use cases in the middle, goals on the right. An actor owns a use case by the
- * use case's `actor` edge (solid), a use case serves a goal by its `goal` edge (dashed).
+ * The use-case diagram in UML notation where UML has one (BR-01m4gg8wd62m9h75yczmmzphs7): goals,
+ * which UML does not draw, stand apart on the left, joined to the use cases that serve them by dotted
+ * lines; the use cases sit inside the system boundary; actors stand outside it, joined by plain
+ * lines; «include» and «extend» are dotted links with their label. Mermaid has no UML shapes, so a
+ * use case is a rounded node and an actor a labelled node.
  */
 export function useCaseDiagram(spec: SpecNode[], options: DiagramOptions = {}): Diagram {
   const palette = options.palette ?? DEFAULT_PALETTE;
@@ -167,28 +174,22 @@ export function useCaseDiagram(spec: SpecNode[], options: DiagramOptions = {}): 
   goals.forEach((node, index) => short.set(node.id, `G${index}`));
 
   const lines = ["flowchart LR"];
-  lines.push(`  subgraph actors[${mermaidLabel("Actors")}]`, "    direction TB");
-  for (const node of actors) lines.push(`    ${short.get(node.id)}[${mermaidLabel(node.title)}]`);
-  lines.push("  end");
-  lines.push(`  subgraph cases[${mermaidLabel("Use cases")}]`, "    direction TB");
-  const groups = byCapability(cases);
-  groups.forEach((group, index) => {
-    const grouped = group.capability !== null || groups.length > 1;
-    if (grouped) lines.push(`    subgraph cap${index}[${mermaidLabel(group.capability ?? NO_CAPABILITY)}]`, "      direction TB");
-    for (const node of group.nodes) lines.push(`${grouped ? "      " : "    "}${short.get(node.id)}([${mermaidLabel(node.title)}])`);
-    if (grouped) lines.push("    end");
-  });
-  lines.push("  end");
   lines.push(`  subgraph goals[${mermaidLabel("Goals")}]`, "    direction TB");
   for (const node of goals) lines.push(`    ${short.get(node.id)}{{${mermaidLabel(node.title)}}}`);
   lines.push("  end");
-  const actorIds = new Set(actors.map((node) => node.id));
-  const goalIds = new Set(goals.map((node) => node.id));
+  lines.push(`  subgraph system[${mermaidLabel("System")}]`, "    direction TB");
+  for (const node of cases) lines.push(`    ${short.get(node.id)}([${mermaidLabel(node.title)}])`);
+  lines.push("  end");
+  for (const node of actors) lines.push(`  ${short.get(node.id)}[${mermaidLabel(`actor: ${node.title}`)}]`);
+  const known = new Set(spec.map((node) => node.id));
+  const caseIds = new Set(cases.map((node) => node.id));
   for (const node of cases) {
-    for (const actor of node.edges?.actor ?? []) if (actorIds.has(actor)) lines.push(`  ${short.get(actor)} --> ${short.get(node.id)}`);
-    for (const goal of node.edges?.goal ?? []) if (goalIds.has(goal)) lines.push(`  ${short.get(node.id)} -.-> ${short.get(goal)}`);
+    for (const goal of node.edges?.goal ?? []) if (short.has(goal) && goals.some((candidate) => candidate.id === goal)) lines.push(`  ${short.get(goal)} -.- ${short.get(node.id)}`);
+    for (const actor of node.edges?.actor ?? []) if (known.has(actor) && actors.some((candidate) => candidate.id === actor)) lines.push(`  ${short.get(node.id)} --- ${short.get(actor)}`);
+    for (const included of node.edges?.includes ?? []) if (caseIds.has(included)) lines.push(`  ${short.get(node.id)} -.->|${mermaidLabel("«include»")}| ${short.get(included)}`);
+    for (const extended of node.edges?.extends ?? []) if (caseIds.has(extended)) lines.push(`  ${short.get(node.id)} -.->|${mermaidLabel("«extend»")}| ${short.get(extended)}`);
   }
-  const entries = [...actors, ...cases, ...goals].map((node) => ({ short: short.get(node.id)!, node }));
+  const entries = [...goals, ...cases, ...actors].map((node) => ({ short: short.get(node.id)!, node }));
   lines.push(...classDefs(palette), ...classLines(entries, dim));
   return { source: lines.join("\n"), nodes: new Map(entries.map(({ short: s, node }) => [s, node.id])) };
 }
@@ -357,8 +358,16 @@ export type FlowNode = {
   /** The specification node a click opens. */
   opens?: string;
 };
-export type FlowEdge = { from: string; to: string; dashed?: boolean; both?: boolean; label?: string; title?: string };
-export type FlowGraph = { direction: "DOWN" | "RIGHT"; nodes: FlowNode[]; edges: FlowEdge[]; groups: Array<{ id: string; label: string }> };
+export type FlowEdge = {
+  from: string; to: string; dashed?: boolean; both?: boolean; label?: string; title?: string;
+  /** A UML association: a plain line, no arrowhead. */
+  plain?: boolean;
+  /** A dotted line with no arrowhead: a goal joined to the use cases that serve it. */
+  dotted?: boolean;
+  /** An open arrowhead, as UML draws «include» and «extend». */
+  open?: boolean;
+};
+export type FlowGraph = { direction: "DOWN" | "RIGHT"; nodes: FlowNode[]; edges: FlowEdge[]; groups: Array<{ id: string; label: string; boundary?: boolean }> };
 
 function caption(...parts: Array<string | undefined>): string | undefined {
   const kept = parts.filter(Boolean);
@@ -397,26 +406,34 @@ export function entityGraph(spec: SpecNode[], options: DiagramOptions = {}): Flo
   return { direction: "DOWN", groups, edges, nodes: entities.map((node) => ({ ...flowNode(node, "card", dim), group: groupOf.get(node.id) })) };
 }
 
-/** Actors, then use cases, then goals, left to right: owned by the actor edge, serving by the goal edge (dashed). */
+/**
+ * The use-case diagram for the drawn renderer, in UML notation (BR-01m4gg8wd62m9h75yczmmzphs7): goals
+ * first, outside the boundary, dotted to the use cases that serve them; use cases as ellipses inside
+ * the system boundary; actors as stick figures outside it, on plain association lines; «include» and
+ * «extend» as dashed open arrows with their label.
+ */
 export function useCaseGraph(spec: SpecNode[], options: DiagramOptions = {}): FlowGraph {
   const dim = options.dim ?? (() => false);
   const actors = spec.filter((node) => node.form === "actor");
   const cases = spec.filter((node) => node.form === "use-case");
   const goals = spec.filter((node) => node.form === "goal");
-  const { groups, groupOf } = flowGroups(cases, "cap");
   const actorIds = new Set(actors.map((node) => node.id));
   const goalIds = new Set(goals.map((node) => node.id));
+  const caseIds = new Set(cases.map((node) => node.id));
   const edges: FlowEdge[] = [];
   for (const node of cases) {
-    for (const actor of node.edges?.actor ?? []) if (actorIds.has(actor)) edges.push({ from: actor, to: node.id });
-    for (const goal of node.edges?.goal ?? []) if (goalIds.has(goal)) edges.push({ from: node.id, to: goal, dashed: true });
+    for (const goal of node.edges?.goal ?? []) if (goalIds.has(goal)) edges.push({ from: goal, to: node.id, dotted: true });
+    for (const actor of node.edges?.actor ?? []) if (actorIds.has(actor)) edges.push({ from: node.id, to: actor, plain: true });
+    for (const included of node.edges?.includes ?? []) if (caseIds.has(included)) edges.push({ from: node.id, to: included, dashed: true, open: true, label: "«include»" });
+    for (const extended of node.edges?.extends ?? []) if (caseIds.has(extended)) edges.push({ from: node.id, to: extended, dashed: true, open: true, label: "«extend»" });
   }
+  const groups = cases.length ? [{ id: "system", label: "System", boundary: true }] : [];
   return {
     direction: "RIGHT", groups, edges,
     nodes: [
-      ...actors.map((node) => flowNode(node, "actor", dim, "actor")),
-      ...cases.map((node) => ({ ...flowNode(node, "use-case", dim), group: groupOf.get(node.id) })),
       ...goals.map((node) => flowNode(node, "goal", dim, "goal")),
+      ...cases.map((node) => ({ ...flowNode(node, "use-case", dim), group: "system" })),
+      ...actors.map((node) => flowNode(node, "actor", dim, "actor")),
     ],
   };
 }
@@ -541,3 +558,130 @@ export function dropMarks(spec: SpecNode[], hierarchy: Hierarchy, useCase: strin
   return marks;
 }
 
+
+/* ── The goal tree ─────────────────────────────────────
+   The tree from its purpose (BR-01m4ee23zg0wx6hyvpkyj9qcr1): the journeys above it
+   (BR-01m4ggqbayfx5szaspsvpc7apt), each goal that serves no other at the root with the goals serving
+   it nested, goals in the order the journeys reach them, the goals no journey reaches apart, and the
+   structure's gaps named above everything (BR-01m4gg8w19p98hafy5m1q4g452). The journeys and the gaps
+   are computed by the same module the CLI's `validate` uses. */
+
+export function structureNodes(spec: SpecNode[]): StructureNode[] {
+  return spec.map((node) => ({ id: node.id, form: node.form, title: node.title, ...(node.level ? { level: node.level } : {}), edges: node.edges ?? {} }));
+}
+
+export type GoalBranch = { goal: SpecNode; useCases: string[]; subGoals: GoalBranch[] };
+export type GoalTree = {
+  journeys: Array<{ summary: SpecNode; steps: Array<{ node: SpecNode; journey: boolean }> }>;
+  /** Root goals some journey reaches, in journey order. */
+  roots: GoalBranch[];
+  /** Root goals no journey reaches, by title, keeping their own nesting. */
+  apart: GoalBranch[];
+  /** True when some journey is told; otherwise `apart` is simply every root goal. */
+  told: boolean;
+  /** Use cases that serve no goal the tree holds. */
+  homeless: string[];
+  gaps: StructureGap[];
+  /** Use case positions along the journeys, for ordering under a goal. */
+  position: Map<string, number>;
+};
+
+export function readGoalTree(spec: SpecNode[]): GoalTree {
+  const byId = new Map(spec.map((node) => [node.id, node]));
+  const structure = structureNodes(spec);
+  const goals = spec.filter((node) => node.form === "goal");
+  const goalIds = new Set(goals.map((node) => node.id));
+  const useCases = spec.filter((node) => node.form === "use-case");
+  const positions = goalPositions(structure);
+  const told = journeysOf(structure);
+  const position = new Map<string, number>();
+  let index = 0;
+  for (const journey of told) for (const step of journey.steps) {
+    index += 1;
+    if (!position.has(step)) position.set(step, index);
+    for (const variant of useCases.filter((node) => (node.edges?.extends ?? []).includes(step))) if (!position.has(variant.id)) position.set(variant.id, index + 0.5);
+  }
+  const order = (left: SpecNode, right: SpecNode, at: Map<string, number>) =>
+    (at.get(left.id) ?? Infinity) - (at.get(right.id) ?? Infinity) || left.title.localeCompare(right.title);
+  const branch = (goal: SpecNode, seen: Set<string>): GoalBranch => {
+    const path = new Set(seen).add(goal.id);
+    const serving = useCases.filter((node) => (node.edges?.goal ?? []).includes(goal.id)).sort((l, r) => order(l, r, position)).map((node) => node.id);
+    const subGoals = goals.filter((node) => (node.edges?.serves ?? []).includes(goal.id) && !path.has(node.id)).sort((l, r) => order(l, r, positions)).map((node) => branch(node, path));
+    return { goal, useCases: serving, subGoals };
+  };
+  const rootGoals = goals.filter((goal) => !(goal.edges?.serves ?? []).some((id) => goalIds.has(id)));
+  const reached = (goal: SpecNode): boolean => positions.has(goal.id) || goals.some((node) => (node.edges?.serves ?? []).includes(goal.id) && reached(node));
+  const roots = rootGoals.filter((goal) => told.length > 0 && reached(goal)).sort((l, r) => order(l, r, positions)).map((goal) => branch(goal, new Set()));
+  const apart = rootGoals.filter((goal) => !(told.length > 0 && reached(goal))).sort((l, r) => l.title.localeCompare(r.title)).map((goal) => branch(goal, new Set()));
+  return {
+    journeys: told.map((journey) => ({
+      summary: byId.get(journey.summary)!,
+      steps: journey.steps.map((id) => byId.get(id)!).filter(Boolean).map((node) => ({ node, journey: (node.level ?? "user-goal") === "summary" })),
+    })),
+    roots, apart, told: told.length > 0,
+    homeless: useCases.filter((node) => !(node.edges?.goal ?? []).some((id) => goalIds.has(id))).sort((l, r) => l.title.localeCompare(r.title)).map((node) => node.id),
+    gaps: structureGaps(structure),
+    position,
+  };
+}
+
+/** Examples per node, as nodes, from the example form's subjects. */
+export function examplesOf(spec: SpecNode[]): Map<string, SpecNode[]> {
+  const examples = new Map<string, SpecNode[]>();
+  for (const node of spec.filter((candidate) => candidate.form === "example")) {
+    for (const id of node.edges?.subjects ?? []) examples.set(id, [...(examples.get(id) ?? []), node]);
+  }
+  return examples;
+}
+
+/** Goals left with no use case when a branch of use cases is dropped. */
+export function goalsLeftBare(spec: SpecNode[], branch: Set<string>): Set<string> {
+  const bare = new Set<string>();
+  for (const goal of spec.filter((node) => node.form === "goal")) {
+    const serving = spec.filter((node) => node.form === "use-case" && (node.edges?.goal ?? []).includes(goal.id));
+    if (serving.length && serving.every((node) => branch.has(node.id))) bare.add(goal.id);
+  }
+  return bare;
+}
+
+export { onJourney };
+export type { StructureGap };
+
+/* ── A node's place, and its relations in words ─────────
+   Where a node stands in the tree (purpose › goal › use case), and every relation named by a phrase
+   that reads in its own direction from the node shown (BR-01m4gg8w74b37208tgnb4w6cvj). An edge of a
+   project's own form keeps its field's name. */
+const OUTGOING_PHRASE: Record<string, string> = {
+  serves: "Serves", goal: "For goal", actor: "Performed by", includes: "Includes", extends: "Extends",
+  refines: "Relies on", interfaces: "Uses interface", subjects: "Proves", measured_by: "Measured by",
+};
+const INCOMING_PHRASE: Record<string, string> = {
+  serves: "Served by", goal: "Pursued by", actor: "Performs", includes: "Included in", extends: "Extended by",
+  refines: "Part of", interfaces: "Used by", subjects: "Proven by", measured_by: "Measures",
+};
+export function relationPhrase(field: string, direction: "out" | "in"): string {
+  return (direction === "out" ? OUTGOING_PHRASE : INCOMING_PHRASE)[field] ?? field;
+}
+
+/** The chain from the purpose down to the node: its goals, then its use case, by first parent. */
+export function placeOf(spec: SpecNode[], id: string): SpecNode[] {
+  const byId = new Map(spec.map((node) => [node.id, node]));
+  const node = byId.get(id);
+  if (!node) return [];
+  const goalChain = (goal: SpecNode, seen = new Set<string>()): SpecNode[] => {
+    if (seen.has(goal.id)) return [];
+    const wider = (goal.edges?.serves ?? []).map((other) => byId.get(other)).find((other): other is SpecNode => other?.form === "goal");
+    return wider ? [...goalChain(wider, new Set(seen).add(goal.id)), goal] : [goal];
+  };
+  const useCaseChain = (useCase: SpecNode): SpecNode[] => {
+    const goal = (useCase.edges?.goal ?? []).map((other) => byId.get(other)).find((other): other is SpecNode => other?.form === "goal");
+    return [...(goal ? goalChain(goal) : []), useCase];
+  };
+  if (node.form === "goal") return goalChain(node).slice(0, -1);
+  if (node.form === "use-case") return useCaseChain(node).slice(0, -1);
+  const refiner = spec.find((other) => other.form === "use-case" && [...(other.edges?.refines ?? []), ...(other.edges?.interfaces ?? [])].includes(id));
+  if (refiner) return useCaseChain(refiner);
+  const subject = (node.edges?.subjects ?? []).map((other) => byId.get(other)).find(Boolean);
+  if (subject) return [...placeOf(spec, subject.id), subject];
+  return [];
+}

@@ -56,7 +56,7 @@ describe("the use case view", () => {
     const { container } = render(<UseCaseView board={board()} agentOnly={false} onOpen={onOpen} />);
     const figure = await screen.findByRole("img", { name: "Use case diagram" });
     expect(drawn[0]).toMatch(/^flowchart LR/);
-    expect(drawn[0]).toContain("subgraph cases[\"Use cases\"]");
+    expect(drawn[0]).toContain("subgraph system[\"System\"]");
     // A drawn node opens its node.
     fireEvent.click(figure.querySelector("text")!);
     expect(onOpen).toHaveBeenCalledWith(REVIEW);
@@ -157,9 +157,9 @@ describe("provenance on the board", () => {
     const onAgentOnly = vi.fn();
     render(<ProvenanceSummary board={board()} agentOnly={false} onAgentOnly={onAgentOnly} />);
     const summary = screen.getByRole("region", { name: "Provenance" });
-    expect(summary.textContent).toContain("stated1");
-    expect(summary.textContent).toContain("partly inferred2");
-    expect(summary.textContent).toContain("inferred2");
+    expect(summary.textContent).toContain("said in a source1");
+    expect(summary.textContent).toContain("partly filled in2");
+    expect(summary.textContent).toContain("filled in by the agent2");
     expect(summary.textContent).toContain("the agent decided3");
     expect(summary.textContent).toContain("unmarked 11");
     const filter = within(summary).getByRole("button", { name: /only what the agent decided/ });
@@ -171,7 +171,7 @@ describe("provenance on the board", () => {
   it("marks a node by its own frontmatter and leaves an unmarked node without a badge", () => {
     const { container } = render(<SpecView board={board()} filter="all" form="all" query="" onFilter={() => {}} onForm={() => {}} onQuery={() => {}} onOpen={() => {}} />);
     const row = (title: string) => screen.getByText(title).closest(".spec-row")!;
-    expect(row("Work is accounted for").textContent).toContain("partly inferred");
+    expect(row("Work is accounted for").textContent).toContain("partly filled in");
     expect(row("Work is accounted for").textContent).toContain("agent proposed, you approved");
     expect(row("Operator").textContent).toContain("you said it");
     expect(row("Payment").querySelector(".prov")).toBeNull();

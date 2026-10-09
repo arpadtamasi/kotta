@@ -126,6 +126,13 @@ question, so a draft with one is a draft, not an agreement.
    and take it through `plan-change` to the gate; write the code after the human's yes. Say so in one
    line, naming the promise in plain words, instead of writing the code. Building an approved change
    needs no new change, and neither does work that touches no promise.
+7. **Quality said is quality recorded.** When the conversation or a proposal says how well the
+   product must do something — how readable, findable, fast, stable, accessible or calm — say that it
+   is a quality requirement and draft it into the change as a quality attribute, with a response and
+   a measure. Where nobody said the measure, ask for it under `Open decisions`; do not pick one
+   silently. Never leave it as a build note in the proposal's prose: prose is history once the change
+   is archived, nothing cites it, and nothing notices when it regresses. `kotta plan` lists every item
+   of the proposal's What changes that names no node, for you to judge.
 
 ## Skills
 
