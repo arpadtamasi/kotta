@@ -1,0 +1,18 @@
+change: migracio-helye
+approved_by: Árpád Tamási
+approved_at: 2026-10-10T19:45:09.588Z
+approval_basis: sha256:b0eb3799116706325b258bb16f787d6d5ee5775c8ac352837af3637fc2cca52a
+replaced:
+  UC-01m4kbzhamtpt9gybc9kz6vbrx: sha256:a641d581643bf08a7e3c47d49768388da9b7b48780e1bea87fcb51ee0da17ac9
+  UC-01m4kbzh3rt3sjwmb49km5j1db: sha256:874c914727c8824dcbe5cea2d8e8de295c3d78cb12333606d335d250cae2e511
+  UC-01m0f0wn89x00jkpqpqc2esx9h: sha256:119661fb37137b95b606f94a6b4a21d11cf72b86b4b073049802168c8cad06c3
+approved:
+  added: []
+  changed:
+    - id: UC-01m4kbzhamtpt9gybc9kz6vbrx
+      title: Archive a built change
+    - id: UC-01m4kbzh3rt3sjwmb49km5j1db
+      title: Build what was approved
+    - id: UC-01m0f0wn89x00jkpqpqc2esx9h
+      title: Migrate a workspace
+  removed: []
