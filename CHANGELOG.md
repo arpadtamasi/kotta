@@ -4,6 +4,42 @@ All notable changes to Kotta (called A-Team before 0.3.0) will be documented in 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.10] — 2026-10-10
+
+### Added
+
+- **A goal can serve a goal** (`serves`, never in a cycle), and **a summary use case tells a
+  journey**: its `includes` are the steps, in order; a use case extending a step is its variant;
+  what no journey includes is support.
+- **The board's tree starts from the purpose**: the journeys first, an outline of the goals one
+  action away from anywhere, goals in the order the journey reaches them, closed groups with their
+  counts, one control to simulate a drop, and the gaps in the structure named with what closes
+  each.
+- **The board tells the product before the process**: one process line for the open change — who
+  approved it, what the yes covers, the gate's list, the proposal and the gaps on request —; the
+  workspace counts and the provenance summary only on the specification view.
+- **The drawer reads in words**: the node's own text first, its place in the tree, relations as
+  phrases in their own direction, the opened path in the address (back and shared links work), and
+  what the human decided — also for an accepted node, from the change that landed it.
+- **The use-case diagram in UML notation**: stick figures, ellipses inside the system boundary,
+  dashed «include» and «extend», goals apart.
+- **`kotta validate` names a flat structure** (several goals serving no other goal, an actor with no
+  journey) as a warning; **`kotta import openspec`** asks which purpose its goals serve and which
+  journey the use cases form, and drafts neither.
+- **`kotta plan` names** the proposal items that promise without a node, and a proposal that does
+  not tell the product to a stranger (`## Told to a stranger`) — neither blocks the gate.
+- **The rules file and the skills** have the agent record a quality requirement where it is said,
+  and tell the product to a stranger before shaping a model.
+- Board quality attributes with a browser suite (`npm run test:board`): it reads calmly, anything
+  on it can be found and linked, it speaks in plain words, the view holds still, and the hierarchy
+  can be found around in.
+
+### Fixed
+
+- A citation of an archived change opens from the archive; a broken reference and an unreadable
+  file in a change are said, with what to do; a dropped use case's requirements are listed in the
+  order the use case names them.
+
 ## [1.0.0-alpha.9] — 2026-10-09
 
 ### Added

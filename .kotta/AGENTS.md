@@ -10,7 +10,7 @@ The rules below are enforced by the `kotta` CLI and by the Kotta MCP server. The
 package do not share a name, so the package cannot be guessed from the command:
 
 ```bash
-npm install --global @arpadtamasi/kotta@1.0.0-alpha.9   # or: npx -y -p @arpadtamasi/kotta@1.0.0-alpha.9 kotta validate
+npm install --global @arpadtamasi/kotta@1.0.0-alpha.10   # or: npx -y -p @arpadtamasi/kotta@1.0.0-alpha.10 kotta validate
 ```
 
 If you can install neither — a hosted environment with no network or no npm — read the
@@ -126,6 +126,21 @@ question, so a draft with one is a draft, not an agreement.
    and take it through `plan-change` to the gate; write the code after the human's yes. Say so in one
    line, naming the promise in plain words, instead of writing the code. Building an approved change
    needs no new change, and neither does work that touches no promise.
+7. **Quality said is quality recorded.** When the conversation or a proposal says how well the
+   product must do something — how readable, findable, fast, stable, accessible or calm — say that it
+   is a quality requirement and draft it into the change as a quality attribute, with a response and
+   a measure. Where nobody said the measure, ask for it under `Open decisions`; do not pick one
+   silently. Never leave it as a build note in the proposal's prose: prose is history once the change
+   is archived, nothing cites it, and nothing notices when it regresses. `kotta plan` lists every item
+   of the proposal's What changes that names no node, for you to judge.
+8. **Tell the product to a stranger first.** Before you shape a model, write under
+   `## Told to a stranger` in the proposal, in a few sentences, what the product is for, how it is
+   used step by step, its variants and what supports it. Then propose the model that reads the same
+   way: a purpose the product's goals serve, each journey as a summary use case, variants as
+   extensions; support that is a quality of the product — privacy, access, installation,
+   timeliness — as a quality attribute, support someone does as a use case off the journey. A
+   purpose, a journey or a measure the human has not said is a question under `Open decisions`,
+   never your answer. `kotta plan` names a proposal that tells no stranger.
 
 ## Skills
 
