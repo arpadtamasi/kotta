@@ -1,0 +1,17 @@
+change: minosegi-elvarasok
+approved_by: Árpád Tamási
+approved_at: 2026-10-09T14:46:41.994Z
+approval_basis: sha256:6f5abe1e17754ece412687910ba9af70951d0137d9664865b68d353ca6548831
+replaced: {}
+approved:
+  added:
+    - id: BR-01m4gj0efhjmpmdw58am4f0c46
+      title: A quality requirement is recorded where it is said
+    - id: BR-01m4gj0endmfx601pm929wcp41
+      title: The plan names what the proposal promises without a node
+    - id: EX-01m4gj0etwk33zvh7htrxgszcx
+      title: Board readability notes become quality attributes
+    - id: EX-01m4gj0f0zga6schnfnzsxsxhx
+      title: The plan lists build notes that no node carries
+  changed: []
+  removed: []

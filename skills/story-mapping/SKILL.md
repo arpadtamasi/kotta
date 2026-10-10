@@ -9,6 +9,9 @@ Map an actor's activity flow, then cut small, independently valuable slices thro
 the resulting behavior as `user-story` nodes; keep the spatial story map as a disposable workshop
 view rather than canonical notation.
 
+
+Start from the product as it would be told to a stranger — what it is for, how it is used step by step, its variants, what supports it — and keep the nodes you draft in that shape: one purpose, journeys as summary use cases, support as quality attributes or as use cases off the journey. A purpose or a journey nobody has stated is a question, not a draft.
+
 ## Recognize the form
 
 Read `.kotta/spec/forms/user-story.yaml` before drafting. Recognize a user story when an actor wants a

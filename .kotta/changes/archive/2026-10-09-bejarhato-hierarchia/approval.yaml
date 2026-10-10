@@ -1,0 +1,37 @@
+change: bejarhato-hierarchia
+approved_by: Árpád Tamási
+approved_at: 2026-10-09T16:04:01.863Z
+approval_basis: sha256:fb2da928deb69de9a7620a3f2a048172e8b71457f678d5df69ac08ea311d66f9
+replaced: {}
+approved:
+  added:
+    - id: BR-01m4gmdmy4keq12tj73ahtskx0
+      title: A broken reference and an unreadable change are said, with what to do
+    - id: BR-01m4gmdmhz5zs80j07660yjaeq
+      title: A citation of an archived change still opens
+    - id: BR-01m4gmdmr2h33x4cr7t217yr9t
+      title: A use case's requirements stand in the order it names them
+    - id: BR-01m4gmdmcjc5rcf90rh8hjz3g3
+      title: The drawer opens a node at its top
+    - id: EX-01m4gmdp0mehp38zeye60apv59
+      title: A change with an unreadable node says so
+    - id: EX-01m4gmdnv48mw2p5vkfy197s0f
+      title: A dangling refines says what to do
+    - id: EX-01m4gmtcgffy7y5rd5ztk2jysn
+      title: A rule is three moves from anywhere
+    - id: EX-01m4gmtcvge4npnyqcgxy4hsnb
+      title: A simulated drop opens the goals it touches
+    - id: EX-01m4gmdnf1ntar1hs65r743t0b
+      title: A source in an archived change opens
+    - id: EX-01m4gmdn3rgp6nyh7a5c34eh2c
+      title: Any intimity goal is two moves from the top
+    - id: EX-01m4gmdn9dhm640cr5j8aq0701
+      title: Stepping to the goal shows its title
+    - id: EX-01m4gmdnmh5q4860ep2aff9evc
+      title: The deal's rules stand in the order the deal names them
+    - id: EX-01m4gmtcnvd2744y8ccg4qtn4s
+      title: The outline lists goals nested by serves
+    - id: QA-01m4gmdm6r7t4ajnxa3515ccvd
+      title: The hierarchy can be found around in
+  changed: []
+  removed: []

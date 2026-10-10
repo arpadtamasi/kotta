@@ -43,6 +43,17 @@ and every point nobody has decided.
 - A **removed** node: a list item in `model/REMOVED.md` naming its id and the reason.
 - A node that belongs to a capability carries `capability: <path>` (e.g. `game/session`).
 
+## Tell the product to a stranger first
+
+Before translating anything, write under `## Told to a stranger` in the proposal, in a few
+sentences, how you would tell the product to someone who has never seen it: what it is for, how it
+is used step by step, its variants, and what supports it. Then shape the delta so the hierarchy
+reads the same way: a purpose the product's goals serve (`serves`), each journey as a summary use
+case whose `includes` are its steps in order, variants as `extends`; support that is a quality of
+the product as a `quality-attribute`, support someone does as a use case off the journey. A purpose
+or a journey the human has not stated is drafted `inferred`, with an item under `## Open
+decisions`, until they confirm it. `kotta plan` names a proposal with no such section.
+
 ## Distil the conversation first
 
 If the change was shaped in an agent session, distil it before translating:
@@ -103,6 +114,12 @@ overwritten.
    your suggestion, marked as yours. A reader who has never opened the repository must be able to
    answer with one line. The same goes for a judged contradiction, a conflict candidate, and every
    line you bring to the gate.
+5. **Quality said is quality recorded.** A sentence about how well the product must do something —
+   readable, findable, fast, stable, accessible, calm — is a quality requirement. Say so in the
+   conversation, and draft it as a `quality-attribute` node (the `quality-scenarios` skill is the
+   how) with a response and a measure; where nobody said the measure, ask for it under
+   `## Open decisions` rather than choosing it. Do not leave it as a build note in the proposal's
+   prose: a note protects nothing once the change is archived.
 
 ## Run the measuring
 
@@ -112,7 +129,8 @@ kotta plan <name>          # writes .kotta/changes/<name>/planning.md; non-zero 
 
 It reports (a) the delta's structure, (b) the merged model as a whole, (c) conflict candidates —
 accepted nodes that share an edge with, are named by, or contrast with what the delta changes, and
-lifecycle transitions removed or reversed — ranked, at most ten, each awaiting judgement, (d) the
+lifecycle transitions removed or reversed — ranked, at most ten, each awaiting judgement — and every
+item of the proposal's What changes that names no node, asking whether it is a promise that needs one, (d) the
 silences: open decisions and unanswered form questions, (e) drift against a kept narrative (last section), (f) the provenance
 summary with the list of what the machine decided, each with what it rests on, and every citation of
 `conversation.md` that does not open at a heading. Fix what is structurally wrong, re-run, and repeat

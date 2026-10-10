@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { TreeView } from "./Tree";
-import { agentDecided, type ChangeMark, type SpecNode } from "./model";
+import { TreeView, type Arrangement } from "./Tree";
+import { goalPositions } from "../../src/spec/structure.js";
+import { DECIDER_LABEL, LEVEL_LABEL, agentDecided, placeOf, relationPhrase, structureNodes, type ChangeMark, type ProvenanceDecider, type SpecNode } from "./model";
 import { EntityMapView, ProvenanceBadges, ProvenancePanel, ProvenanceSummary, StateMachineView, StoryMapView, UseCaseView, VIEWS, type ViewKey } from "./views";
 
 /* ══ Kotta board ═══════════════════════════════════════
@@ -21,8 +22,15 @@ export type OpenChange = {
   removed: string[];
   openDecisions: Array<{ node: string; text: string }>;
   planned: boolean; approved: boolean;
+  /** Who said yes, when, and what the gate listed as the agent's own decisions (BR-01m4gh4rxe5navrnzfz0t5a2jf). */
+  approval?: Approval;
   uncommitted: string[];
+  /** Model files the board could not read, and why (BR-01m4gmdmy4keq12tj73ahtskx0). */
+  unreadable?: Array<{ path: string; reason: string }>;
 };
+export type Approval = { by: string; at: string; agentDecidedAtGate: string[] };
+/** An archived change: who approved it, when, and the accepted ids it landed. */
+export type Landing = Approval & { change: string; title: string; nodes: string[] };
 export type Workspace = {
   project: string; workspace?: string;
   spec?: SpecNode[];
@@ -30,6 +38,7 @@ export type Workspace = {
   specForms?: SpecForm[];
   /* What the reader has to say about itself before the page is believed — see WorkspaceNotices. */
   notices?: string[];
+  landings?: Landing[];
 };
 
 /* Reporting leaves the workspace: the board never writes a report, it hands off to GitHub. */
@@ -130,6 +139,8 @@ export type Board = {
   /** For each node, the nodes that name it and the field they name it in. */
   incoming: Map<string, Array<{ from: string; field: string }>>;
   kinds: Map<string, AdmissionKind | null>;
+  /** For an accepted node, the archived change that landed it (newest first wins). */
+  landedBy: Map<string, Landing>;
 };
 
 /**
@@ -153,7 +164,8 @@ export function readBoard(workspace: Workspace, changeName: string | null = null
   const change = workspace.changes?.find((candidate) => candidate.name === changeName) ?? null;
   const spec = change ? mergeChange(workspace.spec ?? [], change) : workspace.spec ?? [];
   entityTitles.clear();
-  for (const node of spec) entityTitles.set(node.id, node.title);
+  firstSentences.clear();
+  for (const node of spec) { entityTitles.set(node.id, node.title); firstSentences.set(node.id, firstSentence(node)); }
   const specById = new Map(spec.map((node) => [node.id, node]));
   const forms = [...new Set(spec.map((node) => node.form))].sort();
   const incoming = new Map<string, Array<{ from: string; field: string }>>();
@@ -163,7 +175,9 @@ export function readBoard(workspace: Workspace, changeName: string | null = null
     }
   }
   const kinds = new Map(spec.map((node) => [node.id, admissionKind(node)]));
-  return { spec, change, specById, forms, incoming, kinds };
+  const landedBy = new Map<string, Landing>();
+  for (const landing of workspace.landings ?? []) for (const id of landing.nodes) if (!landedBy.has(id)) landedBy.set(id, landing);
+  return { spec, change, specById, forms, incoming, kinds, landedBy };
 }
 
 /* ── Small presentational bits ───────────────────────── */
@@ -174,6 +188,26 @@ export function Tail({ id }: { id: string }) {
 /** A row that opens a node: the title is the accessible name, the id rides in `title`. */
 export function EntityButton({ id, className, children, onOpen }: { id: string; className: string; children: ReactNode; onOpen: (id: string) => void }) {
   return <button type="button" className={className} title={entityLabel(id)} onClick={() => onOpen(id)}>{children}</button>;
+}
+const firstSentences = new Map<string, string>();
+/** The first sentence of a node's first written section: what a preview shows. */
+export function firstSentence(node: SpecNode): string {
+  const text = Object.values(node.sections ?? {}).map((body) => body.replace(/<!--[\s\S]*?-->/g, "").trim()).find(Boolean) ?? "";
+  const flat = text.replace(/[#*_`>]/g, "").replace(/\s+/g, " ").trim();
+  const end = flat.search(/[.!?](\s|$)/);
+  return end >= 0 ? flat.slice(0, end + 1) : flat;
+}
+/**
+ * A reference to a related node: pointing at it, or focusing it, shows its title and first sentence
+ * beside it without replacing the node that is open (QA-01m4ghr8h4345h3tt86nb28eqx).
+ */
+export function RelatedRef({ id, onOpen }: { id: string; onOpen: (id: string) => void }) {
+  const [shown, setShown] = useState(false);
+  const sentence = firstSentences.get(id);
+  return <span className="ref-preview" onMouseEnter={() => setShown(true)} onMouseLeave={() => setShown(false)} onFocus={() => setShown(true)} onBlur={() => setShown(false)}>
+    <EntityButton id={id} className="spec-ref" onOpen={onOpen}>{titleOf(id) ?? id}</EntityButton>
+    {shown && <span className="ref-preview__card" role="tooltip"><b>{titleOf(id) ?? id}</b>{sentence ? <span>{sentence}</span> : null}</span>}
+  </span>;
 }
 function Placeholder({ rows = 3, label }: { rows?: number; label: string }) {
   return <div className="ph" role="status" aria-live="polite">
@@ -197,6 +231,12 @@ export function BrandMark({ size = 22 }: { size?: number }) {
   </svg>;
 }
 
+/** The number beside a view: exactly what that view lists (QA-01m4ghr8bn64wazxnap80vhvhe). */
+export function viewCount(board: Board, key: ViewKey): number {
+  const entry = VIEWS.find((candidate) => candidate.key === key)!;
+  return entry.forms.length ? board.spec.filter((node) => (entry.forms as readonly string[]).includes(node.form)).length : board.spec.length;
+}
+
 /* ══ The rail ══════════════════════════════════════════
    The specification list, and the four diagrams of the same model beside it. */
 export function Rail({ board, refreshed, view = "spec", onView = () => {}, changes = [], change = null, onChange = () => {} }: {
@@ -210,7 +250,7 @@ export function Rail({ board, refreshed, view = "spec", onView = () => {}, chang
       {VIEWS.map((entry) => <button key={entry.key} type="button" className={`rail__item ${view === entry.key ? "is-active" : ""}`}
         aria-current={view === entry.key ? "page" : undefined} onClick={() => onView(entry.key)}>
         <span className="rail__label">{entry.label}</span>
-        <span className="rail__count">{board ? (entry.forms.length ? board.spec.filter((node) => (entry.forms as readonly string[]).includes(node.form)).length : board.spec.length) : "—"}</span>
+        <span className="rail__count" aria-label={`${entry.label} lists ${board ? viewCount(board, entry.key) : 0}`}>{board ? viewCount(board, entry.key) : "—"}</span>
       </button>)}
     </div>
     <div className="rail__group">
@@ -238,8 +278,10 @@ function initials(project: string): string {
   const words = project.split(/[\s\-_/]+/).filter(Boolean);
   return (words.length > 1 ? words.slice(0, 2).map((w) => w[0]).join("") : project.slice(0, 2)).toUpperCase();
 }
-export function TopBar({ workspace, board, onRefresh, refreshed }: {
+export function TopBar({ workspace, board, onRefresh, refreshed, counts = true }: {
   workspace: Workspace | null; board: Board | null; onRefresh: () => void; refreshed: number;
+  /** The workspace counts belong to the specification view only (QA-01m4gvndbn0hfx4fwq5jhjj5cg). */
+  counts?: boolean;
 }) {
   const project = workspace?.project ?? "workspace";
   const admitted = board ? board.spec.filter((node) => board.kinds.get(node.id) !== null).length : 0;
@@ -258,17 +300,45 @@ export function TopBar({ workspace, board, onRefresh, refreshed }: {
         <span className="top__ws-path">{workspace?.workspace ?? ".kotta/"}{typeof window !== "undefined" && window.location.port ? ` · port ${window.location.port}` : ""}</span>
       </span>
     </div>
-    <div className="top__stats">
+    {counts && <div className="top__stats">
       {stats.map((stat) => <div key={stat.label} className="top__stat">
         <span className="top__stat-label">{stat.label}</span>
         <span className={`top__stat-value ${stat.hot ? "is-hot" : ""}`}>{stat.value}</span>
       </div>)}
-    </div>
+    </div>}
     <button type="button" className="top__action" onClick={onRefresh}>
       <span className="top__key" aria-hidden="true">↻</span> Refresh <span className="top__ago">{refreshed}s</span>
     </button>
   </header>;
 }
+
+/** Search reads a node's title, its id and the text of its sections (QA-01m4ghr864w6xe125fkvrdptmh). */
+export function matches(node: SpecNode, term: string): boolean {
+  const flat = (text: string) => text.toLowerCase().replace(/\s+/g, " ");
+  return flat(node.title).includes(term) || node.id.toLowerCase().includes(term) || Object.values(node.sections ?? {}).some((body) => flat(body).includes(term));
+}
+
+/** Plain words for an admission (QA-01m4ghr8bn64wazxnap80vhvhe). */
+export const ADMISSION_LABEL: Record<AdmissionKind | "none", string> = {
+  structural: "gap admitted: structural", unexamined: "gap admitted: not examined", unimplemented: "gap admitted: not built", none: "no gap admitted",
+};
+
+/** The marks every row of a group shares, said once in the group's head (QA-01m4ghr80v0r92aw1d9rq9zt6f). */
+export function sharedMarks(nodes: SpecNode[], kindOf: Map<string, AdmissionKind | null>): { mark?: ChangeMark; level?: string; decider?: string; kind?: AdmissionKind | "none" } {
+  if (nodes.length < 2) return {};
+  const one = <T,>(values: T[]) => (values.every((value) => value === values[0]) ? values[0] : undefined);
+  const shared: { mark?: ChangeMark; level?: string; decider?: string; kind?: AdmissionKind | "none" } = {};
+  const mark = one(nodes.map((node) => node.mark));
+  if (mark) shared.mark = mark;
+  const level = one(nodes.map((node) => node.provenance?.level));
+  if (level) shared.level = level;
+  const decider = one(nodes.map((node) => node.provenance?.decided_by));
+  if (decider) shared.decider = decider;
+  const kind = one(nodes.map((node) => kindOf.get(node.id) ?? "none"));
+  if (kind) shared.kind = kind;
+  return shared;
+}
+const MARK_WORD: Record<ChangeMark, string> = { added: "added", changed: "changed", removed: "removed" };
 
 /* ══ The specification view ════════════════════════════ */
 export function SpecView({ board, filter, form, query, agentOnly = false, onFilter, onForm, onQuery, onOpen }: {
@@ -280,7 +350,7 @@ export function SpecView({ board, filter, form, query, agentOnly = false, onFilt
   const rows = board.spec
     .filter((node) => form === "all" || node.form === form)
     .filter((node) => filter === "all" || (filter === "kept" ? kindOf.get(node.id) === null : kindOf.get(node.id) === filter))
-    .filter((node) => !term || node.title.toLowerCase().includes(term) || node.id.toLowerCase().includes(term))
+    .filter((node) => !term || matches(node, term))
     .filter((node) => !agentOnly || agentDecided(node));
 
   // Counted apart, never as one total: the three ask for opposite work, and "nobody looked" is not
@@ -288,8 +358,8 @@ export function SpecView({ board, filter, form, query, agentOnly = false, onFilt
   const counts = (predicate: (node: SpecNode) => boolean) => board.spec.filter(predicate).length;
   const filters: Array<{ key: SpecFilter; label: string; count: number }> = [
     { key: "all", label: "all", count: board.spec.length },
-    { key: "kept", label: "no admission", count: counts((node) => kindOf.get(node.id) === null) },
-    ...ADMISSION_KINDS.map((kind) => ({ key: kind as SpecFilter, label: kind, count: counts((node) => kindOf.get(node.id) === kind) })),
+    { key: "kept", label: ADMISSION_LABEL.none, count: counts((node) => kindOf.get(node.id) === null) },
+    ...ADMISSION_KINDS.map((kind) => ({ key: kind as SpecFilter, label: ADMISSION_LABEL[kind], count: counts((node) => kindOf.get(node.id) === kind) })),
   ];
   const grouped = board.forms
     .filter((name) => rows.some((node) => node.form === name))
@@ -314,32 +384,38 @@ export function SpecView({ board, filter, form, query, agentOnly = false, onFilt
       <button type="button" className={`filter ${form === "all" ? "is-active" : ""}`} aria-pressed={form === "all"} onClick={() => onForm("all")}>all<span>{board.spec.length}</span></button>
       {board.forms.map((name) => <button key={name} type="button" className={`filter ${form === name ? "is-active" : ""}`}
         aria-pressed={form === name} onClick={() => onForm(name)}>{name}<span>{board.spec.filter((node) => node.form === name).length}</span></button>)}
-      <input type="search" className="filters__search" value={query} placeholder="find by title" aria-label="Find a specification node by title"
+      <input type="search" className="filters__search" data-search value={query} placeholder="find by title or text  ( / )" aria-label="Find a specification node by its title or its text"
         onChange={(event) => onQuery(event.target.value)} />
     </div>
     {agentOnly && <p className="view__filtered" role="status">Only what the agent decided on its own — the list to read through first.</p>}
     {rows.length === 0 && <p className="view__empty">No node matches. {board.spec.length === 0
       ? "This workspace has no specification yet. A node is drafted from the registered forms in the calling chat, or with the CLI's spec command."
       : "Widen the filters, or clear the search."}</p>}
-    {grouped.map((group) => <section key={group.form} className="spec-group">
-      <div className="spec-group__head">{group.form}<span>{group.nodes.length}</span></div>
-      {group.nodes.map((node) => {
-        const kind = kindOf.get(node.id);
-        const named = board.incoming.get(node.id)?.length ?? 0;
-        return <EntityButton key={node.id} id={node.id} className="spec-row" onOpen={onOpen}>
-          <span className="spec-row__title">{node.title}</span>
-          <span className="spec-row__meta">
-            <Tail id={node.id} />
-            {node.mark && <ChangeTag node={node} />}
-            <ProvenanceBadges provenance={node.provenance} />
-            {kind
-              ? <span className={`tag admission admission-${kind}`}>{kind}</span>
-              : <span className="tag tag-neutral">no admission</span>}
-            <span className="spec-row__leaning">{named ? `${named} node${named === 1 ? "" : "s"} name${named === 1 ? "s" : ""} it` : "nothing names it"}</span>
-          </span>
-        </EntityButton>;
-      })}
-    </section>)}
+    {grouped.map((group) => {
+      const shared = sharedMarks(group.nodes, kindOf);
+      const said = [shared.mark && MARK_WORD[shared.mark], shared.level && LEVEL_LABEL[shared.level as keyof typeof LEVEL_LABEL], shared.decider && DECIDER_LABEL[shared.decider as ProvenanceDecider], shared.kind && ADMISSION_LABEL[shared.kind]].filter(Boolean);
+      return <section key={group.form} className="spec-group">
+        <div className="spec-group__head">{group.form.replace(/-/g, " ")}<span>{group.nodes.length}</span>{said.length > 0 && <em className="spec-group__shared">every one: {said.join(" · ")}</em>}</div>
+        {group.nodes.map((node) => {
+          const kind = kindOf.get(node.id);
+          const named = board.incoming.get(node.id)?.length ?? 0;
+          return <EntityButton key={node.id} id={node.id} className="spec-row" onOpen={onOpen}>
+            <span className="spec-row__title">{node.title}</span>
+            <span className="spec-row__meta">
+              <Tail id={node.id} />
+              {node.mark && !shared.mark && <ChangeTag node={node} />}
+              {node.uncommitted && shared.mark && <span className="tag tag-outline">not committed</span>}
+              <ProvenanceBadges provenance={node.provenance} hideLevel={Boolean(shared.level)} hideDecider={Boolean(shared.decider)} />
+              {!shared.kind && (kind
+                ? <span className={`tag admission admission-${kind}`}>{ADMISSION_LABEL[kind]}</span>
+                : <span className="tag tag-neutral">{ADMISSION_LABEL.none}</span>)}
+              <span className="spec-row__leaning">{named ? `${named} node${named === 1 ? "" : "s"} name${named === 1 ? "s" : ""} it` : "nothing names it"}</span>
+              {brokenReferences(node, board).length > 0 && <span className="tag broken-tag">holds a broken reference</span>}
+            </span>
+          </EntityButton>;
+        })}
+      </section>;
+    })}
   </div>;
 }
 
@@ -375,70 +451,116 @@ function Dangling({ field, id }: { field: string; id: string }) {
 }
 
 /**
- * A node's place in the graph: the edges it answers and the nodes that answer it. Edge names come
- * from the node's own frontmatter, so a project's own form is traversed with nothing added.
+ * A node's relations, grouped by edge and named by a phrase that reads in its own direction from the
+ * node shown (BR-01m4gg8w74b37208tgnb4w6cvj); a project's own edge keeps its field's name.
  */
-function SpecNeighbours({ node, board, onOpen }: { node: SpecNode; board: Board; onOpen: (id: string) => void }) {
-  const outgoing = Object.entries(node.edges ?? {}).filter(([, ids]) => ids.length);
-  const incoming = board.incoming.get(node.id) ?? [];
-  if (!outgoing.length && !incoming.length) return null;
-
-  const ref = (id: string) => <EntityButton key={id} id={id} className="spec-ref" onOpen={onOpen}>
-    {titleOf(id) ?? id}<Tail id={id} />
-  </EntityButton>;
-
-  return <>
-    {outgoing.length > 0 && <section className="drawer__section">
-      <div className="drawer__section-head">Answers</div>
-      {outgoing.map(([field, ids]) => <div key={field} className="spec-edge">
-        <span className="spec-edge__field">{field}</span>
-        <span className="spec-panel__refs">{ids.map(ref)}</span>
-      </div>)}
-    </section>}
-    {incoming.length > 0 && <section className="drawer__section">
-      <div className="drawer__section-head">Answered by</div>
-      {incoming.map(({ from, field }) => <div key={`${from}-${field}`} className="spec-edge">
-        <span className="spec-edge__field">{field}</span>
-        <span className="spec-panel__refs">{ref(from)}</span>
-      </div>)}
-    </section>}
-  </>;
+function Relations({ node, board, onOpen }: { node: SpecNode; board: Board; onOpen: (id: string) => void }) {
+  const groups = new Map<string, string[]>();
+  for (const [field, ids] of Object.entries(node.edges ?? {})) if (ids.length) groups.set(relationPhrase(field, "out"), [...(groups.get(relationPhrase(field, "out")) ?? []), ...ids]);
+  for (const { from, field } of board.incoming.get(node.id) ?? []) {
+    const phrase = relationPhrase(field, "in");
+    groups.set(phrase === field ? `${field} (from)` : phrase, [...(groups.get(phrase === field ? `${field} (from)` : phrase) ?? []), from]);
+  }
+  // A goal's served-by list follows the tree's order, not the titles (QA-01m4gvndbn0hfx4fwq5jhjj5cg).
+  const served = groups.get(relationPhrase("serves", "in"));
+  if (served) {
+    const positions = goalPositions(structureNodes(board.spec));
+    groups.set(relationPhrase("serves", "in"), [...served].sort((left, right) => (positions.get(left) ?? Infinity) - (positions.get(right) ?? Infinity) || (titleOf(left) ?? left).localeCompare(titleOf(right) ?? right)));
+  }
+  if (!groups.size) return null;
+  return <section className="drawer__section">
+    <div className="drawer__section-head">Relations</div>
+    {[...groups].map(([phrase, ids]) => <div key={phrase} className="spec-edge">
+      <span className="spec-edge__phrase">{phrase}</span>
+      <span className="spec-panel__refs">{[...new Set(ids)].map((id) => board.specById.has(id)
+        ? <RelatedRef key={id} id={id} onOpen={onOpen} />
+        : <BrokenRef key={id} id={id} />)}</span>
+    </div>)}
+  </section>;
 }
 
-export function EntityDrawer({ id, board, onClose, onOpen }: {
-  id: string; board: Board; onClose: () => void; onOpen: (id: string) => void;
+/**
+ * A reference to a node that does not exist, said as such with what closes it, wherever it is shown
+ * (BR-01m4gmdmy4keq12tj73ahtskx0).
+ */
+export function BrokenRef({ id }: { id: string }) {
+  return <span className="broken-ref" role="note"><b>Broken reference</b> <code>{id}</code> — no such node. Add the node, or correct or remove the reference, in a change.</span>;
+}
+/** The ids a node names that no node of the board carries. */
+export function brokenReferences(node: SpecNode, board: Board): string[] {
+  return [...new Set(Object.values(node.edges ?? {}).flat().filter((id) => !board.specById.has(id)))];
+}
+
+const day = (at: string) => (at ? at.slice(0, 10) : "an unrecorded day");
+const DECIDED_SENTENCE: Record<ProvenanceDecider, string> = {
+  human: "You decided this node.",
+  "agent-proposed-human-approved": "The agent proposed this node and you approved it.",
+  "agent-decided": "The agent decided this node alone; it was approved with the change as a whole, not reviewed one by one.",
+};
+
+/** What the approval behind a node covers (BR-01m4gh4rxe5navrnzfz0t5a2jf). */
+function ApprovalNote({ node, board }: { node: SpecNode; board: Board }) {
+  const decider = node.provenance?.decided_by;
+  const own = decider ? DECIDED_SENTENCE[decider] : "The node records no one as having decided it.";
+  if (node.mark && board.change) {
+    const approval = board.change.approval;
+    return <p className="approval-note">{approval
+      ? <>In the change <b>{board.change.title}</b>, approved by {approval.by} on {day(approval.at)}. {own}</>
+      : <>In the change <b>{board.change.title}</b>, which nobody has said yes to yet. {own}</>}</p>;
+  }
+  const landing = board.landedBy.get(node.id);
+  if (!landing) return null;
+  return <p className="approval-note">Landed with the change <b>{landing.title}</b>, approved by {landing.by} on {day(landing.at)}. {own}</p>;
+}
+
+export function EntityDrawer({ id, board, onClose, onOpen, onBack, canGoBack = false, restoreTo, onLeave }: {
+  id: string; board: Board; onClose: () => void; onOpen: (id: string) => void; onBack?: () => void; canGoBack?: boolean;
+  /** Where to show the node from when the reader stepped back to it; opened forward it shows from its top. */
+  restoreTo?: number;
+  /** Told how far the reader had scrolled a node when another one replaces it. */
+  onLeave?: (id: string, scroll: number) => void;
 }) {
   const ref = useDialog(onClose);
+  const title = useRef<HTMLHeadingElement>(null);
+  // Recorded while the node is read: by the time it is replaced, the new content may have clamped it.
+  const scrolled = useRef(0);
+  // A node opened from a list or another node shows from its top with its title focused; stepping
+  // back returns to where the reader left it (BR-01m4gmdmcjc5rcf90rh8hjz3g3).
+  useLayoutEffect(() => {
+    const drawer = ref.current;
+    if (!drawer) return;
+    drawer.scrollTop = restoreTo ?? 0;
+    scrolled.current = drawer.scrollTop;
+    if (restoreTo === undefined) title.current?.focus({ preventScroll: true });
+    return () => { onLeave?.(id, scrolled.current); };
+  }, [id]);
   const node = board.specById.get(id);
+  const place = node ? placeOf(board.spec, id) : [];
   const fields: Array<[string, string]> = [];
   if (node) {
-    // An admission is a statement about the evidence, not about the agreement, so it is shown as
-    // what it is: which kind of gap this node records, and why.
-    fields.push(["form", node.form], ["file", node.path]);
+    fields.push(["form", node.form.replace(/-/g, " ")], ["file", node.path]);
     if (node.capability) fields.push(["capability", node.capability]);
-    for (const admission of node.accepted) fields.push(["admitted", admission]);
+    for (const admission of node.accepted) fields.push(["gap admitted", admission]);
   }
 
   return <div className="scrim" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-    <div className="drawer scroll" role="dialog" aria-modal="true" aria-label={`${node?.form ?? "node"}: ${node?.title ?? id}`} tabIndex={-1} ref={ref}>
+    <div className="drawer scroll" role="dialog" aria-modal="true" aria-label={`${node?.form ?? "node"}: ${node?.title ?? id}`} tabIndex={-1} ref={ref}
+      onScroll={(event) => { scrolled.current = event.currentTarget.scrollTop; }}>
       <div className="drawer__bar">
-        <span className="tag tag-outline">{node?.form ?? "node"}</span>
+        {canGoBack && onBack && <button type="button" className="drawer__back" onClick={onBack}>← Back</button>}
+        <span className="tag tag-outline">{node?.form.replace(/-/g, " ") ?? "node"}</span>
         <Tail id={id} />
         <button type="button" className="drawer__close" onClick={onClose}>Close · esc</button>
       </div>
       {!node
         ? <div className="drawer__gone"><Dangling field="reference" id={id} /></div>
         : <>
-          <h2 className="drawer__title">{node.title}</h2>
+          {place.length > 0 && <nav className="drawer__place" aria-label="Place in the tree">
+            {place.map((step, index) => <span key={step.id}>{index > 0 && <span aria-hidden="true"> › </span>}
+              <button type="button" className="drawer__place-step" onClick={() => onOpen(step.id)}>{step.title}</button></span>)}
+          </nav>}
+          <h2 className="drawer__title" tabIndex={-1} ref={title}>{node.title}</h2>
           {node.mark && <p className="drawer__change"><ChangeTag node={node} /></p>}
-          <ProvenancePanel node={node} onOpen={onOpen} />
-          <SpecNeighbours node={node} board={board} onOpen={onOpen} />
-          <dl className="drawer__fields">
-            {fields.map(([key, value], index) => <div key={`${key}-${index}`}>
-              <dt>{key}</dt>
-              <dd>{value}</dd>
-            </div>)}
-          </dl>
           {Object.entries(node.sections ?? {}).map(([name, body]) => body && body.trim()
             ? <section key={name} className="drawer__section">
               <div className="drawer__section-head">{titleCase(name)}</div>
@@ -448,9 +570,18 @@ export function EntityDrawer({ id, board, onClose, onOpen }: {
           {node.before && <section className="drawer__section">
             <div className="drawer__section-head">Before the change</div>
             {Object.entries(node.before).map(([name, body]) => body && body.trim() && body !== node.sections?.[name]
-              ? <div key={name}><div className="spec-edge__field">{titleCase(name)}</div><MarkdownContent value={body} onEntity={onOpen} /></div>
+              ? <div key={name}><div className="spec-edge__phrase">{titleCase(name)}</div><MarkdownContent value={body} onEntity={onOpen} /></div>
               : null)}
           </section>}
+          <Relations node={node} board={board} onOpen={onOpen} />
+          <ApprovalNote node={node} board={board} />
+          <ProvenancePanel node={node} onOpen={onOpen} />
+          <dl className="drawer__fields">
+            {fields.map(([key, value], index) => <div key={`${key}-${index}`}>
+              <dt>{key}</dt>
+              <dd>{value}</dd>
+            </div>)}
+          </dl>
         </>}
     </div>
   </div>;
@@ -467,22 +598,61 @@ export function ChangeTag({ node }: { node: SpecNode }) {
     {node.uncommitted && <span className="tag tag-outline">not committed</span>}
   </>;
 }
-export function ChangeHeader({ change, onOpen }: { change: OpenChange; onOpen: (id: string) => void }) {
+/**
+ * The process, said in one line (QA-01m4gvndbn0hfx4fwq5jhjj5cg): the open change, who said yes and
+ * what the yes covers (BR-01m4gh4rxe5navrnzfz0t5a2jf), and every other piece — the gate's list, the
+ * proposal, open decisions, unreadable files, and whatever the view adds, such as the gaps — opening
+ * on request below it.
+ */
+export function ChangeHeader({ change, onOpen, extra }: { change: OpenChange | null; onOpen: (id: string) => void; extra?: ReactNode }) {
+  if (!change) return extra ? <section className="process-line" aria-label="About the model">{extra}</section> : null;
   const state = change.approved ? "approved" : change.planned ? "planned, not approved" : "not planned";
-  return <section className="banner banner--change" aria-label={`Open change: ${change.title}`}>
-    <p><b>Open change</b> · <code>{change.name}</code> · {state}
-      {change.uncommitted.length > 0 && <> · <span className="tag tag-outline">not committed</span> {change.uncommitted.length} file{change.uncommitted.length === 1 ? "" : "s"}</>}</p>
-    <details>
-      <summary>Proposal</summary>
-      <MarkdownContent value={change.proposal} onEntity={onOpen} />
-    </details>
-    {change.openDecisions.length > 0 && <details open>
-      <summary>Open decisions · {change.openDecisions.length}</summary>
-      <ul>{change.openDecisions.map((decision, index) => <li key={index}>
-        <MarkdownContent value={`${decision.node}: ${decision.text}`} onEntity={onOpen} />
-      </li>)}</ul>
+  const counts = { human: 0, "agent-proposed-human-approved": 0, "agent-decided": 0, none: 0 };
+  for (const node of change.nodes) counts[node.provenance?.decided_by ?? "none"] += 1;
+  const approval = change.approval;
+  const unreadable = change.unreadable ?? [];
+  return <section className="process-line" aria-label={`Open change: ${change.title}`}>
+    <span className="process-line__lead"><b>{change.title}</b> · {approval ? "" : `${state} · `}</span>
+    {change.uncommitted.length > 0 && <span className="process-line__part"> · {change.uncommitted.length} not committed</span>}
+    {approval && <details className="process-line__part approval-list">
+      <summary>gate list · {approval.agentDecidedAtGate.length}</summary>
+      <div className="process-line__open"><p>What the gate listed as the agent&apos;s own decisions · {approval.agentDecidedAtGate.length}</p>
+        <ul>{approval.agentDecidedAtGate.map((line, index) => <li key={index}><MarkdownContent value={line} onEntity={onOpen} /></li>)}</ul></div>
     </details>}
+    <details className="process-line__part">
+      <summary>proposal</summary>
+      <div className="process-line__open"><MarkdownContent value={change.proposal} onEntity={onOpen} /></div>
+    </details>
+    {change.openDecisions.length > 0 && <details className="process-line__part">
+      <summary>open decisions · {change.openDecisions.length}</summary>
+      <div className="process-line__open"><ul>{change.openDecisions.map((decision, index) => <li key={index}>
+        <MarkdownContent value={`${decision.node}: ${decision.text}`} onEntity={onOpen} />
+      </li>)}</ul></div>
+    </details>}
+    {unreadable.length > 0 && <details className="process-line__part" open>
+      <summary>{unreadable.length} unreadable</summary>
+      <div className="process-line__open unreadable" role="alert">
+        <b>{unreadable.length === 1 ? "One file of this change cannot be read" : `${unreadable.length} files of this change cannot be read`}</b> — the change is not empty; these are left out until they are fixed:
+        <ul>{unreadable.map((file) => <li key={file.path}><code>{file.path}</code> — {file.reason}</li>)}</ul>
+      </div>
+    </details>}
+    {extra}
+    <span className="process-line__part"><span className="approval-summary">{approval
+      ? <>Approved by {approval.by} on {day(approval.at)} for the whole change · as its provenance records it: {counts.human} by you, {counts["agent-proposed-human-approved"]} proposed and approved, {counts["agent-decided"]} by the agent alone</>
+      : <>Nobody has said yes to this change yet.</>}</span></span>
   </section>;
+}
+
+/** With nothing accepted and several changes open, the board opens on their list (BR-01m40e522gtq49knhy51hr9e3d). */
+export function ChangeList({ changes, onChange }: { changes: OpenChange[]; onChange: (name: string) => void }) {
+  return <div className="view">
+    <div className="view__head"><div><h2>Open changes</h2><p>Nothing is accepted yet. Each change below waits at, or has passed, its gate; open one to see its model.</p></div></div>
+    <ul className="change-list">{changes.map((change) => <li key={change.name}>
+      <button type="button" className="change-list__item" onClick={() => onChange(change.name)}>
+        <b>{change.title}</b><span>{change.nodes.length + change.removed.length} nodes · {change.approved ? "approved" : change.planned ? "planned, not approved" : "not planned"}</span>
+      </button>
+    </li>)}</ul>
+  </div>;
 }
 
 /* ══ What the reader says about itself ═══════════
@@ -496,18 +666,64 @@ export function WorkspaceNotices({ notices }: { notices: string[] }) {
   </div>;
 }
 
+/* ══ The address ═════════════════════════════════════
+   The view, its filters, the search, the arrangement, the open change and the open node live in the
+   page's address (QA-01m4ghr864w6xe125fkvrdptmh): a copied address opens the same screen, and opening
+   one node from another is a step the browser's back retraces (BR-01m4gg8w74b37208tgnb4w6cvj). */
+export type Address = {
+  view: ViewKey | "changes"; change: string | null; filter: SpecFilter; form: string; query: string;
+  node: string | null; arrangement: Arrangement;
+};
+const VIEW_KEYS = new Set<string>([...VIEWS.map((entry) => entry.key), "changes"]);
+export function readAddress(search: string): Partial<Address> & { explicit: boolean } {
+  const params = new URLSearchParams(search);
+  const out: Partial<Address> & { explicit: boolean } = { explicit: params.has("view") || params.has("change") };
+  const view = params.get("view");
+  if (view && VIEW_KEYS.has(view)) out.view = view as Address["view"];
+  if (params.has("change")) out.change = params.get("change") || null;
+  const filter = params.get("filter");
+  if (filter && ["all", "kept", ...ADMISSION_KINDS].includes(filter)) out.filter = filter as SpecFilter;
+  if (params.has("form")) out.form = params.get("form")!;
+  if (params.has("q")) out.query = params.get("q")!;
+  if (params.has("node")) out.node = params.get("node") || null;
+  const arrangement = params.get("by");
+  if (arrangement === "goal" || arrangement === "actor") out.arrangement = arrangement;
+  return out;
+}
+export function writeAddress(search: string, address: Address): string {
+  const params = new URLSearchParams(search);
+  const set = (key: string, value: string | null, fallback: string | null) => (value === null || value === fallback ? params.delete(key) : params.set(key, value));
+  set("view", address.view, null);
+  set("change", address.change, null);
+  set("filter", address.filter, "all");
+  set("form", address.form, "all");
+  set("q", address.query, "");
+  set("node", address.node, null);
+  set("by", address.arrangement, "goal");
+  const text = params.toString();
+  return text ? `?${text}` : "";
+}
+
 /* ══ App ═══════════════════════════════════════════════ */
 export function App() {
+  const initial = useMemo(() => readAddress(typeof window !== "undefined" ? window.location.search : ""), []);
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [detailId, setDetailId] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(initial.node ?? null);
   const [refreshed, setRefreshed] = useState(0);
-  const [specFilter, setSpecFilter] = useState<SpecFilter>("all");
-  const [specForm, setSpecForm] = useState<string>("all");
-  const [specQuery, setSpecQuery] = useState<string>("");
-  const [view, setView] = useState<ViewKey>("spec");
+  const [specFilter, setSpecFilter] = useState<SpecFilter>(initial.filter ?? "all");
+  const [specForm, setSpecForm] = useState<string>(initial.form ?? "all");
+  const [specQuery, setSpecQuery] = useState<string>(initial.query ?? "");
+  const [view, setView] = useState<Address["view"]>(initial.view ?? "spec");
+  const [arrangement, setArrangement] = useState<Arrangement>(initial.arrangement ?? "goal");
   const [agentOnly, setAgentOnly] = useState(false);
-  const [changeName, setChangeName] = useState<string | null>(null);
+  const [changeName, setChangeName] = useState<string | null>(initial.change ?? null);
+  const [depth, setDepth] = useState(0);
+  const [treeExpansion, setTreeExpansion] = useState<{ open: boolean; round: number }>({ open: false, round: 0 });
+  const landed = useRef(initial.explicit);
+  const stage = useRef<HTMLElement>(null);
+  const scrolls = useRef(new Map<string, number>());
+  const shownView = useRef<string>(initial.view ?? "spec");
 
   /* One request, always the same one: the board never posts. A failed read keeps the last
      good data on screen and says what failed — a refresh preserves the filters and the drawer. */
@@ -525,31 +741,112 @@ export function App() {
   useEffect(() => { void refresh(); const timer = window.setInterval(() => void refresh(), 1_500); return () => window.clearInterval(timer); }, [refresh]);
   useEffect(() => { const t = window.setInterval(() => setRefreshed((r) => (r + 1) % 600), 1_000); return () => window.clearInterval(t); }, []);
 
+  // Nothing accepted yet: the board opens on the one open change, or on the list of several
+  // (BR-01m40e522gtq49knhy51hr9e3d) — unless the address already says where to be.
+  useEffect(() => {
+    if (!workspace || landed.current) return;
+    landed.current = true;
+    const changes = workspace.changes ?? [];
+    if ((workspace.spec ?? []).length > 0 || changes.length === 0) return;
+    if (changes.length === 1) setChangeName(changes[0].name);
+    else setView("changes");
+  }, [workspace]);
+
+  // The address follows the state; opening a node is a step back can retrace.
+  const address: Address = { view, change: changeName, filter: specFilter, form: specForm, query: specQuery, node: detailId, arrangement };
+  const lastNode = useRef(detailId);
+  useEffect(() => {
+    const next = `${window.location.pathname}${writeAddress(window.location.search, address)}${window.location.hash}`;
+    if (next === `${window.location.pathname}${window.location.search}${window.location.hash}`) return;
+    if (detailId && detailId !== lastNode.current) window.history.pushState({ depth }, "", next);
+    else window.history.replaceState({ depth }, "", next);
+    lastNode.current = detailId;
+  });
+  useEffect(() => {
+    const onPop = (event: PopStateEvent) => {
+      const read = readAddress(window.location.search);
+      lastNode.current = read.node ?? null;
+      setDetailId(read.node ?? null);
+      setView(read.view ?? "spec");
+      setChangeName(read.change ?? null);
+      setSpecFilter(read.filter ?? "all");
+      setSpecForm(read.form ?? "all");
+      setSpecQuery(read.query ?? "");
+      setArrangement(read.arrangement ?? "goal");
+      setDepth(typeof event.state?.depth === "number" ? event.state.depth : 0);
+      setSteppedBack(true);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+  const detailIdRef = useRef(detailId);
+  detailIdRef.current = detailId;
+  const open = useCallback((id: string) => { setSteppedBack(false); setDepth((current) => (detailIdRef.current ? current + 1 : 1)); setDetailId(id); }, []);
+  const close = useCallback(() => { setDetailId(null); setDepth(0); }, []);
+  const drawerScrolls = useRef(new Map<string, number>());
+  const [steppedBack, setSteppedBack] = useState(false);
+
+  // `/` reaches search from anywhere but a field; the view a reader returns to opens where it was left,
+  // and a view switched to opens at its top (QA-01m4ghr864w6xe125fkvrdptmh, QA-01m4ghr8h4345h3tt86nb28eqx).
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target && (target.closest("input, textarea, select, [contenteditable=true]"))) return;
+      event.preventDefault();
+      setView("spec");
+      setSeeking((count) => count + 1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  // A `/` pressed before the search is on screen is kept until it is, then answered once.
+  const [seeking, setSeeking] = useState(0);
+  const sought = useRef(0);
+  useEffect(() => {
+    if (seeking === sought.current) return;
+    const search = document.querySelector<HTMLInputElement>("[data-search]");
+    if (!search) return;
+    search.focus();
+    sought.current = seeking;
+  });
+  useLayoutEffect(() => {
+    const element = stage.current;
+    if (!element || shownView.current === view) return;
+    // The scroll of the view left was recorded while it was read; the switch itself may have clamped it.
+    element.scrollTop = scrolls.current.get(view) ?? 0;
+    shownView.current = view;
+  }, [view]);
+  useEffect(() => { if (workspace) document.title = `Kotta — ${workspace.project}`; }, [workspace]);
+
   const board = useMemo(() => (workspace ? readBoard(workspace, changeName) : null), [workspace, changeName]);
+  const changes = workspace?.changes ?? [];
 
   return <div className="app">
-    <Rail board={board} refreshed={refreshed} view={view} onView={setView} changes={workspace?.changes ?? []} change={board?.change?.name ?? null} onChange={setChangeName} />
+    <Rail board={board} refreshed={refreshed} view={view === "changes" ? "spec" : view} onView={setView} changes={changes} change={board?.change?.name ?? null} onChange={(name) => { setChangeName(name); if (view === "changes") setView("spec"); }} />
     <div className="content">
-      <TopBar workspace={workspace} board={board} onRefresh={() => void refresh()} refreshed={refreshed} />
+      <TopBar workspace={workspace} board={board} onRefresh={() => void refresh()} refreshed={refreshed} counts={view === "spec"} />
       {workspace?.notices?.length ? <WorkspaceNotices notices={workspace.notices} /> : null}
-      {board?.change && <ChangeHeader change={board.change} onOpen={setDetailId} />}
-      {board && <ProvenanceSummary board={board} agentOnly={agentOnly} onAgentOnly={setAgentOnly} />}
       {workspace && error && <div className="banner" role="alert">
         <b>Last read failed.</b> Tried <code>GET {WORKSPACE_ENDPOINT}</code> — {error}. Showing the last good read.
         <button type="button" className="btn btn-secondary btn-sm" onClick={() => void refresh()}>Retry</button>
       </div>}
-      <main className="stage scroll">
+      <main className="stage scroll" ref={stage} onScroll={(event) => scrolls.current.set(shownView.current, event.currentTarget.scrollTop)}>
+        {board?.change && view !== "tree" && <ChangeHeader change={board.change} onOpen={open} />}
+        {board && view === "spec" && <ProvenanceSummary board={board} agentOnly={agentOnly} onAgentOnly={setAgentOnly} />}
         {!board && <div className="view"><Placeholder rows={6} label="Reading the workspace…" />
           {error && <div className="banner" role="alert"><b>The workspace could not be read.</b> {error}. <button type="button" className="btn btn-secondary btn-sm" onClick={() => void refresh()}>Retry</button></div>}</div>}
+        {board && view === "changes" && <ChangeList changes={changes} onChange={(name) => { setChangeName(name); setView("spec"); }} />}
         {board && view === "spec" && <SpecView board={board} filter={specFilter} form={specForm} query={specQuery} agentOnly={agentOnly}
-          onFilter={setSpecFilter} onForm={setSpecForm} onQuery={setSpecQuery} onOpen={setDetailId} />}
-        {board && view === "use-cases" && <UseCaseView board={board} agentOnly={agentOnly} onOpen={setDetailId} />}
-        {board && view === "stories" && <StoryMapView board={board} agentOnly={agentOnly} onOpen={setDetailId} />}
-        {board && view === "entities" && <EntityMapView board={board} agentOnly={agentOnly} onOpen={setDetailId} />}
-        {board && view === "states" && <StateMachineView board={board} agentOnly={agentOnly} onOpen={setDetailId} />}
-        {board && view === "tree" && <TreeView board={board} onOpen={setDetailId} />}
+          onFilter={setSpecFilter} onForm={setSpecForm} onQuery={setSpecQuery} onOpen={open} />}
+        {board && view === "use-cases" && <UseCaseView board={board} agentOnly={agentOnly} onOpen={open} />}
+        {board && view === "stories" && <StoryMapView board={board} agentOnly={agentOnly} onOpen={open} />}
+        {board && view === "entities" && <EntityMapView board={board} agentOnly={agentOnly} onOpen={open} />}
+        {board && view === "states" && <StateMachineView board={board} agentOnly={agentOnly} onOpen={open} />}
+        {board && view === "tree" && <TreeView board={board} onOpen={open} arrangement={arrangement} onArrangement={setArrangement} expansion={treeExpansion} onExpansion={setTreeExpansion} />}
       </main>
     </div>
-    {detailId && board && <EntityDrawer id={detailId} board={board} onClose={() => setDetailId(null)} onOpen={setDetailId} />}
+    {detailId && board && <EntityDrawer id={detailId} board={board} onClose={close} onOpen={open} canGoBack={depth > 1} onBack={() => window.history.back()}
+      restoreTo={steppedBack ? drawerScrolls.current.get(detailId) : undefined} onLeave={(id, scroll) => drawerScrolls.current.set(id, scroll)} />}
   </div>;
 }

@@ -16,6 +16,11 @@ availability, security, accessibility, modifiability, or operability is discusse
 failure, environment, threshold, percentile, or error budget. Treat words such as “fast”, “secure”,
 and “scalable” alone as prompts for clarification, not as complete requirements.
 
+Watch for quality that is said in passing — in a review, a critique, or a proposal's list of what
+will change: "the labels are too small", "search finds titles only", "the header takes a quarter
+of the screen". Each is a quality requirement. Say so, and draft it as a node in the change; never
+let it stay a build note in prose, where nothing cites it and nothing notices it regress.
+
 ## Run the workshop
 
 1. Name the source of the stimulus and the exact stimulus.

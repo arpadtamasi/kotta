@@ -24,6 +24,8 @@ const data = workspace({
 let calls: Array<{ url: string; method: string }>;
 
 beforeEach(() => {
+  // The board keeps its state in the address; each test starts from a clean one.
+  window.history.replaceState(null, "", "/");
   calls = [];
   vi.stubGlobal("fetch", (input: unknown, init?: { method?: string }) => {
     calls.push({ url: String(input), method: init?.method ?? "GET" });

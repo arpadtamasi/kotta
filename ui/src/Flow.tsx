@@ -14,7 +14,10 @@ import type { FlowEdge, FlowGraph, FlowNode } from "./model";
    points rather than re-routed by React Flow. Loaded only when a view draws with it.
    Keeps BR-01m414skfbftb3zv6z2f1tzzsq (the board draws its own diagrams). */
 
-const MAX_WIDTH: Partial<Record<FlowNode["shape"], number>> = { "use-case": 280, actor: 200, goal: 220 };
+const MAX_WIDTH: Partial<Record<FlowNode["shape"], number>> = { "use-case": 260, actor: 160, goal: 220 };
+/* UML's use-case notation (BR-01m4gg8wd62m9h75yczmmzphs7): an actor is a stick figure above its name,
+   a use case an ellipse, so both are taller than a card. */
+const FIGURE = 44;
 const DEFAULT_MAX = 200;
 const PAD = 28;
 const LINE = 18;
@@ -40,11 +43,14 @@ function sizeOf(node: FlowNode): { width: number; height: number } {
   const natural = Math.ceil(textWidth(node.label, FONT)) + pad;
   const width = Math.min(max, Math.max(72, natural));
   const lines = natural <= max ? 1 : Math.ceil((natural - pad) / (max - pad));
-  return { width, height: 14 + LINE * lines + (node.caption ? CAPTION : 0) };
+  const text = 14 + LINE * lines + (node.caption ? CAPTION : 0);
+  if (node.shape === "actor") return { width, height: text + FIGURE };
+  if (node.shape === "use-case") return { width: width + 24, height: text + 18 };
+  return { width, height: text };
 }
 
 type CardData = { node: FlowNode; lit: boolean | null };
-type GroupData = { label: string };
+type GroupData = { label: string; boundary?: boolean };
 type RouteData = { points: ElkPoint[]; lit: boolean | null; label?: ElkLabel; title?: string };
 
 function FlowCard({ data }: NodeProps<Node<CardData>>) {
@@ -54,14 +60,23 @@ function FlowCard({ data }: NodeProps<Node<CardData>>) {
   const marker = node.shape === "start" || node.shape === "end";
   return <div className={classes.filter(Boolean).join(" ")} title={marker ? node.label : undefined}>
     <Handle type="target" position={Position.Top} isConnectable={false} />
+    {node.shape === "actor" && <StickFigure />}
     {!marker && <span className="flow-node__label">{node.label}</span>}
     {!marker && node.caption && <span className="flow-node__caption">{node.caption}</span>}
     <Handle type="source" position={Position.Bottom} isConnectable={false} />
   </div>;
 }
 
+/** UML's actor: a stick figure. */
+function StickFigure() {
+  return <svg className="flow-node__figure" width="22" height="38" viewBox="0 0 22 38" aria-hidden="true" focusable="false">
+    <circle cx="11" cy="6" r="5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+    <path d="M11 11 V24 M2 16 H20 M11 24 L3 36 M11 24 L19 36" fill="none" stroke="currentColor" strokeWidth="1.5" />
+  </svg>;
+}
+
 function FlowGroup({ data }: NodeProps<Node<GroupData>>) {
-  return <div className="flow-group"><span className="flow-group__label">{data.label}</span></div>;
+  return <div className={`flow-group${data.boundary ? " flow-group--boundary" : ""}`}><span className="flow-group__label">{data.label}</span></div>;
 }
 
 /** A path through ELK's bend points, each corner rounded. */
@@ -122,7 +137,7 @@ function toSvg(laid: Laid): string {
   }
   const out: string[] = [
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" font-family="Archivo, system-ui, sans-serif">`,
-    `<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${c.muted}"/></marker></defs>`,
+    `<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="${c.muted}"/></marker><marker id="open" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M0,0 L10,5 L0,10" fill="none" stroke="${c.muted}" stroke-width="1.5"/></marker></defs>`,
     `<rect width="${width}" height="${height}" fill="${c.bg}"/>`,
   ];
   for (const node of laid.nodes) {
@@ -134,7 +149,9 @@ function toSvg(laid: Laid): string {
   }
   for (const edge of laid.edges) {
     if (!edge.points.length) continue;
-    out.push(`<path d="${roundedPath(edge.points.map((p) => ({ x: p.x + margin, y: p.y + margin })))}" fill="none" stroke="${c.muted}" stroke-width="1.25"${edge.dashed ? ' stroke-dasharray="5 4"' : ""} marker-end="url(#arrow)"${edge.both ? ' marker-start="url(#arrow)"' : ""}/>`);
+    const dash = edge.dotted ? ' stroke-dasharray="2 4"' : edge.dashed ? ' stroke-dasharray="5 4"' : "";
+    const head = edge.plain || edge.dotted ? "" : edge.open ? ' marker-end="url(#open)"' : ' marker-end="url(#arrow)"';
+    out.push(`<path d="${roundedPath(edge.points.map((p) => ({ x: p.x + margin, y: p.y + margin })))}" fill="none" stroke="${c.muted}" stroke-width="1.25"${dash}${head}${edge.both ? ' marker-start="url(#arrow)"' : ""}/>`);
     const label = edge.elkLabel;
     if (label?.text) {
       const lx = (label.x ?? 0) + margin, ly = (label.y ?? 0) + margin;
@@ -152,16 +169,17 @@ function toSvg(laid: Laid): string {
     if (flow.shape === "end") { out.push(`<circle cx="${cx}" cy="${y + h / 2}" r="${w / 2}" fill="none" stroke="${c.text}" stroke-width="1.5"/>`, `<circle cx="${cx}" cy="${y + h / 2}" r="${w / 2 - 4}" fill="${c.text}"/>`); continue; }
     const stroke = flow.level === "partly-inferred" ? c.partly : flow.level === "inferred" ? c.inferred : flow.level === "stated" ? c.text : c.line;
     const dash = flow.level === "partly-inferred" || flow.level === "inferred" ? ' stroke-dasharray="5 3"' : "";
-    const radius = { "use-case": h / 2, actor: 3, goal: 0, state: 12 }[flow.shape as string] ?? 6;
-    const fill = flow.shape === "actor" ? c.bg : flow.shape === "goal" ? "none" : c.surface;
-    if (flow.shape !== "condition") out.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${radius}" fill="${fill}" stroke="${flow.shape === "goal" && !flow.level ? c.soft : stroke}" stroke-width="1.5"${dash}/>`);
-    if (flow.shape === "actor") out.push(`<rect x="${x}" y="${y}" width="5" height="${h}" fill="${c.text}"/>`);
+    const radius = { goal: 0, state: 12 }[flow.shape as string] ?? 6;
+    const fill = flow.shape === "goal" ? "none" : c.surface;
+    if (flow.shape === "use-case") out.push(`<ellipse cx="${cx}" cy="${y + h / 2}" rx="${w / 2}" ry="${h / 2}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"${dash}/>`);
+    else if (flow.shape === "actor") out.push(`<g transform="translate(${cx - 11} ${y + 2})" fill="none" stroke="${c.text}" stroke-width="1.5"><circle cx="11" cy="6" r="5"/><path d="M11 11 V24 M2 16 H20 M11 24 L3 36 M11 24 L19 36"/></g>`);
+    else if (flow.shape !== "condition") out.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${radius}" fill="${fill}" stroke="${flow.shape === "goal" && !flow.level ? c.soft : stroke}" stroke-width="1.5"${dash}/>`);
     if (flow.shape === "goal") out.push(`<rect x="${x}" y="${y + h - 4}" width="${w}" height="4" fill="${c.soft}"/>`);
     if (flow.terminal) out.push(`<rect x="${x + 3}" y="${y + 3}" width="${w - 6}" height="${h - 6}" rx="9" fill="none" stroke="${c.text}" stroke-width="1.5"/>`);
     const pad = flow.shape === "use-case" ? PAD + 16 : PAD;
     const lines = wrap(flow.label, w - pad + 2, FONT);
     const block = lines.length * LINE + (flow.caption ? CAPTION : 0);
-    let ty = y + (h - block) / 2 + 13;
+    let ty = flow.shape === "actor" ? y + FIGURE + 13 : y + (h - block) / 2 + 13;
     const italic = flow.shape === "condition" ? ' font-style="italic"' : "";
     for (const line of lines) { out.push(`<text x="${cx}" y="${ty}" text-anchor="middle" font-size="13.5" font-weight="${flow.shape === "condition" ? 500 : 600}"${italic} fill="${flow.shape === "condition" ? c.muted : c.text}">${escapeXml(line)}</text>`); ty += LINE; }
     if (flow.caption) out.push(`<text x="${cx}" y="${ty - 3}" text-anchor="middle" font-size="10.5" fill="${c.muted}">${escapeXml(flow.caption)}</text>`);
@@ -217,7 +235,7 @@ async function layOut(graph: FlowGraph): Promise<Laid> {
   for (const child of laid.children ?? []) {
     if (byId.has(child.id)) { nodes.push(toNode(child)); continue; }
     nodes.push({ id: child.id, type: "group", position: { x: child.x ?? 0, y: child.y ?? 0 }, draggable: false, selectable: false,
-      style: { width: child.width, height: child.height }, data: { label: child.labels?.[0]?.text ?? "" } satisfies GroupData });
+      style: { width: child.width, height: child.height }, data: { label: child.labels?.[0]?.text ?? "", boundary: graph.groups.find((group) => group.id === child.id)?.boundary } satisfies GroupData });
     for (const inner of child.children ?? []) nodes.push(toNode(inner, child.id));
   }
   const edges = (laid.edges ?? []).map((edge, index) => {
@@ -232,6 +250,9 @@ export default function FlowDiagram({ graph, label, onOpen }: { graph: FlowGraph
   const [laid, setLaid] = useState<Laid | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
+  // Scrolling over a diagram scrolls the page; the diagram pans only while it has the focus
+  // (QA-01m4ghr864w6xe125fkvrdptmh). A modifier key zooms, as React Flow does by default.
+  const [active, setActive] = useState(false);
   useEffect(() => {
     let live = true;
     setLaid(null);
@@ -250,10 +271,11 @@ export default function FlowDiagram({ graph, label, onOpen }: { graph: FlowGraph
     const edges: Edge<RouteData>[] = laid.edges.map((edge) => {
       const lit = hovered ? edge.from === hovered || edge.to === hovered : null;
       const color = lit ? accent : stroke;
-      const marker = { type: MarkerType.ArrowClosed, color, width: 16, height: 16 };
+      const marker = { type: edge.open ? MarkerType.Arrow : MarkerType.ArrowClosed, color, width: 16, height: 16 };
+      const headless = edge.plain || edge.dotted;
       return { id: edge.id, source: edge.from, target: edge.to, type: "routed",
         data: { points: edge.points, lit, label: edge.elkLabel, title: edge.title },
-        style: { stroke: color, strokeDasharray: edge.dashed ? "5 4" : undefined }, markerEnd: marker, markerStart: edge.both ? marker : undefined };
+        style: { stroke: color, strokeDasharray: edge.dotted ? "2 4" : edge.dashed ? "5 4" : undefined }, markerEnd: headless ? undefined : marker, markerStart: edge.both ? marker : undefined };
     });
     return { nodes, edges };
   }, [laid, hovered, stroke, accent]);
@@ -261,11 +283,12 @@ export default function FlowDiagram({ graph, label, onOpen }: { graph: FlowGraph
   if (error) return <p className="diagram__failed" role="alert">The diagram could not be laid out ({error}).</p>;
   if (!laid) return <p className="diagram__drawing" role="status">Drawing {label.toLowerCase()}…</p>;
   return <>
-    <div className="flow" role="img" aria-label={label} style={{ height: Math.min(Math.max(laid.height + 96, 200), 900) }}>
+    <div className={`flow${active ? " is-active" : ""}`} role="img" aria-label={label} tabIndex={0} style={{ height: Math.min(Math.max(laid.height + 96, 200), 900) }}
+      onFocus={() => setActive(true)} onBlur={() => setActive(false)}>
     <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes}
       fitView fitViewOptions={{ padding: { top: "56px", right: "24px", bottom: "24px", left: "24px" }, maxZoom: 1, minZoom: 0.5 }} minZoom={0.2} maxZoom={2}
       nodesConnectable={false} nodesDraggable={false} elementsSelectable={false}
-      panOnScroll zoomOnScroll={false} proOptions={{ hideAttribution: true }}
+      panOnScroll={active} zoomOnScroll={false} preventScrolling={active} proOptions={{ hideAttribution: true }}
       onNodeClick={(_, node) => { const opens = (node.data as CardData).node?.opens; if (opens && onOpen) onOpen(opens); }}
       onNodeMouseEnter={(_, node) => { if (node.type === "card") setHovered(node.id); }}
       onNodeMouseLeave={() => setHovered(null)}>

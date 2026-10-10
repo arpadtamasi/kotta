@@ -28,6 +28,6 @@ export default defineConfig({
     // default), and each one is a full checkout carrying its own copy of tests/. Vitest ignores
     // .gitignore when discovering tests, so without this the suite runs once per open task
     // against a `dist/` resolved from this root — a result that means nothing in either direction.
-    exclude: [...configDefaults.exclude, "site/tests/**", ".worktrees/**"],
+    exclude: [...configDefaults.exclude, "site/tests/**", "ui/tests/**", ".worktrees/**"],
   },
 });

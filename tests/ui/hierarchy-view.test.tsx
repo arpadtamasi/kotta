@@ -69,17 +69,18 @@ describe("the hierarchy view", () => {
     }
   });
 
-  it("draws the tree and the drop highlight on the board", () => {
-    const { container } = render(<TreeView board={readBoard(workspace({ spec }))} onOpen={() => {}} />);
+  it("draws the tree arranged by actor, with the drop highlight a simulation (EX-01m4ee25ey0g2x0bmj6v6rzrpq)", () => {
+    const { container } = render(<TreeView board={readBoard(workspace({ spec }))} onOpen={() => {}} arrangement="actor" />);
     const heads = [...container.querySelectorAll(".spec-group__head")].map((head) => head.textContent);
-    expect(heads[0]).toMatch(/^Overall/);
+    expect(heads.at(-2)).toMatch(/^Holds for the whole product/);
     expect(heads.at(-1)).toMatch(/^No place yet/);
     expect(screen.getAllByText("«includes»")).toHaveLength(2);
     expect(screen.getAllByText("«extends»")).toHaveLength(1);
 
-    const teacherChat = screen.getByText("The teacher tries the course chat").closest("summary")!;
-    fireEvent.click(within(teacherChat).getByText("If dropped"));
-    expect(screen.getByRole("status").textContent).toContain("1 requirement falls out, 1 stays");
+    fireEvent.change(screen.getByLabelText("simulate dropping"), { target: { value: TEST_CHAT } });
+    const status = screen.getByRole("status").textContent ?? "";
+    expect(status).toContain("Simulation — nothing in the specification changes.");
+    expect(status).toContain("1 requirement would fall out, 1 would stay");
     expect(container.querySelector(".tree-req--out")?.textContent).toContain("Own test chat");
     expect([...container.querySelectorAll(".tree-req--stays")].some((row) => row.textContent?.includes("Citation to the place"))).toBe(true);
   });

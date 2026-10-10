@@ -80,6 +80,24 @@ Every Kotta workspace, every agent and every command that opens, plans, approves
 - **WHEN** The workshop asks Kotta for the node.
 - **THEN** The node is minted with `kotta spec new use-case --title … --into <change>` under the change's `model/`; `.kotta/spec/` is untouched until the change is approved and archived.
 
+### Requirement: A quality requirement is recorded where it is said
+<!-- kotta: BR-01m4gj0efhjmpmdw58am4f0c46 -->
+When the conversation or a proposal says how well the product must do something — how readable, findable, fast, stable, accessible or calm it must be — the agent SHALL say in the conversation that it is a quality requirement and SHALL draft it into the change as a quality attribute with a response and a measure; where nobody has said the measure, the agent SHALL ask for it under Open decisions rather than choose one silently. The agent SHALL NOT leave such a requirement as a build note in the proposal's prose.
+
+**Rationale**
+
+A build note in prose protects nothing: the proposal is history once the change is archived, nothing can cite a note, and `kotta gap` cannot count it, so the first regression goes unnoticed. On 2026-10-09 the agent planning the board's hierarchy left ten such notes — no 9px labels, a low sticky header, search over body text — judging them "only presentation"; the operator asked why nothing protected them, and they became four quality attributes. Kotta's own specification had held only four quality attributes, none about reading the board: quality is said often and recorded rarely.
+
+**Scope**
+
+Every change an agent plans under the rules Kotta ships (the rules file and the `plan-change` and `quality-scenarios` skills).
+
+#### Scenario: Board readability notes become quality attributes
+<!-- kotta: EX-01m4gj0etwk33zvh7htrxgszcx -->
+- **GIVEN** A conversation about the board in which the critique says labels are 9px, the sticky header takes a quarter of the screen and search finds titles only.
+- **WHEN** The agent plans the change that fixes them.
+- **THEN** It says in the conversation that these are quality requirements, drafts them as quality attributes with a response and a measure — the fixed header at most 120 pixels, search matching body text — and lists the thresholds it chose for the human at the gate; the proposal carries no build note for them.
+
 ### Requirement: Archive never puts back an older accepted text
 <!-- kotta: BR-01m4at3x2fffqepx85tmvf3hxw -->
 When a change's delta replaces an accepted node, `kotta approve` SHALL record, beside the delta's fingerprint, the fingerprint of that accepted node as it stood when the human said yes. `kotta archive` SHALL refuse to replace a node whose accepted text no longer matches what the approval recorded: it SHALL name the node, say that it changed after the approval, and write nothing. The change is then brought up to the new text — its copy taken again, its own edit applied to it — planned, and put to the human again. A node the change only adds or removes is not affected. An approval recorded before this rule, which carries no such fingerprint, SHALL NOT be archived over a node it replaces: the archive asks for the change to be planned and approved again.
@@ -130,11 +148,11 @@ Every workspace, from 1.0.0-alpha.3. A workspace that had OpenSpec specs and no 
 
 ### Requirement: The board shows what waits at the gate
 <!-- kotta: BR-01m40e522gtq49knhy51hr9e3d -->
-The board SHALL list every open change beside the accepted specification, and SHALL let the reader open one. An opened change SHALL show the model as it would be after the change — the accepted nodes with the delta applied — with every node the change adds, changes or removes marked as such, the diagrams drawn from that merged model, and beside it the change's proposal, its open decisions, and whether it has been planned and approved. An open change SHALL be read from the working tree, so a change not yet committed is shown, and every part of it not committed SHALL be marked as such. The accepted view SHALL stay what it is, read from the base ref as before: the agreed specification, unaffected by any open change. The board SHALL remain read-only: nothing is planned, approved or archived from it.
+The board SHALL list every open change beside the accepted specification, and SHALL let the reader open one. An opened change SHALL show the model as it would be after the change — the accepted nodes with the delta applied — with every node the change adds, changes or removes marked as such, the diagrams drawn from that merged model, and beside it the change's proposal, its open decisions, and whether it has been planned and approved. An open change SHALL be read from the working tree, so a change not yet committed is shown, and every part of it not committed SHALL be marked as such. The accepted view SHALL stay what it is, read from the base ref as before: the agreed specification, unaffected by any open change. When the accepted specification has no node and exactly one change is open, the board SHALL open on that change; with several open and nothing accepted, it SHALL open on the list of open changes. The board SHALL remain read-only: nothing is planned, approved or archived from it.
 
 **Rationale**
 
-Since every proposal opens as a change and reaches the accepted specification only through the gate, the work that waits for the human's decision lives entirely in changes. A board that shows only the accepted specification is empty exactly when the human has to decide: in two projects the whole first slice sat in a change and the board showed nothing.
+Since every proposal opens as a change and reaches the accepted specification only through the gate, the work that waits for the human's decision lives entirely in changes. A board that shows only the accepted specification is empty exactly when the human has to decide: in two projects the whole first slice sat in a change and the board showed nothing. Listing the change was not enough: in intimity the board still opened on an empty accepted view saying "0 nodes", with the 226-node change a small item at the side.
 
 **Scope**
 
@@ -146,11 +164,23 @@ Since every proposal opens as a change and reaches the accepted specification on
 - **WHEN** The human opens the change on the board.
 - **THEN** The rule is shown with its new text, marked changed, and the old text is available beside it; the example is shown marked removed; every other accepted node is shown unmarked.
 
+#### Scenario: An empty specification opens on its one change
+<!-- kotta: EX-01m4gg8xtv2dgnnazgrfag2j59 -->
+- **GIVEN** The intimity workspace as it was on 2026-10-09 before its baseline was archived: no accepted node on the base branch and one open change, *baseline*, with 226 nodes.
+- **WHEN** The human runs `kotta ui`.
+- **THEN** The board opens on the change *baseline*, its model and proposal shown; the accepted view is one click away and still says it holds nothing.
+
 #### Scenario: An uncommitted change appears on the board
 <!-- kotta: EX-01m40e5289ztd19t2he1g3vw2b -->
 - **GIVEN** A workspace with no accepted node and an open change `elso-szelet` whose model holds a goal, a use case and three rules, none of it committed.
 - **WHEN** The human runs `kotta ui` and opens the change.
 - **THEN** The board lists `elso-szelet` as an open change, marked as not committed; opened, it shows the five nodes as added, the proposal's text and its open decisions, and says the change is neither planned nor approved.
+
+#### Scenario: Several open changes open on their list
+<!-- kotta: EX-01m4ggqcvsax811dfpeqm4emh4 -->
+- **GIVEN** A workspace with no accepted node and two open changes.
+- **WHEN** The human runs `kotta ui`.
+- **THEN** The board opens on the list of the two changes, each leading to its model.
 
 #### Scenario: The accepted view is unchanged by an open change
 <!-- kotta: EX-01m40e52kbj64sykakqvez2bpz -->
@@ -187,6 +217,24 @@ Every agent working in a Kotta repository, on any host, on any change. The rule 
 - **GIVEN** A change that only rewrites documentation, or refactors code without adding, changing or removing any promise.
 - **WHEN** The human asks the agent to apply it.
 - **THEN** The agent implements it and says nothing about the specification.
+
+### Requirement: The plan names what the proposal promises without a node
+<!-- kotta: BR-01m4gj0endmfx601pm929wcp41 -->
+`kotta plan` SHALL list, as candidates awaiting judgement, every list item under the proposal's What changes that names no node of the delta and no accepted node by its title, and SHALL ask of each whether it is a promise — a quality attribute, a rule — that needs a node, or work that keeps no promise. It SHALL NOT block the gate on them.
+
+**Rationale**
+
+The agent that left ten build notes in prose was the same agent that would have had to notice them; a second pair of eyes that is mechanical catches what judgement waved through. The check cannot know which prose is quality, so it only points and asks — the way conflict candidates do.
+
+**Scope**
+
+`kotta plan`, on every change.
+
+#### Scenario: The plan lists build notes that no node carries
+<!-- kotta: EX-01m4gj0f0zga6schnfnzsxsxhx -->
+- **GIVEN** A proposal whose What changes lists, after the nodes it names by title, ten items such as "the 9px labels become at least 11px" and "search matches body text", which name no node.
+- **WHEN** `kotta plan` runs.
+- **THEN** The report lists the ten items as candidates, each asking whether it is a promise that needs a node or work that keeps none; the change can still go to the gate.
 
 ### Requirement: The rules name nothing an agent should not reach for
 <!-- kotta: BR-01m40e0avfnth9evktzafbhr7w -->

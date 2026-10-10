@@ -356,9 +356,16 @@ export function validateNodeSet(forms: SpecForm[], nodes: SpecNode[], options: N
   return issues;
 }
 
+const CYCLE_SENTENCE: Record<string, string> = {
+  includes: "A use case may not include itself, directly or through others.",
+  extends: "A use case may not extend itself, directly or through others.",
+  // BR-01m4gg8vnq75d4rkw1e0x1b734
+  serves: "A goal may not serve itself, directly or through others.",
+};
+
 /**
  * A use case may not include or extend itself, directly or through others
- * (BR-01m4ee22ypyq06n7vkk4ycnz9v): every edge a form marks `acyclic` is followed, and each cycle is
+ * (BR-01m4ee22ypyq06n7vkk4ycnz9v), nor a goal serve itself (BR-01m4gg8vnq75d4rkw1e0x1b734): every edge a form marks `acyclic` is followed, and each cycle is
  * named once, on a measured node in it.
  */
 function cycleIssues(forms: SpecForm[], nodes: SpecNode[], subject: (node: SpecNode) => boolean): ValidationIssue[] {
@@ -386,7 +393,7 @@ function cycleIssues(forms: SpecForm[], nodes: SpecNode[], subject: (node: SpecN
         if (reported.has(key)) continue;
         reported.add(key);
         const titles = cycle.map((id) => String(byId.get(id)?.data.title ?? id));
-        issues.push({ code: "SPEC_NODE_CYCLE", message: `${basename(start.path)} (${form.id}) closes a cycle through '${edge.name}': ${titles.join(" → ")}. A use case may not ${edge.name === "extends" ? "extend" : "include"} itself, directly or through others.`, path: start.path });
+        issues.push({ code: "SPEC_NODE_CYCLE", message: `${basename(start.path)} (${form.id}) closes a cycle through '${edge.name}': ${titles.join(" → ")}. ${CYCLE_SENTENCE[edge.name] ?? `A ${form.id} may not reach itself through '${edge.name}'.`}`, path: start.path });
       }
     }
   }

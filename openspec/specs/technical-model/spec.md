@@ -8,6 +8,90 @@
 
 ## Requirements
 
+### Requirement: A broken reference and an unreadable change are said, with what to do
+<!-- kotta: BR-01m4gmdmy4keq12tj73ahtskx0 -->
+A reference to a node that does not exist SHALL be marked as broken wherever the board shows it — in the list and among a node's relations — and SHALL say what closes it: add the node, or correct or remove the reference. A change whose model holds a node the board cannot read SHALL be shown with that node named as unreadable and the reason, never left out in silence.
+
+**Rationale**
+
+A broken reference looked exactly like a working one until it was clicked, and a change with one malformed file showed as an empty change with nothing to say why; `kotta validate` knew both.
+
+**Scope**
+
+`kotta ui`, on the accepted specification and on every open change.
+
+#### Scenario: A change with an unreadable node says so
+<!-- kotta: EX-01m4gmdp0mehp38zeye60apv59 -->
+- **GIVEN** An open change whose model holds a node with malformed frontmatter.
+- **WHEN** The human opens the change on the board.
+- **THEN** The change's header names the unreadable file and why it cannot be read; the change is not shown as empty.
+
+#### Scenario: A dangling refines says what to do
+<!-- kotta: EX-01m4gmdnv48mw2p5vkfy197s0f -->
+- **GIVEN** A use case whose `refines` names a rule id no node carries.
+- **WHEN** The human reads the use case in the list and opens it.
+- **THEN** The list row says it holds a broken reference; among its relations the reference is marked broken and says: add the node, or correct or remove the reference.
+
+### Requirement: A citation of an archived change still opens
+<!-- kotta: BR-01m4gmdmhz5zs80j07660yjaeq -->
+Where a node cites a file of a change by its open path — `.kotta/changes/<name>/…` — and no open change has that name, the board SHALL open the file in the archive folder whose name is the date of archiving followed by `<name>`, the latest when several are, and SHALL say that the change is archived. An open change of that name wins. Where neither exists, the source SHALL be marked as broken, with what closes it.
+
+**Rationale**
+
+Every node a change lands keeps citing the change by its open path; once the change is archived the path is gone, and the board answered "The narrative could not be read: No such file" on the provenance a reviewer most needs.
+
+**Scope**
+
+The sources of a node in `kotta ui`.
+
+#### Scenario: A source in an archived change opens
+<!-- kotta: EX-01m4gmdnf1ntar1hs65r743t0b -->
+- **GIVEN** An intimity rule citing `.kotta/changes/web-push/proposal.md · Why`, and the change *web-push* archived as `.kotta/changes/archive/2026-10-09-web-push/`.
+- **WHEN** The human opens the rule's sources.
+- **THEN** The cited part of the archived proposal is shown, and the source says the change is archived.
+
+### Requirement: A goal can serve a goal
+<!-- kotta: BR-01m4gg8vnq75d4rkw1e0x1b734 -->
+The goal form Kotta ships SHALL let a goal name the goals it serves (`serves`), from the narrower goal to the wider one, and SHALL declare the edge optional and acyclic, so that `kotta validate` names a goal that serves itself, directly or through others.
+
+**Rationale**
+
+A product has one purpose and narrower outcomes under it; goal-oriented requirements engineering calls this goal refinement (KAOS, i*). The word `refines` is taken — it is the use case's edge to the requirements it relies on — so the goal's edge is named for what the narrower goal does: it serves the wider one. Without it every goal is a sibling of every other: the intimity import made eight equal goals, one per capability, and "it can be installed on the home screen" stood level with "the result never exposes one partner". The purpose a human tells in one sentence had nowhere to live.
+
+**Scope**
+
+The goal form Kotta ships. A workspace that already has its own registry gains the edge the way any form change lands: through a change that carries the form (*A form change goes through the gate*).
+
+#### Scenario: Intimity's goals serve one purpose
+<!-- kotta: EX-01m4gg8wkj7dzaje345c4ska46 -->
+- **GIVEN** The intimity specification with eight goals, none naming another, and a new goal *Find an evening both welcome, without one-sided vulnerability*.
+- **WHEN** Each of the eight goals names the new goal under `serves`, and `kotta validate` runs; then *Find an evening both welcome* is made to serve *Each partner can answer honestly, in private*.
+- **THEN** The first run validates; the second is refused, naming the cycle between the two goals.
+
+### Requirement: A summary use case tells a journey
+<!-- kotta: BR-01m4ggqbayfx5szaspsvpc7apt -->
+A use case at the `summary` level SHALL be read as a journey: the use cases it includes are its steps, in the order its `includes` list names them. A step MAY serve a different goal than the summary and than the other steps. A use case that extends a step SHALL be read as on that journey, as a variant of the step. A use case with no `level` SHALL be counted as `user-goal`; one that no summary includes, directly or through another step, and that extends no step, SHALL be read as off every journey. No Kotta command SHALL reorder a use case's `includes` list.
+
+**Rationale**
+
+A product is told as a journey — in intimity: pair, deal, answer in private, see the result — and the four steps serve four different goals, so no order inside one goal can carry it. Cockburn's summary level and UML's include already say "this goal is reached through these steps"; what was missing is only that the order of the steps is meant. A separate order edge between use cases was considered and turned down: "deal comes after pair" is mostly "pairing makes dealing possible", a precondition rather than a sequence, and UML leaves such an edge out for that reason. Whatever no journey includes — discreet use, installing, signing in — is then visibly support, not part of the story.
+
+**Scope**
+
+The use-case form Kotta ships (its `level` and `includes` exist since *A use case can be decomposed*), `kotta validate`, and the board.
+
+#### Scenario: An evening together tells the intimity journey
+<!-- kotta: EX-01m4ggqbwcb2045qa1dvtcbk4k -->
+- **GIVEN** The intimity use cases, all at the `user-goal` level, and a new use case *Spend an evening together* at the `summary` level, serving *Find an evening both welcome*, whose `includes` names *Pair with a partner through an invitation*, *Deal or join tonight's round*, *Choose a side and answer the cards*, *Wait for the partner* and *See the shared result*, in that order.
+- **WHEN** Kotta reads the model.
+- **THEN** The journey is pair, deal, answer, wait, result, though its steps serve four different goals; *Play an evening apart* is on it as a variant of the deal; *Use the app discreetly*, *Keep the app on the home screen*, *Sign in* and *Sign out* are off every journey.
+
+#### Scenario: Dropping the evening together marks its whole journey
+<!-- kotta: EX-01m4ggxas3te2f5f4h2644eje9 -->
+- **GIVEN** The intimity specification with the journey *Spend an evening together*.
+- **WHEN** The human marks *Spend an evening together* as dropped on the tree.
+- **THEN** Every step of the journey and the evening apart that varies it are marked as falling out, with every requirement only they refine, because only the journey holds them; their goals stay, each marked as left with no use case; the requirements of the use cases off every journey — discreet use, the home screen, the account — and the overall requirements are marked as staying.
+
 ### Requirement: A use case can be decomposed
 <!-- kotta: BR-01m4ee22ypyq06n7vkk4ycnz9v -->
 A use case SHALL be able to name the use cases it includes (`includes`) and the use cases it extends (`extends`), as UML defines the two relationships, and MAY state its goal level (`level`: `summary`, `user-goal` or `subfunction`, after Cockburn). A use case SHALL NOT include or extend itself, directly or through others; `kotta validate` names such a cycle.
@@ -18,7 +102,7 @@ A single level of use cases does not fit a real product: uploading a material is
 
 **Scope**
 
-The use-case form Kotta ships, every workspace that uses it, and the board's use-case drawing.
+The use-case form Kotta ships, every workspace that uses it, and the board's use-case drawing. The order of an `includes` list means nothing here, except at the `summary` level, where it is the order of a journey's steps (*A summary use case tells a journey*).
 
 #### Scenario: Uploading a material is three use cases
 <!-- kotta: EX-01m4ee24hbczjt2k76pn2cq2wm -->
@@ -61,6 +145,24 @@ The use-case form Kotta ships; the business-rule, interface and quality-attribut
 - **GIVEN** The rule *Citation to the place* and two use cases, *A student asks and gets a cited answer* and *The teacher tries the course chat*.
 - **WHEN** Both use cases name the rule under `refines`; the rule itself names neither.
 - **THEN** Asked from the rule's side, Kotta lists both use cases as refining it; the rule's file is unchanged.
+
+### Requirement: A use case's requirements stand in the order it names them
+<!-- kotta: BR-01m4gmdmr2h33x4cr7t217yr9t -->
+Under a use case the tree SHALL list the requirements in the order the use case's `refines` list names them, and SHALL NOT sort them by title; what falls out with a dropped use case SHALL be listed in that order too, on the board and by `kotta spec impact`. No Kotta command SHALL reorder a `refines` list. The requirements that hold for the whole product and those with no place have no use case to give them an order, and stay by title.
+
+**Rationale**
+
+A to Z put "A gentler round…" first among the result's rules and broke the story the use case tells. The use case already lists what it relies on; the board keeps the order the use case lists, so whoever writes the list sets the reading order.
+
+**Scope**
+
+The hierarchy view of `kotta ui`.
+
+#### Scenario: The deal's rules stand in the order the deal names them
+<!-- kotta: EX-01m4gmdnmh5q4860ep2aff9evc -->
+- **GIVEN** The use case *Deal or join tonight's round*, whose `refines` names *Every new round contains two equal sides* first and *A screen that has its state keeps it through a lost connection* last.
+- **WHEN** The human opens it in the hierarchy.
+- **THEN** Its rules stand in that order, the two equal sides first.
 
 ### Requirement: Dropping a use case shows what falls out with it
 <!-- kotta: BR-01m4ee23h66jzr4wzd0a3grf02 -->
@@ -140,20 +242,422 @@ The accepted nodes under `.kotta/spec/`, and the changes that remove or reword t
 - **WHEN** The project accounts for it.
 - **THEN** The node is listed in a change's `model/REMOVED.md`, together with every accepted node that names it and promises nothing the release keeps; `kotta plan` measures the removal, and the node leaves `.kotta/spec/` only when the human approves the change and it is archived. Admitting it as unimplemented, citing it in a comment, or deleting the file by hand is not how it leaves.
 
-### Requirement: The board shows the specification as a tree
-<!-- kotta: BR-01m4ee23zg0wx6hyvpkyj9qcr1 -->
-The board SHALL offer a view of the specification as a tree: the overall requirements at the top, then each actor with its use cases, a use case's included and extending use cases nested under it, and under each use case the requirements it refines, each with the number of its examples. Requirements that have no place SHALL be listed apart. A use case SHALL be selectable as dropped, and the board SHALL then mark what falls out and what stays. The capability SHALL filter the tree, never group it.
+### Requirement: The board names a relation in words
+<!-- kotta: BR-01m4gg8w74b37208tgnb4w6cvj -->
+Where the board shows a node it SHALL first show the node's own text, then its place in the tree (purpose › goal › use case), then its relations grouped by edge, each named by a phrase that reads in its own direction from the node shown: *serves* / *served by* for goals, *for goal* / *pursued by* between a use case and its goal, *includes* / *included in*, *extends* / *extended by*, *part of* / *relies on* between a requirement and its use case, *proven by* / *proves* between a node and its examples. An edge of a form the project added SHALL be named by its field. The path of nodes opened one from another SHALL be kept in the page's address, so the browser's back steps along it and a copied address opens the same node.
 
 **Rationale**
 
-A flat list by form is hard to read at a few hundred nodes: the rule and the use case it serves never stand side by side. The operator looked at the oktat-ai specification laid out this way and found it right.
+A drawer that lists `MEASURED_BY` and `USED_BY`, and puts the use case a rule belongs to under "Answered by / REFINES", makes the reader decode the schema and reverse the arrow in their head. A reviewer walking from a goal down to an example lost the way after two drawers, with no way back and no way to send someone the node they were looking at.
+
+**Scope**
+
+The node drawer of `kotta ui`, in every view.
+
+#### Scenario: A rule's drawer says which use case it is part of
+<!-- kotta: EX-01m4gg8xfhm8raymbdwy1b3tmj -->
+- **GIVEN** The intimity rule *Three private answer choices*, refined by *Choose a side and answer the cards* and proven by two examples.
+- **WHEN** The human opens the rule, then its use case from the drawer, then presses the browser's back.
+- **THEN** The drawer shows the rule's text first, then its place — the purpose › *Each partner can answer honestly, in private* › *Choose a side and answer the cards* — then *Part of* the use case and *Proven by* the two examples; no raw field name and no *Answered by* stands there; back returns to the rule.
+
+#### Scenario: A shared link opens the same drawer
+<!-- kotta: EX-01m4ggqcemksxzh5hwaf95ha1m -->
+- **GIVEN** The human has the rule *Three private answer choices* open on the board.
+- **WHEN** They copy the page's address and open it in a new tab.
+- **THEN** The new tab shows the same view with the same rule open.
+
+#### Scenario: An edge of a project's own form is named by its field
+<!-- kotta: EX-01m4ggqcmnpc67n7k0bte54kd5 -->
+- **GIVEN** A workspace that added a form *risk* whose nodes name the rules they threaten under `threatens`.
+- **WHEN** The human opens such a risk on the board.
+- **THEN** Its relation to the rules is listed under *threatens*; no phrase is made up for it.
+
+### Requirement: The board says what the human decided
+<!-- kotta: BR-01m4gh4rxe5navrnzfz0t5a2jf -->
+Where the board shows an approved change, or an accepted node that landed through one, it SHALL say what that approval covers: who said yes and when, that the yes covers the whole delta as planned, and, as the nodes' provenance records it, how many of its nodes the human decided, how many the human approved on the agent's proposal, and how many the agent decided alone; and it SHALL let the reader open the list of what the agent decided alone exactly as the planning report put it to the human at the gate. An accepted node SHALL name the change that landed it, who approved that change and when, and its own provenance mark. A node the agent decided alone SHALL be marked as decided by the agent and approved with the delta, never as reviewed by the human one by one. A change not yet approved SHALL say that nobody has said yes to it.
+
+**Rationale**
+
+In intimity the board showed "approved" beside "the agent decided 223": the reader could not tell whether a human had looked at 223 nodes, at three, or at none. The gate is one yes to a delta, given after the planning report listed what the agent decided alone; the board has to say exactly that, no more and no less, or the approval reads as a review that did not happen.
+
+**Scope**
+
+`kotta ui`: for an open change on its banner and on each node it shows, and for every accepted node, read from the receipt of the change that landed it.
+
+#### Scenario: The approval is one line
+<!-- kotta: EX-01m4gvndqfnkd48n1m57tjv0c7 -->
+- **GIVEN** The intimity change, approved by Árpád Tamási on 2026-10-09, with 4 nodes decided by him and 22 by the agent alone.
+- **WHEN** The human opens it on the board.
+- **THEN** One neutral line reads that he approved the whole change on 2026-10-09 and, as the nodes' provenance records it, 4 by him, 0 on the agent's proposal and 22 by the agent alone, and the number of gaps, with the gate's list one click away; no red banner, and the provenance summary of the whole model is not on this view.
+
+#### Scenario: The intimity baseline says what its approval covered
+<!-- kotta: EX-01m4gh4s32tcgq6yj2zm5ynnr7 -->
+- **GIVEN** The intimity specification after its change *baseline* was approved on 2026-10-09 and archived: 226 accepted nodes, 3 marked decided by the human, 223 decided by the agent alone and listed in the change's planning report.
+- **WHEN** The human opens one of the 223 nodes in the accepted view.
+- **THEN** The node names the change *baseline*, who approved it and when, and says it was decided by the agent and approved with the delta, not reviewed one by one; from there the change's counts — 3 by the human, 223 by the agent alone, as the provenance records them — and the list the gate showed are one click away.
+
+### Requirement: The board shows the specification as a tree
+<!-- kotta: BR-01m4ee23zg0wx6hyvpkyj9qcr1 -->
+The board SHALL offer a view of the specification as a tree that starts from its purpose. Above the tree it SHALL show each journey (*A summary use case tells a journey*) as its steps in order, each step leading to its place in the tree. The tree SHALL hold the overall requirements at the top, then each goal that serves no other goal, the goals that serve it nested under it, and under each goal the use cases that serve it, with their included and extending use cases nested, the requirements each refines, and under each requirement the examples that prove it. Several journeys SHALL stand in title order. A step that is itself a journey SHALL stand in the strip as one step that opens its own journey. A summary use case SHALL be shown as its journey strip and as one row under its goal that does not nest its steps; its steps SHALL be shown in full under the goals they serve. Under a goal, the goals that serve it SHALL come before its use cases, so a purpose reads as its journey first and what supports it after. Sibling goals SHALL stand in the order of the earliest journey step that serves them — the first step, in the first journey in title order, that serves them — and a goal served only by a variant SHALL stand right after the goal of the step it varies; goals none of whose use cases is on a journey SHALL follow, apart, as off every journey, keeping the nesting their `serves` edges give them. Any other use case that stands in more than one place SHALL be shown in full at its first place in the tree's top-to-bottom reading order, and as a reference to that place everywhere else. The arrangement by actor SHALL stay available beside it. Requirements that have no place SHALL be listed apart. A use case SHALL be selectable as dropped, and the board SHALL then mark what falls out and what stays. The capability SHALL filter the tree, never group it.
+
+**Rationale**
+
+A flat list by form is hard to read at a few hundred nodes: the rule and the use case it serves never stand side by side. On 2026-10-08 the operator found the oktat-ai specification right laid out by actor. Laid out the same way, the intimity specification showed why the actor alone is not enough: with one actor every use case hung from one root, alphabetically, the goals were missing and the examples were numbers, and a reader could not follow the product from what it is for to what proves it. A human tells a product from its purpose and along its journey; the tree reads the same way, and what is not on the journey reads as what it is — support.
 
 **Scope**
 
 `kotta ui`, beside the existing views.
 
+#### Scenario: A use case under two parents is drawn once
+<!-- kotta: EX-01m4ggqc1zvpsm5ksv2mtcpr6m -->
+- **GIVEN** *Play an evening apart*, which serves *An evening apart can still be played* and extends *Deal or join tonight's round*.
+- **WHEN** The human opens the tree view.
+- **THEN** *Play an evening apart* is shown with its nine rules under the deal, its first place in reading order; under its own goal it stands as one row saying where it is shown in full, leading there.
+
+#### Scenario: Off-journey goals keep their own nesting
+<!-- kotta: EX-01m4ggxaz5qcvdannbap8r0dek -->
+- **GIVEN** The intimity specification with a goal *Kept private around others* that *The app can be used where someone could glance over a shoulder* serves, and a goal *Reachable like an app* that the account and home-screen goals serve; none of their use cases is on a journey.
+- **WHEN** The human opens the tree view.
+- **THEN** Below the journey goals, apart, stand *Kept private around others* with discreet use under it, and *Reachable like an app* with the account and the home screen under it — support and infrastructure as two groups, from the goals alone.
+
+#### Scenario: The intimity tree reads from its purpose
+<!-- kotta: EX-01m4gg8x36bgmg3ebmfzdg5mmf -->
+- **GIVEN** The intimity specification with its eight goals serving *Find an evening both welcome* and the journey *Spend an evening together*.
+- **WHEN** The human opens the tree view on the board.
+- **THEN** Above the tree stands the journey: pair → deal → answer → wait → result. In the tree the purpose is the root; under it first *Two accounts become one private couple* with *Pair with a partner*; *Both phones play one shared round* with *Deal or join tonight's round*, its extension *Play an evening apart* drawn in full beneath it; right after it *An evening apart can still be played*, its use case a reference to the deal; then *Each partner can answer honestly, in private* with *Choose a side and answer the cards* and *Wait for the partner*; then *The result reveals mutual interest*, and after the goals *Spend an evening together* as one row. After them, apart, the goals off every journey — discreet use, the home screen, the account. Under *Three private answer choices* its examples open on demand. The arrangement by actor is one switch away.
+
 #### Scenario: The tree with the drop highlight
 <!-- kotta: EX-01m4ee25ey0g2x0bmj6v6rzrpq -->
 - **GIVEN** A workspace with three actors, thirteen use cases, two overall rules and one rule with no place.
-- **WHEN** The human opens the tree view on the board and marks *The teacher tries the course chat* as dropped.
+- **WHEN** The human opens the tree view on the board, switches it to the arrangement by actor, and marks *The teacher tries the course chat* as dropped.
 - **THEN** The overall rules stand at the top, each actor's use cases below with their requirements, the unplaced rule apart; the requirements that fall out are marked as such and the ones that stay are marked as staying.
+
+### Requirement: The drawer opens a node at its top
+<!-- kotta: BR-01m4gmdmcjc5rcf90rh8hjz3g3 -->
+When the drawer opens a node from a list or from another node, it SHALL show the node from its top, and SHALL move the focus to the node's title. Stepping back SHALL return to the node before where the reader left it, as *The view holds still* promises of a view.
+
+**Rationale**
+
+Opening a related node kept the scroll of the one before: the reader landed in the middle of a text with no title in sight, and a screen reader stayed where it was.
+
+**Scope**
+
+The node drawer of `kotta ui`.
+
+#### Scenario: Stepping to the goal shows its title
+<!-- kotta: EX-01m4gmdn9dhm640cr5j8aq0701 -->
+- **GIVEN** The drawer shows *Choose a side and answer the cards*, scrolled to its relations.
+- **WHEN** The human opens its goal, *Each partner can answer honestly, in private*, from the relations, then steps back.
+- **THEN** The goal opens at its top with its title focused; stepping back shows the use case where the reader left it, at its relations.
+
+### Requirement: The import asks what its goals serve
+<!-- kotta: BR-01m4ggqbpgfp2w72q9p9yt2era -->
+When `kotta import openspec` drafts more than one goal, it SHALL write into the change's proposal, under Open decisions, the question which purpose those goals serve and which journey the product's use cases form, and SHALL NOT draft a purpose goal or a summary use case itself.
+
+**Rationale**
+
+One goal per capability is all a narrative states, so the import is where a model becomes flat. The purpose and the journey are product intent: the import may not invent them, but it can make sure nobody plans the change without being asked.
+
+**Scope**
+
+`kotta import openspec`.
+
+#### Scenario: The intimity import asks what its goals serve
+<!-- kotta: EX-01m4ggqd7z6b055594jy17zjzw -->
+- **GIVEN** The intimity OpenSpec narrative, with eight capabilities each stating a Purpose.
+- **WHEN** `kotta import openspec` runs.
+- **THEN** It drafts eight goals, no purpose goal and no summary use case, and the change's proposal lists under Open decisions which purpose the eight goals serve and which journey the use cases form.
+
+### Requirement: The model is shaped the way the product is told to a stranger
+<!-- kotta: BR-01m4gvndx1scrdc836cmjp58dq -->
+When an agent shapes a model — planning a change, or running a workshop — it SHALL first write in the proposal, under `## Told to a stranger`, how the product is told to a stranger in a few sentences: what it is for, how it is used step by step, its variants, and what supports it. It SHALL then propose the model that reads the same way: a purpose the product's goals serve, each journey as a summary use case, variants as extensions; support that is a quality of the product — privacy, access, installation, timeliness and the like — as a quality attribute, and support someone does as a use case off the journey. A purpose or a journey the human has not stated SHALL be drafted as inferred, with an open decision, until the human confirms it; a quality attribute's measure nobody has said SHALL be asked for, as *A quality requirement is recorded where it is said* requires. The import keeps asking and drafts neither (*The import asks what its goals serve*). `kotta plan` SHALL name a proposal that carries no `## Told to a stranger` section, without blocking the gate.
+
+**Rationale**
+
+A model that is complete can still be impossible to follow: the intimity import held every rule and example, and still told the product as nine equal goals in alphabetical order. The agent could tell the product clearly in chat; the model was shaped by the narrative's chapters instead. Told to a stranger first, the structure follows the telling; *Validate names a flat structure* checks the result where a check is possible.
+
+**Scope**
+
+Every change an agent plans under the rules Kotta ships: the rules file, the `plan-change` skill, the workshop skills and the import's proposal.
+
+#### Scenario: Intimity told to a stranger
+<!-- kotta: EX-01m4gvne2grr08rfqj7m6jf3x5 -->
+- **GIVEN** The intimity specification with nine equal goals, and a request to put it in order.
+- **WHEN** The agent plans the change.
+- **THEN** The proposal first tells intimity to a stranger — what it is for, the evening step by step, the evening apart as its variant, what keeps it private and reachable — and the delta follows it: one purpose the evening's goals serve, the journey as a summary use case, privacy, access, installation and timeliness as quality attributes. The purpose is drafted as inferred with an open decision; the operator words it — *a shared activity both of them want* — and only then is it marked as theirs.
+
+#### Scenario: The plan names a proposal that tells no stranger
+<!-- kotta: EX-01m4gvy0tm10wvsfyv7kwdac8j -->
+- **GIVEN** A change whose proposal has Why, What changes and Open decisions, and no section `## Told to a stranger`.
+- **WHEN** `kotta plan` runs.
+- **THEN** The report names the missing telling among what awaits judgement, and the change can still go to the gate; once the proposal tells the product, the line is gone.
+
+### Requirement: The tree names the gaps in its structure
+<!-- kotta: BR-01m4gg8w19p98hafy5m1q4g452 -->
+The tree's header SHALL show how many gaps the model's structure has, and SHALL name each: an actor with more than one `user-goal` use case and no summary use case that includes any of them; a `user-goal` use case off every journey whose goal a journey step serves; a goal that no use case serves; and several goals that serve no other goal. A use case with no `level` counts as `user-goal` throughout. Each gap SHALL lead to the nodes it names and SHALL say what would close it and that it is closed in a change. With no gap the header SHALL say so in words; while a gap exists, nothing on the board SHALL state the structure complete.
+
+**Rationale**
+
+A flat model looks tidy: the intimity tree said "No place yet: 0" while its eight goals had no common purpose and its journey was nowhere — the reviewer saw health where the structure was missing. What the board cannot show it has to say, and since the board only reads, it has to say where the fix goes.
+
+**Scope**
+
+The tree view of `kotta ui`, on the accepted specification and on an opened change.
+
+#### Scenario: A complete structure says so
+<!-- kotta: EX-01m4ggqc904qbhpg0j4xrj0gj4 -->
+- **GIVEN** The intimity specification with one purpose and the journey *Spend an evening together*.
+- **WHEN** The human opens the tree view.
+- **THEN** The header says in words that the structure has no gap.
+
+#### Scenario: A flat import names its gaps
+<!-- kotta: EX-01m4gg8x90azvgnb0f5ctm7b4h -->
+- **GIVEN** The intimity specification as imported on 2026-10-09: eight goals serving no other goal, the Player's nine use cases all at the `user-goal` level and no summary use case, the Visitor's one.
+- **WHEN** The human opens the tree view.
+- **THEN** The header says the structure has two gaps: eight goals serve no other goal — name the purpose they serve, in a change — and the Player has nine use cases and no journey — add a summary use case that includes the steps, in a change. The Visitor, with one use case, is not named. Nothing on the board says the structure is complete.
+
+### Requirement: The use-case diagram draws how use cases relate
+<!-- kotta: BR-01m4gg8wd62m9h75yczmmzphs7 -->
+The board's use-case diagram SHALL draw in UML use-case notation wherever UML has one: actors as stick figures outside the system boundary, use cases as ellipses inside it, an actor's association as a plain line, and every `includes` and `extends` edge between use cases as a dashed open arrow labelled «include» or «extend». Each shape SHALL keep what *The board draws its own diagrams, and Mermaid is one switch away* promises of a node: its provenance frame, opening on a click, lighting its connections on hover. What UML does not draw — the goals — SHALL stand outside the system boundary, laid out before it in reading order (left of it, or above), each joined to the use cases that serve it by a dotted line. Mermaid, which has no UML shapes, SHALL draw a use case as a rounded node, an actor as a labelled node and «include» or «extend» as a dotted link with its label.
+
+**Rationale**
+
+The diagram is the one picture of the use cases, and it drew only actors and goals: in intimity the evening apart, which extends the everyday deal, stood beside it as an unrelated sibling, and the goals sat at the far end as leaves, after everything they are for.
+
+**Scope**
+
+The use-case diagram of `kotta ui`, in both renderers.
+
+#### Scenario: The evening apart is drawn as extending the deal
+<!-- kotta: EX-01m4gg8xn5gczyzcygyctfw3j1 -->
+- **GIVEN** The intimity use case *Play an evening apart*, which extends *Deal or join tonight's round*.
+- **WHEN** The human opens the use-case diagram, in the board's own renderer and then in Mermaid.
+- **THEN** Both drawings show an arrow from *Play an evening apart* to *Deal or join tonight's round* labelled «extend», and the goals stand left of the use cases.
+
+#### Scenario: The use-case diagram is drawn in UML notation
+<!-- kotta: EX-01m4gh4s9gyew9m3trn627jrac -->
+- **GIVEN** The intimity use cases with their two actors, the Player and the Visitor.
+- **WHEN** The human opens the use-case diagram in the board's own renderer.
+- **THEN** The Player and the Visitor stand as stick figures outside a box that holds the use cases as ellipses; plain lines join each actor to its use cases; a dashed open arrow labelled «extend» runs from *Play an evening apart* to *Deal or join tonight's round*; the goals stand apart, left of the box.
+
+### Requirement: Validate names a flat structure
+<!-- kotta: BR-01m4ggqbgh250jcn09w3t5sxqq -->
+`kotta validate` SHALL warn, never fail, when several goals serve no other goal, when an actor has more than one `user-goal` use case and no summary use case includes any of them, and when a `user-goal` use case is off every journey while its goal is served by a journey step — a use case with no `level` counting as `user-goal`; each warning SHALL name the nodes and the question that would close it.
+
+**Rationale**
+
+Agents orient by the CLI, not by the board. If only the board names a flat structure, the agent that drafts the next change never learns that the model has no purpose and no journey, and keeps adding siblings.
+
+**Scope**
+
+`kotta validate`, on the accepted specification and on every open change.
+
+#### Scenario: Validate warns about a flat import
+<!-- kotta: EX-01m4ggqd1y597jjpamfw69d6j8 -->
+- **GIVEN** The intimity specification as imported on 2026-10-09.
+- **WHEN** `kotta validate` runs.
+- **THEN** It passes, with two warnings: eight goals serve no other goal, naming them and asking which purpose they serve; the Player has nine use cases and no summary use case, asking which journey they form.
+
+### Requirement: Anything on the board can be found and linked
+<!-- kotta: QA-01m4ghr864w6xe125fkvrdptmh -->
+A human who remembers a phrase but not a title, or who wants to show someone what they see.
+
+**Stimulus**
+
+Searching for a phrase, or copying the page's address, or working from the keyboard.
+
+**Environment**
+
+A desktop browser at 1312 × 735 CSS pixels, and a phone at 390 pixels wide, on a specification of a few hundred nodes.
+
+**Artifact**
+
+The local board (`kotta ui`).
+
+**Response**
+
+The board's search SHALL match a node's title and the text of its sections. The view, its filters, the search and the opened node SHALL be held in the page's address, so a copied address opens the same screen. The keyboard SHALL reach search with `/`, close the open node with Escape, and walk the tree with the arrow keys. Scrolling over a diagram SHALL scroll the page; the diagram SHALL pan only while it has the focus or a modifier key is held.
+
+**Measure**
+
+Every phrase of a node's body finds that node. A copied address restores the same view, filters, search and node in 100% of the suite's cases. The three keys work on every view. Checked by the board's browser suite.
+
+#### Scenario: A phrase from a rule body is found and shared
+<!-- kotta: EX-01m4ghr8w38wt1tweg4bb2r1te -->
+- **GIVEN** The intimity rule *Every new round contains two equal sides*, whose text says "at least three cards per side" and whose title does not.
+- **WHEN** The human types `/`, searches for "at least three cards", opens the rule, and sends the page's address to a colleague.
+- **THEN** The search finds the rule; the colleague's browser opens the same view with the same search and the rule open.
+
+### Requirement: The board reads calmly
+<!-- kotta: QA-01m4ghr80v0r92aw1d9rq9zt6f -->
+A human reviewing a specification or an open change on the board.
+
+**Stimulus**
+
+Reading a long list of nodes, or a change with its proposal and provenance.
+
+**Environment**
+
+A desktop browser at 1312 × 735 CSS pixels, and a phone at 390 pixels wide, on a specification of a few hundred nodes.
+
+**Artifact**
+
+The local board (`kotta ui`).
+
+**Response**
+
+The board SHALL show a mark that every row of a list carries once, in the list's head, and not on the rows. The part of the page that stays in place while the reader scrolls SHALL stay small, and SHALL NOT grow when the proposal or the provenance of a change is opened: these SHALL open in the page's flow, the provenance summary closed until asked for.
+
+**Measure**
+
+At 1312 × 735, with the proposal closed and with it open, the fixed part of the page is at most 120 pixels high. On every list view, no mark that all of its rows share appears on a row. Checked by the board's browser suite on a fixture of at least 200 nodes.
+
+#### Scenario: The intimity change fits one calm screen
+<!-- kotta: EX-01m4ghr8pn9bjgmcm557zf5xdt -->
+- **GIVEN** The intimity specification with its 226 nodes, every one marked added and partly inferred, at 1312 × 735.
+- **WHEN** The human opens the list of nodes, then opens the proposal.
+- **THEN** The group head says once that every node is added and partly inferred, and no row repeats it; the fixed part of the page stays under 120 pixels with the proposal closed and open, the proposal unfolding in the page below it.
+
+### Requirement: The board speaks in plain words
+<!-- kotta: QA-01m4ghr8bn64wazxnap80vhvhe -->
+A human who knows the product, not Kotta's file format.
+
+**Stimulus**
+
+Reading labels, counts and simulations on any view.
+
+**Environment**
+
+A desktop browser at 1312 × 735 CSS pixels, and a phone at 390 pixels wide, on a specification of a few hundred nodes.
+
+**Artifact**
+
+The local board (`kotta ui`).
+
+**Response**
+
+The board SHALL label provenance, status and level in plain words, never with a field's raw name or value. The browser tab SHALL name Kotta and the project. A count beside a view SHALL count what that view lists. The same kind of node SHALL be named with the same word in the tree, the diagrams and the drawer. A simulation — marking a use case as dropped — SHALL say on screen that it is a simulation and that nothing is changed.
+
+**Measure**
+
+On each view of the intimity fixture, no label shows a raw field name or an upper-case enumeration value; every count equals the number of items its view lists. Checked by the board's browser suite.
+
+#### Scenario: No raw label on the intimity board
+<!-- kotta: EX-01m4ghr91fmchrjjrvy1sps150 -->
+- **GIVEN** The intimity specification on the board.
+- **WHEN** The human reads each view and marks a use case as dropped.
+- **THEN** No label reads PARTLY INFERRED, NO ADMISSION or USER-GOAL — each says it in words; the rail's counts equal what each view lists; the tab names Kotta and intimity; the drop highlight says it is a simulation and changes nothing.
+
+### Requirement: The board tells the product before the process
+<!-- kotta: QA-01m4gvndbn0hfx4fwq5jhjj5cg -->
+A reader who knows the product, or none of it, opening the board to learn what the product is.
+
+**Stimulus**
+
+Opening the hierarchy or an open change.
+
+**Environment**
+
+A desktop browser at 1312 × 735 CSS pixels, on a model with a purpose, a journey and an approved change.
+
+**Artifact**
+
+The hierarchy view and the change view of `kotta ui`.
+
+**Response**
+
+The board SHALL tell the product before the process. In the hierarchy and in a change's view, the view's title SHALL come first, with a description of at most one line that names no position on the page; then at most one line SHALL speak of the process — in no error or alert colour — holding the approval (who said yes and when, that it covers the whole change, and the three counts as the nodes' provenance records them), the number of gaps in the structure and the proposal, each opening on request; then the journey; then the outline; then one row of tools — the arrangement, opening and closing all, simulating a drop; then the tree. The requirements that hold for the whole product and those with no place SHALL stand after the tree and open and close like a goal. The workspace counts and the provenance summary of the whole model SHALL appear only in the specification view — the list of every node. A row of the tree SHALL carry no form, capability or id; the drawer shows them. Clicking a goal's row outside its title SHALL expand it, clicking its title SHALL open the goal in the drawer, and clicking a journey step SHALL expand its place in the tree where it is. A goal's served-by list in the drawer SHALL follow the tree's order. Everything above the tree stays in the page's flow, as *The board reads calmly* requires of the fixed part.
+
+**Measure**
+
+At 1312 × 735, on the intimity fixture, in the hierarchy and in a change view: at most three bands stand above the outline — the title with its one-line description, the process line, the journey; the process line is one line in no alert colour; the purpose and every journey step are visible without scrolling; no row of the tree shows a form, a capability or an id; a click on a goal's row outside its title expands it and a click on its title opens the drawer; a click on a journey step moves the view by no more than that step's own height. Checked by the board's browser suite.
+
+#### Scenario: The approval is one line
+<!-- kotta: EX-01m4gvndqfnkd48n1m57tjv0c7 -->
+- **GIVEN** The intimity change, approved by Árpád Tamási on 2026-10-09, with 4 nodes decided by him and 22 by the agent alone.
+- **WHEN** The human opens it on the board.
+- **THEN** One neutral line reads that he approved the whole change on 2026-10-09 and, as the nodes' provenance records it, 4 by him, 0 on the agent's proposal and 22 by the agent alone, and the number of gaps, with the gate's list one click away; no red banner, and the provenance summary of the whole model is not on this view.
+
+#### Scenario: The intimity change opens on its purpose and journey
+<!-- kotta: EX-01m4gvndhk3168ex3qyrrh9300 -->
+- **GIVEN** The intimity change that gives the product its purpose and the journey *Play an evening together*, approved, at 1312 × 735.
+- **WHEN** The human opens the change on the board, in the hierarchy.
+- **THEN** Without scrolling they see *The couple finds a shared activity both of them want* and the five steps — pair, deal or join, choose a side and answer, wait, see the result; above them the title and one process line — who approved the change, the number of gaps, the proposal on request; under the purpose the five evening goals come first, the support use cases after them; no row shows a form, a capability or an id.
+
+### Requirement: The hierarchy can be found around in
+<!-- kotta: QA-01m4gmdm6r7t4ajnxa3515ccvd -->
+A human reading a specification of a few hundred nodes on the board.
+
+**Stimulus**
+
+Opening the hierarchy and looking for one goal, one use case or one requirement.
+
+**Environment**
+
+A desktop browser at 1312 × 735 CSS pixels, and a phone at 390 pixels wide, on a model with many goals, many overall requirements and gaps in its structure.
+
+**Artifact**
+
+The hierarchy view of `kotta ui`.
+
+**Response**
+
+The hierarchy SHALL show an outline of its top level — every goal, nested ones under the goal they serve, or every actor in the arrangement by actor — that leads to each, and the outline SHALL stay one action away from anywhere in the view. The gaps in the structure SHALL be a count in the view's process line until the reader opens them; opened, they say all that *The tree names the gaps in its structure* requires. The requirements that hold for the whole product and those with no place SHALL start closed, showing only how many there are. Goals SHALL start closed, showing how many use cases serve them; a goal reached from the outline opens; the view SHALL offer to open and to close them all. Simulating a drop SHALL be one control in the view's row of tools, where a use case is chosen, not a control on every row; while a drop is simulated, the outline SHALL show for each goal how many of its requirements fall out, and those goals SHALL open. The outline, the closed gaps and the drop control SHALL sit in the page's flow, never in its fixed part.
+
+**Measure**
+
+At 1312 × 735, the start of the outline is on the first screen; the closed gaps are a count in the process line; from anywhere in the view any goal is reached in at most two actions and any requirement in at most three (a click, a key, or a search over titles and text). Goals, the whole-product requirements and those with no place start closed with their count. At 390 pixels wide the outline is reached in one action from anywhere in the view and the tree needs no sideways scrolling. No row of the tree carries a drop control. Checked by the board's browser suite on the intimity fixture and on a fixture whose goals are nested by serves.
+
+#### Scenario: A rule is three moves from anywhere
+<!-- kotta: EX-01m4gmtcgffy7y5rd5ztk2jysn -->
+- **GIVEN** The intimity hierarchy scrolled deep into *Deal or join tonight's round*, at 1312 × 735 and at 390 pixels wide.
+- **WHEN** The human goes to *Three private answer choices*.
+- **THEN** Three actions bring it into view — to the outline, to *Each partner can answer honestly, in private*, open *Choose a side and answer the cards* — or a search for its text does; at 390 pixels the outline is one action away and nothing scrolls sideways.
+
+#### Scenario: A simulated drop opens the goals it touches
+<!-- kotta: EX-01m4gmtcvge4npnyqcgxy4hsnb -->
+- **GIVEN** The intimity hierarchy with every goal closed.
+- **WHEN** The human chooses *Play an evening apart* in the drop control in the view's row of tools.
+- **THEN** The outline shows nine requirements falling out under *An evening apart can still be played*, that goal opens with its marks, and every other goal stays closed; the control says it is a simulation.
+
+#### Scenario: Any intimity goal is two moves from the top
+<!-- kotta: EX-01m4gmdn3rgp6nyh7a5c34eh2c -->
+- **GIVEN** The intimity specification with nine goals serving no other goal, sixteen requirements that hold for the whole product, and two gaps in its structure, at 1312 × 735.
+- **WHEN** The human opens the hierarchy and goes to *Each partner can answer honestly, in private*.
+- **THEN** The first screen starts with the outline of the nine goals; the gaps are a count in the process line, and opened they name both gaps with what closes each; the whole-product requirements and the goals are closed with their counts; from deep in the tree, one action reaches the outline and one more brings the goal into view, open. No row carries a drop control.
+
+#### Scenario: The outline lists goals nested by serves
+<!-- kotta: EX-01m4gmtcnvd2744y8ccg4qtn4s -->
+- **GIVEN** The intimity goals serving one purpose, and discreet use and the home screen serving two goals of their own.
+- **WHEN** The human opens the hierarchy, then switches to the arrangement by actor.
+- **THEN** The outline lists the purpose, the journey goals under it and the two support goals with what serves them, each leading to its place; arranged by actor, the outline lists the Player and the Visitor.
+
+### Requirement: The view holds still
+<!-- kotta: QA-01m4ghr8h4345h3tt86nb28eqx -->
+A human moving between views and nodes while reviewing.
+
+**Stimulus**
+
+Switching views, opening related nodes, expanding a tree.
+
+**Environment**
+
+A desktop browser at 1312 × 735 CSS pixels, and a phone at 390 pixels wide, on a specification of a few hundred nodes.
+
+**Artifact**
+
+The local board (`kotta ui`).
+
+**Response**
+
+A view the reader switches to SHALL open at its top, and a view the reader returns to SHALL open where it was left. The tree SHALL offer to expand and collapse everything at once, and the filters SHALL be cleared with one action. Pointing at a related node SHALL show its title and first sentence without replacing the node that is open.
+
+**Measure**
+
+Switching from the tree to a diagram and back restores the tree's scroll position within 10 pixels; a new view opens at 0. Expand-all and clear-filters are each one action. Checked by the board's browser suite.
+
+#### Scenario: Returning to the tree finds it where it was left
+<!-- kotta: EX-01m4ghr97pebezq1r7qmwzrtgt -->
+- **GIVEN** The intimity tree scrolled halfway down, at *See the shared result*.
+- **WHEN** The human opens the use-case diagram, then comes back to the tree; then points at a related rule in an open node's drawer.
+- **THEN** The diagram opens at its top; the tree reopens at *See the shared result*; pointing at the rule shows its title and first sentence while the open node stays.

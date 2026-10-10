@@ -432,6 +432,16 @@ function renderProposal(input: { name: string; capabilities: ImportedCapability[
     for (const warning of input.warnings) lines.push(`- ${warning}`);
     lines.push("");
   }
+  // The purpose and the journey are product intent: asked, never drafted (BR-01m4ggqbpgfp2w72q9p9yt2era).
+  if (drafted.goals > 1) {
+    lines.push(
+      "## Open decisions",
+      "",
+      `- **Which purpose do the ${drafted.goals} goals serve?** The import drafted one goal per capability, side by side; the narrative names no goal above them. Name the product's purpose as a goal, and let each of these serve it (\`serves\`) — or say they stand on their own.`,
+      "- **Which journey do the use cases form?** The narrative tells no order between capabilities. Name the steps a user goes through, in order, as a summary-level use case that includes them — or say there is none.",
+      "",
+    );
+  }
   lines.push(
     "## Next",
     "",

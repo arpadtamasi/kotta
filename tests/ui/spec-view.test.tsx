@@ -49,7 +49,7 @@ describe("the specification view", () => {
     const { container } = renderView();
     const groups = [...container.querySelectorAll(".spec-group__head")].map((head) => head.textContent);
 
-    expect(groups.some((head) => head?.startsWith("business-rule"))).toBe(true);
+    expect(groups.some((head) => head?.startsWith("business rule"))).toBe(true);
     expect(screen.getByText("Identifiers are permanent")).toBeTruthy();
     expect(screen.getByText("A remedy that adds a capability amends the specification")).toBeTruthy();
     expect(container.querySelectorAll(".spec-row").length).toBe(populated.spec!.length);
@@ -58,7 +58,7 @@ describe("the specification view", () => {
   it("counts the three admission kinds apart, and filters to each", () => {
     const { container } = renderView();
     const chips = [...container.querySelectorAll(".filters .filter")].map((chip) => chip.textContent);
-    expect(chips).toEqual(expect.arrayContaining(["all5", "no admission2", "structural1", "unexamined1", "unimplemented1"]));
+    expect(chips).toEqual(expect.arrayContaining(["all5", "no gap admitted2", "gap admitted: structural1", "gap admitted: not examined1", "gap admitted: not built1"]));
 
     cleanup();
     renderView({ filter: "unimplemented" });
@@ -103,9 +103,9 @@ describe("a node's place in the graph", () => {
   it("shows the edges it answers and the nodes that answer it", () => {
     render(<EntityDrawer id={GAP} board={board()} onClose={() => {}} onOpen={() => {}} />);
 
-    // Outgoing: what this node answers, under the field name its own form gave the edge.
-    const answers = screen.getByText("Answers").closest("section")!;
-    expect(within(answers).getByText("actor")).toBeTruthy();
+    // Relations, each named by a phrase that reads in its own direction (BR-01m4gg8w74b37208tgnb4w6cvj).
+    const answers = screen.getByText("Relations").closest("section")!;
+    expect(within(answers).getByText("Performed by")).toBeTruthy();
     expect(within(answers).getByText("Operator")).toBeTruthy();
     expect(within(answers).getByText("Work is accounted for")).toBeTruthy();
     // The admission is shown as what it is: which kind of gap, and why.
@@ -115,16 +115,18 @@ describe("a node's place in the graph", () => {
     // Incoming: read from the other side, never from a reciprocal field this node would carry.
     cleanup();
     render(<EntityDrawer id={ACTOR} board={board()} onClose={() => {}} onOpen={() => {}} />);
-    const answered = screen.getByText("Answered by").closest("section")!;
+    const answered = screen.getByText("Relations").closest("section")!;
     expect(within(answered).getByText("Analyze the implementation gap")).toBeTruthy();
-    expect(within(answered).getByText("actor")).toBeTruthy();
+    expect(within(answered).getByText("Performs")).toBeTruthy();
   });
 
   it("opens the node an edge names, and a node named in prose", () => {
     const onOpen = vi.fn();
     render(<EntityDrawer id={GAP} board={board()} onClose={() => {}} onOpen={onOpen} />);
-    // The title appears twice on purpose: once as the edge's target, once where the prose names it.
-    const [edge, prose] = screen.getAllByRole("button", { name: /Operator/ });
+    // The title appears twice on purpose: once where the prose names it, once as the relation's target.
+    const named = screen.getAllByRole("button", { name: /Operator/ });
+    const edge = named.find((button) => button.className.includes("spec-ref"))!;
+    const prose = named.find((button) => button.className.includes("ref-s"))!;
     expect(edge.className).toContain("spec-ref");
     fireEvent.click(edge);
     expect(onOpen).toHaveBeenCalledWith(ACTOR);

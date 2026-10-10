@@ -40,7 +40,29 @@ describe("an open change on the board", () => {
     expect(run(root, ["plan", "add-pause"]).status).toBe(0);
     expect(readWorkspace(root).changes[0]).toMatchObject({ name: "add-pause", planned: true, approved: false, openDecisions: [] });
     expect(run(root, ["approve", "add-pause", "--by", "Ada"]).status).toBe(0);
-    expect(readWorkspace(root).changes[0]).toMatchObject({ planned: true, approved: true });
+    const approved = readWorkspace(root).changes[0];
+    expect(approved).toMatchObject({ planned: true, approved: true });
+    // What the yes covered: who and when from the receipt, the gate's own list as the report put it (BR-01m4gh4rxe5navrnzfz0t5a2jf).
+    expect(approved.approval?.by).toBe("Ada");
+    expect(approved.approval?.at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(approved.approval?.agentDecidedAtGate.some((line) => line.includes("Game lifecycle"))).toBe(true);
+  });
+
+  test("an accepted node names the change that landed it, who approved it and when (EX-01m4gh4s32tcgq6yj2zm5ynnr7)", () => {
+    const root = planningWorkspace("board-landed", null);
+    answerPause(root);
+    expect(run(root, ["plan", "add-pause"]).status).toBe(0);
+    expect(run(root, ["approve", "add-pause", "--by", "Ada"]).status).toBe(0);
+    expect(run(root, ["archive", "add-pause"]).status).toBe(0);
+    execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false", "add", "-A"], { cwd: root });
+    execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false", "commit", "-qm", "the archived change"], { cwd: root });
+    const workspace = readWorkspace(root);
+    expect(workspace.landings).toHaveLength(1);
+    expect(workspace.landings[0]).toMatchObject({ change: "add-pause", by: "Ada" });
+    expect(workspace.landings[0].nodes).toContain(PAUSE);
+    const board = readBoard(workspace as unknown as Workspace);
+    expect(board.landedBy.get(PAUSE)?.by).toBe("Ada");
+    expect(board.landedBy.get(GAME)).toBeUndefined();
   });
 
   test("a changed node is marked against the accepted one, a removed one is marked, the rest is not (EX-01m40e52dx6qscs9cevrp7zcfh)", () => {

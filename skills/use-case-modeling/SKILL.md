@@ -9,6 +9,9 @@ Describe one actor's goal-directed interaction with the system, including the pa
 Persist the result as a `use-case` Markdown node. Keep UML terminology for precision without
 requiring an UML diagram.
 
+
+Start from the product as it would be told to a stranger — what it is for, how it is used step by step, its variants, what supports it — and keep the nodes you draft in that shape: one purpose, journeys as summary use cases, support as quality attributes or as use cases off the journey. A purpose or a journey nobody has stated is a question, not a draft.
+
 ## Recognize the form
 
 Read `.kotta/spec/forms/use-case.yaml` before drafting. Recognize a use case when the conversation has an
