@@ -1,0 +1,15 @@
+change: idegennek-elmondva
+approved_by: Árpád Tamási
+approved_at: 2026-10-10T05:56:15.650Z
+approval_basis: sha256:f011ab212fe1daf3f0e92e1edbe8e809856ca9cf3e2fd00482543f1a19ea7b09
+replaced: {}
+approved:
+  added:
+    - id: BR-01m4gvndx1scrdc836cmjp58dq
+      title: The model is shaped the way the product is told to a stranger
+    - id: EX-01m4gvne2grr08rfqj7m6jf3x5
+      title: Intimity told to a stranger
+    - id: EX-01m4gvy0tm10wvsfyv7kwdac8j
+      title: The plan names a proposal that tells no stranger
+  changed: []
+  removed: []

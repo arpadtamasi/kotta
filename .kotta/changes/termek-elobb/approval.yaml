@@ -1,0 +1,30 @@
+change: termek-elobb
+approved_by: Árpád Tamási
+approved_at: 2026-10-10T05:56:15.370Z
+approval_basis: sha256:d129b83945089100d592d6ab86122af640137f435ebdbae3a940776b46cca1f3
+replaced:
+  BR-01m4ee23zg0wx6hyvpkyj9qcr1: sha256:753bd1aba433c191a4d3d13438e96d7af9f8ff9a1b638761ca618082c4ac42b0
+  EX-01m4gmtcvge4npnyqcgxy4hsnb: sha256:9cec676ea3e1a73bf7878dff686e1ac10021330a04bff1539034b3016d4f1319
+  EX-01m4gmdn3rgp6nyh7a5c34eh2c: sha256:8bc91ab99c0195d068a48e6c01817839a6b401dcc7a1918d351f035bf2392d41
+  EX-01m4gg8x36bgmg3ebmfzdg5mmf: sha256:b7a6774d6bf089488c7b013b8d698232f9333f4a4a08bc2037b5f4bffc5266dc
+  QA-01m4gmdm6r7t4ajnxa3515ccvd: sha256:6bb8f8a8a343dc35232a81ee08318e3ea70dba041640d9a41738df8432847f80
+approved:
+  added:
+    - id: EX-01m4gvndqfnkd48n1m57tjv0c7
+      title: The approval is one line
+    - id: EX-01m4gvndhk3168ex3qyrrh9300
+      title: The intimity change opens on its purpose and journey
+    - id: QA-01m4gvndbn0hfx4fwq5jhjj5cg
+      title: The board tells the product before the process
+  changed:
+    - id: BR-01m4ee23zg0wx6hyvpkyj9qcr1
+      title: The board shows the specification as a tree
+    - id: EX-01m4gmtcvge4npnyqcgxy4hsnb
+      title: A simulated drop opens the goals it touches
+    - id: EX-01m4gmdn3rgp6nyh7a5c34eh2c
+      title: Any intimity goal is two moves from the top
+    - id: EX-01m4gg8x36bgmg3ebmfzdg5mmf
+      title: The intimity tree reads from its purpose
+    - id: QA-01m4gmdm6r7t4ajnxa3515ccvd
+      title: The hierarchy can be found around in
+  removed: []
