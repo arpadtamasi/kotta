@@ -4,6 +4,8 @@ form: example
 title: "An intent becomes kept code through one gate"
 subjects:
   - UC-01m4kbetjswsfc2vz74drj2vss
+accepted:
+  - "structural: the journey is proven by the examples of its steps, each evidenced in the tests; no single test plays the whole journey"
 provenance:
   level: partly-inferred
   decided_by: agent-decided
