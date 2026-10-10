@@ -72,7 +72,7 @@ describe("the hierarchy view", () => {
   it("draws the tree arranged by actor, with the drop highlight a simulation (EX-01m4ee25ey0g2x0bmj6v6rzrpq)", () => {
     const { container } = render(<TreeView board={readBoard(workspace({ spec }))} onOpen={() => {}} arrangement="actor" />);
     const heads = [...container.querySelectorAll(".spec-group__head")].map((head) => head.textContent);
-    expect(heads[0]).toMatch(/^Holds for the whole product/);
+    expect(heads.at(-2)).toMatch(/^Holds for the whole product/);
     expect(heads.at(-1)).toMatch(/^No place yet/);
     expect(screen.getAllByText("«includes»")).toHaveLength(2);
     expect(screen.getAllByText("«extends»")).toHaveLength(1);

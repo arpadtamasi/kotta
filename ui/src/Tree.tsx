@@ -1,7 +1,7 @@
 import { useMemo, useState, type KeyboardEvent, type ReactElement, type ReactNode } from "react";
 import { LEVEL_WORD, dropBranch, dropMarks, examplesOf, goalsLeftBare, readGoalTree, readHierarchy, type GoalBranch, type SpecNode } from "./model";
 import { describeGap, type StructureGap } from "../../src/spec/structure.js";
-import type { Board } from "./App";
+import { ChangeHeader, type Board } from "./App";
 
 /* ══ The hierarchy ═════════════════════════════════════
    The specification as a tree that starts from its purpose (BR-01m4ee23zg0wx6hyvpkyj9qcr1): the
@@ -21,7 +21,6 @@ function RequirementRow({ node, examples, mark, alsoBy, onOpen }: {
 }) {
   return <div className={`tree-req ${mark ? `tree-req--${mark}` : ""}`}>
     <button type="button" className="tree-req__title" data-tree-item onClick={() => onOpen(node.id)}>{node.title}</button>
-    <span className="tree-req__meta">{node.form.replace(/-/g, " ")}{node.capability ? ` · ${node.capability}` : ""}</span>
     {mark && <span className={`tree-mark tree-mark--${mark}`}>{mark === "out" ? "falls out" : "stays"}</span>}
     {alsoBy.length > 0 && <span className="tree-req__also">also part of {alsoBy.map((useCase) => useCase.title).join(", ")}</span>}
     {examples.length > 0 && <details className="tree-examples">
@@ -99,6 +98,13 @@ export function TreeView({ board, onOpen, arrangement = "goal", onArrangement = 
     target.scrollIntoView?.({ block: "start" });
     (target.querySelector("summary, button") as HTMLElement | null)?.focus();
   };
+  // A journey step opens its place in the tree where it is, without carrying the reader away.
+  const openPlace = (id: string) => {
+    const target = document.getElementById(anchor(id));
+    if (!target) return;
+    for (let details = target.closest("details"); details; details = details.parentElement?.closest("details") ?? null) details.open = true;
+    if (target instanceof HTMLDetailsElement) target.open = true;
+  };
   const useCases = useMemo(() => spec.filter((node) => node.form === "use-case").sort((left, right) => left.title.localeCompare(right.title)), [spec]);
   // Simulating a drop is one control at the top of the view, never one on every row.
   const dropControl = <div className="filters tree-drop-control">
@@ -168,8 +174,8 @@ export function TreeView({ board, onOpen, arrangement = "goal", onArrangement = 
         {bare.has(entry.goal.id) && <span className="tree-mark tree-mark--out">left with no use case</span>}
       </summary>
       <div className="tree-goal__body">
-        {entry.useCases.map((id) => useCase(id, 0, null, new Set(), entry.goal.title))}
         {entry.subGoals.map((sub) => goal(sub, depth + 1))}
+        {entry.useCases.map((id) => useCase(id, 0, null, new Set(), entry.goal.title))}
       </div>
     </details>;
   };
@@ -198,9 +204,10 @@ export function TreeView({ board, onOpen, arrangement = "goal", onArrangement = 
     ? `${gap.goals.length} goals serve no other goal. Name the purpose they serve under 'serves', in a change.`
     : describeGap(gap, title);
   const gaps = gapCount === 0
-    ? <section className="tree-gaps" aria-label="Gaps in the structure"><h3 className="tree-gaps__head">The structure has no gap: every goal serves one purpose and every journey is told.</h3></section>
-    : <details className="tree-gaps has-gaps" aria-label="Gaps in the structure">
-    <summary className="tree-gaps__head">{plural(gapCount, "gap")} in the structure — open to see what closes each</summary>
+    ? <span className="tree-gaps process-line__part" aria-label="Gaps in the structure"><span className="tree-gaps__head">No gap in the structure: one purpose, every journey told.</span></span>
+    : <details className="tree-gaps has-gaps process-line__part" aria-label="Gaps in the structure">
+    <summary className="tree-gaps__head">{plural(gapCount, "gap")} in the structure</summary>
+    <div className="process-line__open">
     {<ul>{tree.gaps.map((gap, index) => {
       const named = gap.kind === "root-goals" ? gap.goals : gap.kind === "no-journey" ? gap.useCases : gap.kind === "off-journey" ? [gap.useCase, gap.goal] : [gap.goal];
       return <li key={index}>
@@ -209,6 +216,7 @@ export function TreeView({ board, onOpen, arrangement = "goal", onArrangement = 
       </li>;
     })}</ul>}
     <p className="tree-gaps__note">The board only reads: a gap is closed in a change, through the gate.</p>
+    </div>
   </details>;
 
   const simulation = dropped && <p className="tree-impact" role="status"><b>Simulation — nothing in the specification changes.</b> If <b>{byId.get(dropped)?.title}</b> were dropped:
@@ -220,7 +228,7 @@ export function TreeView({ board, onOpen, arrangement = "goal", onArrangement = 
         <h2>Hierarchy</h2>
         <p>Arranged by actor: overall requirements, then each actor's use cases with the requirements they rely on.</p>
       </div></div>
-      {switcher}
+      <div className="tree-tools">{switcher}{dropControl}</div>
       <div className="filters">
         <span className="filters__label">capability</span>
         <button type="button" className={`filter ${capability === null ? "is-active" : ""}`} aria-pressed={capability === null} onClick={() => setCapability(null)}>all</button>
@@ -232,50 +240,48 @@ export function TreeView({ board, onOpen, arrangement = "goal", onArrangement = 
           <span className="tree-count"> · {roots.length}</span>
         </li>)}</ul>
       </nav>
-      {dropControl}
       {simulation}
-      <Overall hierarchy={hierarchy} examples={examples} onOpen={onOpen} />
       {hierarchy.actors.map(({ actor, roots }) => <details key={`${actor?.id ?? "none"}-${expansion.round}`} id={anchor(actor?.id ?? "no-actor")} className="spec-group tree-actor" open={expansion.open ? true : undefined}>
         <summary className="spec-group__head" data-tree-item>{actor ? actor.title : "Use cases with no actor"}<span>{roots.length}</span></summary>
         {roots.map((id) => useCase(id, 0, null, new Set(), actor?.title ?? "no actor"))}
       </details>)}
-      {toOutline}
+      <Overall hierarchy={hierarchy} examples={examples} onOpen={onOpen} />
       <Unplaced hierarchy={hierarchy} examples={examples} onOpen={onOpen} />
+      {toOutline}
     </div>;
   }
 
   return <div className="view tree" onKeyDown={walk}>
     <div className="view__head"><div>
       <h2>Hierarchy</h2>
-      <p>From the purpose down: each goal, the use cases that pursue it, the requirements they rely on and the examples that prove them.{tree.journeys.length ? " Read it along the journey above." : " No journey is told yet, so the goals stand in title order."}</p>
+      <p>The product from its purpose down: goals, the use cases that pursue them, their requirements and examples.</p>
     </div></div>
-    <nav id="tree-outline" className="tree-outline" aria-label="Outline of the goals">
-      <ul>{[...tree.roots, ...tree.apart].map(outlineGoal)}</ul>
-    </nav>
-    {gaps}
-    {switcher}
-    {dropControl}
+    <ChangeHeader change={board.change} onOpen={onOpen} extra={gaps} />
     {tree.journeys.length > 0 && <section className="tree-journeys" aria-label="Journeys">
       {tree.journeys.map((journey) => <div key={journey.summary.id} className="journey">
         <button type="button" className="journey__name" onClick={() => onOpen(journey.summary.id)}>{journey.summary.title}</button>
         <ol className="journey__steps">{journey.steps.map(({ node, journey: nested }, index) => <li key={`${node.id}-${index}`}>
-          <a className="journey__step" href={`#${anchor(node.id)}`} onClick={(event) => { event.preventDefault(); if (nested) onOpen(node.id); else goTo(node.id); }}>{node.title}{nested ? " · a journey of its own" : ""}</a>
+          <a className="journey__step" href={`#${anchor(node.id)}`} onClick={(event) => { event.preventDefault(); if (nested) onOpen(node.id); else openPlace(node.id); }}>{node.title}{nested ? " · a journey of its own" : ""}</a>
         </li>)}</ol>
       </div>)}
     </section>}
+    <nav id="tree-outline" className="tree-outline" aria-label="Outline of the goals">
+      <ul>{[...tree.roots, ...tree.apart].map(outlineGoal)}</ul>
+    </nav>
+    <div className="tree-tools">{switcher}{dropControl}</div>
     {simulation}
-    <Overall hierarchy={hierarchy} examples={examples} onOpen={onOpen} />
     {tree.roots.map((entry) => goal(entry, 0))}
     {tree.apart.length > 0 && <section className="spec-group tree-apart">
       <div className="spec-group__head">{tree.told ? "Off every journey" : "Goals — no journey is told yet"}<span>{tree.apart.length}</span></div>
       {tree.apart.map((entry) => goal(entry, 0))}
     </section>}
-    {toOutline}
     {tree.homeless.length > 0 && <section className="spec-group">
       <div className="spec-group__head">Use cases that serve no goal<span>{tree.homeless.length}</span></div>
       {tree.homeless.map((id) => useCase(id, 0, null, new Set(), "no goal"))}
     </section>}
+    <Overall hierarchy={hierarchy} examples={examples} onOpen={onOpen} />
     <Unplaced hierarchy={hierarchy} examples={examples} onOpen={onOpen} />
+    {toOutline}
   </div>;
 }
 

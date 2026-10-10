@@ -2,7 +2,8 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { TreeView, type Arrangement } from "./Tree";
-import { DECIDER_LABEL, LEVEL_LABEL, agentDecided, placeOf, relationPhrase, type ChangeMark, type ProvenanceDecider, type SpecNode } from "./model";
+import { goalPositions } from "../../src/spec/structure.js";
+import { DECIDER_LABEL, LEVEL_LABEL, agentDecided, placeOf, relationPhrase, structureNodes, type ChangeMark, type ProvenanceDecider, type SpecNode } from "./model";
 import { EntityMapView, ProvenanceBadges, ProvenancePanel, ProvenanceSummary, StateMachineView, StoryMapView, UseCaseView, VIEWS, type ViewKey } from "./views";
 
 /* ══ Kotta board ═══════════════════════════════════════
@@ -277,8 +278,10 @@ function initials(project: string): string {
   const words = project.split(/[\s\-_/]+/).filter(Boolean);
   return (words.length > 1 ? words.slice(0, 2).map((w) => w[0]).join("") : project.slice(0, 2)).toUpperCase();
 }
-export function TopBar({ workspace, board, onRefresh, refreshed }: {
+export function TopBar({ workspace, board, onRefresh, refreshed, counts = true }: {
   workspace: Workspace | null; board: Board | null; onRefresh: () => void; refreshed: number;
+  /** The workspace counts belong to the specification view only (QA-01m4gvndbn0hfx4fwq5jhjj5cg). */
+  counts?: boolean;
 }) {
   const project = workspace?.project ?? "workspace";
   const admitted = board ? board.spec.filter((node) => board.kinds.get(node.id) !== null).length : 0;
@@ -297,12 +300,12 @@ export function TopBar({ workspace, board, onRefresh, refreshed }: {
         <span className="top__ws-path">{workspace?.workspace ?? ".kotta/"}{typeof window !== "undefined" && window.location.port ? ` · port ${window.location.port}` : ""}</span>
       </span>
     </div>
-    <div className="top__stats">
+    {counts && <div className="top__stats">
       {stats.map((stat) => <div key={stat.label} className="top__stat">
         <span className="top__stat-label">{stat.label}</span>
         <span className={`top__stat-value ${stat.hot ? "is-hot" : ""}`}>{stat.value}</span>
       </div>)}
-    </div>
+    </div>}
     <button type="button" className="top__action" onClick={onRefresh}>
       <span className="top__key" aria-hidden="true">↻</span> Refresh <span className="top__ago">{refreshed}s</span>
     </button>
@@ -458,6 +461,12 @@ function Relations({ node, board, onOpen }: { node: SpecNode; board: Board; onOp
     const phrase = relationPhrase(field, "in");
     groups.set(phrase === field ? `${field} (from)` : phrase, [...(groups.get(phrase === field ? `${field} (from)` : phrase) ?? []), from]);
   }
+  // A goal's served-by list follows the tree's order, not the titles (QA-01m4gvndbn0hfx4fwq5jhjj5cg).
+  const served = groups.get(relationPhrase("serves", "in"));
+  if (served) {
+    const positions = goalPositions(structureNodes(board.spec));
+    groups.set(relationPhrase("serves", "in"), [...served].sort((left, right) => (positions.get(left) ?? Infinity) - (positions.get(right) ?? Infinity) || (titleOf(left) ?? left).localeCompare(titleOf(right) ?? right)));
+  }
   if (!groups.size) return null;
   return <section className="drawer__section">
     <div className="drawer__section-head">Relations</div>
@@ -589,35 +598,48 @@ export function ChangeTag({ node }: { node: SpecNode }) {
     {node.uncommitted && <span className="tag tag-outline">not committed</span>}
   </>;
 }
-export function ChangeHeader({ change, onOpen }: { change: OpenChange; onOpen: (id: string) => void }) {
+/**
+ * The process, said in one line (QA-01m4gvndbn0hfx4fwq5jhjj5cg): the open change, who said yes and
+ * what the yes covers (BR-01m4gh4rxe5navrnzfz0t5a2jf), and every other piece — the gate's list, the
+ * proposal, open decisions, unreadable files, and whatever the view adds, such as the gaps — opening
+ * on request below it.
+ */
+export function ChangeHeader({ change, onOpen, extra }: { change: OpenChange | null; onOpen: (id: string) => void; extra?: ReactNode }) {
+  if (!change) return extra ? <section className="process-line" aria-label="About the model">{extra}</section> : null;
   const state = change.approved ? "approved" : change.planned ? "planned, not approved" : "not planned";
   const counts = { human: 0, "agent-proposed-human-approved": 0, "agent-decided": 0, none: 0 };
   for (const node of change.nodes) counts[node.provenance?.decided_by ?? "none"] += 1;
   const approval = change.approval;
-  return <section className="banner banner--change" aria-label={`Open change: ${change.title}`}>
-    <p><b>Open change</b> · <code>{change.name}</code> · {state}
-      {change.uncommitted.length > 0 && <> · <span className="tag tag-outline">not committed</span> {change.uncommitted.length} file{change.uncommitted.length === 1 ? "" : "s"}</>}</p>
-    <p className="approval-summary">{approval
-      ? <>Approved by <b>{approval.by}</b> on {day(approval.at)}. The yes covers the whole change as planned. As its nodes&apos; provenance records it — the agent wrote those marks — {counts.human} were decided by you, {counts["agent-proposed-human-approved"]} the agent proposed and you approved, and {counts["agent-decided"]} the agent decided alone.</>
-      : <>Nobody has said yes to this change yet.</>}</p>
-    {approval && <details className="approval-list">
-      <summary>What the gate listed as the agent&apos;s own decisions · {approval.agentDecidedAtGate.length}</summary>
-      <ul>{approval.agentDecidedAtGate.map((line, index) => <li key={index}><MarkdownContent value={line} onEntity={onOpen} /></li>)}</ul>
+  const unreadable = change.unreadable ?? [];
+  return <section className="process-line" aria-label={`Open change: ${change.title}`}>
+    <span className="process-line__lead"><b>{change.title}</b> · {approval ? "" : `${state} · `}</span>
+    <span className="approval-summary">{approval
+      ? <>Approved by {approval.by} on {day(approval.at)} for the whole change · as its provenance records it: {counts.human} by you, {counts["agent-proposed-human-approved"]} proposed and approved, {counts["agent-decided"]} by the agent alone</>
+      : <>Nobody has said yes to this change yet.</>}</span>
+    {change.uncommitted.length > 0 && <span className="process-line__part"> · {change.uncommitted.length} not committed</span>}
+    {approval && <details className="process-line__part approval-list">
+      <summary>gate list · {approval.agentDecidedAtGate.length}</summary>
+      <div className="process-line__open"><p>What the gate listed as the agent&apos;s own decisions · {approval.agentDecidedAtGate.length}</p>
+        <ul>{approval.agentDecidedAtGate.map((line, index) => <li key={index}><MarkdownContent value={line} onEntity={onOpen} /></li>)}</ul></div>
     </details>}
-    <details>
-      <summary>Proposal</summary>
-      <MarkdownContent value={change.proposal} onEntity={onOpen} />
+    <details className="process-line__part">
+      <summary>proposal</summary>
+      <div className="process-line__open"><MarkdownContent value={change.proposal} onEntity={onOpen} /></div>
     </details>
-    {(change.unreadable ?? []).length > 0 && <div className="unreadable" role="alert">
-      <b>{change.unreadable!.length === 1 ? "One file of this change cannot be read" : `${change.unreadable!.length} files of this change cannot be read`}</b> — the change is not empty; these are left out until they are fixed:
-      <ul>{change.unreadable!.map((file) => <li key={file.path}><code>{file.path}</code> — {file.reason}</li>)}</ul>
-    </div>}
-    {change.openDecisions.length > 0 && <details open>
-      <summary>Open decisions · {change.openDecisions.length}</summary>
-      <ul>{change.openDecisions.map((decision, index) => <li key={index}>
+    {change.openDecisions.length > 0 && <details className="process-line__part">
+      <summary>open decisions · {change.openDecisions.length}</summary>
+      <div className="process-line__open"><ul>{change.openDecisions.map((decision, index) => <li key={index}>
         <MarkdownContent value={`${decision.node}: ${decision.text}`} onEntity={onOpen} />
-      </li>)}</ul>
+      </li>)}</ul></div>
     </details>}
+    {unreadable.length > 0 && <details className="process-line__part" open>
+      <summary>{unreadable.length} unreadable</summary>
+      <div className="process-line__open unreadable" role="alert">
+        <b>{unreadable.length === 1 ? "One file of this change cannot be read" : `${unreadable.length} files of this change cannot be read`}</b> — the change is not empty; these are left out until they are fixed:
+        <ul>{unreadable.map((file) => <li key={file.path}><code>{file.path}</code> — {file.reason}</li>)}</ul>
+      </div>
+    </details>}
+    {extra}
   </section>;
 }
 
@@ -803,15 +825,15 @@ export function App() {
   return <div className="app">
     <Rail board={board} refreshed={refreshed} view={view === "changes" ? "spec" : view} onView={setView} changes={changes} change={board?.change?.name ?? null} onChange={(name) => { setChangeName(name); if (view === "changes") setView("spec"); }} />
     <div className="content">
-      <TopBar workspace={workspace} board={board} onRefresh={() => void refresh()} refreshed={refreshed} />
+      <TopBar workspace={workspace} board={board} onRefresh={() => void refresh()} refreshed={refreshed} counts={view === "spec"} />
       {workspace?.notices?.length ? <WorkspaceNotices notices={workspace.notices} /> : null}
       {workspace && error && <div className="banner" role="alert">
         <b>Last read failed.</b> Tried <code>GET {WORKSPACE_ENDPOINT}</code> — {error}. Showing the last good read.
         <button type="button" className="btn btn-secondary btn-sm" onClick={() => void refresh()}>Retry</button>
       </div>}
       <main className="stage scroll" ref={stage} onScroll={(event) => scrolls.current.set(shownView.current, event.currentTarget.scrollTop)}>
-        {board?.change && <ChangeHeader change={board.change} onOpen={open} />}
-        {board && view !== "changes" && <ProvenanceSummary board={board} agentOnly={agentOnly} onAgentOnly={setAgentOnly} />}
+        {board?.change && view !== "tree" && <ChangeHeader change={board.change} onOpen={open} />}
+        {board && view === "spec" && <ProvenanceSummary board={board} agentOnly={agentOnly} onAgentOnly={setAgentOnly} />}
         {!board && <div className="view"><Placeholder rows={6} label="Reading the workspace…" />
           {error && <div className="banner" role="alert"><b>The workspace could not be read.</b> {error}. <button type="button" className="btn btn-secondary btn-sm" onClick={() => void refresh()}>Retry</button></div>}</div>}
         {board && view === "changes" && <ChangeList changes={changes} onChange={(name) => { setChangeName(name); setView("spec"); }} />}

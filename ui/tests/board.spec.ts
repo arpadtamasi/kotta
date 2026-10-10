@@ -13,7 +13,7 @@ test("the change fits one calm screen: the fixed part stays under 120 pixels, th
   await page.goto("/?change=review");
   await expect(page.getByRole("region", { name: "Open change: A long proposal" })).toBeVisible();
   expect(await fixedHeight(page)).toBeLessThanOrEqual(120);
-  await page.getByText("Proposal", { exact: true }).click();
+  await page.locator(".process-line summary", { hasText: "proposal" }).click();
   await expect(page.getByText("Point 30")).toBeAttached();
   expect(await fixedHeight(page)).toBeLessThanOrEqual(120);
   await page.goto("/");
@@ -140,4 +140,46 @@ test("stepping back in the drawer returns to where the reader left the node (EX-
   await dialog.getByRole("button", { name: "← Back" }).click();
   await expect(dialog).toHaveAttribute("aria-label", /Choose a side and answer the cards/);
   expect(Math.abs(await dialog.evaluate((element) => element.scrollTop) - left)).toBeLessThanOrEqual(10);
+});
+
+test.describe("the product before the process (QA-01m4gvndbn0hfx4fwq5jhjj5cg)", () => {
+  for (const address of ["/?view=tree", "/?view=tree&change=review"]) {
+    test(`the purpose and the journey come first, under one process line — ${address} (EX-01m4gvndhk3168ex3qyrrh9300, EX-01m4gvndqfnkd48n1m57tjv0c7)`, async ({ page }) => {
+      await page.goto(address);
+      const outline = page.locator("#tree-outline");
+      await expect(outline).toBeVisible();
+      const bands = await page.locator(".view.tree").evaluate((view) => {
+        const outlineTop = view.querySelector("#tree-outline")!.getBoundingClientRect().top;
+        return [...view.children].filter((child) => child.getBoundingClientRect().bottom <= outlineTop + 1).map((child) => child.className.split(" ")[0]);
+      });
+      expect(bands.length).toBeLessThanOrEqual(3);
+      const line = page.locator(".process-line");
+      if (await line.count()) {
+        // One line: every part of it on the same row, none wrapped below another.
+        const { rows, color } = await line.evaluate((element) => ({ rows: new Set([...element.children].map((child) => Math.round(child.getBoundingClientRect().top))).size, color: getComputedStyle(element).backgroundColor }));
+        expect(rows).toBe(1);
+        expect(color).not.toMatch(/rgb\(2[0-9]{2}, [0-9]{1,2}, [0-9]{1,2}\)/);
+      }
+      await expect(page.locator(".tree-journeys")).toBeInViewport({ ratio: 1 });
+      await expect(outline.getByRole("button").first()).toBeInViewport();
+      await expect(page.locator(".tree-req__meta", { hasText: /business rule/ })).toHaveCount(0);
+    });
+  }
+
+  test("a goal's row expands, its title opens the drawer, and a journey step opens its place where it is", async ({ page }) => {
+    await page.goto("/?view=tree");
+    await page.locator("details.tree-goal > summary").first().locator(".tree-count").click();
+    const head = page.locator("details.tree-goal > summary", { hasText: "Each partner can answer honestly, in private" }).first();
+    await head.locator(".tree-count").click();
+    expect(await head.evaluate((summary) => (summary.parentElement as HTMLDetailsElement).open)).toBe(true);
+    await head.locator(".tree-goal__title").click();
+    await expect(page.getByRole("dialog")).toHaveAttribute("aria-label", /Each partner can answer honestly/);
+    await page.keyboard.press("Escape");
+    await page.locator(".stage").evaluate((stage) => { stage.scrollTop = 0; });
+    const before = await page.locator(".stage").evaluate((stage) => stage.scrollTop);
+    const step = page.locator(".journey__step").nth(2);
+    const height = await step.evaluate((element) => element.getBoundingClientRect().height);
+    await step.click();
+    expect(Math.abs(await page.locator(".stage").evaluate((stage) => stage.scrollTop) - before)).toBeLessThanOrEqual(height);
+  });
 });

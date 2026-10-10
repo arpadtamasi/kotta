@@ -87,7 +87,8 @@ describe("the tree from its purpose", () => {
     const gaps = container.querySelector(".tree-gaps")!;
     expect(gaps.tagName).toBe("DETAILS");
     expect((gaps as HTMLDetailsElement).open).toBe(false);
-    expect(gaps.querySelector("summary")!.textContent).toBe("2 gaps in the structure — open to see what closes each");
+    expect(gaps.querySelector("summary")!.textContent).toBe("2 gaps in the structure");
+    expect(gaps.closest(".process-line")).toBeTruthy();
     const lines = [...gaps.querySelectorAll("li")].map((line) => line.textContent ?? "");
     expect(lines[0]).toMatch(/^8 goals serve no other goal/);
     expect(lines[0]).toContain("in a change");
@@ -99,7 +100,7 @@ describe("the tree from its purpose", () => {
 
   it("says in words when the structure has no gap (EX-01m4ggqc904qbhpg0j4xrj0gj4)", () => {
     const { container } = render(<TreeView board={board(told())} onOpen={() => {}} />);
-    expect(container.querySelector(".tree-gaps h3")!.textContent).toBe("The structure has no gap: every goal serves one purpose and every journey is told.");
+    expect(container.querySelector(".tree-gaps .tree-gaps__head")!.textContent).toBe("No gap in the structure: one purpose, every journey told.");
   });
 
   it("dropping the evening together marks its whole journey, and leaves its goals with no use case (EX-01m4ggxas3te2f5f4h2644eje9)", () => {
@@ -245,8 +246,8 @@ describe("what the human decided", () => {
     const nodes = boardSpec(flat()).slice(0, 4).map((entry, index) => ({ ...entry, mark: "added" as const, provenance: { sources: [], decided_by: index === 0 ? "human" as const : "agent-decided" as const } }));
     render(<ChangeHeader change={change("baseline", { approved: true, nodes, approval: { by: "Árpád Tamási", at: "2026-10-09T13:50:47Z", agentDecidedAtGate: ["Three lines", "as the gate", "listed them"] } })} onOpen={() => {}} />);
     const summary = document.querySelector(".approval-summary")!.textContent ?? "";
-    expect(summary).toContain("Approved by Árpád Tamási on 2026-10-09. The yes covers the whole change as planned.");
-    expect(summary).toContain("1 were decided by you, 0 the agent proposed and you approved, and 3 the agent decided alone");
+    expect(summary).toContain("Approved by Árpád Tamási on 2026-10-09 for the whole change");
+    expect(summary).toContain("as its provenance records it: 1 by you, 0 proposed and approved, 3 by the agent alone");
     expect(screen.getByText(/What the gate listed as the agent's own decisions · 3/)).toBeTruthy();
   });
 
@@ -391,6 +392,41 @@ describe("the tree after a change", () => {
     const { container } = render(<TreeView board={readBoard(workspace({ spec }))} onOpen={() => {}} />);
     expect(container.querySelector(".tree-outline")!.textContent).not.toContain("The app is opened from the home screen like an app");
     expect(container.querySelector(`#tree-${IDS.install}`)).toBeNull();
-    expect(container.querySelector(".tree-gaps")!.textContent).toContain("no gap");
+    expect(container.querySelector(".tree-gaps")!.textContent).toContain("No gap");
+  });
+});
+
+describe("the product before the process (QA-01m4gvndbn0hfx4fwq5jhjj5cg)", () => {
+  it("opens on the title, one process line, the journey, the outline, the tools, then the tree, with nothing but titles on its rows (EX-01m4gvndhk3168ex3qyrrh9300)", () => {
+    const nodes = boardSpec(told()).map((entry) => ({ ...entry, mark: "added" as const, provenance: { sources: [], decided_by: "agent-decided" as const } }));
+    const spec = boardSpec(told());
+    const changed = readBoard(workspace({ spec, changes: [change("cel-es-menet", { approved: true, nodes, approval: { by: "Árpád Tamási", at: "2026-10-09T17:30:00Z", agentDecidedAtGate: ["one"] } })] }), "cel-es-menet");
+    const { container } = render(<TreeView board={changed} onOpen={() => {}} />);
+    const order = [...container.querySelector(".view.tree")!.children].map((child) => child.className.split(" ")[0]);
+    expect(order.slice(0, 5)).toEqual(["view__head", "process-line", "tree-journeys", "tree-outline", "tree-tools"]);
+    expect(container.querySelectorAll(".process-line")).toHaveLength(1);
+    expect(container.querySelector(".process-line")!.textContent).toContain("gap");
+    // Under the purpose its goals come first, the use cases after them.
+    const purpose = container.querySelector(`#tree-${IDS.purpose}`)!;
+    const body = purpose.querySelector(":scope > .tree-goal__body")!;
+    expect(body.firstElementChild!.className).toContain("tree-goal");
+    expect(body.lastElementChild!.className).not.toContain("tree-goal");
+    const kinds = [...body.children].map((child) => child.className.includes("tree-goal") ? "goal" : "use case");
+    expect(kinds.lastIndexOf("goal")).toBeLessThan(kinds.indexOf("use case"));
+    // No form, capability or id on a row.
+    for (const row of container.querySelectorAll(".tree-req")) expect(row.textContent).not.toMatch(/business rule|BR-|·\s*[a-z]+-[a-z]+/);
+    // The whole-product and unplaced requirements stand after the tree.
+    const heads = [...container.querySelectorAll(".spec-group__head")].map((head) => head.textContent ?? "");
+    expect(heads.at(-1)).toMatch(/^No place yet/);
+    expect(heads.at(-2)).toMatch(/^Holds for the whole product/);
+  });
+
+  it("says the approval in one line, with the three counts and the gate's list a click away (EX-01m4gvndqfnkd48n1m57tjv0c7)", () => {
+    const nodes = boardSpec(flat()).slice(0, 26).map((entry, index) => ({ ...entry, mark: "added" as const, provenance: { sources: [], decided_by: index < 4 ? "human" as const : "agent-decided" as const } }));
+    render(<ChangeHeader change={change("cel-es-menet", { approved: true, nodes, approval: { by: "Árpád Tamási", at: "2026-10-09T17:30:00Z", agentDecidedAtGate: ["one", "two"] } })} onOpen={() => {}} />);
+    const line = document.querySelector(".process-line")!;
+    expect(line.className).not.toMatch(/alert|banner/);
+    expect(line.textContent).toContain("Approved by Árpád Tamási on 2026-10-09 for the whole change · as its provenance records it: 4 by you, 0 proposed and approved,");
+    expect(screen.getByText("gate list · 2")).toBeTruthy();
   });
 });

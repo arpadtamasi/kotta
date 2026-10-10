@@ -724,3 +724,22 @@ code { font-family: var(--font-mono); }
 .broken-tag { border: 1px solid var(--color-accent-700); color: var(--color-accent-700); }
 .unreadable { margin-top: var(--space-2); padding: var(--space-2); border: 1px solid var(--color-accent-700); }
 .unreadable ul { margin: var(--space-1) 0 0; padding-left: var(--space-4); }
+
+/* The product before the process (QA-01m4gvndbn0hfx4fwq5jhjj5cg): one neutral line for the process,
+   every part of it opening below on request; the tools share one row. */
+.process-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px var(--space-2); margin: 0 0 var(--space-3); padding: 6px var(--space-3); font-size: 13px; color: var(--text-muted); background: var(--color-surface); border-bottom: 1px solid var(--line-soft); }
+.process-line b { color: var(--color-text); }
+.process-line__part > summary { display: inline; cursor: pointer; text-decoration: underline; color: var(--color-text); }
+.process-line__part > summary::marker, .process-line__part > summary::-webkit-details-marker { display: none; }
+.process-line__part::before { content: "· "; }
+.process-line__part[open] { flex-basis: 100%; }
+.process-line__open { margin-top: var(--space-2); color: var(--color-text); }
+.process-line .tree-gaps { margin: 0; padding: 0; border: 0; background: none; }
+.process-line .tree-gaps__head { font-size: 13px; font-weight: 400; }
+.tree-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-4); margin: 0 0 var(--space-2); }
+.tree-tools .filters { border: 0; padding: 0; margin: 0; }
+/* One line, whatever it holds: it scrolls within itself rather than grow; it wraps only to show a part opened. */
+.process-line { flex-wrap: nowrap; white-space: nowrap; overflow-x: auto; }
+.process-line:has(details[open]) { flex-wrap: wrap; white-space: normal; overflow-x: visible; }
+.process-line { scrollbar-width: none; }
+.process-line::-webkit-scrollbar { display: none; }
