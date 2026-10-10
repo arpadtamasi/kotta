@@ -6,7 +6,7 @@ level: user-goal
 actor:
   - A-01m0f0wn89w35y4k8nngzgemz8
 goal:
-  - G-01m4kbetcrer5bjb75djba5sct
+  - G-01m0f0wn89zx3nr6h1vtd9jg9h
 refines:
   - BR-01m3w9ajdxbf04ph4y97dmry35
   - BR-01m4at3x2fffqepx85tmvf3hxw
@@ -19,7 +19,7 @@ provenance:
     - ".kotta/changes/kotta-celja-es-menete/conversation.md · K2"
     - "templates/AGENTS.md · Rules for agents"
   quote: "rp, 2026-10-10: „Igen, két új eset”"
-  inferred: "The operator chose that building and archiving are steps of the journey; the steps are the rules file's own, the wording is the agent's."
+  inferred: "2026-10-10 (migracio-helye): serves its own goal, not the purpose directly, so that the purpose is served through its goals and support can stand beside the journey; the agent's. The operator chose that building and archiving are steps of the journey; the steps are the rules file's own, the wording is the agent's."
 ---
 # Archive a built change
 

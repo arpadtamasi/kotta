@@ -5,7 +5,7 @@ title: "Migrate a workspace"
 actor:
   - A-01m0f0wn89ewnpex9n4tq0s0rg
 goal:
-  - G-01m0f0wn89zx3nr6h1vtd9jg9h
+  - G-01m4kbetcrer5bjb75djba5sct
 interfaces:
   - IF-01m0f0wn8994dzf9z1sdygxa04
 accepted:
@@ -16,11 +16,12 @@ provenance:
   level: partly-inferred
   decided_by: human
   sources:
+    - ".kotta/changes/migracio-helye/conversation.md · P1"
     - ".kotta/changes/az-a-team-oroksege-megy/conversation.md · P6"
     - ".kotta/changes/az-a-team-oroksege-megy/conversation.md · J1"
     - ".kotta/changes/archive/2026-10-03-a-valtozas-a-kottae/conversation.md · J4"
   quote: "rp, 2026-10-03: „minden a-team örökség mehet, migrálni sem kell” — „és engedjük el, akkor lehessen a kotta csak a repóban” — „1”"
-  inferred: "What is left of the use case — the move out of OpenSpec's folder that 1.0.0-alpha.3 added — is the agent's reading of „migrálni sem kell” as the pre-1.0 migration only."
+  inferred: "2026-10-10 (migracio-helye): it serves the purpose directly, as support someone does off the journey (the told-to-a-stranger rule), instead of a goal a journey step serves; the agent's, put to the operator at the gate. What is left of the use case — the move out of OpenSpec's folder that 1.0.0-alpha.3 added — is the agent's reading of „migrálni sem kell” as the pre-1.0 migration only."
 ---
 
 ## Intent
