@@ -44,7 +44,7 @@ disagree, the disagreement is reported rather than smoothed over. See [Concepts]
 Node.js 20 or newer, Git, and a coding-agent host that reads skills from `~/.claude/skills`.
 
 ```bash
-npm install --global @arpadtamasi/kotta@1.0.0-alpha.10   # or @arpadtamasi/kotta@next
+npm install --global @arpadtamasi/kotta@1.0.0-alpha.11   # or @arpadtamasi/kotta@next
 kotta --version
 ```
 

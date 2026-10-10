@@ -1,6 +1,6 @@
 # CLI reference
 
-Every `kotta` command and option, as `kotta <command> --help` prints them in 1.0.0-alpha.10, grouped
+Every `kotta` command and option, as `kotta <command> --help` prints them in 1.0.0-alpha.11, grouped
 by what you use them for.
 
 ## Conventions

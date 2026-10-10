@@ -4,6 +4,23 @@ All notable changes to Kotta (called A-Team before 0.3.0) will be documented in 
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-alpha.11] — 2026-10-10
+
+### Added
+
+- **`kotta plan` measures against approved open changes too**: their deltas are laid over the
+  accepted model for the conflict candidates, and the report names them.
+- **`kotta narrative` keeps every word of the human**: answers to structured questions, paired as
+  questions answered, and messages typed while the agent works.
+- **Kotta's own specification has a purpose and a journey**: *The human sees in time what the
+  machine does*; *Agree before building, then see it kept* — orient, shape, approve, build, analyse
+  the gap, archive.
+
+### Fixed
+
+- `kotta plan` resolves a citation of an archived change's conversation instead of listing it as
+  unresolved.
+
 ## [1.0.0-alpha.10] — 2026-10-10
 
 ### Added
