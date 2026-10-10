@@ -11,7 +11,7 @@ provenance:
   sources:
     - ".impeccable/critique re-run of 2026-10-09 on the intimity board (design critic, 25/40; detector and post-build checklist)"
   quote: "rp, 2026-10-09: „alig navigálható a hierarchia... nekem”"
-  inferred: "The case is the intimity board as reviewed on 2026-10-09; the wording is the agent's."
+  inferred: "2026-10-09 (termek-elobb): the gaps are now a count in the process line. The case is the intimity board as reviewed on 2026-10-09; the wording is the agent's."
 ---
 # Any intimity goal is two moves from the top
 
@@ -25,5 +25,5 @@ The human opens the hierarchy and goes to *Each partner can answer honestly, in 
 
 ## Then
 
-The first screen starts with the outline of the nine goals; the gaps take two lines, closed, and opened they name both gaps with what closes each; the whole-product requirements and the goals are closed with their counts; from deep in the tree, one action reaches the outline and one more brings the goal into view, open. No row carries a drop control.
+The first screen starts with the outline of the nine goals; the gaps are a count in the process line, and opened they name both gaps with what closes each; the whole-product requirements and the goals are closed with their counts; from deep in the tree, one action reaches the outline and one more brings the goal into view, open. No row carries a drop control.
 

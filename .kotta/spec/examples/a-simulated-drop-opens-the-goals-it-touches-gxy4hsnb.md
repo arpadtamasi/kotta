@@ -11,7 +11,7 @@ provenance:
   sources:
     - ".impeccable/critique re-run of 2026-10-09 on the intimity board (design critic, 25/40; detector and post-build checklist)"
   quote: "rp, 2026-10-09: „alig navigálható a hierarchia... nekem”"
-  inferred: "The case is the intimity board as reviewed on 2026-10-09; the wording is the agent's."
+  inferred: "2026-10-09 (termek-elobb): the drop control now sits in the row of tools. The case is the intimity board as reviewed on 2026-10-09; the wording is the agent's."
 ---
 # A simulated drop opens the goals it touches
 
@@ -21,7 +21,7 @@ The intimity hierarchy with every goal closed.
 
 ## When
 
-The human chooses *Play an evening apart* in the drop control at the top of the view.
+The human chooses *Play an evening apart* in the drop control in the view's row of tools.
 
 ## Then
 
