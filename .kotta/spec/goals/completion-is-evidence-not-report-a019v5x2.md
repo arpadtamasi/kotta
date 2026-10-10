@@ -2,6 +2,8 @@
 id: G-01m0f0wn89bbzdenysa019v5x2
 form: goal
 title: "Completion is evidence, not report"
+serves:
+  - G-01m4kbetcrer5bjb75djba5sct
 measured_by:
   - EX-01m0qtshfq4gx91qt7zhfg56b2
 accepted:
@@ -13,7 +15,7 @@ provenance:
   sources:
     - ".kotta/changes/a-motor-maradek-igeretei/proposal.md · What changes"
   quote: null
-  inferred: "Restated from review evidence and execution outcomes, which are removed, to evidence by citation, which the release keeps. Context is unchanged. It is now measured by *An unadmitted promise fails the gap check*."
+  inferred: "2026-10-10 (kotta-celja-es-menete): serves the purpose the operator's observation names; the edge is the agent's. Restated from review evidence and execution outcomes, which are removed, to evidence by citation, which the release keeps. Context is unchanged. It is now measured by *An unadmitted promise fails the gap check*."
 ---
 
 ## Outcome

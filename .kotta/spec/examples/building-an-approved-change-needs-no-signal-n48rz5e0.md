@@ -3,6 +3,7 @@ id: EX-01m3wa6fk1b8anb3dxn48rz5e0
 form: example
 title: Building an approved change needs no signal
 subjects:
+  - UC-01m4kbzh3rt3sjwmb49km5j1db
   - BR-01m3kdq88m3bgye3xnn9q6hsr2
   - BR-01m0fp2hdkfn519h1w84jsrqbe
 capability: planning-phase
