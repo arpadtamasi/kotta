@@ -133,6 +133,14 @@ question, so a draft with one is a draft, not an agreement.
    silently. Never leave it as a build note in the proposal's prose: prose is history once the change
    is archived, nothing cites it, and nothing notices when it regresses. `kotta plan` lists every item
    of the proposal's What changes that names no node, for you to judge.
+8. **Tell the product to a stranger first.** Before you shape a model, write under
+   `## Told to a stranger` in the proposal, in a few sentences, what the product is for, how it is
+   used step by step, its variants and what supports it. Then propose the model that reads the same
+   way: a purpose the product's goals serve, each journey as a summary use case, variants as
+   extensions; support that is a quality of the product — privacy, access, installation,
+   timeliness — as a quality attribute, support someone does as a use case off the journey. A
+   purpose, a journey or a measure the human has not said is a question under `Open decisions`,
+   never your answer. `kotta plan` names a proposal that tells no stranger.
 
 ## Skills
 

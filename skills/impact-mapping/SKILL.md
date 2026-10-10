@@ -9,6 +9,9 @@ Turn a proposed output into a small chain of measurable outcomes and participati
 the canonical `goal` and `actor` forms from `.kotta/spec/forms/`; keep the workshop notation in
 Markdown. Treat diagrams as optional illustrations, never as the canonical record.
 
+
+Start from the product as it would be told to a stranger — what it is for, how it is used step by step, its variants, what supports it — and keep the nodes you draft in that shape: one purpose, journeys as summary use cases, support as quality attributes or as use cases off the journey. A purpose or a journey nobody has stated is a question, not a draft.
+
 ## Recognize the forms
 
 Read `.kotta/spec/forms/goal.yaml` and `.kotta/spec/forms/actor.yaml` before drafting. Recognize a goal

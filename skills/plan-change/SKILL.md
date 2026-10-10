@@ -43,6 +43,17 @@ and every point nobody has decided.
 - A **removed** node: a list item in `model/REMOVED.md` naming its id and the reason.
 - A node that belongs to a capability carries `capability: <path>` (e.g. `game/session`).
 
+## Tell the product to a stranger first
+
+Before translating anything, write under `## Told to a stranger` in the proposal, in a few
+sentences, how you would tell the product to someone who has never seen it: what it is for, how it
+is used step by step, its variants, and what supports it. Then shape the delta so the hierarchy
+reads the same way: a purpose the product's goals serve (`serves`), each journey as a summary use
+case whose `includes` are its steps in order, variants as `extends`; support that is a quality of
+the product as a `quality-attribute`, support someone does as a use case off the journey. A purpose
+or a journey the human has not stated is drafted `inferred`, with an item under `## Open
+decisions`, until they confirm it. `kotta plan` names a proposal with no such section.
+
 ## Distil the conversation first
 
 If the change was shaped in an agent session, distil it before translating:

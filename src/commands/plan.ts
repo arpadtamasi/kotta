@@ -93,6 +93,8 @@ export interface ChangeAnalysis {
   conversation: ConversationCitations;
   /** List items of the proposal's What changes that name no node: a promise left in prose, or work that keeps none. */
   prose: ProseItem[];
+  /** The proposal tells the product to a stranger under `## Told to a stranger` (BR-01m4gvndx1scrdc836cmjp58dq). */
+  toldToAStranger: boolean;
 }
 
 export interface ProseItem { line: number; text: string }
@@ -349,6 +351,7 @@ export function analyzeChange(root: string, name: string): Analysis {
     provenance: provenanceSummary(root, model.nodes),
     conversation: conversationCitations(root, model),
     prose: existsSync(join(model.directory, PROPOSAL_FILE)) ? proseWithoutNode(readFileSync(join(model.directory, PROPOSAL_FILE), "utf8"), [...accepted, ...model.nodes]) : [],
+    toldToAStranger: existsSync(join(model.directory, PROPOSAL_FILE)) && /^##\s+Told to a stranger\s*$/im.test(readFileSync(join(model.directory, PROPOSAL_FILE), "utf8")),
     forms,
     model,
     accepted,
@@ -444,6 +447,9 @@ export function renderPlanning(analysis: ChangeAnalysis, root: string, generated
     lines.push("", "The proposal's What changes names no node in these items. Is each a promise — a quality attribute, a rule — that needs a node, or work that keeps no promise? Awaits judgement:", "");
     for (const item of analysis.prose) lines.push(`- proposal.md:${item.line} — ${item.text}`);
   }
+  if (!analysis.toldToAStranger) {
+    lines.push("", "The proposal does not tell the product to a stranger: it has no `## Told to a stranger` section. Write what the product is for, how it is used step by step, its variants and what supports it, and shape the model to read the same way. Awaits judgement; it does not block the gate.");
+  }
   lines.push("", "The machine's candidates are mechanical and narrow. Contradictions the agent found by comparing every claim of the delta with the accepted nodes it touches, each marked `judged`:", "");
   lines.push(JUDGED_OPEN, ...(judged.trim() ? [judged.trim()] : []), JUDGED_CLOSE, "");
 
@@ -501,7 +507,7 @@ export function formatPlan(result: PlanResult): string {
   const data = result.data;
   const lines = [
     `Planned ${data.change}: ${data.delta.added.length} added, ${data.delta.modified.length} changed, ${data.delta.removed.length} removed. Report: ${data.planning}.`,
-    `Conflict candidates awaiting judgement: ${data.conflictsTotal}${data.conflictsTotal > data.conflicts.length ? ` (top ${data.conflicts.length} listed)` : ""}. Proposal items naming no node: ${data.prose.length}. Open decisions: ${data.silences.openDecisions.length}. Narrative drift: ${data.drift.length}. Judged by the agent: ${data.judged.length}. Decided by the machine alone: ${data.provenance.machineDecisions.length}.`,
+    `Conflict candidates awaiting judgement: ${data.conflictsTotal}${data.conflictsTotal > data.conflicts.length ? ` (top ${data.conflicts.length} listed)` : ""}. Proposal items naming no node: ${data.prose.length}.${data.toldToAStranger ? "" : " The proposal tells no stranger."} Open decisions: ${data.silences.openDecisions.length}. Narrative drift: ${data.drift.length}. Judged by the agent: ${data.judged.length}. Decided by the machine alone: ${data.provenance.machineDecisions.length}.`,
   ];
   if (result.ok) lines.push("Ready for the gate: put the delta, the candidates and the machine's decisions to the human, then record their yes with 'kotta approve'.");
   return lines.join("\n");
