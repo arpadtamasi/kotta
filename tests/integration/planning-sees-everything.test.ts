@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { readSession } from "../../src/conversation/sessions.js";
+import { distill } from "../../src/conversation/distill.js";
 import { answerPause, planningWorkspace, run, write, node, PAUSE, QUIT } from "./planning-fixture.js";
 
 /**
@@ -25,6 +26,9 @@ describe("the planning phase sees everything", () => {
     ];
     writeFileSync(log, lines.map((line) => JSON.stringify(line)).join("\n"));
     const session = readSession(log);
+    const distilled = distill([{ session, source: "session.jsonl" }]);
+    expect(distilled.questions).toHaveLength(1);
+    expect(distilled.questions[0].human.text).toBe("nem átlátható, mit csinál a gép");
     expect(session.utterances.map((utterance) => [utterance.speaker, utterance.text])).toEqual([
       ["human", "kezeld a hiákat"],
       ["agent", "Options: Több munka / Közös igazság\n\nMi a Kotta célja egy mondatban?"],

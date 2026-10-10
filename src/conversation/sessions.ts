@@ -24,6 +24,8 @@ export interface Utterance {
   /** ISO 8601, as the log recorded it. */
   timestamp: string;
   text: string;
+  /** A question the agent asked through a structured-question tool: what follows is its answer. */
+  structured?: boolean;
 }
 
 export type SkipReason = "sidechain" | "tool" | "system" | "skill" | "command" | "interrupted" | "paste" | "meta" | "image" | "since";
@@ -158,7 +160,7 @@ function readClaude(entries: Entry[], skip: (reason: SkipReason) => void): Utter
     // result: the question is the agent's, the choice the human's (BR-01m4kazy7hhmvt1k2kqx5xde8b).
     const answered = structuredAnswer(entry.toolUseResult);
     if (answered) {
-      utterances.push({ speaker: "agent", timestamp, text: answered.asked }, { speaker: "human", timestamp, text: answered.answer });
+      utterances.push({ speaker: "agent", timestamp, text: answered.asked, structured: true }, { speaker: "human", timestamp, text: answered.answer });
       continue;
     }
     // A user entry holding only tool results is the harness talking, not the human.
