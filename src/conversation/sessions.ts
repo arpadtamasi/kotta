@@ -108,9 +108,40 @@ function blockTexts(content: unknown, types: string[]): { texts: string[]; other
   return { texts, other };
 }
 
+/**
+ * The question an agent asked through a structured-question tool and the human's choice, from the
+ * tool result Claude Code records: `{ questions: [{ question, options: [{ label }] }], answers: { question: answer } }`.
+ */
+function structuredAnswer(result: unknown): { asked: string; answer: string } | null {
+  const data = record(result);
+  const answers = record(data?.answers);
+  const questions = Array.isArray(data?.questions) ? data!.questions.map(record).filter((item): item is Record<string, unknown> => Boolean(item)) : [];
+  if (!answers || !Object.keys(answers).length) return null;
+  const asked = questions.map((question) => {
+    const options = Array.isArray(question.options) ? question.options.map((option) => String(record(option)?.label ?? "")).filter(Boolean) : [];
+    // The options first, the question last: a question is read from how the agent's message ends.
+    return `${options.length ? `Options: ${options.join(" / ")}\n\n` : ""}${String(question.question ?? "")}`;
+  });
+  const replies = Object.entries(answers).map(([question, answer]) => Object.keys(answers).length > 1 ? `„${question}” — ${String(answer)}` : String(answer));
+  return { asked: asked.join("\n\n") || Object.keys(answers).join("\n\n"), answer: replies.join("\n\n") };
+}
+
 function readClaude(entries: Entry[], skip: (reason: SkipReason) => void): Utterance[] {
   const utterances: Utterance[] = [];
+  const queued = new Set<string>();
   for (const entry of entries) {
+    // A message the human typed while the agent was working is logged as a queued command, not as a
+    // user turn; it is the human speaking all the same (BR-01m4kazy7hhmvt1k2kqx5xde8b).
+    const attachment = record(entry.attachment);
+    if (entry.type === "attachment" && attachment?.type === "queued_command" && record(attachment.origin)?.kind === "human") {
+      const id = String(attachment.source_uuid ?? attachment.delivery_id ?? "");
+      const text = blockTexts(attachment.prompt, ["text"]).texts.join("\n\n").trim();
+      if (text && !(id && queued.has(id))) {
+        if (id) queued.add(id);
+        utterances.push({ speaker: "human", timestamp: typeof attachment.timestamp === "string" ? attachment.timestamp : String(entry.timestamp ?? ""), text });
+      }
+      continue;
+    }
     if (entry.type !== "user" && entry.type !== "assistant") continue;
     const message = record(entry.message);
     if (!message) continue;
@@ -121,6 +152,13 @@ function readClaude(entries: Entry[], skip: (reason: SkipReason) => void): Utter
       const text = texts.join("\n\n").trim();
       if (text) utterances.push({ speaker: "agent", timestamp, text });
       else skip("tool");
+      continue;
+    }
+    // An answer to a structured question is the human speaking, though the log files it as a tool
+    // result: the question is the agent's, the choice the human's (BR-01m4kazy7hhmvt1k2kqx5xde8b).
+    const answered = structuredAnswer(entry.toolUseResult);
+    if (answered) {
+      utterances.push({ speaker: "agent", timestamp, text: answered.asked }, { speaker: "human", timestamp, text: answered.answer });
       continue;
     }
     // A user entry holding only tool results is the harness talking, not the human.

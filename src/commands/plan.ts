@@ -1,10 +1,11 @@
-import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { parse as parseYaml } from "yaml";
 import { join, relative, sep } from "node:path";
 import { parseMarkdown, sections } from "../core/markdown.js";
 import { displayId } from "../core/identity.js";
 import { parseOpenQuestions, unresolvedQuestions } from "../core/questions.js";
 import { findRepositoryRoot, specPath } from "../filesystem/workspace.js";
-import { deltaHash, FORMS_DIRECTORY, MODEL_DIRECTORY, OPENSPEC_DIRECTORY, PLANNING_FILE, PROPOSAL_FILE, readChangeModel, resolveChange, type ChangeModel } from "../spec/change.js";
+import { APPROVAL_FILE, deltaHash, listChanges, FORMS_DIRECTORY, MODEL_DIRECTORY, OPENSPEC_DIRECTORY, PLANNING_FILE, PROPOSAL_FILE, readChangeModel, resolveChange, type ChangeModel } from "../spec/change.js";
 import { claimSentences, glossaryContrasts, readContent } from "../spec/contrast.js";
 import { markdownFiles, narrativeDrift, type NarrativeDrift } from "../spec/narrative.js";
 import { readNarrativeSetting, requiresNormativeKeyword } from "../core/config.js";
@@ -93,6 +94,8 @@ export interface ChangeAnalysis {
   conversation: ConversationCitations;
   /** List items of the proposal's What changes that name no node: a promise left in prose, or work that keeps none. */
   prose: ProseItem[];
+  /** Other open changes whose approved deltas were laid over the accepted model for the conflicts. */
+  agreedWith: string[];
   /** The proposal tells the product to a stranger under `## Told to a stranger` (BR-01m4gvndx1scrdc836cmjp58dq). */
   toldToAStranger: boolean;
 }
@@ -279,13 +282,59 @@ function conversationCitations(root: string, model: ChangeModel): ConversationCi
       if (!/(?:^|\/)conversation\.md$/i.test(named)) continue;
       cited += 1;
       const ref = reference(root, node);
-      if (named !== path) unresolved.push({ node: ref, source, reason: `name the conversation as ${path}, the repository-relative path the board opens` });
+      if (named !== path) {
+        // Another change's conversation — open, or archived since — is a citation that resolves
+        // wherever the board would open it (BR-01m4kazyfbvyapfr0h6dcx1n3y, BR-01m4gmdmhz5zs80j07660yjaeq).
+        const other = otherConversation(root, named);
+        if (other === null) unresolved.push({ node: ref, source, reason: `name the conversation as ${path}, the repository-relative path the board opens, or an open or archived change's conversation` });
+        else if (!part) unresolved.push({ node: ref, source, reason: "name the part it cites: an item id such as J1, or its time" });
+        else if (!headingNames(parseMarkdown(other).content, part)) unresolved.push({ node: ref, source, reason: `no heading in ${named} names '${part}'` });
+        continue;
+      }
       else if (content === null) unresolved.push({ node: ref, source, reason: `the change has no ${path}; distil it with 'kotta narrative'` });
       else if (!part) unresolved.push({ node: ref, source, reason: "name the part it cites: an item id such as J1, or its time" });
       else if (!headingNames(parseMarkdown(content).content, part)) unresolved.push({ node: ref, source, reason: `no heading in ${path} names '${part}'` });
     }
   }
   return { path: content === null ? null : path, cited, unresolved };
+}
+
+/** Another change's conversation, open or archived (`<date>-<name>`, the latest), by the path a node cites; null when neither exists. */
+function otherConversation(root: string, named: string): string | null {
+  const match = /^(.*\/changes)\/(?:archive\/)?([^/]+)\/conversation\.md$/.exec(named);
+  if (!match) return null;
+  const folder = join(root, ...match[1].split("/"));
+  const name = match[2];
+  const open = join(folder, name, "conversation.md");
+  if (existsSync(open)) return readFileSync(open, "utf8");
+  const archive = join(folder, "archive");
+  if (!existsSync(archive)) return null;
+  const entry = readdirSync(archive).filter((candidate) => candidate === name || candidate.endsWith(`-${name}`)).sort().pop();
+  const file = entry ? join(archive, entry, "conversation.md") : null;
+  return file && existsSync(file) ? readFileSync(file, "utf8") : null;
+}
+
+/**
+ * The agreement a change is measured against: the accepted model, with every other open change that
+ * holds an approval to its current delta laid over it — between approval and archive an approved
+ * delta is the agreement for the nodes it touches (BR-01m4kazy06s3yg2d2pgw26f583).
+ */
+export function agreement(root: string, forms: SpecForm[], accepted: SpecNode[], except: string): { nodes: SpecNode[]; changes: string[] } {
+  const byId = new Map(accepted.map((node) => [node.id, node]));
+  const changes: string[] = [];
+  for (const name of listChanges(root).filter((candidate) => candidate !== except)) {
+    try {
+      const model = readChangeModel(root, name, forms);
+      const receipt = join(model.directory, APPROVAL_FILE);
+      if (!existsSync(receipt)) continue;
+      const basis = (parseYaml(readFileSync(receipt, "utf8")) ?? {}) as { approval_basis?: unknown };
+      if (basis.approval_basis !== deltaHash(model)) continue;
+      for (const node of model.nodes) byId.set(node.id, node);
+      for (const id of model.removed) byId.delete(id);
+      changes.push(name);
+    } catch { /* a change that cannot be read is no agreement */ }
+  }
+  return { nodes: [...byId.values()], changes };
 }
 
 /** Everything the planning phase knows about a change, computed from disk; nothing is written. */
@@ -320,7 +369,8 @@ export function analyzeChange(root: string, name: string): Analysis {
     .filter((issue) => !ACCEPTED_WARNING_CODES.has(issue.code))];
 
   const removedNodes = model.removed.map((id) => acceptedById.get(id)).filter((node): node is SpecNode => Boolean(node));
-  const allConflicts = conflictCandidates(root, accepted, model.nodes, removedNodes);
+  const agreed = agreement(root, forms, accepted, model.name);
+  const allConflicts = conflictCandidates(root, agreed.nodes, model.nodes, removedNodes);
 
   const openDecisions: OpenDecision[] = model.nodes.flatMap((node) =>
     unresolvedQuestions(parseOpenQuestions(node.id, readFileSync(node.path, "utf8"))).map((question) => ({ reference: question.reference, node: reference(root, node), text: question.text, line: question.line })));
@@ -351,6 +401,7 @@ export function analyzeChange(root: string, name: string): Analysis {
     provenance: provenanceSummary(root, model.nodes),
     conversation: conversationCitations(root, model),
     prose: existsSync(join(model.directory, PROPOSAL_FILE)) ? proseWithoutNode(readFileSync(join(model.directory, PROPOSAL_FILE), "utf8"), [...accepted, ...model.nodes]) : [],
+    agreedWith: agreed.changes,
     toldToAStranger: existsSync(join(model.directory, PROPOSAL_FILE)) && /^##\s+Told to a stranger\s*$/im.test(readFileSync(join(model.directory, PROPOSAL_FILE), "utf8")),
     forms,
     model,
@@ -438,6 +489,7 @@ export function renderPlanning(analysis: ChangeAnalysis, root: string, generated
   lines.push(...(analysis.merged.length ? issueLines(analysis.merged, root) : ["The accepted model with this delta applied validates as a whole."]), "");
 
   lines.push("## (c) Conflict candidates", "");
+  if (analysis.agreedWith.length) lines.push(`Measured against the accepted model with the approved open change${analysis.agreedWith.length === 1 ? "" : "s"} ${analysis.agreedWith.map((name) => `\`${name}\``).join(", ")} laid over it: between approval and archive an approved delta is the agreement for the nodes it touches.`, "");
   if (!analysis.conflicts.length) lines.push("No accepted node shares an edge with, is named by, or contrasts with the delta.");
   for (const conflict of analysis.conflicts) {
     lines.push(`${conflict.rank}. **${named(conflict.node)}** — ${conflict.detail} (${conflict.kind}; because of ${named(conflict.because)}). Awaits judgement.`);
