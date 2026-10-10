@@ -254,7 +254,7 @@ export function TreeView({ board, onOpen, arrangement = "goal", onArrangement = 
   return <div className="view tree" onKeyDown={walk}>
     <div className="view__head"><div>
       <h2>Hierarchy</h2>
-      <p>The product from its purpose down: goals, the use cases that pursue them, their requirements and examples.</p>
+      <p>The product from its purpose down.</p>
     </div></div>
     <ChangeHeader change={board.change} onOpen={onOpen} extra={gaps} />
     {tree.journeys.length > 0 && <section className="tree-journeys" aria-label="Journeys">

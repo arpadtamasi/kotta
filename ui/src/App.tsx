@@ -613,9 +613,6 @@ export function ChangeHeader({ change, onOpen, extra }: { change: OpenChange | n
   const unreadable = change.unreadable ?? [];
   return <section className="process-line" aria-label={`Open change: ${change.title}`}>
     <span className="process-line__lead"><b>{change.title}</b> · {approval ? "" : `${state} · `}</span>
-    <span className="approval-summary">{approval
-      ? <>Approved by {approval.by} on {day(approval.at)} for the whole change · as its provenance records it: {counts.human} by you, {counts["agent-proposed-human-approved"]} proposed and approved, {counts["agent-decided"]} by the agent alone</>
-      : <>Nobody has said yes to this change yet.</>}</span>
     {change.uncommitted.length > 0 && <span className="process-line__part"> · {change.uncommitted.length} not committed</span>}
     {approval && <details className="process-line__part approval-list">
       <summary>gate list · {approval.agentDecidedAtGate.length}</summary>
@@ -640,6 +637,9 @@ export function ChangeHeader({ change, onOpen, extra }: { change: OpenChange | n
       </div>
     </details>}
     {extra}
+    <span className="process-line__part"><span className="approval-summary">{approval
+      ? <>Approved by {approval.by} on {day(approval.at)} for the whole change · as its provenance records it: {counts.human} by you, {counts["agent-proposed-human-approved"]} proposed and approved, {counts["agent-decided"]} by the agent alone</>
+      : <>Nobody has said yes to this change yet.</>}</span></span>
   </section>;
 }
 
