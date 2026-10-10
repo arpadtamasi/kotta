@@ -139,7 +139,8 @@ export function distillSession(session: Session, source: string): Omit<Distillat
     if (utterance.speaker === "agent") { lastAgent = utterance; continue; }
     const agent = lastAgent;
     lastAgent = undefined;
-    const move = agent ? agentMove(agent.text) : "statement";
+    // An answer to a structured question is a question answered, however many it holds (BR-01m4kazy7hhmvt1k2kqx5xde8b).
+    const move = agent?.structured ? "question" : agent ? agentMove(agent.text) : "statement";
     if (!agent) { result.intents.push({ ...utterance, source }); continue; }
     const pair: Pair = { id: "", source, agent, human: utterance };
     if (move === "statement") {

@@ -1,0 +1,21 @@
+change: tervezes-mindent-lat
+approved_by: Árpád Tamási
+approved_at: 2026-10-10T16:57:28.210Z
+approval_basis: sha256:9f656a1aed581e8fb8631ca3aace600e6796d3f5f40a60734045a91b0afdd7b4
+replaced: {}
+approved:
+  added:
+    - id: BR-01m4kazyfbvyapfr0h6dcx1n3y
+      title: A citation of an archived conversation resolves in the plan
+    - id: BR-01m4kazy7hhmvt1k2kqx5xde8b
+      title: The distillate keeps the answers to structured questions
+    - id: BR-01m4kazy06s3yg2d2pgw26f583
+      title: The plan measures against approved open changes too
+    - id: EX-01m4kazyqsnc6nyr8j8n3qwkct
+      title: A step back in an open change is caught by the plan
+    - id: EX-01m4kazyzdk56c5vmvp0z15gs5
+      title: An answer chosen from options is distilled
+    - id: EX-01m4kazz5wsg016051cs09yd2v
+      title: An archived conversation item is not unresolved
+  changed: []
+  removed: []

@@ -1,0 +1,36 @@
+change: kotta-celja-es-menete
+approved_by: Árpád Tamási
+approved_at: 2026-10-10T17:25:40.583Z
+approval_basis: sha256:21f21edcfa7aa64bbadd1e538702023203b399313300a1b98488d9c5f875d7c2
+replaced:
+  EX-01m3wa6fbrg18wtsvfrdab0wn9: sha256:3fd2b3a774bbade4257447a2b3173fd7ef451c4a92b953f0e1891592133ed16c
+  EX-01m3wa6fk1b8anb3dxn48rz5e0: sha256:c3ee9462bbd38e1cb51d5b1d0c72cc17d7cdfe6899aa4260cfc990bed6e5fd6e
+  G-01m0f0wn89bbzdenysa019v5x2: sha256:f546b81845a094caec078e2b2e8d48da5578a877c6690ab6a406493be80e6bb1
+  G-01m0f0wn89bsqrswjac57sdzez: sha256:d0feee83e029b22945937e90d9bf3a56abbb3721532813e08b9ed1af82e3737e
+  G-01m0f0wn89zx3nr6h1vtd9jg9h: sha256:f7e864d448559e11d2d8f555de1455d9b6531cebc953dd4d2a65ea39122fef5e
+approved:
+  added:
+    - id: EX-01m4kbetvy1w4s4nnprhcj756g
+      title: An intent becomes kept code through one gate
+    - id: G-01m4kbetcrer5bjb75djba5sct
+      title: The human sees in time what the machine does
+    - id: UC-01m4kbetjswsfc2vz74drj2vss
+      title: Agree before building, then see it kept
+    - id: UC-01m4kbzhamtpt9gybc9kz6vbrx
+      title: Archive a built change
+    - id: UC-01m4kbzh3rt3sjwmb49km5j1db
+      title: Build what was approved
+  changed:
+    - id: EX-01m3wa6fbrg18wtsvfrdab0wn9
+      title: Archive refuses a change with an unaccounted promise
+    - id: EX-01m3wa6fk1b8anb3dxn48rz5e0
+      title: Building an approved change needs no signal
+    - id: G-01m0f0wn89bbzdenysa019v5x2
+      title: Completion is evidence, not report
+    - id: G-01m0f0wn89bsqrswjac57sdzez
+      title: Direct more work than you can observe
+    - id: G-01m0f0wn89zx3nr6h1vtd9jg9h
+      title: The repository is the shared truth
+  removed:
+    - id: G-01m0fp2hdjsaegywtfk5psy35m
+      title: The ceremony fits the stakes
