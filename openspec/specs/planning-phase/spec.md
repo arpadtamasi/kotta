@@ -32,6 +32,24 @@ Every change in a Kotta workspace; the shipped rules file and the `plan-change` 
 - **WHEN** `kotta archive` runs on that change.
 - **THEN** It refuses, names the third node by title and says where evidence was sought. Nothing is merged, nothing is moved and nothing is written. Once the third node is either named by the code that keeps it or admitted with a reason, the same command lands the change, asking nobody anything.
 
+### Requirement: A citation of an archived conversation resolves in the plan
+<!-- kotta: BR-01m4kazyfbvyapfr0h6dcx1n3y -->
+`kotta plan` SHALL resolve a citation of another change's conversation — open, or archived since — the way the board opens it, and SHALL list it as unresolved only when no such conversation exists or no heading in it names the cited part.
+
+**Rationale**
+
+A node a change carries over from the accepted model keeps citing the conversation of the change that wrote it. Once that change is archived the citation is still good — *A citation of an archived change still opens* — yet the plan listed it as unresolved, and asked for it to be renamed to the new change's conversation, which says nothing about it.
+
+**Scope**
+
+`kotta plan`, the provenance citations of a change's nodes.
+
+#### Scenario: An archived conversation item is not unresolved
+<!-- kotta: EX-01m4kazz5wsg016051cs09yd2v -->
+- **GIVEN** A change that carries over an accepted rule citing `.kotta/changes/hasznalati-eset-hierarchia/conversation.md · SZ2`, archived as `.kotta/changes/archive/2026-10-08-hasznalati-eset-hierarchia/`.
+- **WHEN** `kotta plan` runs.
+- **THEN** The citation is not listed as unresolved; a citation of a change that is neither open nor archived, or of an item no heading names, still is.
+
 ### Requirement: A form change goes through the gate
 <!-- kotta: BR-01m4ee245pe1wb8x8n7wxyvxwh -->
 A change SHALL be able to carry form definitions under `model/forms/`. `kotta plan` SHALL measure the delta's nodes against the registry as the change would leave it, `kotta approve` SHALL fingerprint the forms with the nodes, and `kotta archive` SHALL land them in the registry. A form edited in the registry outside a change SHALL be reported by `kotta validate`.
@@ -217,6 +235,42 @@ Every agent working in a Kotta repository, on any host, on any change. The rule 
 - **GIVEN** A change that only rewrites documentation, or refactors code without adding, changing or removing any promise.
 - **WHEN** The human asks the agent to apply it.
 - **THEN** The agent implements it and says nothing about the specification.
+
+### Requirement: The distillate keeps the answers to structured questions
+<!-- kotta: BR-01m4kazy7hhmvt1k2kqx5xde8b -->
+`kotta narrative` SHALL distil an answer the human gave to a structured question — the question and its options as the agent's words, the choice as the human's — and a message the human typed while the agent was working, as the human's words.
+
+**Rationale**
+
+On 2026-10-09 the decisions that shaped three changes — the direction, the scope, the journey's form, the tree's root — were answers to structured questions, and several of the human's key sentences came while the agent was working. The distillate dropped all of them as tool traffic, so the nodes could cite them only as "chat", which nobody can check.
+
+**Scope**
+
+`kotta narrative`, on Claude Code session logs.
+
+#### Scenario: An answer chosen from options is distilled
+<!-- kotta: EX-01m4kazyzdk56c5vmvp0z15gs5 -->
+- **GIVEN** A session in which the agent asks, as a structured question with three options, what the product's purpose is, and the human answers in their own words; and, while the agent works, the human adds „és későn derül ki”.
+- **WHEN** `kotta narrative` distils the session.
+- **THEN** The distillate holds the question with its options as the agent's and the answer as the human's, paired under Questions and answers, and the added sentence as the human's own words.
+
+### Requirement: The plan measures against approved open changes too
+<!-- kotta: BR-01m4kazy06s3yg2d2pgw26f583 -->
+`kotta plan` SHALL look for conflict candidates against the accepted model with every other open change that holds an approval to its current delta laid over it, and SHALL name the changes it laid over.
+
+**Rationale**
+
+Between approval and archive an approved delta is the agreement for the nodes it touches. On 2026-10-09 a change made stepping back in the drawer open a node at its top; *The view holds still*, approved in another change still open, said the opposite. The plan measured only the accepted model and saw nothing; a critic found it by hand.
+
+**Scope**
+
+`kotta plan`, on every change.
+
+#### Scenario: A step back in an open change is caught by the plan
+<!-- kotta: EX-01m4kazyqsnc6nyr8j8n3qwkct -->
+- **GIVEN** An approved open change whose delta holds *The view holds still* — a view the reader returns to opens where it was left — and a second change whose new rule says stepping back opens a node at its top.
+- **WHEN** `kotta plan` runs on the second change.
+- **THEN** The report says it laid the first change over the accepted model, and lists *The view holds still* among the conflict candidates.
 
 ### Requirement: The plan names what the proposal promises without a node
 <!-- kotta: BR-01m4gj0endmfx601pm929wcp41 -->
